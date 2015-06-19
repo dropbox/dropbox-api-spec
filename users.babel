@@ -1,0 +1,199 @@
+namespace users
+    "This namespace contains endpoints user management."
+
+alias AccountId = String(min_length=40, max_length=40)
+
+#
+# Route: get_account
+#
+
+route get_account (GetAccountArg, BasicAccount, GetAccountError)
+    "Get information about a user's account."
+
+struct GetAccountArg
+    "Arguments for :route:`get_account`."
+
+    account_id AccountId
+        "A user's account identifier."
+
+    example default
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+
+union GetAccountError
+    "Error returned by :route:`get_account`."
+
+    no_account
+        "The specified :field:`GetAccountArg.account_id` does not exist."
+    unknown*
+
+union AccountType
+    "What type of account this user has."
+
+    basic
+        "The basic account type."
+    pro
+        "The Dropbox Pro account type."
+    business
+        "The Dropbox for Business account type."
+
+    example default
+        basic = null
+
+    example business
+        business = null
+
+struct Account
+    "The amount of detail revealed about an account depends on the user
+    being queried and the user making the query."
+
+    account_id AccountId
+        "The user's unique Dropbox ID."
+    name Name
+        "Details of a user's name."
+
+    example default
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+        name = default
+
+struct BasicAccount extends Account
+    "Basic information about any account."
+
+    is_teammate Boolean
+        "Whether this user is a teammate of the current user. If this account
+        is the current user's account, then this will be :val:`true`."
+
+    example default
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+        name = default
+        is_teammate = true
+
+#
+# Route: get_current_account
+#
+
+route get_current_account (Void, FullAccount, Void)
+    "Get information about the current user's account."
+
+struct FullAccount extends Account
+    "Detailed information about the current user's account."
+
+    email String
+        "The user's e-mail address."
+    country String(min_length=2, max_length=2)?
+        "The user's two-letter country code, if available. Country codes are
+        based on :link:`ISO 3166-1 http://en.wikipedia.org/wiki/ISO_3166-1`."
+    locale String(min_length=2, max_length=2)
+        "The language that the user specified. Locale tags will be
+        :link:`IETF language tags http://en.wikipedia.org/wiki/IETF_language_tag`."
+    referral_link String
+        "The user's :link:`referral link https://www.dropbox.com/referrals`."
+    team Team?
+        "If this account is a member of a team, information about that team."
+    is_paired Boolean
+        "Whether the user has a personal and work account. If the current
+        account is personal, then :field:`team` will always be :val:`null`,
+        but :field:`is_paired` will indicate if a work account is linked."
+    account_type AccountType
+        "What type of account this user has."
+
+    example default "Paired account"
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+        name = default
+        email = "franz@dropbox.com"
+        country = "US"
+        locale = "en"
+        referral_link = "https://db.tt/ZITNuhtI"
+        is_paired = true
+        account_type = business
+
+    example unpaired "Unpaired account"
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+        name = default
+        email = "franz@gmail.com"
+        country = "US"
+        locale = "en"
+        referral_link = "https://db.tt/ZITNuhtI"
+        team = null
+        is_paired = false
+        account_type = default
+
+struct Team
+    "Information about a team."
+
+    id String
+        "The team's unique ID."
+    name String
+        "The name of the team."
+
+    example default
+        id = "dbtid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+        name = "Acme, Inc."
+
+struct Name
+    "Representations for a person's name to assist with internationalization."
+
+    given_name String
+        "Also known as a first name."
+    surname String
+        "Also known as a last name or family name."
+    familiar_name String
+        "Locale-dependent name. In the US, a person's familiar name is their
+        :field:`given_name`, but elsewhere, it could be any combination of a
+        person's :field:`given_name` and :field:`surname`."
+    display_name String
+        "A name that can be used directly to represent the name of a user's
+        Dropbox account."
+
+    example default
+        given_name = "Franz"
+        surname = "Ferdinand"
+        familiar_name = "Franz"
+        display_name = "Franz Ferdinand (Personal)"
+
+#
+# Route: get_space_usage
+#
+
+route get_space_usage(Void, SpaceUsage, Void)
+    "Get the space usage information for the current user's account."
+
+struct SpaceUsage
+    "Information about a user's space usage and quota."
+
+    used UInt64
+        "The user's total space usage (bytes)."
+    allocation SpaceAllocation
+        "The user's space allocation."
+
+    example default
+        used = 314159265
+        allocation = default
+
+union SpaceAllocation
+    "Space is allocated differently based on the type of account."
+
+    individual IndividualSpaceAllocation
+        "The user's space allocation applies only to their individual account."
+    team TeamSpaceAllocation
+        "The user shares space with other members of their team."
+    other*
+
+    example default
+        individual = default
+
+struct IndividualSpaceAllocation
+    allocated UInt64
+        "The total space allocated to the user's account (bytes)."
+
+    example default
+        allocated = 10000000000
+
+struct TeamSpaceAllocation
+    used UInt64
+        "The total space currently used by the user's team (bytes)."
+    allocated UInt64
+        "The total space allocated to the user's team (bytes)."
+
+    example default
+        used = 27182818284
+        allocated = 100000000000

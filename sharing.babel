@@ -1,0 +1,135 @@
+namespace sharing
+    "This namespace contains endpoints and data types for creating and managing
+    shared links."
+
+import common
+import files
+
+alias PathError = files.PathError
+
+union Visibility
+    "Who can access a shared link.
+    The most open visibility is :field:`public`.
+    The default depends on many aspects, such as team and user
+    preferences and shared folder settings."
+
+    public
+        "Anyone who has received the link can access it. No login required."
+    team_only
+        "Only members of the same DfB (Dropbox for Business) team can
+        access the link. Login is required."
+    password
+        "A link-specific password is required to access the
+        link. Login is not required."
+    team_and_password
+        "Only members of the same DfB (Dropbox for Business) team who
+        have the link-specific password can access the link."
+    shared_folder_only
+        "Only members of the shared folder containing the linked file
+        can access the link. Login is required."
+    other*
+        "An unknown restriction is in place."
+
+struct LinkMetadata
+    "Metadata for a shared link. This can be either a
+    :type:`PathLinkMetadata` or :type:`CollectionLinkMetadata`."
+
+    union*
+        path PathLinkMetadata
+        collection CollectionLinkMetadata
+
+    url String
+        "URL of the shared link."
+    visibility Visibility
+        "Who can access the link."
+    expires common.DropboxTimestamp?
+        "Expiration time, if set. By default the link won't expire."
+
+struct PathLinkMetadata extends LinkMetadata
+    "Metadata for a path-based shared link."
+
+    path String
+        "Path in user's Dropbox."
+
+    example default
+        url = "https://www.dropbox.com/4x4kjyl1udi33jt/AACqw4NCzgwpCHeKtVlv6o6Pa?dl=0"
+        path = "/Homework/math/prime_numbers.txt"
+        expires = null
+        visibility = public
+
+struct CollectionLinkMetadata extends LinkMetadata
+    "Metadata for a collection-based shared link."
+
+    example default
+        url = "https://www.dropbox.com/s6fvw6ol7rmqo1x/AAAgWRSbjmYDvPpDB30Sykjfa?dl=0"
+        expires = null
+        visibility = public
+
+struct GetSharedLinksArg
+    "Arguments for :route:`get_shared_links`."
+
+    path String?
+        "See :route:`get_shared_links` description."
+
+    example default  "Get all links, including collection links"
+        path = ""
+
+    example math_homework_links  "Get links giving access to /Homework/math"
+        path = "/Homework/math"
+
+struct GetSharedLinksResult
+    "Result for :route:`get_shared_links`."
+
+    links List(LinkMetadata)
+        "Shared links applicable to the path argument."
+
+route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, PathError)
+    "Returns a list of :type:`LinkMetadata` objects for this user,
+    including collection links.
+
+    If no path is given or the path is empty, returns a list of all
+    shared links for the current user, including collection links.
+
+    If a non-empty path is given, returns a list of all shared links
+    that allow access to the given path.  Collection links are never
+    returned in this case.
+
+    Note that the url field in the response is never the shortened URL.
+
+    This API is not supported for App Folder and filetypes apps."
+
+union PendingUploadMode
+    "Flag to indicate pending upload default (for linking to not-yet-existing paths)."
+
+    file
+        "Assume pending uploads are files."
+    folder
+        "Assume pending uploads are folders."
+
+# TODO: Add optional expiration and visibility?
+struct CreateSharedLinkArg
+    "Arguments for :route:`create_shared_link`."
+
+    path String
+        "The path to share."
+    short_url Boolean = false
+        "Whether to return a shortened URL."
+    pending_upload PendingUploadMode?
+        # TODO: Use :val: once it supports union field names.
+        "If it's okay to share a path that does not yet exist, set
+        this to either 'file' or 'folder' to indicate whether to
+        assume it's a file or folder."
+
+    example default
+        path = "/Homework/math/prime_numbers.txt"
+
+route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, PathError)
+    "Create a shared link.
+
+    If a shared link already exists for the given path, that link is returned.
+
+    Note that in the returned :type:`PathLinkMetadata`, the url field
+    is the shortened URL if the short_url argument is set to
+    :val:`true`.
+
+    This API is not supported for App Folder and filetypes apps."
