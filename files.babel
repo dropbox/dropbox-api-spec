@@ -4,8 +4,10 @@ namespace files
 
 import common
 
-alias Rev = String(min_length=9, pattern="[0-9a-f]+")
+alias Id = String(min_length=1)
 alias Path = String
+alias PathOrId = String
+alias Rev = String(min_length=9, pattern="[0-9a-f]+")
 
 #
 # Metadata definitions and route
@@ -35,6 +37,8 @@ struct Metadata
 struct FileMetadata extends Metadata
     "Metadata (excluding name or path) for a file."
 
+    id Id?
+        "A unique identifier for the file."
     client_modified common.DropboxTimestamp
         "For files, this is the modification time set by the desktop client
         when the file was added to Dropbox. Since this time is not verified
@@ -51,6 +55,7 @@ struct FileMetadata extends Metadata
         "The file size in bytes."
 
     example default
+        id = "id:a4ayc_80_OEAAAAAAAAAXw"
         name = "Prime_Numbers.txt"
         path_lower = "/homework/math/prime_numbers.txt"
         client_modified = "2015-05-12T15:50:38Z"
@@ -64,7 +69,11 @@ struct FolderMetadata extends Metadata
     (There are currently no fields defined here, but we will add
     folder-specific metadata in the future.)"
 
+    id Id?
+        "A unique identifier for the folder."
+
     example default
+        id = "id:a4ayc_80_OEAAAAAAAAAXz"
         path_lower = "/homework/math"
         name = "math"
 
@@ -89,11 +98,14 @@ union GetMetadataError
 struct GetMetadataArg
     "Arguments for :route:`get_metadata`."
 
-    path Path
-        "The path of the file or folder on Dropbox. Must not be the root."
+    path PathOrId
+        "The path or ID of a file or folder on Dropbox. Must not be the root."
 
     example default
         path = "/Homework/math"
+
+    example id
+        path = "id:a4ayc_80_OEAAAAAAAAAYa"
 
 route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
     "Returns the metadata for a file or folder."
@@ -108,9 +120,12 @@ struct ListFolderArg
     path Path
         "The path to the folder you want to see the contents of.
         May be the root (i.e. empty)."
-
+    recursive Boolean = false
+        "If true, list folder operation will be applied recursively to all subfolders.
+        And the response will contain contents of all subfolders"
     example default
         path = "/Homework/math"
+        recursive = false
 
 struct ListFolderResult
     "Information returned by :route:`list_folder`."
@@ -169,6 +184,22 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
     paginate through all files and retrieve updates to the folder.
 
     NOTE: We're definitely going to streamline this interface."
+
+struct ListFolderGetLatestCursorResult
+    "Information returned by :route:`list_folder/get_latest_cursor`."
+
+    cursor String
+        "Pass the cursor into :route:`list_folder/continue` to see what's
+        changed in the folder since your previous query."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorResult, ListFolderError)
+    "A way to quickly get a cursor for the folder's state. Unlike :route:`list_folder`,
+    :route:`list_folder/get_latest_cursor` doesn't return any entries. This endpoint is for app
+    which only needs to know about new files and modifications and doesn't need to know about
+    files that already exist in Dropbox."
 
 #
 # Download
@@ -434,7 +465,6 @@ struct CommitInfo
     example default
         path = "/Homework/math/Matrices.txt"
         autorename = true
-        mute = false
 
 struct UploadSessionFinishArg
     "Arguments for :route:`upload_session/finish`."
@@ -505,10 +535,7 @@ struct SearchQuery
         "The search mode (filename, filename_and_content, or deleted_filename)."
 
     example default
-        # TODO: Omit args with defaults
         path = ""
-        start = 0
-        max_results = 100
         query = "prime numbers"
 
 union SearchMatchType
