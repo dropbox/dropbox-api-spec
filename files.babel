@@ -5,8 +5,9 @@ namespace files
 import common
 
 alias Id = String(min_length=1)
-alias Path = String
-alias PathOrId = String
+alias Path = String(pattern="/.*")
+alias PathOrId = String(pattern="(/|id:).*")
+alias PathR = String(pattern="(/.*)?")               # A path that can be the root path ("").
 alias Rev = String(min_length=9, pattern="[0-9a-f]+")
 
 #
@@ -90,16 +91,13 @@ struct DeletedMetadata extends Metadata
 union GetMetadataError
     "Error returned by :route:`get_metadata`."
 
-    not_found
-        "File is not found at the specified path."
-    other*
-        "An unspecified error."
+    path LookupError
 
 struct GetMetadataArg
     "Arguments for :route:`get_metadata`."
 
     path PathOrId
-        "The path or ID of a file or folder on Dropbox. Must not be the root."
+        "The path or ID of a file or folder on Dropbox"
 
     example default
         path = "/Homework/math"
@@ -117,12 +115,12 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
 struct ListFolderArg
     "Arguments for :route:`list_folder`."
 
-    path Path
-        "The path to the folder you want to see the contents of.
-        May be the root (i.e. empty)."
+    path PathR
+        "The path to the folder you want to see the contents of."
     recursive Boolean = false
         "If true, list folder operation will be applied recursively to all subfolders.
         And the response will contain contents of all subfolders"
+
     example default
         path = "/Homework/math"
         recursive = false
@@ -143,17 +141,10 @@ struct ListFolderResult
         cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
         has_more = false
 
-union FolderPathError
-    "Base class for errors returned by :route:`list_folder`."
-
-    not_found
-        "There is no file or folder at the given path."
-    not_folder
-        "Entry at path is not a folder."
-
-union ListFolderError extends FolderPathError
+union ListFolderError
     "Error returned by :route:`list_folder` and :route:`list_folder/continue`."
 
+    path LookupError
     other*
         "An unspecified error."
 
@@ -172,12 +163,14 @@ struct ListFolderContinueArg
     example default
         cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
 
-union ListFolderContinueError extends ListFolderError
+union ListFolderContinueError
     "Error returned by :route:`list_folder/continue`."
 
+    path LookupError
     reset
         "Indicates that the cursor has been invalidated. Call
         :route:`list_folder` to obtain a new cursor."
+    other*
 
 route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderContinueError)
     "Once a cursor has been retrieved from :route:`list_folder`, use this to
@@ -205,56 +198,10 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
 # Download
 #
 
-union NoFileReason
-    "Errors from :route:`download` when the file cannot be downloaded."
-
-    not_found
-        "The path is not found."
-    is_folder
-        "The path refers to a folder. Only files can be downloaded."
-
-struct NoFile
-    "Error structure for :route:`download`."
-
-    reason NoFileReason
-        "The path could not be downloaded. The value gives the reason."
-
-union RestrictedReason
-    "Errors for :route:`download` when download is forbidden."
-
-    dmca
-        "The download is forbidden because of a DMCA (U.S. Digital
-        Millenium Copyright Act) takedown request."
-    other*
-        "The download is forbidden for some other reason."
-
-struct Restricted
-    "Error structure for :route:`download`."
-
-    reason RestrictedReason
-        "The download is forbidden. The value gives the reason."
-
-union DisallowedReason
-    "Errors for :route:`download` when download is disallowed or forbidden."
-
-    permission
-        "The requesting user has no permission to access the file."
-    restricted Restricted
-        "The download is forbidden; see the value for the reason."
-
-struct Disallowed
-    "Error structure for :route:`download`."
-
-    reason DisallowedReason
-        "The reason why the download is disallowed."
-
 union DownloadError
     "Errors from :route:`download`."
 
-    disallowed Disallowed
-        "The download is disallowed or forbidden; see the value for the reason."
-    no_file NoFile
-        "The path cannot be downloaded."
+    path LookupError
     other*
         "An unspecified error."
 
@@ -286,38 +233,19 @@ route download (DownloadArg, FileMetadata, DownloadError)
 
 # Errors
 
-union CommitConflictError
-    "Errors related to commit conflicts."
-
-    file
-        "A file already exists at this path."
-    folder
-        "A folder already exists at this path."
-    autorename_failed
-        "File could not be automatically renamed."
-    other*
-        "An unspecified error."
-
-union CommitError
-    "Errors from :route:`upload`."
-
-    conflict CommitConflictError
-        "A conflict prevented the commit. See the value for the reason."
-    no_write_permission
-        "User does not have permission to write in the folder. An example of
-        this is if the folder is a read-only shared folder."
-    insufficient_quota
-        "User does not have sufficient space quota to save the file."
-    other*
-        "An unspecified error."
-
-struct UploadCommitError
-    "Error structure for commit errors."
-
-    reason CommitError
-        "The reason why the commit failed."
+struct UploadWriteFailed
+    reason WriteError
+        "The reason why the file couldn't be saved."
     upload_session_id String
         "The upload session ID; this may be used to retry the commit."
+
+union UploadError
+    "Errors for upload."
+
+    path UploadWriteFailed
+        "Unable to save the uploaded contents to a file."
+    other*
+        "An unspecified error."
 
 struct UploadSessionOffsetError
     "Error structure for recovering the correct upload offset."
@@ -341,21 +269,13 @@ union UploadSessionLookupError
     other*
         "An unspecified error."
 
-union UploadError
-    "Errors for upload."
-
-    commit_failed UploadCommitError
-        "The upload failed; the value explains the reason."
-    other*
-        "An unspecified error."
-
 union UploadSessionFinishError
     "Errors for :route:`upload_session/finish`."
 
     lookup_failed UploadSessionLookupError
         "The session arguments are incorrect; the value explains the reason."
-    commit_failed CommitError
-        "The commit failed; the value explains the reason."
+    path WriteError
+        "Unable to save the uploaded contents to a file."
     other*
         "An unspecified error."
 
@@ -519,9 +439,9 @@ union SearchMode
 struct SearchQuery
     "Arguments for :route:`search`."
 
-    path Path
+    path PathR
         "The path in the user's Dropbox to search. Should probably be
-        a folder. May be the root (i.e. empty)."
+        a folder."
     query String
         "The string to search for. The search string is split on spaces into
         multiple tokens. For file name searching, the last token is used for
@@ -579,9 +499,10 @@ struct SearchResults
         more = false
         start = 1
 
-union SearchError extends FolderPathError
+union SearchError
     "Errors for :route:`search`."
 
+    path LookupError
     other*
         "An unspecified error."
 
@@ -592,39 +513,41 @@ route search (SearchQuery, SearchResults, SearchError)
 # Errors shared by various operations
 #
 
-union PathError
-    "Path validation errors."
+alias MalformedPathError = String?  # TODO: Maybe a user_message-like thing?
 
-    # State-free errors
-    root_disallowed
-        "The path should not be empty."
-    malformed_path String
-        "The path is invalid; the message gives more info."
-    # Read errors
+union LookupError
+    malformed_path MalformedPathError
     not_found
-        "The path does not exist."
-    file_disallowed
-        "The path should refer to a folder."
-    folder_disallowed
-        "The path should refer to a file."
-    # TODO: dmca, restricted, permission?
-    # Write errors
-    conflict_file
-        "A file already exists there."
-    conflict_folder
-        "A folder already exists there."
-    conflict_file_ancestor
-        "An ancestor is a file."
-    read_only
-        "No write permission."
-    shared_folder_disallowed
-        "The path should not refer to a shared folder."
-    autorename_filed
-        "Automatic rename would result in a malformed path (e.g. too long)."
-    misc String
-        "Miscellaneous error (see error message)."
+        "There is nothing at the given path."
+    not_file
+        "We were expecting a file, but the given path refers to something that isn't a file."
+    not_folder
+        "We were expecting a folder, but the given path refers to something that isn't a folder."
+    restricted_content
+        "The file cannot be transferred because the content is restricted.  For example,
+        sometimes there are legal restrictions due to copyright claims."
     other*
-        "An unspecified error."
+
+union WriteError
+    malformed_path MalformedPathError
+    conflict WriteConflictError
+        "Couldn't write to the target path because there was something in the way."
+    no_write_permission
+        "The user doesn't have permissions to write to the target location."
+    insufficient_space
+        "The user doesn't have enough available space (bytes) to write more data."
+    disallowed_name
+        "Dropbox will not save the file or folder because it of its name."
+    other*
+
+union WriteConflictError
+    file
+        "There's a file in the way."
+    folder
+        "There's a folder in the way."
+    file_ancestor
+        "There's a file at an ancestor path, so we couldn't create the required parent folders."
+    other*
 
 #
 # Create folder
@@ -639,7 +562,10 @@ struct CreateFolderArg
     example default
         path = "/Homework/geometry"
 
-route create_folder (CreateFolderArg, FolderMetadata, PathError)
+union CreateFolderError
+    path WriteError
+
+route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError)
     "Create a folder at a given path.
 
     No file or folder may exist at the path.
@@ -660,7 +586,12 @@ struct DeleteArg
     example delete
         path = "/Homework/math/Prime_Numbers.txt"
 
-route delete (DeleteArg, Metadata, PathError)
+union DeleteError
+    path_lookup LookupError
+    path_write WriteError
+    other*
+
+route delete (DeleteArg, Metadata, DeleteError)
     "Delete the file or folder at a given path.
 
     If the path is a folder all its contents will be deleted too."
@@ -683,19 +614,18 @@ struct RelocationArg
 
 
 union RelocationError
-    "Errors reported by :route:`copy` and :route:`move`.
+    "Errors reported by :route:`copy` and :route:`move`."
 
-    This is not just an extension of PathError; there are alternatives
-    for errors relating to the source, the destination, and the copy
-    operation itself."
-    from_error PathError
-        "The operation is disallowed due to a problem with the source path."
-    to_error PathError
-        "The operation is disallowed due to a problem with the destination path."
+    from_lookup LookupError
+    from_write WriteError
+    to WriteError
+
+    cant_copy_shared_folder
+        "Shared folders can't be copied."
+    cant_nest_shared_folder
+        "Your move operation would result in nested shared folders.  This is not allowed."
     too_many_files
         "The operation would involve more than 10,000 files and folders."
-    quota_error
-        "Quota exceeded."
     other*
         "An unspecified error."
 
@@ -767,7 +697,7 @@ struct ThumbnailArg
 union ThumbnailError
     "Errors reported by :route:`get_thumbnail`."
 
-    download_error DownloadError
+    path LookupError
         "An error occurs when downloading metadata for the image."
     unsupported_extension
         "The file extension doesn't allow conversion to a thumbnail."
@@ -809,7 +739,7 @@ struct PreviewArg
 union PreviewError
     "Errors reported by :route:`get_preview`."
 
-    download_error DownloadError
+    path LookupError
         "An error occurs when downloading metadata for the file."
     in_progress
         "This preview generation is still in progress and the file is not ready
@@ -850,8 +780,7 @@ struct ListRevisionsArg
 union ListRevisionsError
     "Errors reported by :route:`list_revisions`."
 
-    download_error DownloadError
-        "An error occurs when downloading metadata for the file."
+    path LookupError
 
 struct ListRevisionsResult
     "Information returned by :route:`list_revisions`."
@@ -884,10 +813,11 @@ struct RestoreArg
 union RestoreError
     "Errors reported by :route:`restore`."
 
-    download_error DownloadError
+    path_lookup LookupError
         "An error occurs when downloading metadata for the file."
-    commit_failed CommitError
-        "The commit for the restore failed."
+    path_write WriteError
+        "An error occurs when trying to restore the file to that path."
+
     invalid_revision
         "The revision is invalid. It may point to a different file."
 
