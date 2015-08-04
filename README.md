@@ -1,5 +1,5 @@
-Dropbox API Specs
-=================
+Dropbox API Spec
+================
 
-The Babel specifications that describe the Dropbox v2 API.
+The Babel specification that describes the Dropbox v2 API.
 
