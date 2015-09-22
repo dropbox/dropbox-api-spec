@@ -67,8 +67,6 @@ struct CollectionLinkMetadata extends LinkMetadata
         visibility = public
 
 struct GetSharedLinksArg
-    "Arguments for :route:`get_shared_links`."
-
     path String?
         "See :route:`get_shared_links` description."
 
@@ -79,8 +77,6 @@ struct GetSharedLinksArg
         path = "/Homework/math"
 
 struct GetSharedLinksResult
-    "Result for :route:`get_shared_links`."
-
     links List(LinkMetadata)
         "Shared links applicable to the path argument."
 
@@ -113,8 +109,6 @@ union PendingUploadMode
 
 # TODO: Add optional expiration and visibility?
 struct CreateSharedLinkArg
-    "Arguments for :route:`create_shared_link`."
-
     path String
         "The path to share."
     short_url Boolean = false
@@ -249,8 +243,8 @@ struct SharedFolderMetadata
         basic BasicSharedFolderMetadata
         full FullSharedFolderMetadata
 
-    path_lower String
-        "The lower-cased full path of this shared folder."
+    path_lower String?
+        "The lower-cased full path of this shared folder. Absent for unmounted folders."
     name String
         "The name of the this shared folder."
     id SharedFolderId
@@ -312,8 +306,6 @@ union SharedFolderAccessError
 # Get shared folder route
 
 struct GetSharedFolderArgs
-    "Arguments for :route:`get_shared_folder`."
-
     id SharedFolderId
         "The ID for the shared folder."
     include_membership Boolean = true
@@ -329,16 +321,20 @@ route get_shared_folder(GetSharedFolderArgs, SharedFolderMetadata, SharedFolderA
 # List shared folders route
 
 struct ListSharedFoldersArgs
-    "Arguments for :route:`list_shared_folders`."
-
     include_membership Boolean = false
         "If include user and group membership information in the response."
+    show_unmounted Boolean = false
+        "Determines whether the returned list of shared folders will include folders
+         that the user has left (but may still rejoin)."
 
     example default
         include_membership = false
+        show_unmounted = true
 
 struct ListSharedFoldersResult
-    "Result for :route:`list_shared_folders`."
+    "Result for :route:`list_shared_folders`.
+
+    Unmounted shared folders can be identified by the absence of :field:`SharedFolderMetadata.path_lower`."
 
     entries List(SharedFolderMetadata)
         "List of all shared folders the authenticated user has access to."

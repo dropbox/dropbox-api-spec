@@ -11,8 +11,6 @@ route get_account (GetAccountArg, BasicAccount, GetAccountError)
     "Get information about a user's account."
 
 struct GetAccountArg
-    "Arguments for :route:`get_account`."
-
     account_id AccountId
         "A user's account identifier."
 
@@ -20,8 +18,6 @@ struct GetAccountArg
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
 
 union GetAccountError
-    "Error returned by :route:`get_account`."
-
     no_account
         "The specified :field:`GetAccountArg.account_id` does not exist."
     unknown*
@@ -106,7 +102,7 @@ struct FullAccount extends Account
         is_paired = true
         account_type = business
 
-    example unpaired "Unpaired account"
+    example unpaired "A personal account that is not paired with a team."
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
         email = "franz@gmail.com"
