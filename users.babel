@@ -1,5 +1,5 @@
 namespace users
-    "This namespace contains endpoints user management."
+    "This namespace contains endpoints and data types for user management."
 
 alias AccountId = String(min_length=40, max_length=40)
 
