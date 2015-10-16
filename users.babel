@@ -78,7 +78,7 @@ struct FullAccount extends Account
     country String(min_length=2, max_length=2)?
         "The user's two-letter country code, if available. Country codes are
         based on :link:`ISO 3166-1 http://en.wikipedia.org/wiki/ISO_3166-1`."
-    locale String(min_length=2, max_length=2)
+    locale String(min_length=2)
         "The language that the user specified. Locale tags will be
         :link:`IETF language tags http://en.wikipedia.org/wiki/IETF_language_tag`."
     referral_link String

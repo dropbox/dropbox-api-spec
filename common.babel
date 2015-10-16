@@ -4,3 +4,5 @@ alias DropboxTimestamp = Timestamp("%Y-%m-%dT%H:%M:%SZ")
 
 alias Date = Timestamp("%Y-%m-%d")
 
+# Note - "\\." is needed in order to translate to "\."
+alias EmailAddress = String(pattern="^[^@]+@[^@]+\\.[^@]+$")

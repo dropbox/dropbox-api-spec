@@ -136,6 +136,28 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
 
     This API is not supported for App Folder and filetypes apps."
 
+struct RevokeSharedLinkArg
+    url String
+        "URL of the shared link."
+
+    example default
+        url = "https://www.dropbox.com/4x4kjyl1udi33jt/AACqw4NCzgwpCHeKtVlv6o6Pa?dl=0"
+
+union RevokeSharedLinkError
+    shared_link_malformed
+        "Shared link is malformed."
+    shared_link_not_found
+        "Shared link not found."
+    shared_link_access_denied
+        "Shared link access denied."
+    other*
+        "An unspecified error."
+
+route revoke_shared_link(RevokeSharedLinkArg, Void, RevokeSharedLinkError)
+    "Revoke a shared link.
+
+    This API is only supported for full dropbox apps."
+
 #
 # Shared folders
 #
@@ -180,6 +202,10 @@ struct UserInfo
         "The account ID of the user."
     display_name String
         "The display name of the user."
+    email String
+        "Email address of the user."
+    email_verified Boolean
+        "Whether the user has verified their email address."
     same_team Boolean
         "If the user is in the same team as current user."
     member_id String?
@@ -189,6 +215,8 @@ struct UserInfo
     example default
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         display_name = "Test user"
+        email = "test@example.com"
+        email_verified = true
         same_team = true
         member_id = "dbmid:abcd1234"
 
