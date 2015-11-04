@@ -1,0 +1,695 @@
+# TODO(kelkabany/krieb): This spec is under development. Do not make public!
+
+namespace sharing
+    "Additionally, this namespace contains endpoints for creating and managing
+    shared folders."
+
+import async
+import common
+import files
+import team
+import users
+
+alias DropboxId = String(min_length=1)
+
+union AccessLevel
+    "Defines the access levels for collaborators."
+
+    owner
+        "The collaborator is the owner of the shared folder. Owners can
+        view and edit the shared folder as well as set the folder's
+        policies using :route:`update_folder_policy`."
+    editor
+        "The collaborator can both view and edit the shared folder."
+    viewer
+        "The collaborator can only view the shared folder."
+    other*
+
+struct FolderPolicy
+    "A set of policies governing membership and privileges for a shared
+    folder."
+
+    member_policy MemberPolicy?
+        "Who can be a member of this shared folder. Only set if the user is a
+        member of a team."
+    acl_update_policy AclUpdatePolicy
+        "Who can add and remove members from this shared folder."
+    shared_link_policy SharedLinkPolicy
+        "Who links can be shared with."
+
+    example default
+        member_policy = anyone
+        acl_update_policy = owner
+        shared_link_policy = anyone
+
+union MemberPolicy
+    "Policy governing who can be a member of a shared folder. Only applicable
+    to folders owned by a user on a team."
+
+    team
+        "Only a teammate can become a member."
+    anyone
+        "Anyone can become a member."
+    other*
+
+union AclUpdatePolicy
+    "Policy governing who can change a shared folder's access control list
+    (ACL). In other words, who can add, remove, or change the privileges of
+    members."
+
+    owner
+        "Only the owner can update the ACL."
+    editors
+        "Any editor can update the ACL. This may be further restricted to
+        editors on the same team."
+    other*
+
+union SharedLinkPolicy
+    "Policy governing who can view shared links."
+
+    anyone
+        "Links can be shared with anyone."
+    members
+        "Links can only be shared among members of the shared folder."
+    other*
+        "An unknown shared link policy."
+
+struct MembershipInfo
+    "The information about a member of the shared folder."
+
+    access_type AccessLevel
+        "The access type for this member."
+
+    example default
+        access_type = owner
+
+struct UserInfo
+    "Basic information about a user. Use :route:`users.get_account` and
+    :route:`users.get_account_batch`` to obtain more detailed information."
+
+    account_id users.AccountId
+        "The account ID of the user."
+    same_team Boolean
+        "If the user is in the same team as current user."
+    team_member_id String?
+        "The team member ID of the shared folder member. Only present if
+        :field:`same_team` is true."
+
+    example default
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+        same_team = true
+        team_member_id = "dbmid:abcd1234"
+
+struct UserMembershipInfo extends MembershipInfo
+    "The information about a user member of the shared folder."
+
+    user UserInfo
+        "The account information for the membership user."
+
+    example default
+        user = default
+        access_type = owner
+
+union InviteeInfo
+    "The information about a non-Dropbox user invited to join a shared folder."
+
+    email common.EmailAddress
+        "E-mail address of invited user."
+    other*
+
+    example default
+        email = "jessica@example.com"
+
+struct InviteeMembershipInfo extends MembershipInfo
+    "The information about a non-Dropbox member invited to join a shared folder."
+
+    invitee InviteeInfo
+        "The information for the invited user."
+
+    example default
+        invitee = default
+        access_type = viewer
+
+struct GroupInfo extends team.GroupSummary
+    "The information about a group. Groups is a way to manage a list of users
+     who need same access permission to the shared folder."
+
+    same_team Boolean
+        "If the group is owned by the current user's team."
+
+    example default
+        group_name = "Test group"
+        group_id = "g:e2db7665347abcd600000000001a2b3c"
+        member_count = 10
+        same_team = true
+
+struct GroupMembershipInfo extends MembershipInfo
+    "The information about a group member of the shared folder."
+
+    group GroupInfo
+        "The information about the membership group."
+
+    example default
+        group = default
+        access_type = editor
+
+struct SharedFolderMetadata
+    "The base type for shared folder metadata."
+
+    union
+        basic BasicSharedFolderMetadata
+        full FullSharedFolderMetadata
+
+    path_lower String?
+        "The lower-cased full path of this shared folder. Absent for unmounted folders."
+    name String
+        "The name of the this shared folder."
+    id SharedFolderId
+        "The ID of the shared folder."
+    access_type AccessLevel
+        "The current user's access level for this shared folder."
+    is_team_folder Boolean
+        "Whether this folder is a
+        :link:`team folder https://www.dropbox.com/en/help/986`."
+    policy FolderPolicy
+        "Policies governing this shared folder."
+
+    example default
+        basic = default
+
+struct BasicSharedFolderMetadata extends SharedFolderMetadata
+    "The metadata which includes basic information about the shared folder."
+
+    example default
+        path_lower = "/dir"
+        name = "dir"
+        id = "15432343"
+        access_type = owner
+        is_team_folder = false
+        policy = default
+
+struct FullSharedFolderMetadata extends SharedFolderMetadata
+    "The full metadata for the shared folder which includes user and group
+    membership."
+
+    # TODO(kelkabany/krieb#Tiburon): This needs to include users who have
+    # only been invited.
+    membership List(UserMembershipInfo)
+        "The list of user members of the shared folder."
+    groups List(GroupMembershipInfo)
+        "The list of group members of the shared folder."
+    invitees List(InviteeMembershipInfo)
+        "The list of non-Dropbox users invited to join the shared folder."
+
+    example default
+        path_lower = "/dir"
+        name = "dir"
+        id = "15432343"
+        access_type = owner
+        is_team_folder = false
+        policy = default
+
+union SharedFolderAccessError
+    "There is an error accessing the shared folder."
+
+    invalid_id
+        "This shared folder ID is invalid."
+    not_member
+        "The user is not a member of the shared folder
+        thus cannot access it."
+    no_permission
+        "The current user does not have sufficient privileges to perform the
+        desired action."
+    email_unverified
+        "The current account's e-mail address is unverified."
+    team_folder
+        "The current user cannot perform this action on a team shared folder."
+    unmounted
+        "The shared folder is unmounted."
+    other*
+
+# --
+
+route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAccessError)
+    "Returns shared folder metadata by its folder ID.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct GetMetadataArgs
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+    include_membership Boolean = true
+        "If :val:`true`, user and group membership included in the response."
+
+    example default
+        shared_folder_id = "15432343"
+        include_membership = true
+
+# --
+
+route list_folders(ListFoldersArgs, ListFoldersResult, Void)
+    "Return the list of all shared folders the current user has access to.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct ListFoldersArgs
+    include_membership Boolean = false
+        "If include user and group membership information in the response."
+
+    example default
+        include_membership = false
+
+struct ListFoldersResult
+    "Result for :route:`list_folders`.
+
+    Unmounted shared folders can be identified by the absence of
+    :field:`SharedFolderMetadata.path_lower`."
+
+    # TODO(kelkabany/krieb#Tiburon): This needs to include shared folders that
+    # the user is not a member of. To make this work, we're going to return an
+    # empty membership list if the user hasn't ever mounted the folder.
+    entries List(SharedFolderMetadata)
+        "List of all shared folders the authenticated user has access to."
+
+# --
+
+route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError)
+    "Share a folder with collaborators.
+
+    Most sharing will be completed synchronously. Large folders will be
+    completed asynchronously. To make testing the async case repeatable, set
+    `ShareFolderArg.force_async`.
+
+    If a :field:`ShareFolderLaunch.async_job_id` is returned, you'll need to
+    call :route:`check_share_job_status` until the action completes to get the
+    metadata for the folder.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct ShareFolderArg
+    path files.Path
+        "The path to the folder to share. If it does not exist, then a new one
+        is created."
+    member_policy MemberPolicy = anyone
+        "Who can be a member of this shared folder."
+    acl_update_policy AclUpdatePolicy = owner
+        "Who can add and remove members of this shared folder."
+    shared_link_policy SharedLinkPolicy = anyone
+        "The policy to apply to shared links created for content inside this
+        shared folder."
+    force_async Boolean = false
+        "Whether to force the share to happen asynchronously."
+
+union ShareFolderError
+    email_unverified
+        "The current account's e-mail address is unverified."
+    bad_path SharePathError
+        ":field:`ShareFolderArg.path` is invalid."
+    team_policy_disallows_member_policy
+        "Team policy is more restrictive than :field:`ShareFolderArg.member_policy`."
+    other*
+
+union SharePathError
+    is_file
+        "A file is at the specified path."
+    inside_shared_folder
+        "We do not support sharing a folder inside a shared folder."
+    contains_shared_folder
+        "We do not support shared folders that contain shared folders."
+    is_app_folder
+        "We do not support sharing an app folder."
+    inside_app_folder
+        "We do not support sharing a folder inside an app folder."
+    already_shared
+        "Folder is already shared."
+    invalid_path
+        "Path is not valid."
+    other*
+
+# --
+
+route update_folder_policy(UpdateFolderPolicyArg, BasicSharedFolderMetadata, UpdateFolderPolicyError)
+    "Update the sharing policies for a shared folder.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct UpdateFolderPolicyArg
+    "If any of the policy's are unset, then they retain their current setting."
+
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+    member_policy MemberPolicy?
+        "Who can be a member of this shared folder. Only set this if the
+        current user is on a team."
+    acl_update_policy AclUpdatePolicy?
+        "Who can add and remove members of this shared folder."
+    shared_link_policy SharedLinkPolicy?
+        "The policy to apply to shared links created for content inside this
+        shared folder."
+
+union UpdateFolderPolicyError
+    access_error SharedFolderAccessError
+    not_on_team
+        ":field:`UpdateFolderPolicyArg.member_policy` was set even though user
+        is not on a team."
+    other*
+
+# --
+
+route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderError)
+    "Allows a shared folder owner to unshare the folder.
+
+    You'll need to call :route:`check_job_status` to determine if the action has
+    completed successfully.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct UnshareFolderArg
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+    leave_a_copy Boolean
+        "If true, members of this shared folder will get a copy of this folder
+        after it's unshared. Otherwise, it will be removed from their Dropbox.
+        The current user, who is an owner, will always retain their copy."
+
+union UnshareFolderError
+    access_error SharedFolderAccessError
+    other*
+
+# --
+
+route transfer_folder(TransferFolderArg, Void, TransferFolderError)
+    "Transfer ownership of a shared folder to a member of the shared folder.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct TransferFolderArg
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+    to_dropbox_id DropboxId
+        "A account or team member ID to transfer ownership to."
+
+union TransferFolderError
+    access_error SharedFolderAccessError
+    invalid_dropbox_id
+    no_permission
+    new_owner_not_member
+        "The new designated owner is not currently a member of the shared folder."
+    new_owner_unmounted
+        "The new desginated owner does not have the shared folder mounted."
+    new_owner_email_unverified
+        "The new designated owner's e-mail address is unverified."
+    other*
+
+# --
+
+route unmount_folder(UnmountFolderArg, Void, UnmountFolderError)
+    "The current user unmounts the designated folder. They can re-mount the
+    folder at a later time using :route:`mount_folder`.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct UnmountFolderArg
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+
+union UnmountFolderError
+    access_error SharedFolderAccessError
+    other*
+
+# --
+
+route mount_folder(MountFolderArg, BasicSharedFolderMetadata, MountFolderError)
+    "The current user mounts the designated folder.
+
+    Mount a shared folder for a user after they have been added as a member.
+    Once mounted, the shared folder will appear in their Dropbox.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+# TODO(kelkabany): Consider exposing mount path as an argument. More error
+# cases will be possible.
+struct MountFolderArg
+    shared_folder_id SharedFolderId
+        "The ID of the shared folder to mount."
+
+union MountFolderError
+    access_error SharedFolderAccessError
+    inside_shared_folder
+        "Mounting would cause a shared folder to be inside another, which is
+        disallowed."
+    insufficient_quota
+        "The current user does not have enough space to mount the shared
+        folder."
+    already_mounted
+        "The shared folder is already mounted."
+    other*
+
+# --
+
+route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
+    "Allows an owner or editor (if the ACL update policy allows) of a shared
+    folder to add another member.
+
+    For the new member to get access to all the functionality for this folder,
+    you will need to call :route:`mount_folder` on their behalf.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct AddFolderMemberArg
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+    members List(AddMember)
+        "The intended list of members to add.  Added members will receive
+        invites to join the shared folder."
+    quiet Boolean = false
+        "Whether added members should be notified via email and device
+        notifications of their invite."
+    custom_message String(min_length=1)?
+        "Optional message to display to added members in their invitation."
+
+    example default
+        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        custom_message = "Documentation for launch day!"
+
+struct AddMember
+    "The member and type of access the member should have when added to a shared folder."
+
+    member MemberSelector
+        "The member to add to the shared folder."
+    access_level AccessLevel = viewer
+        "The access level to grant :field:`member` to the shared folder.  :field:`AccessLevel.owner`
+        is disallowed."
+
+    example default
+        member = default
+        access_level = editor
+
+    example account
+        member = account
+        access_level = viewer
+
+union MemberSelector
+    "Includes different ways to identify a member to add to a shared folder."
+
+    dropbox_id DropboxId
+        "Dropbox account, team member, or group ID of member to add."
+    email common.EmailAddress
+        "E-mail address of member to add."
+    other*
+
+    example default
+        email = "justin@example.com"
+
+    example account
+        dropbox_id = "dbid:AAEufNrMPSPe0dMQijRP0N_aZtBJRm26W4Q"
+
+    example group
+        dropbox_id = "g:98d36ed08e6290c2e9d536a392f974ee"
+
+union AddFolderMemberError
+    access_error SharedFolderAccessError
+        "Unable to access shared folder."
+    email_unverified
+        "The current account's e-mail address is unverified."
+    bad_member AddMemberSelectorError
+        ":field:`AddFolderMemberArg.members` contains a bad invitation recipient."
+    no_permission
+        "The current account does not have permission to perform this action."
+    cant_share_outside_team
+        "Your team policy does not allow sharing outside of the team."
+    too_many_members UInt64
+        "The value is the member limit that was reached."
+    too_many_pending_invites UInt64
+        "The value is the pending invite limit that was reached."
+    insufficient_plan
+        "The current user's account doesn't support this action. An example of
+        this is when adding a read-only member. This action can only be
+        performed by users that have upgraded to a Pro or Business plan."
+    other*
+
+    example default
+        no_permission = null
+
+    example member
+        bad_member = default
+
+union AddMemberSelectorError
+    invalid_dropbox_id DropboxId
+        "The value is the ID that could not be identified."
+    invalid_email common.EmailAddress
+        "The value is the e-email address that is malformed."
+    unverified_dropbox_id DropboxId
+        "The value is the ID of the Dropbox user with an unverified e-mail
+        address.  Invite unverified users by e-mail address instead of by their
+        Dropbox ID."
+    group_deleted
+        "At least one of the specified groups in :field:`AddFolderMemberArg.members`
+        is deleted."
+    group_not_on_team
+        "Sharing to a group that is not on the current account's team."
+    other*
+
+    example default
+        invalid_dropbox_id = "dbid:AAEufNrMPSPe0dMQijRP0N_aZtBJRm26W4Q"
+
+# --
+
+union ShareFolderJobStatus extends async.PollResultBase
+    complete FullSharedFolderMetadata
+        "The share job has finished. The value is the metadata for the folder."
+    failed ShareFolderError
+
+union ShareFolderLaunch extends async.LaunchResultBase
+    complete FullSharedFolderMetadata
+
+route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for sharing a folder.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+# --
+
+union JobStatus extends async.PollResultBase
+    complete
+        "The asynchronous job has finished."
+    failed JobError
+        "The asynchronous job returned an error."
+
+union SharedFolderMemberError
+    invalid_dropbox_id
+        "The target dropbox_id is invalid."
+    not_a_member
+        "The target dropbox_id is not a member of the shared folder."
+    other*
+
+union JobError
+    access_error SharedFolderAccessError
+    member_error SharedFolderMemberError
+    other*
+
+route check_job_status(async.PollArg, JobStatus, async.PollError)
+    "Returns the status of an asynchronous job.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+# --
+
+route remove_folder_member(RemoveFolderMemberArg, async.LaunchEmptyResult, RemoveFolderMemberError)
+    "Allows an owner or editor (if the ACL update policy allows) of a shared
+    folder to remove another member.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct RemoveFolderMemberArg
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+    member MemberSelector
+        "The member to remove from the folder. Only the
+        :field:`MemberSelector.dropbox_id` may be set at this time."
+    leave_a_copy Boolean
+        "If true, the removed user will keep their copy of the folder after
+        it's unshared, assuming it was mounted. Otherwise, it will be removed
+        from their Dropbox. Also, this must be set to false when kicking a
+        group."
+
+union RemoveFolderMemberError
+    access_error SharedFolderAccessError
+    invalid_dropbox_id
+        "The target :field:`MemberSelector.dropbox_id` is invalid."
+    not_a_member
+        "The target :field:`MemberSelector.dropbox_id` is not a member of
+        the shared folder."
+    other*
+
+# --
+
+route update_folder_member(UpdateFolderMemberArg, Void, UpdateFolderMemberError)
+    "Allows an owner or editor of a shared folder to update another member's
+    permissions.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct UpdateFolderMemberArg
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+    member MemberSelector
+        "The member of the shared folder to update.  Only the
+        :field:`MemberSelector.dropbox_id` may be set at this time."
+    access_level AccessLevel
+        "The new access level for :field:`member`. :field:`AccessLevel.owner`
+        is disallowed."
+
+union UpdateFolderMemberError
+    access_error SharedFolderAccessError
+    invalid_dropbox_id
+        "The target :field:`MemberSelector.dropbox_id` is invalid."
+    not_a_member
+        "The target :field:`UpdateFolderMemberArg.member` is not a member of
+        the shared folder."
+    insufficient_plan
+        "The current user's account doesn't support this action. An example of
+        this is when downgrading a member from editor to viewer. This action
+        can only be performed by users that have upgraded to a Pro or Business
+        plan."
+    other*
+
+# --
+
+route relinquish_folder_membership(RelinquishFolderMembershipArg, Void, RelinquishFolderMembershipError)
+    "The current user relinquishes their membership in the designated shared
+    folder and will no longer have access to the folder.  A folder owner cannot
+    relinquish membership in their own folder.
+
+    Warning: This endpoint is in beta and is subject to minor but possibly
+    backwards-incompatible changes."
+
+struct RelinquishFolderMembershipArg
+    shared_folder_id SharedFolderId
+        "The ID for the shared folder."
+
+union RelinquishFolderMembershipError
+    access_error SharedFolderAccessError
+    folder_owner
+        "The current user is the owner of the shared folder. Owners cannot relinquish membership to
+        their own folders. Try unsharing or transfering ownership first."
+    mounted
+        "The shared folder is currently mounted.  Unmount the shared folder before relinquishing
+        membership."
+    group_access
+        "The current user has access to the shared folder via a group.  You can't relinquish
+        membership to folders shared via groups."
+    other*

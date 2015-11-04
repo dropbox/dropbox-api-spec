@@ -163,6 +163,9 @@ struct GetMetadataArg
     example id
         path = "id:a4ayc_80_OEAAAAAAAAAYa"
 
+    example rev
+        path = "rev:a1c10ce0dd78"
+
 route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
     "Returns the metadata for a file or folder."
 
@@ -280,17 +283,19 @@ union DownloadError
         "An unspecified error."
 
 struct DownloadArg
-    path Path
+    path ReadPath
         "The path of the file to download."
     rev Rev?
-        "Optional revision, taken from the corresponding :type:`Metadata` field."
+        "Deprecated. Please specify revision in :field:'path' instead"
 
     example default
         path = "/Homework/math/Prime_Numbers.txt"
 
-    example with_rev
-        path = "/Homework/math/Prime_Numbers.txt"
-        rev = "a1c10ce0dd78"
+    example id
+        path = "id:a4ayc_80_OEAAAAAAAAAYa"
+
+    example rev
+        path = "rev:a1c10ce0dd78"
 
 route download (DownloadArg, FileMetadata, DownloadError)
     "Download a file from a user's Dropbox."
@@ -632,6 +637,10 @@ route delete (DeleteArg, Metadata, DeleteError)
 
     If the path is a folder, all its contents will be deleted too."
 
+route permanently_delete (DeleteArg, Void, DeleteError)
+    "Permanently delete the file or folder at a given path
+    (see https://www.dropbox.com/en/help/40)."
+
 #
 # Args and error shared by copy and move
 #
@@ -700,7 +709,7 @@ union ThumbnailFormat
     png
 
 struct ThumbnailArg
-    path Path
+    path ReadPath
         "The path to the image file you want to thumbnail."
     format ThumbnailFormat = jpeg
         "The format for the thumbnail image, jpeg (default) or png. For
@@ -711,6 +720,14 @@ struct ThumbnailArg
 
     example default
         path = "/image.jpg"
+        format = jpeg
+
+    example id
+        path = "id:a4ayc_80_OEAAAAAAAAAYa"
+        format = jpeg
+
+    example rev
+        path = "rev:a1c10ce0dd78"
         format = jpeg
 
 union ThumbnailError
@@ -739,17 +756,19 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
 #
 
 struct PreviewArg
-    path Path
+    path ReadPath
         "The path of the file to preview."
     rev Rev?
-        "Optional revision, taken from the corresponding :type:`Metadata` field."
+        "Deprecated. Please specify revision in :field:'path' instead"
 
     example default
         path = "/word.docx"
 
-    example with_rev
-        path = "/word.docx"
-        rev = "a1c10ce0dd78"
+    example id
+        path = "id:a4ayc_80_OEAAAAAAAAAYa"
+
+    example rev
+        path = "rev:a1c10ce0dd78"
 
 union PreviewError
     path LookupError

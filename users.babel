@@ -193,3 +193,26 @@ struct TeamSpaceAllocation
     example default
         used = 27182818284
         allocated = 100000000000
+
+#
+# Route: get_account_batch
+#
+
+route get_account_batch (GetAccountBatchArg, GetAccountBatchResult, GetAccountBatchError)
+    "Get information about multiple user accounts.  At most 300 accounts may be queried
+    per request."
+
+struct GetAccountBatchArg
+    account_ids List(AccountId, min_items=1)
+        "List of user account identifiers.  Should not contain any duplicate account IDs."
+
+alias GetAccountBatchResult = List(BasicAccount)
+
+union GetAccountBatchError
+    no_account AccountId
+        "The value is an account ID specified in :field:`GetAccountBatchArg.account_ids`
+        that does not exist."
+    other*
+
+    example default
+        no_account = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
