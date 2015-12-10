@@ -38,6 +38,12 @@ union LaunchEmptyResult extends LaunchResultBase
     complete
         "The job finished synchronously and successfully."
 
+    example complete
+        complete = null
+
+    example async_job_id
+        async_job_id = "34g93hh34h04y384084"
+
 #
 # Poll
 #
@@ -48,6 +54,9 @@ struct PollArg
     async_job_id AsyncJobId
         "Id of the asynchronous job.
         This is the value of a response returned from the method that launched the job."
+
+    example default
+        async_job_id = "34g93hh34h04y384084"
 
 # TODO(kelkabany): Remove `error_msg` since others might want to return it
 # differently.
@@ -68,6 +77,12 @@ union PollEmptyResult extends PollResultBase
 
     complete
         "The asynchronous job has completed successfully."
+
+    example complete
+        complete = null
+
+    example in_progress
+        in_progress = null
 
 
 union PollError

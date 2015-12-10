@@ -2,6 +2,7 @@ namespace files
     "This namespace contains endpoints and data types for basic file operations."
 
 import common
+import sharing
 
 alias Id = String(min_length=1)
 alias Path = String(pattern="/.*")
@@ -29,6 +30,8 @@ struct Metadata
     path_lower String
         "The lowercased full path in the user's Dropbox.
         This always starts with a slash."
+    parent_shared_folder_id sharing.SharedFolderId?
+        "Set if this file or folder is contained in a shared folder."
 
     example default
         file = default
@@ -125,6 +128,7 @@ struct FileMetadata extends Metadata
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
         name = "Prime_Numbers.txt"
         path_lower = "/homework/math/prime_numbers.txt"
+        parent_shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
         client_modified = "2015-05-12T15:50:38Z"
         server_modified = "2015-05-12T15:50:38Z"
         rev = "a1c10ce0dd78"
@@ -133,11 +137,14 @@ struct FileMetadata extends Metadata
 struct FolderMetadata extends Metadata
     id Id?
         "A unique identifier for the folder."
+    shared_folder_id sharing.SharedFolderId?
+        "If this folder is a shared folder mount point, the ID of the shared folder mounted at this location."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXz"
         path_lower = "/homework/math"
         name = "math"
+        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
 
 struct DeletedMetadata extends Metadata
     "Indicates that there used to be a file or folder at this path, but it no longer exists."
@@ -183,6 +190,9 @@ struct ListFolderLongpollArg
         parameter, as some network infrastructure does not support long
         timeouts."
 
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
 struct ListFolderLongpollResult
     changes Boolean
         "Indicates whether new changes are available. If true, call
@@ -190,6 +200,9 @@ struct ListFolderLongpollResult
     backoff UInt64?
         "If present, backoff for at least this many seconds before calling
         :route:`list_folder/longpoll` again."
+
+    example default
+        changes = true
 
 union ListFolderLongpollError
     reset
@@ -201,9 +214,12 @@ route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, Lis
     "A longpoll endpoint to wait for changes on an account. In conjunction with
     :route:`list_folder`, this call gives you a low-latency way to monitor an
     account for file changes. The connection will block until there are changes
-    available or a timeout occurs."
+    available or a timeout occurs. This endpoint is useful mostly for client-side
+    apps. If you're looking for server-side notifications, check out our
+    :link:`webhooks documentation https://www.dropbox.com/developers/reference/webhooks`."
     attrs
         host="notify"
+        auth="noauth"
 
 struct ListFolderArg
     path PathR
@@ -213,6 +229,8 @@ struct ListFolderArg
         and the response will contain contents of all subfolders."
     include_media_info Boolean = false
         "If true, :field:'FileMetadata.media_info' is set for photo and video."
+    include_deleted Boolean = false
+        "If true, the results will include entries for files and folders that used to exist but were deleted."
 
     example default
         path = "/Homework/math"
@@ -229,6 +247,7 @@ struct ListFolderResult
         cursor to :route:`list_folder/continue` to retrieve the rest."
 
     example default
+        entries = [default, folder_metadata]
         cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
         has_more = false
 
@@ -363,7 +382,9 @@ route upload_session/start (Void, UploadSessionStartResult, Void)
     "Upload sessions allow you to upload a single file using multiple requests.
     This call starts a new upload session with the given data.  You can
     then use :route:`upload_session/append` to add more data and
-    :route:`upload_session/finish` to save all the data to a file in Dropbox."
+    :route:`upload_session/finish` to save all the data to a file in Dropbox.
+
+    A single request should not upload more than 150 MB of file contents."
 
     attrs
         host="content"
@@ -382,7 +403,9 @@ struct UploadSessionCursor
         offset = 0
 
 route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError)
-    "Append more data to an upload session."
+    "Append more data to an upload session.
+
+    A single request should not upload more than 150 MB of file contents."
 
     attrs
         host="content"
@@ -448,6 +471,11 @@ struct CommitInfo
         path = "/Homework/math/Matrices.txt"
         autorename = true
 
+    example update
+        path = "/Homework/math/Matrices.txt"
+        mode = with_revision
+        autorename = false
+
 struct UploadSessionFinishArg
     cursor UploadSessionCursor
         "Contains the upload session ID and the offset."
@@ -458,16 +486,25 @@ struct UploadSessionFinishArg
         cursor = default
         commit = default
 
+    example update
+        cursor = default
+        commit = update
+
 route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSessionFinishError)
     "Finish an upload session and save the uploaded data to the given file
-    path."
+    path.
+
+    A single request should not upload more than 150 MB of file contents."
 
     attrs
         host="content"
         style="upload"
 
 route upload (CommitInfo, FileMetadata, UploadError)
-    "Create a new file with the contents provided in the request."
+    "Create a new file with the contents provided in the request.
+
+    Do not use this to upload a file larger than 150 MB. Instead, create an
+    upload session with :route:`upload_session/start`."
 
     attrs
         host="content"
@@ -508,7 +545,9 @@ struct SearchArg
     max_results UInt64(min_value=1, max_value=1000) = 100
         "The maximum number of search results to return."
     mode SearchMode = filename
-        "The search mode (filename, filename_and_content, or deleted_filename)."
+        "The search mode (filename, filename_and_content, or deleted_filename).
+        Note that searching file content is only available for Dropbox Business
+        accounts."
 
     example default
         path = ""
@@ -548,6 +587,7 @@ struct SearchResult
         :route:`search` to fetch the next page of results."
 
     example default
+        matches = [default]
         more = false
         start = 1
 
@@ -639,7 +679,9 @@ route delete (DeleteArg, Metadata, DeleteError)
 
 route permanently_delete (DeleteArg, Void, DeleteError)
     "Permanently delete the file or folder at a given path
-    (see https://www.dropbox.com/en/help/40)."
+    (see https://www.dropbox.com/en/help/40).
+
+    Note: This endpoint is only available for Dropbox Business apps."
 
 #
 # Args and error shared by copy and move

@@ -5,7 +5,7 @@ import common
 import files
 import users
 
-alias SharedFolderId = String(pattern="[-_0-9a-zA-Z]+")
+alias SharedFolderId = String(pattern="[-_0-9a-zA-Z:]+")
 
 union Visibility
     "Who can access a shared link.
@@ -16,13 +16,13 @@ union Visibility
     public
         "Anyone who has received the link can access it. No login required."
     team_only
-        "Only members of the same DfB (Dropbox for Business) team can
+        "Only members of the same team can
         access the link. Login is required."
     password
         "A link-specific password is required to access the
         link. Login is not required."
     team_and_password
-        "Only members of the same DfB (Dropbox for Business) team who
+        "Only members of the same team who
         have the link-specific password can access the link."
     shared_folder_only
         "Only members of the shared folder containing the linked file
@@ -94,9 +94,7 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
     that allow access to the given path.  Collection links are never
     returned in this case.
 
-    Note that the url field in the response is never the shortened URL.
-
-    This API is not supported for App Folder and filetypes apps."
+    Note that the url field in the response is never the shortened URL."
 
 union PendingUploadMode
     "Flag to indicate pending upload default (for linking to not-yet-existing paths)."
@@ -113,10 +111,9 @@ struct CreateSharedLinkArg
     short_url Boolean = false
         "Whether to return a shortened URL."
     pending_upload PendingUploadMode?
-        # TODO: Use :val: once it supports union field names.
-        "If it's okay to share a path that does not yet exist, set
-        this to either 'file' or 'folder' to indicate whether to
-        assume it's a file or folder."
+        "If it's okay to share a path that does not yet exist, set this to
+        either :field:`PendingUploadMode.file` or :field:`PendingUploadMode.folder`
+        to indicate whether to assume it's a file or folder."
 
     example default
         path = "/Homework/math/prime_numbers.txt"
@@ -130,11 +127,14 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
 
     If a shared link already exists for the given path, that link is returned.
 
-    Note that in the returned :type:`PathLinkMetadata`, the url field
-    is the shortened URL if the short_url argument is set to
-    :val:`true`.
+    Note that in the returned :type:`PathLinkMetadata`, the
+    :field:`PathLinkMetadata.url` field is the shortened URL if
+    :field:`CreateSharedLinkArg.short_url` argument is set to :val:`true`.
 
-    This API is not supported for App Folder and filetypes apps."
+    Previously, it was technically possible to break a shared link by moving or
+    renaming the corresponding file or folder. In the future, this will no
+    longer be the case, so your app shouldn't rely on this behavior. Instead, if
+    your app needs to revoke a shared link, use :route:`revoke_shared_link`."
 
 struct RevokeSharedLinkArg
     url String

@@ -30,7 +30,7 @@ union AccountType
     pro
         "The Dropbox Pro account type."
     business
-        "The Dropbox for Business account type."
+        "The Dropbox Business account type."
 
     example default
         basic = null
