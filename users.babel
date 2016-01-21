@@ -74,7 +74,11 @@ struct FullAccount extends Account
     "Detailed information about the current user's account."
 
     email String
-        "The user's e-mail address."
+        "The user's e-mail address. Do not rely on this without checking the
+        :field:`email_verified` field. Even then, it's possible that the user
+        has since lost access to their e-mail."
+    email_verified Boolean
+        "Whether the user has verified their e-mail address."
     country String(min_length=2, max_length=2)?
         "The user's two-letter country code, if available. Country codes are
         based on :link:`ISO 3166-1 http://en.wikipedia.org/wiki/ISO_3166-1`."
@@ -96,6 +100,7 @@ struct FullAccount extends Account
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
         email = "franz@dropbox.com"
+        email_verified = true
         country = "US"
         locale = "en"
         referral_link = "https://db.tt/ZITNuhtI"
@@ -106,6 +111,7 @@ struct FullAccount extends Account
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
         email = "franz@gmail.com"
+        email_verified = false
         country = "US"
         locale = "en"
         referral_link = "https://db.tt/ZITNuhtI"

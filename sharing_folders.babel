@@ -1,8 +1,6 @@
 # TODO(kelkabany/krieb): This spec is under development. Do not make public!
 
 namespace sharing
-    "Additionally, this namespace contains endpoints for creating and managing
-    shared folders."
 
 import async
 import common
@@ -202,6 +200,8 @@ union SharedFolderAccessError
 route list_folders(Void, ListFoldersResult, Void)
     "Return the list of all shared folders the current user has access to.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
 
@@ -227,6 +227,8 @@ route list_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFolde
     "Once a cursor has been retrieved from :route:`list_folders`, use this to paginate through all
     shared folders.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly backwards-incompatible
     changes."
 
@@ -248,6 +250,8 @@ union ListFoldersContinueError
 route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAccessError)
     "Returns shared folder metadata by its folder ID.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
 
@@ -262,6 +266,8 @@ struct GetMetadataArgs
 
 route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFolderAccessError)
     "Returns shared folder membership by its folder ID.
+
+    Apps must have full Dropbox access to use this endpoint.
 
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
@@ -299,6 +305,8 @@ route list_folder_members/continue(ListFolderMembersContinueArg, SharedFolderMem
     "Once a cursor has been retrieved from :route:`list_folder_members`, use this to paginate
     through all shared folder members.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly backwards-incompatible
     changes."
 
@@ -328,6 +336,8 @@ route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError)
     If a :field:`ShareFolderLaunch.async_job_id` is returned, you'll need to
     call :route:`check_share_job_status` until the action completes to get the
     metadata for the folder.
+
+    Apps must have full Dropbox access to use this endpoint.
 
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
@@ -359,6 +369,11 @@ union ShareFolderError
         ":field:`ShareFolderArg.path` is invalid."
     team_policy_disallows_member_policy
         "Team policy is more restrictive than :field:`ShareFolderArg.member_policy`."
+    disallowed_shared_link_policy
+        "The current account is not allowed to select the specified
+        :field:`ShareFolderArg.shared_link_policy`."
+    no_permission
+        "The current account does not have permission to perform this action."
     other*
 
 union SharePathError
@@ -397,6 +412,8 @@ union ShareFolderLaunch extends async.LaunchResultBase
 route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollError)
     "Returns the status of an asynchronous job for sharing a folder.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
 
@@ -423,6 +440,8 @@ union JobError
 route check_job_status(async.PollArg, JobStatus, async.PollError)
     "Returns the status of an asynchronous job.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
 
@@ -433,6 +452,8 @@ route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderErr
 
     You'll need to call :route:`check_job_status` to determine if the action has
     completed successfully.
+
+    Apps must have full Dropbox access to use this endpoint.
 
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
@@ -457,6 +478,8 @@ union UnshareFolderError
 
 route transfer_folder(TransferFolderArg, Void, TransferFolderError)
     "Transfer ownership of a shared folder to a member of the shared folder.
+
+    Apps must have full Dropbox access to use this endpoint.
 
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
@@ -490,6 +513,8 @@ union TransferFolderError
 route update_folder_policy(UpdateFolderPolicyArg, SharedFolderMetadata, UpdateFolderPolicyError)
     "Update the sharing policies for a shared folder.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
 
@@ -518,6 +543,11 @@ union UpdateFolderPolicyError
     not_on_team
         ":field:`UpdateFolderPolicyArg.member_policy` was set even though user
         is not on a team."
+    team_policy_disallows_member_policy
+        "Team policy is more restrictive than :field:`ShareFolderArg.member_policy`."
+    disallowed_shared_link_policy
+        "The current account is not allowed to select the specified
+        :field:`ShareFolderArg.shared_link_policy`."
     other*
 
 # --
@@ -528,6 +558,8 @@ route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
 
     For the new member to get access to all the functionality for this folder,
     you will need to call :route:`mount_folder` on their behalf.
+
+    Apps must have full Dropbox access to use this endpoint.
 
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
@@ -638,6 +670,8 @@ route remove_folder_member(RemoveFolderMemberArg, async.LaunchEmptyResult, Remov
     "Allows an owner or editor (if the ACL update policy allows) of a shared
     folder to remove another member.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
 
@@ -659,6 +693,12 @@ struct RemoveFolderMemberArg
 
 union RemoveFolderMemberError
     access_error SharedFolderAccessError
+    member_error SharedFolderMemberError
+    folder_owner
+        "The target user is the owner of the shared folder. You can't remove
+        this user until ownership has been transferred to another member."
+    group_access
+        "The target user has access to the shared folder via a group."
     other*
 
 # --
@@ -666,6 +706,8 @@ union RemoveFolderMemberError
 route update_folder_member(UpdateFolderMemberArg, Void, UpdateFolderMemberError)
     "Allows an owner or editor of a shared folder to update another member's
     permissions.
+
+    Apps must have full Dropbox access to use this endpoint.
 
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
@@ -703,6 +745,8 @@ route mount_folder(MountFolderArg, SharedFolderMetadata, MountFolderError)
     Mount a shared folder for a user after they have been added as a member.
     Once mounted, the shared folder will appear in their Dropbox.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
 
@@ -733,6 +777,8 @@ route unmount_folder(UnmountFolderArg, Void, UnmountFolderError)
     "The current user unmounts the designated folder. They can re-mount the
     folder at a later time using :route:`mount_folder`.
 
+    Apps must have full Dropbox access to use this endpoint.
+
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
 
@@ -753,6 +799,8 @@ route relinquish_folder_membership(RelinquishFolderMembershipArg, Void, Relinqui
     "The current user relinquishes their membership in the designated shared
     folder and will no longer have access to the folder.  A folder owner cannot
     relinquish membership in their own folder.
+
+    Apps must have full Dropbox access to use this endpoint.
 
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."

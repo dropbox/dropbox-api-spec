@@ -3,13 +3,14 @@ namespace files
 
 import common
 import sharing
+import users
 
 alias Id = String(min_length=1)
 alias Path = String(pattern="/.*")
 alias PathOrId = String(pattern="(/|id:).*")
 alias PathR = String(pattern="(/.*)?")               # A path that can be the root path ("").
 alias Rev = String(min_length=9, pattern="[0-9a-f]+") # TODO: Change pattern to "rev:[0-9a-f]{9,}"
-
+alias ListFolderCursor = String(min_length=1)
 alias ReadPath = String(pattern="((/|id:).*)|(rev:[0-9a-f]{9,})")
 
 #
@@ -31,13 +32,57 @@ struct Metadata
         "The lowercased full path in the user's Dropbox.
         This always starts with a slash."
     parent_shared_folder_id sharing.SharedFolderId?
-        "Set if this file or folder is contained in a shared folder."
+        "Deprecated. Please use :field:'FileSharingInfo.parent_shared_folder_id'
+        or :field:'FolderSharingInfo.parent_shared_folder_id' instead."
 
     example default
         file = default
 
     example folder_metadata
         folder = default
+
+struct SharingInfo
+    "Sharing info for a file or folder."
+
+    read_only Boolean
+        "True if the file or folder is inside a read-only shared folder."
+
+    example default
+        read_only = false
+
+struct FileSharingInfo extends SharingInfo
+    "Sharing info for a file which is contained by a shared folder."
+
+    parent_shared_folder_id sharing.SharedFolderId
+        "ID of shared folder that holds this file."
+
+    modified_by users.AccountId?
+        "The last user who modified the file. This field will be null if
+        the user's account has been deleted."
+
+    example default
+        read_only = true
+        parent_shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        modified_by = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+
+struct FolderSharingInfo extends SharingInfo
+    "Sharing info for a folder which is contained in a shared folder or is a
+    shared folder mount point."
+
+    parent_shared_folder_id sharing.SharedFolderId?
+        "Set if the folder is contained by a shared folder."
+
+    shared_folder_id sharing.SharedFolderId?
+        "If this folder is a shared folder mount point, the ID of the shared
+        folder mounted at this location."
+
+    example default "Folder inside a shared folder."
+        read_only = false
+        parent_shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+
+    example shared_folder "Read-only shared folder mount point."
+        read_only = true
+        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
 
 struct Dimensions
     "Dimensions for a photo or video."
@@ -123,12 +168,14 @@ struct FileMetadata extends Metadata
         "The file size in bytes."
     media_info MediaInfo?
         "Additional information if the file is a photo or video."
+    sharing_info FileSharingInfo?
+        "Set if this file is contained in a shared folder."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
         name = "Prime_Numbers.txt"
         path_lower = "/homework/math/prime_numbers.txt"
-        parent_shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        sharing_info = default
         client_modified = "2015-05-12T15:50:38Z"
         server_modified = "2015-05-12T15:50:38Z"
         rev = "a1c10ce0dd78"
@@ -138,13 +185,15 @@ struct FolderMetadata extends Metadata
     id Id?
         "A unique identifier for the folder."
     shared_folder_id sharing.SharedFolderId?
-        "If this folder is a shared folder mount point, the ID of the shared folder mounted at this location."
+        "Deprecated. Please use :field:'sharing_info' instead."
+    sharing_info FolderSharingInfo?
+        "Set if the folder is contained in a shared folder or is a shared folder mount point."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXz"
         path_lower = "/homework/math"
         name = "math"
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        sharing_info = default
 
 struct DeletedMetadata extends Metadata
     "Indicates that there used to be a file or folder at this path, but it no longer exists."
@@ -181,7 +230,7 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
 #
 
 struct ListFolderLongpollArg
-    cursor String
+    cursor ListFolderCursor
         "A cursor as returned by :route:`list_folder` or :route:`list_folder/continue`"
     timeout UInt64(min_value=30, max_value=480) = 30
         "A timeout in seconds. The request will block for at most this length
@@ -239,7 +288,7 @@ struct ListFolderArg
 struct ListFolderResult
     entries List(Metadata)
         "The files and (direct) subfolders in the folder."
-    cursor String
+    cursor ListFolderCursor
         "Pass the cursor into :route:`list_folder/continue` to see what's
         changed in the folder since your previous query."
     has_more Boolean
@@ -260,7 +309,7 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
     "Returns the contents of a folder."
 
 struct ListFolderContinueArg
-    cursor String
+    cursor ListFolderCursor
         "The cursor returned by your last call to :route:`list_folder` or
         :route:`list_folder/continue`."
 
@@ -279,7 +328,7 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
     paginate through all files and retrieve updates to the folder."
 
 struct ListFolderGetLatestCursorResult
-    cursor String
+    cursor ListFolderCursor
         "Pass the cursor into :route:`list_folder/continue` to see what's
         changed in the folder since your previous query."
 
@@ -627,7 +676,7 @@ union WriteError
     insufficient_space
         "The user doesn't have enough available space (bytes) to write more data."
     disallowed_name
-        "Dropbox will not save the file or folder because it of its name."
+        "Dropbox will not save the file or folder because of its name."
     other*
 
 union WriteConflictError
@@ -707,6 +756,8 @@ union RelocationError
         "Shared folders can't be copied."
     cant_nest_shared_folder
         "Your move operation would result in nested shared folders.  This is not allowed."
+    cant_move_folder_into_itself
+        "You cannot move a folder into itself."
     too_many_files
         "The operation would involve more than 10,000 files and folders."
     other*
