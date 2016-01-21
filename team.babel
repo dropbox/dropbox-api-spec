@@ -1,0 +1,176 @@
+namespace team
+
+import users
+
+#
+# Common types
+#
+
+alias TeamMemberId = String
+alias memberExternalId = String(max_length=64)
+
+# Note that in the database, we also have members that are in state "deleted"
+# meaning that the User has been permanently removed from the team.
+# But the API is not going to expose such users externally.  We will omit such users
+# in API responses.
+#
+union TeamMemberStatus
+    "The user's status as a member of a specific team."
+
+    active
+        "User has successfully joined the team."
+    invited
+        "User has been invited to a team, but has not joined the team yet."
+    suspended
+        "User is no longer a member of the team, but the account can be un-suspended,
+        re-establishing the user as a team member."
+
+
+struct MemberProfile
+    "Basic member profile."
+
+    team_member_id TeamMemberId
+        "ID of user as a member of a team."
+    external_id String?
+        "External ID that a team can attach to the user.
+        An application using the API may find it easier to use their
+        own IDs instead of Dropbox IDs like account_id or team_member_id."
+    email String
+        "Email address of user."
+    email_verified Boolean
+        "Is true if the user's email is verified to be owned by the user."
+    status TeamMemberStatus
+        "The user's status as a member of a specific team."
+    name users.Name
+        "Representations for a person's name."
+
+    example default
+        team_member_id = "dbmid:1234567"
+        email = "mary@lamb.com"
+        email_verified = true
+        status = active
+        name = default
+
+union UserSelectorArg
+    "Argument for selecting a single user, either by team_member_id, external_id or email."
+
+    team_member_id TeamMemberId
+    external_id String
+    email String
+
+    example default
+        team_member_id = "dbmid:efgh5678"
+
+    example email
+        email = "dan@hotmail.com"
+
+
+union UserSelectorError
+    "Error that can be returned whenever a struct derived from :type:`UserSelectorArg` is used."
+
+    user_not_found
+        "No matching user found. The provided team_member_id, email, or external_id does not exist on this team."
+
+
+union UsersSelectorArg
+    "Argument for selecting a list of users, either by team_member_ids, external_ids or emails."
+
+    team_member_ids List(TeamMemberId)
+        "List of member IDs."
+    external_ids List(String)
+        "List of external user IDs."
+    emails List(String)
+        "List of email addresses."
+
+
+
+#
+# Handle DfB routes that do not have a better place to be.
+#
+
+#
+# Route get_info
+#
+
+union EmmState
+    disabled
+        "Emm token is disabled"
+    optional
+        "Emm token is optional"
+    required
+        "Emm token is required"
+    other*
+        ""
+
+struct TeamGetInfoResult
+
+    name String
+        "The name of the team."
+    team_id String
+        "The ID of the team."
+    num_licensed_users UInt32
+        "The number of licenses available to the team."
+    num_provisioned_users UInt32
+        "The number of accounts that have been invited or are already active members of the team."
+    policies TeamPolicies
+
+    example default
+        name="Dropbox Inc."
+        team_id="dbtid:1234abcd"
+        num_licensed_users=5
+        num_provisioned_users=2
+        policies=default
+
+struct TeamPolicies
+    "Policies governing team members."
+
+    sharing TeamSharingPolicies
+        "Policies governing sharing."
+    emm_state EmmState
+        "This describes the Enterprise Mobility Management (EMM) state for this team.
+        This information can be used to understand if an organization is integrating with
+        a third-party EMM vendor to further manage and apply restrictions upon the team's
+        Dropbox usage on mobile devices.
+        This is a new feature and in the future we'll be adding more new fields and additional
+        documentation."
+
+    example default
+        sharing = default
+        emm_state = disabled
+
+struct TeamSharingPolicies
+    "Policies governing sharing within and outside of the team."
+
+    shared_folder_member_policy SharedFolderMemberPolicy
+        "Who can join folders shared by team members."
+    shared_folder_join_policy SharedFolderJoinPolicy
+        "Which shared folders team members can join."
+
+    example default
+        shared_folder_member_policy = team
+        shared_folder_join_policy = from_anyone
+
+# NOTE: we do not reuse sharing.MemberPolicy here since we may want to enable folder-specific member
+# policies that work on top of the broader team policies.
+union SharedFolderMemberPolicy
+    "Policy governing who can be a member of a folder shared by a team member."
+
+    team
+        "Only a teammate can be a member of a folder shared by a team member."
+    anyone
+        "Anyone can be a member of a folder shared by a team member."
+    other*
+
+union SharedFolderJoinPolicy
+    "Policy governing which shared folders a team member can join."
+
+    from_team_only
+        "Team members can only join folders shared by teammates."
+    from_anyone
+        "Team members can join any shared folder, including those shared by users outside the team."
+    other*
+
+route get_info(Void, TeamGetInfoResult, Void)
+    "Retrieves information about a team."
+    attrs
+        auth="team"
