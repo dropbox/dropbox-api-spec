@@ -40,6 +40,37 @@ struct FolderPolicy
         acl_update_policy = owner
         shared_link_policy = anyone
 
+union FolderAction
+    "Actions that may be taken on shared folders."
+
+    change_options
+        "Change folder options, such as who can be invited to join the folder."
+    edit_contents
+        "Change or edit contents of the folder."
+    #modify_role - split into invite_viewer
+    #send_invites - change to invite_editor
+    unmount
+        "Unmount the folder."
+    unshare
+        "Stop sharing this folder."
+    other*
+
+struct FolderPermission
+    "Whether the user is allowed to take the action on the shared folder."
+
+    action FolderAction
+        "The action that the user may wish to take on the folder."
+    allow Boolean
+        "True if the user is allowed to take the action."
+    reason PermissionDeniedReason?
+        "The reason why the user is denied the permission. Not present if the action
+        is allowed"
+
+    example default
+        action = edit_contents
+        allow = false
+        reason = user_not_same_team_as_owner
+
 union MemberPolicy
     "Policy governing who can be a member of a shared folder. Only applicable
     to folders owned by a user on a team."
@@ -48,6 +79,49 @@ union MemberPolicy
         "Only a teammate can become a member."
     anyone
         "Anyone can become a member."
+    other*
+
+union MemberAction
+    "Actions that may be taken on members of a shared folder."
+
+    make_owner
+        "Make the member an owner of the folder."
+    #modify_role - split into make_editor/make_viewer
+    remove
+        "Remove the member from the folder."
+    other*
+
+struct MemberPermission
+    "Whether the user is allowed to take the action on the associated member."
+
+    action MemberAction
+        "The action that the user may wish to take on the member."
+    allow Boolean
+        "True if the user is allowed to take the action."
+    reason PermissionDeniedReason?
+        "The reason why the user is denied the permission. Not present if the action
+        is allowed"
+
+    example default
+        action = make_owner
+        allow = false
+        reason = target_is_indirect_member
+
+union PermissionDeniedReason
+    "Possible reasons the user is denied a permission."
+
+    user_not_same_team_as_owner
+        "User is not on the same team as the folder owner."
+    user_not_allowed_by_owner
+        "User is prohibited by the owner from taking the action."
+    target_is_indirect_member
+        "Target is indirectly a member of the folder, for example by being part of a group."
+    target_is_owner
+        "Target is the owner of the folder."
+    target_is_self
+        "Target is the user itself."
+    target_not_active
+        "Target is not an active member of the team."
     other*
 
 union AclUpdatePolicy
@@ -77,9 +151,13 @@ struct MembershipInfo
 
     access_type AccessLevel
         "The access type for this member."
+    permissions List(MemberPermission)?
+        "The permissions that requesting user has on this member. The set of
+        permissions corresponds to the MemberActions in the request."
 
     example default
         access_type = owner
+        permissions = []
 
 struct UserInfo
     "Basic information about a user. Use :route:`users.get_account` and
@@ -107,6 +185,7 @@ struct UserMembershipInfo extends MembershipInfo
     example default
         user = default
         access_type = owner
+        permissions = []
 
 union InviteeInfo
     "The information about a user invited to become a member a shared folder."
@@ -127,6 +206,7 @@ struct InviteeMembershipInfo extends MembershipInfo
     example default
         invitee = default
         access_type = viewer
+        permissions = []
 
 struct GroupInfo extends team.GroupSummary
     "The information about a group. Groups is a way to manage a list of users
@@ -150,6 +230,7 @@ struct GroupMembershipInfo extends MembershipInfo
     example default
         group = default
         access_type = editor
+        permissions = []
 
 struct SharedFolderMetadata
     "The metadata which includes basic information about the shared folder."
@@ -167,6 +248,9 @@ struct SharedFolderMetadata
         :link:`team folder https://www.dropbox.com/en/help/986`."
     policy FolderPolicy
         "Policies governing this shared folder."
+    permissions List(FolderPermission)?
+        "Actions the current user may perform on the folder and its contents.
+        The set of permissions corresponds to the MemberActions in the request."
 
     example default
         path_lower = "/dir"
@@ -175,6 +259,7 @@ struct SharedFolderMetadata
         access_type = owner
         is_team_folder = false
         policy = default
+        permissions = []
 
 union SharedFolderAccessError
     "There is an error accessing the shared folder."
@@ -258,9 +343,12 @@ route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAcc
 struct GetMetadataArgs
     shared_folder_id SharedFolderId
         "The ID for the shared folder."
+    actions List(FolderAction)?
+        "Folder actions to query."
 
     example default
         shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        actions = []
 
 # --
 
@@ -275,9 +363,12 @@ route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFold
 struct ListFolderMembersArgs
     shared_folder_id SharedFolderId
         "The ID for the shared folder."
+    actions List(MemberAction)?
+        "Member actions to query."
 
     example default
         shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        actions = []
 
 struct SharedFolderMembers
     "Shared folder user and group membership."
