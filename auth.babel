@@ -1,0 +1,12 @@
+namespace auth
+
+union AuthError
+    "Errors occurred during authentication."
+
+    invalid_access_token
+        "The access token is invalid."
+    invalid_select_user
+        "The user specified in 'Dropbox-API-Select-User' is no longer on the team."
+    other*
+        "An unspecified error."
+
