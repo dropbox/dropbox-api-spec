@@ -31,9 +31,14 @@ struct Metadata
     path_lower String
         "The lowercased full path in the user's Dropbox.
         This always starts with a slash."
+    path_display String
+        "The cased path to be used for display purposes only. In rare instances
+        the casing will not correctly match the user's filesystem, but this
+        behavior will match the path provided in the Core API v1.
+        Changes to the casing of paths won't be returned by :route:`list_folder/continue`"
     parent_shared_folder_id sharing.SharedFolderId?
-        "Deprecated. Please use :field:'FileSharingInfo.parent_shared_folder_id'
-        or :field:'FolderSharingInfo.parent_shared_folder_id' instead."
+        "Deprecated. Please use :field:`FileSharingInfo.parent_shared_folder_id`
+        or :field:`FolderSharingInfo.parent_shared_folder_id` instead."
 
     example default
         file = default
@@ -62,7 +67,7 @@ struct FileSharingInfo extends SharingInfo
 
     example default
         read_only = true
-        parent_shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        parent_shared_folder_id = "84528192421"
         modified_by = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
 
 struct FolderSharingInfo extends SharingInfo
@@ -78,11 +83,11 @@ struct FolderSharingInfo extends SharingInfo
 
     example default "Folder inside a shared folder."
         read_only = false
-        parent_shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        parent_shared_folder_id = "84528192421"
 
     example shared_folder "Read-only shared folder mount point."
         read_only = true
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
 
 struct Dimensions
     "Dimensions for a photo or video."
@@ -150,7 +155,7 @@ union MediaInfo
         "The metadata for the photo/video."
 
 struct FileMetadata extends Metadata
-    id Id?
+    id Id
         "A unique identifier for the file."
     client_modified common.DropboxTimestamp
         "For files, this is the modification time set by the desktop client
@@ -175,6 +180,7 @@ struct FileMetadata extends Metadata
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
         name = "Prime_Numbers.txt"
         path_lower = "/homework/math/prime_numbers.txt"
+        path_display = "/Homework/math/Prime_Numbers.txt"
         sharing_info = default
         client_modified = "2015-05-12T15:50:38Z"
         server_modified = "2015-05-12T15:50:38Z"
@@ -182,16 +188,17 @@ struct FileMetadata extends Metadata
         size = 7212
 
 struct FolderMetadata extends Metadata
-    id Id?
+    id Id
         "A unique identifier for the folder."
     shared_folder_id sharing.SharedFolderId?
-        "Deprecated. Please use :field:'sharing_info' instead."
+        "Deprecated. Please use :field:`sharing_info` instead."
     sharing_info FolderSharingInfo?
         "Set if the folder is contained in a shared folder or is a shared folder mount point."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXz"
         path_lower = "/homework/math"
+        path_display = "/Homework/math"
         name = "math"
         sharing_info = default
 
@@ -201,7 +208,8 @@ struct DeletedMetadata extends Metadata
     # TODO: Add the mtime when it's been deleted?  And the rev???
 
     example default
-        path_lower = "/home/math/pi.txt"
+        path_lower = "/homework/math/pi.txt"
+        path_display = "/Homework/math/pi.txt"
         name = "pi.txt"
 
 union GetMetadataError
@@ -209,9 +217,9 @@ union GetMetadataError
 
 struct GetMetadataArg
     path ReadPath
-        "The path of a file or folder on Dropbox"
+        "The path of a file or folder on Dropbox."
     include_media_info Boolean = false
-        "If true, :field:'FileMetadata.media_info' is set for photo and video."
+        "If true, :field:`FileMetadata.media_info` is set for photo and video."
 
     example default
         path = "/Homework/math"
@@ -223,7 +231,9 @@ struct GetMetadataArg
         path = "rev:a1c10ce0dd78"
 
 route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
-    "Returns the metadata for a file or folder."
+    "Returns the metadata for a file or folder.
+
+    Note: Metadata for the root folder is unsupported."
 
 #
 # List folder routes
@@ -277,7 +287,7 @@ struct ListFolderArg
         "If true, the list folder operation will be applied recursively to all subfolders
         and the response will contain contents of all subfolders."
     include_media_info Boolean = false
-        "If true, :field:'FileMetadata.media_info' is set for photo and video."
+        "If true, :field:`FileMetadata.media_info` is set for photo and video."
     include_deleted Boolean = false
         "If true, the results will include entries for files and folders that used to exist but were deleted."
 
@@ -354,7 +364,7 @@ struct DownloadArg
     path ReadPath
         "The path of the file to download."
     rev Rev?
-        "Deprecated. Please specify revision in :field:'path' instead"
+        "Deprecated. Please specify revision in :field:`path` instead"
 
     example default
         path = "/Homework/math/Prime_Numbers.txt"
@@ -852,7 +862,7 @@ struct PreviewArg
     path ReadPath
         "The path of the file to preview."
     rev Rev?
-        "Deprecated. Please specify revision in :field:'path' instead"
+        "Deprecated. Please specify revision in :field:`path` instead"
 
     example default
         path = "/word.docx"

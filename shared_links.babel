@@ -209,6 +209,8 @@ struct ListSharedLinksArg
         "See :route:`list_shared_links` description."
     cursor String?
         "The cursor returned by your last call to :route:`list_shared_links`."
+    direct_only Boolean?
+        "See :route:`list_shared_links` description."
 
     example default  "List all links"
         cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
@@ -221,6 +223,10 @@ struct ListSharedLinksArg
 
     example rev
         path = "rev:a1c10ce0dd78"
+
+    example id_no_parent_links
+        path = "id:a4ayc_80_OEAAAAAAAAAYa"
+        direct_only = true
 
 struct ListSharedLinksResult
     links List(SharedLinkMetadata)
@@ -252,7 +258,8 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
 
     If a non-empty path is given, returns a list of all shared links
     that allow access to the given path - direct links to the given path and links to parent folders
-    of the given path. "
+    of the given path. Links to parent folders can be suppressed by setting
+    direct_only to true."
 
 #
 # Modify shared link settings definitions and route

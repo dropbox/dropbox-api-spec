@@ -188,9 +188,9 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
 
 struct MemberAddArg
     member_email common.EmailAddress
-    member_given_name common.Name
+    member_given_name common.NamePart
         "Member's first name."
-    member_surname common.Name
+    member_surname common.NamePart
         "Member's last name."
     member_external_id memberExternalId?
         "External ID for member."
@@ -316,9 +316,9 @@ struct MembersSetProfileArg
         "New email for member."
     new_external_id String?
         "New external ID for member."
-    new_given_name String?
+    new_given_name common.NamePart?
         "New given name for member."
-    new_surname String?
+    new_surname common.NamePart?
         "New surname for member."
 
     example default
@@ -338,7 +338,7 @@ union MembersSetProfileError extends MemberSelectorError
     set_profile_disallowed
         "Setting profile disallowed"
     param_cannot_be_empty
-        "New  new_email, new_given_name or new_surname value cannot be empty."
+        "Parameter new_email cannot be empty."
     other*
         "An unspecified error."
 
@@ -490,8 +490,6 @@ route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveErr
     Calling :route:`members/add` with the removed user's email address will create a new account
     with a new team_member_id that will not have access to any content that was shared with the initial
     account.
-
-    This endpoint can also be used to cancel a pending invite to join the team.
 
     This endpoint may initiate an asynchronous job. To obtain the final result
     of the job, the client should periodically poll :route:`members/remove/job_status/get`."

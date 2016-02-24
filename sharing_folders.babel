@@ -47,8 +47,12 @@ union FolderAction
         "Change folder options, such as who can be invited to join the folder."
     edit_contents
         "Change or edit contents of the folder."
-    #modify_role - split into invite_viewer
-    #send_invites - change to invite_editor
+    invite_editor
+        "Invite a user or group to join the folder with read and write permission."
+    invite_viewer
+        "Invite a user or group to join the folder with read permission."
+    relinquish_membership
+        "Relinquish one's own membership in the folder."
     unmount
         "Unmount the folder."
     unshare
@@ -84,9 +88,12 @@ union MemberPolicy
 union MemberAction
     "Actions that may be taken on members of a shared folder."
 
+    make_editor
+        "Make the member an editor of the folder."
     make_owner
         "Make the member an owner of the folder."
-    #modify_role - split into make_editor/make_viewer
+    make_viewer
+        "Make the member a viewer of the folder."
     remove
         "Remove the member from the folder."
     other*
@@ -154,14 +161,20 @@ struct MembershipInfo
     permissions List(MemberPermission)?
         "The permissions that requesting user has on this member. The set of
         permissions corresponds to the MemberActions in the request."
+    initials String?
+        "Suggested name initials for a member."
+    is_inherited Boolean = false
+        "True if the member's access to the file is inherited from a parent folder."
 
     example default
         access_type = owner
         permissions = []
+        initials = "JD"
+        is_inherited = false
 
 struct UserInfo
     "Basic information about a user. Use :route:`users.get_account` and
-    :route:`users.get_account_batch`` to obtain more detailed information."
+    :route:`users.get_account_batch` to obtain more detailed information."
 
     account_id users.AccountId
         "The account ID of the user."
@@ -232,15 +245,9 @@ struct GroupMembershipInfo extends MembershipInfo
         access_type = editor
         permissions = []
 
-struct SharedFolderMetadata
-    "The metadata which includes basic information about the shared folder."
+struct SharedFolderMetadataBase
+    "Properties of the shared folder."
 
-    path_lower String?
-        "The lower-cased full path of this shared folder. Absent for unmounted folders."
-    name String
-        "The name of the this shared folder."
-    shared_folder_id SharedFolderId
-        "The ID of the shared folder."
     access_type AccessLevel
         "The current user's access level for this shared folder."
     is_team_folder Boolean
@@ -250,12 +257,28 @@ struct SharedFolderMetadata
         "Policies governing this shared folder."
     permissions List(FolderPermission)?
         "Actions the current user may perform on the folder and its contents.
-        The set of permissions corresponds to the MemberActions in the request."
+        The set of permissions corresponds to the FolderActions in the request."
+
+    example default
+        access_type = owner
+        is_team_folder = false
+        policy = default
+        permissions = []
+
+struct SharedFolderMetadata extends SharedFolderMetadataBase
+    "The metadata which includes basic information about the shared folder."
+
+    path_lower String?
+        "The lower-cased full path of this shared folder. Absent for unmounted folders."
+    name String
+        "The name of the this shared folder."
+    shared_folder_id SharedFolderId
+        "The ID of the shared folder."
 
     example default
         path_lower = "/dir"
         name = "dir"
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         access_type = owner
         is_team_folder = false
         policy = default
@@ -269,26 +292,31 @@ union SharedFolderAccessError
     not_a_member
         "The user is not a member of the shared folder
         thus cannot access it."
-    no_permission
-        "The current user does not have sufficient privileges to perform the
-        desired action."
     email_unverified
-        "The current account's e-mail address is unverified."
-    team_folder
-        "The current user cannot perform this action on a team shared folder."
+        "The current user's e-mail address is unverified."
     unmounted
         "The shared folder is unmounted."
     other*
 
 # --
 
-route list_folders(Void, ListFoldersResult, Void)
+route list_folders(ListFoldersArgs, ListFoldersResult, Void)
     "Return the list of all shared folders the current user has access to.
 
     Apps must have full Dropbox access to use this endpoint.
 
     Warning: This endpoint is in beta and is subject to minor but possibly
     backwards-incompatible changes."
+
+struct ListFoldersArgs
+    limit UInt32(min_value=1, max_value=1000) = 1000
+        "The maximum number of results to return per request."
+    actions List(FolderAction)?
+        "Folder actions to query. This field is optional."
+
+    example default
+        limit = 100
+        actions = []
 
 struct ListFoldersResult
     "Result for :route:`list_folders`.
@@ -332,6 +360,21 @@ union ListFoldersContinueError
 
 # --
 
+route list_mountable_folders(ListFoldersArgs, ListFoldersResult, Void)
+    "Return the list of all shared folders the current user can mount or unmount.
+
+    Apps must have full Dropbox access to use this endpoint."
+
+# --
+
+route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFoldersContinueError)
+    "Once a cursor has been retrieved from :route:`list_mountable_folders`, use this to paginate through all
+    mountable shared folders.
+
+    Apps must have full Dropbox access to use this endpoint."
+
+# --
+
 route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAccessError)
     "Returns shared folder metadata by its folder ID.
 
@@ -344,10 +387,10 @@ struct GetMetadataArgs
     shared_folder_id SharedFolderId
         "The ID for the shared folder."
     actions List(FolderAction)?
-        "Folder actions to query."
+        "Folder actions to query. This field is optional."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         actions = []
 
 # --
@@ -364,11 +407,14 @@ struct ListFolderMembersArgs
     shared_folder_id SharedFolderId
         "The ID for the shared folder."
     actions List(MemberAction)?
-        "Member actions to query."
+        "Member actions to query. This field is optional."
+    limit UInt32(min_value=1, max_value=1000) = 1000
+        "The maximum number of results that include members, groups and invitees to return per request."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         actions = []
+        limit = 10
 
 struct SharedFolderMembers
     "Shared folder user and group membership."
@@ -455,16 +501,16 @@ struct ShareFolderArg
 
 union ShareFolderError
     email_unverified
-        "The current account's e-mail address is unverified."
+        "The current user's e-mail address is unverified."
     bad_path SharePathError
         ":field:`ShareFolderArg.path` is invalid."
     team_policy_disallows_member_policy
         "Team policy is more restrictive than :field:`ShareFolderArg.member_policy`."
     disallowed_shared_link_policy
-        "The current account is not allowed to select the specified
+        "The current user's account is not allowed to select the specified
         :field:`ShareFolderArg.shared_link_policy`."
     no_permission
-        "The current account does not have permission to perform this action."
+        "The current user does not have permission to perform this action."
     other*
 
 union SharePathError
@@ -524,8 +570,13 @@ union SharedFolderMemberError
     other*
 
 union JobError
-    access_error SharedFolderAccessError
-    member_error SharedFolderMemberError
+    "Error occurred while performing an asynchronous job from :route:`unshare_folder`
+    or :route:`remove_folder_member`."
+
+    unshare_folder_error UnshareFolderError
+        "Error occurred while performing :route:`unshare_folder` action."
+    remove_folder_member_error RemoveFolderMemberError
+        "Error occurred while performing :route:`remove_folder_member` action."
     other*
 
 route check_job_status(async.PollArg, JobStatus, async.PollError)
@@ -558,11 +609,15 @@ struct UnshareFolderArg
         The current user, who is an owner, will always retain their copy."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         leave_a_copy = true
 
 union UnshareFolderError
     access_error SharedFolderAccessError
+    team_folder
+        "This action cannot be performed on a team shared folder."
+    no_permission
+        "The current user does not have permission to perform this action."
     other*
 
 # --
@@ -582,21 +637,23 @@ struct TransferFolderArg
         "A account or team member ID to transfer ownership to."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         to_dropbox_id = "dbid:AAEufNrMPSPe0dMQijRP0N_aZtBJRm26W4Q"
 
 union TransferFolderError
     access_error SharedFolderAccessError
-    no_permission
-        "The current account does not have permission to perform this action."
     invalid_dropbox_id
         ":field:`TransferFolderArg.to_dropbox_id` is invalid."
     new_owner_not_a_member
         "The new designated owner is not currently a member of the shared folder."
     new_owner_unmounted
-        "The new desginated owner does not have the shared folder mounted."
+        "The new designated owner does not have the shared folder mounted."
     new_owner_email_unverified
         "The new designated owner's e-mail address is unverified."
+    team_folder
+        "This action cannot be performed on a team shared folder."
+    no_permission
+        "The current user does not have permission to perform this action."
     other*
 
 # --
@@ -624,7 +681,7 @@ struct UpdateFolderPolicyArg
         shared folder."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         member_policy = team
         acl_update_policy = owner
         shared_link_policy = members
@@ -669,7 +726,7 @@ struct AddFolderMemberArg
 
     example default
         members = [default, account]
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         custom_message = "Documentation for launch day"
 
 struct AddMember
@@ -711,11 +768,9 @@ union AddFolderMemberError
     access_error SharedFolderAccessError
         "Unable to access shared folder."
     email_unverified
-        "The current account's e-mail address is unverified."
+        "The current user's e-mail address is unverified."
     bad_member AddMemberSelectorError
         ":field:`AddFolderMemberArg.members` contains a bad invitation recipient."
-    no_permission
-        "The current account does not have permission to perform this action."
     cant_share_outside_team
         "Your team policy does not allow sharing outside of the team."
     too_many_members UInt64
@@ -728,6 +783,10 @@ union AddFolderMemberError
         "The current user's account doesn't support this action. An example of
         this is when adding a read-only member. This action can only be
         performed by users that have upgraded to a Pro or Business plan."
+    team_folder
+        "This action cannot be performed on a team shared folder."
+    no_permission
+        "The current user does not have permission to perform this action."
     other*
 
     example default
@@ -749,7 +808,7 @@ union AddMemberSelectorError
         "At least one of the specified groups in :field:`AddFolderMemberArg.members`
         is deleted."
     group_not_on_team
-        "Sharing to a group that is not on the current account's team."
+        "Sharing to a group that is not on the current user's team."
     other*
 
     example default
@@ -778,7 +837,7 @@ struct RemoveFolderMemberArg
         group."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         member = default
         leave_a_copy = false
 
@@ -790,6 +849,10 @@ union RemoveFolderMemberError
         this user until ownership has been transferred to another member."
     group_access
         "The target user has access to the shared folder via a group."
+    team_folder
+        "This action cannot be performed on a team shared folder."
+    no_permission
+        "The current user does not have permission to perform this action."
     other*
 
 # --
@@ -814,7 +877,7 @@ struct UpdateFolderMemberArg
         is disallowed."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
         member = default
         access_level = editor
 
@@ -826,6 +889,8 @@ union UpdateFolderMemberError
         this is when downgrading a member from editor to viewer. This action
         can only be performed by users that have upgraded to a Pro or Business
         plan."
+    no_permission
+        "The current user does not have permission to perform this action."
     other*
 
 # --
@@ -848,7 +913,7 @@ struct MountFolderArg
         "The ID of the shared folder to mount."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
 
 union MountFolderError
     access_error SharedFolderAccessError
@@ -860,6 +925,8 @@ union MountFolderError
         folder."
     already_mounted
         "The shared folder is already mounted."
+    no_permission
+        "The current user does not have permission to perform this action."
     other*
 
 # --
@@ -878,10 +945,12 @@ struct UnmountFolderArg
         "The ID for the shared folder."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
 
 union UnmountFolderError
     access_error SharedFolderAccessError
+    no_permission
+        "The current user does not have permission to perform this action."
     other*
 
 # --
@@ -901,17 +970,21 @@ struct RelinquishFolderMembershipArg
         "The ID for the shared folder."
 
     example default
-        shared_folder_id = "dbsfid:BCcDKIi3BO5uA9Kzv1v7I9MBJiqoXZXx7Fo"
+        shared_folder_id = "84528192421"
 
 union RelinquishFolderMembershipError
     access_error SharedFolderAccessError
     folder_owner
         "The current user is the owner of the shared folder. Owners cannot relinquish membership to
-        their own folders. Try unsharing or transfering ownership first."
+        their own folders. Try unsharing or transferring ownership first."
     mounted
         "The shared folder is currently mounted.  Unmount the shared folder before relinquishing
         membership."
     group_access
         "The current user has access to the shared folder via a group.  You can't relinquish
         membership to folders shared via groups."
+    team_folder
+        "This action cannot be performed on a team shared folder."
+    no_permission
+        "The current user does not have permission to perform this action."
     other*
