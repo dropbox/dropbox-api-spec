@@ -192,7 +192,7 @@ struct MemberAddArg
         "Member's first name."
     member_surname common.NamePart
         "Member's last name."
-    member_external_id memberExternalId?
+    member_external_id MemberExternalId?
         "External ID for member."
     send_welcome_email Boolean = true
         "Whether to send a welcome email to the member.
@@ -312,9 +312,9 @@ struct MembersSetProfileArg
 
     user UserSelectorArg
         "Identity of user whose profile will be set."
-    new_email String?
+    new_email common.EmailAddress?
         "New email for member."
-    new_external_id String?
+    new_external_id MemberExternalId?
         "New external ID for member."
     new_given_name common.NamePart?
         "New given name for member."
@@ -386,6 +386,8 @@ union MembersSetPermissionsError extends UserSelectorError
         "The user is not a member of the team."
     cannot_set_permissions
         "Cannot remove/grant permissions."
+    team_license_limit
+        "Team is full. The organization has no available licenses."
 
     other*
         "An unspecified error."
@@ -519,6 +521,8 @@ union MembersSuspendError extends MembersDeactivateError
         "The user is not active, so it cannot be suspended."
     suspend_last_admin
         "The user is the last admin of the team, so it cannot be suspended."
+    team_license_limit
+        "Team is full. The organization has no available licenses."
 
 route members/suspend(MembersDeactivateArg, Void, MembersSuspendError)
     "Suspend a member from a team.
@@ -547,6 +551,8 @@ struct MembersUnsuspendArg
 union MembersUnsuspendError extends MembersDeactivateError
     unsuspend_non_suspended_member
         "The user is unsuspended, so it cannot be unsuspended again."
+    team_license_limit
+        "Team is full. The organization has no available licenses."
 
 route members/unsuspend(MembersUnsuspendArg, Void, MembersUnsuspendError)
     "Unsuspend a member from a team.

@@ -120,7 +120,8 @@ struct FullAccount extends Account
     account_type AccountType
         "What type of account this user has."
 
-    example default "Paired account"
+    example default
+        "Paired account"
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
         email = "franz@dropbox.com"
@@ -133,7 +134,8 @@ struct FullAccount extends Account
         is_paired = true
         account_type = business
 
-    example unpaired "A personal account that is not paired with a team."
+    example unpaired
+        "A personal account that is not paired with a team."
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
         email = "franz@gmail.com"

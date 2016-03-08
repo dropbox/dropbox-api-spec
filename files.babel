@@ -2,7 +2,6 @@ namespace files
     "This namespace contains endpoints and data types for basic file operations."
 
 import common
-import sharing
 import users
 
 alias Id = String(min_length=1)
@@ -36,7 +35,7 @@ struct Metadata
         the casing will not correctly match the user's filesystem, but this
         behavior will match the path provided in the Core API v1.
         Changes to the casing of paths won't be returned by :route:`list_folder/continue`"
-    parent_shared_folder_id sharing.SharedFolderId?
+    parent_shared_folder_id common.SharedFolderId?
         "Deprecated. Please use :field:`FileSharingInfo.parent_shared_folder_id`
         or :field:`FolderSharingInfo.parent_shared_folder_id` instead."
 
@@ -58,7 +57,7 @@ struct SharingInfo
 struct FileSharingInfo extends SharingInfo
     "Sharing info for a file which is contained by a shared folder."
 
-    parent_shared_folder_id sharing.SharedFolderId
+    parent_shared_folder_id common.SharedFolderId
         "ID of shared folder that holds this file."
 
     modified_by users.AccountId?
@@ -74,18 +73,20 @@ struct FolderSharingInfo extends SharingInfo
     "Sharing info for a folder which is contained in a shared folder or is a
     shared folder mount point."
 
-    parent_shared_folder_id sharing.SharedFolderId?
+    parent_shared_folder_id common.SharedFolderId?
         "Set if the folder is contained by a shared folder."
 
-    shared_folder_id sharing.SharedFolderId?
+    shared_folder_id common.SharedFolderId?
         "If this folder is a shared folder mount point, the ID of the shared
         folder mounted at this location."
 
-    example default "Folder inside a shared folder."
+    example default
+        "Folder inside a shared folder."
         read_only = false
         parent_shared_folder_id = "84528192421"
 
-    example shared_folder "Read-only shared folder mount point."
+    example shared_folder
+        "Read-only shared folder mount point."
         read_only = true
         shared_folder_id = "84528192421"
 
@@ -190,7 +191,7 @@ struct FileMetadata extends Metadata
 struct FolderMetadata extends Metadata
     id Id
         "A unique identifier for the folder."
-    shared_folder_id sharing.SharedFolderId?
+    shared_folder_id common.SharedFolderId?
         "Deprecated. Please use :field:`sharing_info` instead."
     sharing_info FolderSharingInfo?
         "Set if the folder is contained in a shared folder or is a shared folder mount point."
@@ -241,7 +242,10 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
 
 struct ListFolderLongpollArg
     cursor ListFolderCursor
-        "A cursor as returned by :route:`list_folder` or :route:`list_folder/continue`"
+        "A cursor as returned by :route:`list_folder` or :route:`list_folder/continue`. Cursors
+        retrieved by setting :field:`ListFolderArg.include_media_info` to :val:`true` are not
+        supported."
+
     timeout UInt64(min_value=30, max_value=480) = 30
         "A timeout in seconds. The request will block for at most this length
         of time, plus up to 90 seconds of random jitter added to avoid the
@@ -734,7 +738,11 @@ union DeleteError
 route delete (DeleteArg, Metadata, DeleteError)
     "Delete the file or folder at a given path.
 
-    If the path is a folder, all its contents will be deleted too."
+    If the path is a folder, all its contents will be deleted too.
+
+    A successful response indicates that the file or folder was deleted. The returned metadata will
+    be the corresponding :type:`FileMetadata` or :type:`FolderMetadata` for the item at time of
+    deletion, and not a :type:`DeletedMetadata` object."
 
 route permanently_delete (DeleteArg, Void, DeleteError)
     "Permanently delete the file or folder at a given path
@@ -919,6 +927,10 @@ struct ListRevisionsResult
         "If the file is deleted."
     entries List(FileMetadata)
         "The revisions for the file. Only non-delete revisions will show up here."
+
+    example default
+        is_deleted = false
+        entries = [default]
 
 route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
     "Return revisions of a file"

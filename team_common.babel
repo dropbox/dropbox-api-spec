@@ -16,3 +16,14 @@ struct GroupSummary
         group_name = "Test group"
         group_id = "g:e2db7665347abcd600000000001a2b3c"
         member_count = 10
+
+union GroupType
+    "The group type determines how a group is created and managed."
+
+    team
+        "A group to which team members are automatically added. Applicable to
+        :link:`team folders https://www.dropbox.com/help/986` only."
+    user_managed
+        "A group is created and managed by a user."
+    other*
+

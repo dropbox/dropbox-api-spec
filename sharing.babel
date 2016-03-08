@@ -6,4 +6,3 @@ import common
 import files
 import users
 
-alias SharedFolderId = String(pattern="[-_0-9a-zA-Z:]+")

@@ -125,7 +125,7 @@ struct GetMembershipReport extends BaseDfbReport
     members_joined NumberPerDay
         "The number of members that joined the team, for each day."
     suspended_members NumberPerDay
-        "The number of members that joined the team, for each day."
+        "The number of suspended team members, for each day."
     licenses NumberPerDay
         "The total number of licenses the team has, for each day."
 

@@ -212,7 +212,8 @@ struct ListSharedLinksArg
     direct_only Boolean?
         "See :route:`list_shared_links` description."
 
-    example default  "List all links"
+    example default
+        "List all links"
         cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
 
     example path
@@ -456,10 +457,12 @@ struct GetSharedLinksArg
     path String?
         "See :route:`get_shared_links` description."
 
-    example default  "Get all links, including collection links"
+    example default
+        "Get all links, including collection links"
         path = ""
 
-    example math_homework_links  "Get links giving access to /Homework/Math"
+    example math_homework_links
+        "Get links giving access to /Homework/Math"
         path = "/Homework/Math"
 
 struct GetSharedLinksResult

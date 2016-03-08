@@ -1,5 +1,6 @@
 namespace team
 
+import common
 import users
 
 #
@@ -7,7 +8,7 @@ import users
 #
 
 alias TeamMemberId = String
-alias memberExternalId = String(max_length=64)
+alias MemberExternalId = String(max_length=64)
 
 # Note that in the database, we also have members that are in state "deleted"
 # meaning that the User has been permanently removed from the team.
@@ -55,8 +56,8 @@ union UserSelectorArg
     "Argument for selecting a single user, either by team_member_id, external_id or email."
 
     team_member_id TeamMemberId
-    external_id String
-    email String
+    external_id MemberExternalId
+    email common.EmailAddress
 
     example default
         team_member_id = "dbmid:efgh5678"
@@ -77,9 +78,9 @@ union UsersSelectorArg
 
     team_member_ids List(TeamMemberId)
         "List of member IDs."
-    external_ids List(String)
+    external_ids List(MemberExternalId)
         "List of external user IDs."
-    emails List(String)
+    emails List(common.EmailAddress)
         "List of email addresses."
 
 
@@ -145,10 +146,13 @@ struct TeamSharingPolicies
         "Who can join folders shared by team members."
     shared_folder_join_policy SharedFolderJoinPolicy
         "Which shared folders team members can join."
+    shared_link_create_policy SharedLinkCreatePolicy
+        "What is the visibility of newly created shared links."
 
     example default
         shared_folder_member_policy = team
         shared_folder_join_policy = from_anyone
+        shared_link_create_policy = team_only
 
 # NOTE: we do not reuse sharing.MemberPolicy here since we may want to enable folder-specific member
 # policies that work on top of the broader team policies.
@@ -168,6 +172,20 @@ union SharedFolderJoinPolicy
         "Team members can only join folders shared by teammates."
     from_anyone
         "Team members can join any shared folder, including those shared by users outside the team."
+    other*
+
+union SharedLinkCreatePolicy
+    "Policy governing the visibility of newly created shared links."
+
+    default_public
+        "By default, anyone can access newly created shared links.
+        No login will be required to access the shared links unless overridden."
+    default_team_only
+        "By default, only members of the same team can access newly created shared links.
+        Login will be required to access the shared links unless overridden."
+    team_only
+        "Only members of the same team can access newly created shared links.
+        Login will be required to access the shared links."
     other*
 
 route get_info(Void, TeamGetInfoResult, Void)
