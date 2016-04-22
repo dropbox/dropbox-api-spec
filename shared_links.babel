@@ -283,6 +283,8 @@ struct ModifySharedLinkSettingsArgs
         "URL of the shared link to change its settings"
     settings SharedLinkSettings
         "Set of settings for the shared link."
+    remove_expiration Boolean = false
+        "If set to true, removes the expiration of the shared link."
 
     example default
         url = "https://www.dropbox.com/s/2sn712vy1ovegw8/Prime_Numbers.txt?dl=0"

@@ -10,3 +10,5 @@ union AuthError
     other*
         "An unspecified error."
 
+route token/revoke(Void, Void, Void)
+    "Disables the access token used to authenticate the call."

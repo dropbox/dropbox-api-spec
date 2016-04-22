@@ -83,6 +83,14 @@ union GroupMembersSelectorError extends GroupSelectorError
     member_not_in_group
         "At least one of the specified users is not a member of the group."
 
+
+struct IncludeMembersArg
+
+    return_members Boolean = true
+        "Whether to return the list of members in the group.
+         Note that the default value will cause all the group members
+         to be returned in the response. This may take a long time for large groups."
+
 ####################
 # Group Info methods
 ####################
@@ -103,7 +111,7 @@ struct GroupMemberInfo
 struct GroupFullInfo extends GroupSummary
     "Full description of a group."
 
-    members List(GroupMemberInfo)
+    members List(GroupMemberInfo)?
         "List of group members."
     created UInt64
         "The group creation time as a UTC timestamp in milliseconds since the Unix epoch."
@@ -130,10 +138,10 @@ struct GroupsListArg
 struct GroupsListResult
     groups List(GroupSummary)
     cursor String
-        "Pass the cursor into :route:`members/list/continue` to obtain the additional members."
+        "Pass the cursor into :route:`groups/list/continue` to obtain the additional groups."
     has_more Boolean
-        "Is true if there are additional team members that have not been returned
-        yet. An additional call to :route:`members/list/continue` can retrieve them."
+        "Is true if there are additional groups that have not been returned
+        yet. An additional call to :route:`groups/list/continue` can retrieve them."
 
     example default
         groups = [default]
@@ -270,7 +278,7 @@ route groups/delete(GroupSelector, async.LaunchEmptyResult, GroupDeleteError)
 # route groups/update
 #
 
-struct GroupUpdateArgs
+struct GroupUpdateArgs extends IncludeMembersArg
     group GroupSelector
         "Specify a group."
     new_group_name String?
@@ -305,7 +313,7 @@ struct GroupMembersChangeResult
     "Result returned by :route:`groups/members/add` and :route:`groups/members/remove`."
 
     group_info GroupFullInfo
-        "Lists the group members after the member change operation has been performed."
+        "The group info after member change operation has been performed."
     async_job_id async.AsyncJobId
         "An ID that can be used to obtain the status of granting/revoking group-owned resources."
 
@@ -329,8 +337,7 @@ struct MemberAccess
         user = default
         access_type = default
 
-
-struct GroupMembersAddArg
+struct GroupMembersAddArg extends IncludeMembersArg
     group GroupSelector
         "Group to which users will be added."
     members List(MemberAccess)
@@ -357,6 +364,8 @@ union GroupMembersAddError extends GroupSelectorError
         "These users were not found in Dropbox."
     user_must_be_active_to_be_owner
         "A suspended user cannot be added to a group as owner."
+    user_cannot_be_manager_of_company_managed_group List(String)
+        "A company-managed group cannot be managed by a user."
 
 
 route groups/members/add(GroupMembersAddArg, GroupMembersChangeResult, GroupMembersAddError)
@@ -375,9 +384,11 @@ route groups/members/add(GroupMembersAddArg, GroupMembersChangeResult, GroupMemb
 # route groups/members/remove  (async method)
 #
 
-struct GroupMembersRemoveArg
+struct GroupMembersRemoveArg extends IncludeMembersArg
     group GroupSelector
+        "Group from which users will be removed."
     users List(UserSelectorArg)
+        "List of users to be removed from the group."
 
     example default
         group = default
@@ -408,14 +419,21 @@ route groups/members/remove(GroupMembersRemoveArg, GroupMembersChangeResult, Gro
 struct GroupMembersSetAccessTypeArg extends GroupMemberSelector
     access_type GroupAccessType
         "New group access type the user will have."
+    return_members Boolean = true
+        "Whether to return the list of members in the group.
+         Note that the default value will cause all the group members
+         to be returned in the response. This may take a long time for large groups."
 
     example default
         group = default
         user = default
         access_type = default
 
+union GroupMemberSetAccessTypeError extends GroupMemberSelectorError
+    user_cannot_be_manager_of_company_managed_group
+        "A company managed group cannot be managed by a user."
 
-route groups/members/set_access_type(GroupMembersSetAccessTypeArg, GroupsGetInfoResult, GroupMemberSelectorError)
+route groups/members/set_access_type(GroupMembersSetAccessTypeArg, GroupsGetInfoResult, GroupMemberSetAccessTypeError)
     "Sets a member's access type in a group.
 
     Permission : Team member management"

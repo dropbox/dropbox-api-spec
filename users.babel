@@ -1,6 +1,8 @@
 namespace users
     "This namespace contains endpoints and data types for user management."
 
+import team_policies
+
 alias AccountId = String(min_length=40, max_length=40)
 
 #
@@ -54,6 +56,8 @@ struct Account
         "Whether the user has verified their e-mail address."
     profile_photo_url String?
         "URL for the photo representing the user, if one is set."
+    disabled Boolean
+        "Whether the user has been disabled."
 
     example default
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
@@ -61,9 +65,11 @@ struct Account
         email = "franz@dropbox.com"
         email_verified = true
         profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416582218&size=128x128"
+        disabled = false
 
 struct BasicAccount extends Account
     "Basic information about any account."
+
 
     is_teammate Boolean
         "Whether this user is a teammate of the current user. If this account
@@ -80,6 +86,7 @@ struct BasicAccount extends Account
         email_verified = true
         profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416696524&size=128x128"
         is_teammate = false
+        disabled = false
 
     example team
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
@@ -89,7 +96,7 @@ struct BasicAccount extends Account
         profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416696524&size=128x128"
         is_teammate = true
         team_member_id = "dbmid:AAHhy7WsR0x-u4ZCqiDl5Fz5zvuL3kmspwU"
-
+        disabled = false
 #
 # Route: get_current_account
 #
@@ -108,7 +115,7 @@ struct FullAccount extends Account
         :link:`IETF language tags http://en.wikipedia.org/wiki/IETF_language_tag`."
     referral_link String
         "The user's :link:`referral link https://www.dropbox.com/referrals`."
-    team Team?
+    team FullTeam?
         "If this account is a member of a team, information about that team."
     team_member_id String?
         "This account's unique team member id. This field will only be present if
@@ -133,6 +140,7 @@ struct FullAccount extends Account
         team_member_id = "dbmid:AAHhy7WsR0x-u4ZCqiDl5Fz5zvuL3kmspwU"
         is_paired = true
         account_type = business
+        disabled = false
 
     example unpaired
         "A personal account that is not paired with a team."
@@ -147,6 +155,7 @@ struct FullAccount extends Account
         is_paired = false
         account_type = default
         profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416673259&size=128x128"
+        disabled = false
 
 struct Team
     "Information about a team."
@@ -159,6 +168,17 @@ struct Team
     example default
         id = "dbtid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
         name = "Acme, Inc."
+
+struct FullTeam extends Team
+    "Detailed information about a team."
+
+    sharing_policies team_policies.TeamSharingPolicies
+        "Team policies governing sharing."
+
+    example default
+        id = "dbtid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+        name = "Acme, Inc."
+        sharing_policies = default
 
 struct Name
     "Representations for a person's name to assist with internationalization."

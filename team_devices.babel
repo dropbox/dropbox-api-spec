@@ -47,7 +47,7 @@ struct ActiveWebSession extends DeviceSession
     example default
         session_id = "dbwsid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
         ip_address = "3.3.3.3"
-        country = "United States" 
+        country = "United States"
         created = "2015-05-12T15:50:38Z"
         updated = "2015-05-12T15:51:22Z"
         user_agent = "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.815.0 Safari/535.1"
@@ -81,7 +81,7 @@ struct DesktopClientSession extends DeviceSession
     example default
         session_id= "dbdsid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
         ip_address = "3.3.3.3"
-        country = "United States" 
+        country = "United States"
         created = "2015-05-12T15:50:38Z"
         updated = "2015-05-12T15:51:22Z"
         host_name = "Home_desktop"
@@ -121,13 +121,13 @@ struct MobileClientSession extends DeviceSession
     example default
         session_id = "dbmsid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
         ip_address = "3.3.3.3"
-        country = "United States" 
+        country = "United States"
         created = "2015-05-12T15:50:38Z"
         updated = "2015-05-12T15:51:22Z"
         device_name = "Iphone 6"
         client_type = iphone
         client_version = "3.9.5"
-        os_version = "8.4" 
+        os_version = "8.4"
         last_carrier = "Verizon"
 
 struct ListMemberDevicesResult
@@ -155,12 +155,12 @@ route devices/list_member_devices(ListMemberDevicesArg, ListMemberDevicesResult,
         auth="team"
 
 #
-# Structs for devices/list_team_devices
+# Structs for devices/list_members_devices
 #
 
-struct ListTeamDevicesArg
+struct ListMembersDevicesArg
     cursor String?
-        "At the first call to the :route:`devices/list_team_devices` the cursor shouldn't be passed.
+        "At the first call to the :route:`devices/list_members_devices` the cursor shouldn't be passed.
         Then, if the result of the call includes a cursor, the following requests should include the
         received cursors in order to receive the next sub list of team devices"
     include_web_sessions Boolean = true
@@ -182,27 +182,27 @@ struct MemberDevices
     mobile_clients List(MobileClientSession)?
         "List of mobile clients by this team member"
 
-struct ListTeamDevicesResult
+struct ListMembersDevicesResult
     devices List(MemberDevices)
         "The devices of each member of the team"
     has_more Boolean
         "If true, then there are more devices available. Pass the
-        cursor to :route:`devices/list_team_devices` to retrieve the rest."
+        cursor to :route:`devices/list_members_devices` to retrieve the rest."
     cursor String?
-        "Pass the cursor into :route:`devices/list_team_devices` to receive the next
+        "Pass the cursor into :route:`devices/list_members_devices` to receive the next
         sub list of team's devices."
 
-union ListTeamDevicesError
+union ListMembersDevicesError
     reset
         "Indicates that the cursor has been invalidated. Call
-        :route:`devices/list_team_devices` again with an empty cursor to obtain a new cursor."
+        :route:`devices/list_members_devices` again with an empty cursor to obtain a new cursor."
     other*
         "An unspecified error."
 
 #
-# Route: devices/list_team_devices
+# Route: devices/list_members_devices
 #
-route devices/list_team_devices(ListTeamDevicesArg, ListTeamDevicesResult, ListTeamDevicesError)
+route devices/list_members_devices(ListMembersDevicesArg, ListMembersDevicesResult, ListMembersDevicesError)
     "List all device sessions of a team."
 
     attrs
@@ -276,6 +276,46 @@ union RevokeDeviceSessionBatchError
 
 route devices/revoke_device_session_batch(RevokeDeviceSessionBatchArg, RevokeDeviceSessionBatchResult, RevokeDeviceSessionBatchError)
     "Revoke a list of device sessions of team members"
+
+    attrs
+        auth="team"
+
+
+#
+# Deprecated endpoints
+#
+
+struct ListTeamDevicesArg
+    cursor String?
+        "At the first call to the :route:`devices/list_team_devices` the cursor shouldn't be passed.
+        Then, if the result of the call includes a cursor, the following requests should include the
+        received cursors in order to receive the next sub list of team devices"
+    include_web_sessions Boolean = true
+        "Whether to list web sessions of the team members"
+    include_desktop_clients Boolean = true
+        "Whether to list desktop clients of the team members"
+    include_mobile_clients Boolean = true
+        "Whether to list mobile clients of the team members"
+
+struct ListTeamDevicesResult
+    devices List(MemberDevices)
+        "The devices of each member of the team"
+    has_more Boolean
+        "If true, then there are more devices available. Pass the
+        cursor to :route:`devices/list_team_devices` to retrieve the rest."
+    cursor String?
+        "Pass the cursor into :route:`devices/list_team_devices` to receive the next
+        sub list of team's devices."
+
+union ListTeamDevicesError
+    reset
+        "Indicates that the cursor has been invalidated. Call
+        :route:`devices/list_team_devices` again with an empty cursor to obtain a new cursor."
+    other*
+        "An unspecified error."
+
+route devices/list_team_devices(ListTeamDevicesArg, ListTeamDevicesResult, ListTeamDevicesError) deprecated by devices/list_members_devices
+    "List all device sessions of a team."
 
     attrs
         auth="team"

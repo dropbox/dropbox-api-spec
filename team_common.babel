@@ -9,7 +9,7 @@ struct GroupSummary
     group_id GroupId
     group_external_id String?
         "External ID of group. This is an arbitrary ID that an admin can attach to a group."
-    member_count UInt32
+    member_count UInt32?
         "The number of members in the group."
 
     example default

@@ -3,6 +3,7 @@ namespace files
 
 import common
 import users
+import properties
 
 alias Id = String(min_length=1)
 alias Path = String(pattern="/.*")
@@ -176,6 +177,16 @@ struct FileMetadata extends Metadata
         "Additional information if the file is a photo or video."
     sharing_info FileSharingInfo?
         "Set if this file is contained in a shared folder."
+    property_groups List(properties.PropertyGroup)?
+        "Additional information if the file has custom properties with the
+        property template specified."
+    has_explicit_shared_members Boolean?
+        "This flag will only be present if include_has_explicit_shared_members
+         is true in :route:`list_folder` or :route:`get_metadata`. If this
+         flag is present, it will be true if this file has any explicit shared
+         members. This is different from sharing_info in that this could be true
+         in the case where a file has explicit members but is not contained within
+         a shared folder."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
@@ -187,6 +198,8 @@ struct FileMetadata extends Metadata
         server_modified = "2015-05-12T15:50:38Z"
         rev = "a1c10ce0dd78"
         size = 7212
+        property_groups = [default]
+        has_explicit_shared_members = false
 
 struct FolderMetadata extends Metadata
     id Id
@@ -195,6 +208,9 @@ struct FolderMetadata extends Metadata
         "Deprecated. Please use :field:`sharing_info` instead."
     sharing_info FolderSharingInfo?
         "Set if the folder is contained in a shared folder or is a shared folder mount point."
+    property_groups List(properties.PropertyGroup)?
+        "Additional information if the file has custom properties with the
+        property template specified."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXz"
@@ -202,6 +218,7 @@ struct FolderMetadata extends Metadata
         path_display = "/Homework/math"
         name = "math"
         sharing_info = default
+        property_groups = [default]
 
 struct DeletedMetadata extends Metadata
     "Indicates that there used to be a file or folder at this path, but it no longer exists."
@@ -221,6 +238,12 @@ struct GetMetadataArg
         "The path of a file or folder on Dropbox."
     include_media_info Boolean = false
         "If true, :field:`FileMetadata.media_info` is set for photo and video."
+    include_deleted Boolean = false
+        "If true, :type:`DeletedMetadata` will be returned for deleted file or
+        folder, otherwise :field:`LookupError.not_found` will be returned."
+    include_has_explicit_shared_members Boolean = false
+        "If true, the results will include a flag for each file indicating whether or not
+         that file has any explicit members."
 
     example default
         path = "/Homework/math"
@@ -294,6 +317,9 @@ struct ListFolderArg
         "If true, :field:`FileMetadata.media_info` is set for photo and video."
     include_deleted Boolean = false
         "If true, the results will include entries for files and folders that used to exist but were deleted."
+    include_has_explicit_shared_members Boolean = false
+        "If true, the results will include a flag for each file indicating whether or not
+         that file has any explicit members."
 
     example default
         path = "/Homework/math"
@@ -419,6 +445,8 @@ union UploadSessionLookupError
     closed
         "You are attempting to append data to an upload session that
         has alread been closed (i.e. committed)."
+    not_closed
+        "The session must be closed before calling upload_session/finish_batch."
     other*
         "An unspecified error."
 
@@ -427,10 +455,21 @@ union UploadSessionFinishError
         "The session arguments are incorrect; the value explains the reason."
     path WriteError
         "Unable to save the uploaded contents to a file."
+    too_many_shared_folder_targets
+        "The batch request commits files into too many different shared folders.
+        Please limit your batch request to files contained in a single shared folder."
     other*
         "An unspecified error."
 
 # Req/Resp
+
+struct UploadSessionStartArg
+    close Boolean = false
+        "If true, current session will be closed. You cannot do
+        :route:`upload_session/append` any more to current session"
+
+    example with_close
+        close = true
 
 struct UploadSessionStartResult
     session_id String
@@ -441,7 +480,7 @@ struct UploadSessionStartResult
     example default
         session_id = "1234faaf0678bcde"
 
-route upload_session/start (Void, UploadSessionStartResult, Void)
+route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Void)
     "Upload sessions allow you to upload a single file using multiple requests.
     This call starts a new upload session with the given data.  You can
     then use :route:`upload_session/append` to add more data and
@@ -452,6 +491,28 @@ route upload_session/start (Void, UploadSessionStartResult, Void)
     attrs
         host="content"
         style="upload"
+
+struct UploadSessionAppendArg
+    cursor UploadSessionCursor
+        "Contains the upload session ID and the offset."
+    close Boolean = false
+        "If true, current session will be closed. You cannot do
+        :route:`upload_session/append` any more to current session"
+
+    example default
+        cursor = default
+
+route upload_session/append_v2 (UploadSessionAppendArg, Void, UploadSessionLookupError)
+    "Append more data to an upload session.
+
+    When the parameter close is set, this call will close the session.
+
+    A single request should not upload more than 150 MB of file contents."
+
+    attrs
+        host="content"
+        style="upload"
+
 
 struct UploadSessionCursor
     session_id String
@@ -465,7 +526,7 @@ struct UploadSessionCursor
         session_id = "1234faaf0678bcde"
         offset = 0
 
-route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError)
+route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError) deprecated by upload_session/append_v2
     "Append more data to an upload session.
 
     A single request should not upload more than 150 MB of file contents."
@@ -660,7 +721,9 @@ union SearchError
         "An unspecified error."
 
 route search (SearchArg, SearchResult, SearchError)
-    "Searches for files and folders."
+    "Searches for files and folders.
+
+    Note: Recent changes may not immediately be reflected in search results due to a short delay in indexing."
 
 #
 # Errors shared by various operations
@@ -961,3 +1024,103 @@ union RestoreError
 
 route restore(RestoreArg, FileMetadata, RestoreError)
     "Restore a file to a specific revision"
+
+
+#
+# Temporary link
+#
+
+struct GetTemporaryLinkArg
+    path ReadPath
+        "The path to the file you want a temporary link to."
+
+    example default
+        path = "/video.mp4"
+
+struct GetTemporaryLinkResult
+    metadata FileMetadata
+        "Metadata of the file."
+    link String
+        "The temporary link which can be used to stream content the file."
+
+    example default
+        metadata = default
+        link = "https://dl.dropboxusercontent.com/apitl/1/YXNkZmFzZGcyMzQyMzI0NjU2NDU2NDU2"
+
+union GetTemporaryLinkError
+    path LookupError
+
+    other*
+
+route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTemporaryLinkError)
+    "Get a temporary link to stream content of a file. This link will expire in four hours and
+    afterwards you will get 410 Gone. Content-Type of the link is determined automatically by
+    the file's mime type."
+
+
+#
+# Copy reference
+#
+
+struct GetCopyReferenceArg
+    path ReadPath
+        "The path to the file or folder you want to get a copy reference to."
+
+    example default
+        path = "/video.mp4"
+
+struct GetCopyReferenceResult
+    metadata Metadata
+        "Metadata of the file or folder."
+    copy_reference String
+        "A copy reference to the file or folder."
+    expires common.DropboxTimestamp
+        "The expiration date of the copy reference. This value is currently set to be
+        far enough in the future so that expiration is effectively not an issue."
+
+    example default
+        metadata = default
+        copy_reference = "z1X6ATl6aWtzOGq0c3g5Ng"
+        expires = "2045-05-12T15:50:38Z"
+
+union GetCopyReferenceError
+    path LookupError
+    other*
+
+route copy_reference/get(GetCopyReferenceArg, GetCopyReferenceResult, GetCopyReferenceError)
+    "Get a copy reference to a file or folder. This reference string can be used to
+    save that file or folder to another user's Dropbox by passing it to
+    :route:`copy_reference/save`."
+
+struct SaveCopyReferenceArg
+    copy_reference String
+        "A copy reference returned by :route:`copy_reference/get`."
+
+    path Path
+        "Path in the user's Dropbox that is the destination."
+
+    example default
+        copy_reference = "z1X6ATl6aWtzOGq0c3g5Ng"
+        path = "/video.mp4"
+
+struct SaveCopyReferenceResult
+    metadata Metadata
+        "The metadata of the saved file or folder in the user's Dropbox."
+
+    example default
+        metadata = default
+
+union SaveCopyReferenceError
+    path WriteError
+    invalid_copy_reference
+        "The copy reference is invalid."
+    no_permission
+        "The app has no permission to access another user's Dropbox."
+    not_found
+        "The file referenced by the copy reference cannot be found."
+    too_many_files
+        "The operation would involve more than 10,000 files and folders."
+    other*
+
+route copy_reference/save(SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCopyReferenceError)
+    "Save a copy reference returned by :route:`copy_reference/get` to the user's Dropbox."

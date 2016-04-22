@@ -170,8 +170,8 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
 
     Permission : Team information
 
-    This endpoint will return an empty member_info item, for IDs (or emails) that cannot
-    be matched to a valid team member."
+    This endpoint will return :field:`MembersGetInfoItem.id_not_found`,
+    for IDs (or emails) that cannot be matched to a valid team member."
 
     attrs
         auth="team"
