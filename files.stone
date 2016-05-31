@@ -1,17 +1,18 @@
 namespace files
     "This namespace contains endpoints and data types for basic file operations."
 
+import async
 import common
 import users
 import properties
 
 alias Id = String(min_length=1)
-alias Path = String(pattern="/.*")
-alias PathOrId = String(pattern="(/|id:).*")
-alias PathR = String(pattern="(/.*)?")               # A path that can be the root path ("").
+alias Path = String(pattern="/(.|[\\r\\n])*")
+alias PathOrId = String(pattern="/(.|[\\r\\n])*|id:.*")
+alias PathR = String(pattern="(/(.|[\\r\\n])*)?")               # A path that can be the root path ("").
 alias Rev = String(min_length=9, pattern="[0-9a-f]+") # TODO: Change pattern to "rev:[0-9a-f]{9,}"
 alias ListFolderCursor = String(min_length=1)
-alias ReadPath = String(pattern="((/|id:).*)|(rev:[0-9a-f]{9,})")
+alias ReadPath = String(pattern="(/(.|[\\r\\n])*|id:.*)|(rev:[0-9a-f]{9,})")
 
 #
 # Metadata definitions and route
@@ -282,7 +283,7 @@ struct ListFolderLongpollArg
 struct ListFolderLongpollResult
     changes Boolean
         "Indicates whether new changes are available. If true, call
-        :route:`list_folder` to retrieve the changes."
+        :route:`list_folder/continue` to retrieve the changes."
     backoff UInt64?
         "If present, backoff for at least this many seconds before calling
         :route:`list_folder/longpoll` again."
@@ -298,10 +299,11 @@ union ListFolderLongpollError
 
 route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, ListFolderLongpollError)
     "A longpoll endpoint to wait for changes on an account. In conjunction with
-    :route:`list_folder`, this call gives you a low-latency way to monitor an
-    account for file changes. The connection will block until there are changes
-    available or a timeout occurs. This endpoint is useful mostly for client-side
-    apps. If you're looking for server-side notifications, check out our
+    :route:`list_folder/continue`, this call gives you a low-latency way to
+    monitor an account for file changes. The connection will block until there
+    are changes available or a timeout occurs. This endpoint is useful mostly
+    for client-side apps. If you're looking for server-side notifications,
+    check out our
     :link:`webhooks documentation https://www.dropbox.com/developers/reference/webhooks`."
     attrs
         host="notify"
@@ -1025,7 +1027,6 @@ union RestoreError
 route restore(RestoreArg, FileMetadata, RestoreError)
     "Restore a file to a specific revision"
 
-
 #
 # Temporary link
 #
@@ -1124,3 +1125,48 @@ union SaveCopyReferenceError
 
 route copy_reference/save(SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCopyReferenceError)
     "Save a copy reference returned by :route:`copy_reference/get` to the user's Dropbox."
+
+#
+# Save URL
+#
+
+struct SaveUrlArg
+    path Path
+        "The path in Dropbox where the URL will be saved to."
+    url String
+        "The URL to be saved."
+
+    example default
+        path = "/a.txt"
+        url = "http://example.com/a.txt"
+
+union SaveUrlResult extends async.LaunchResultBase
+    complete FileMetadata
+        "Metadata of the file where the URL is saved to."
+
+union SaveUrlError
+    path WriteError
+    download_failed
+        "Failed downloading the given URL."
+    invalid_url
+        "The given URL is invalid."
+    not_found
+        "The file where the URL is saved to no longer exists."
+    other*
+
+route save_url(SaveUrlArg, SaveUrlResult, SaveUrlError)
+    "Save a specified URL into a file in user's Dropbox. If the given path already
+    exists, the file will be renamed to avoid the conflict (e.g. myfile (1).txt)."
+
+#
+# Save URL Job
+#
+
+union SaveUrlJobStatus extends async.PollResultBase
+    complete FileMetadata
+        "Metadata of the file where the URL is saved to."
+    failed SaveUrlError
+
+route save_url/check_job_status(async.PollArg, SaveUrlJobStatus, async.PollError)
+    "Check the status of a :route:`save_url` job."
+

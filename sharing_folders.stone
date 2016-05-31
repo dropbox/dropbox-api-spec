@@ -5,7 +5,7 @@ namespace sharing
 import async
 import common
 import files
-import team
+import team_common
 import users
 
 alias DropboxId = String(min_length=1)
@@ -21,6 +21,9 @@ union AccessLevel
         "The collaborator can both view and edit the shared folder."
     viewer
         "The collaborator can only view the shared folder."
+    viewer_no_comment
+        "The collaborator can only view the shared folder and does
+        not have any access to comments."
     other*
 
 struct FolderPolicy
@@ -232,12 +235,14 @@ struct InviteeMembershipInfo extends MembershipInfo
         access_type = viewer
         permissions = []
 
-struct GroupInfo extends team.GroupSummary
+struct GroupInfo extends team_common.GroupSummary
     "The information about a group. Groups is a way to manage a list of users
      who need same access permission to the shared folder."
 
-    group_type team.GroupType
+    group_type team_common.GroupType
         "The type of group."
+    is_owner Boolean
+        "If the current user is an owner of the group."
     same_team Boolean
         "If the group is owned by the current user's team."
 
@@ -246,6 +251,7 @@ struct GroupInfo extends team.GroupSummary
         group_id = "g:e2db7665347abcd600000000001a2b3c"
         member_count = 10
         group_type = user_managed
+        is_owner = false
         same_team = true
 
 struct GroupMembershipInfo extends MembershipInfo
@@ -544,8 +550,8 @@ union SharePathError
     inside_public_folder
         "A folder inside a public folder can't be shared this way. Use a public
         link instead."
-    already_shared
-        "Folder is already shared."
+    already_shared SharedFolderMetadata
+        "Folder is already shared. Contains metadata about the existing shared folder."
     invalid_path
         "Path is not valid."
     is_osx_package
@@ -575,13 +581,13 @@ route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollErro
 
     Apps must have full Dropbox access to use this endpoint."
 
-# --
-
 union JobStatus extends async.PollResultBase
     complete
         "The asynchronous job has finished."
     failed JobError
         "The asynchronous job returned an error."
+
+# --
 
 union SharedFolderMemberError
     invalid_dropbox_id
@@ -598,6 +604,8 @@ union JobError
         "Error occurred while performing :route:`unshare_folder` action."
     remove_folder_member_error RemoveFolderMemberError
         "Error occurred while performing :route:`remove_folder_member` action."
+    relinquish_folder_membership_error RelinquishFolderMembershipError
+        "Error occurred while performing :route:`relinquish_folder_membership` action."
     other*
 
 route check_job_status(async.PollArg, JobStatus, async.PollError)
@@ -661,7 +669,7 @@ union TransferFolderError
     new_owner_not_a_member
         "The new designated owner is not currently a member of the shared folder."
     new_owner_unmounted
-        "The new designated owner does not have the shared folder mounted."
+        "The new designated owner has not added the folder to their Dropbox."
     new_owner_email_unverified
         "The new designated owner's e-mail address is unverified."
     team_folder
@@ -962,19 +970,24 @@ union UnmountFolderError
 
 # --
 
-route relinquish_folder_membership(RelinquishFolderMembershipArg, Void, RelinquishFolderMembershipError)
+route relinquish_folder_membership(RelinquishFolderMembershipArg, async.LaunchEmptyResult, RelinquishFolderMembershipError)
     "The current user relinquishes their membership in the designated shared
     folder and will no longer have access to the folder.  A folder owner cannot
     relinquish membership in their own folder.
 
+    This will run synchronously if leave_a_copy is false, and asynchronously
+    if leave_a_copy is true.
     Apps must have full Dropbox access to use this endpoint."
 
 struct RelinquishFolderMembershipArg
     shared_folder_id common.SharedFolderId
         "The ID for the shared folder."
+    leave_a_copy Boolean = false
+        "Keep a copy of the folder's contents upon relinquishing membership."
 
     example default
         shared_folder_id = "84528192421"
+        leave_a_copy = false
 
 union RelinquishFolderMembershipError
     access_error SharedFolderAccessError

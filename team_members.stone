@@ -3,6 +3,7 @@ namespace team
 import async
 import users
 import common
+import team_common
 
 union AdminTier
     "Describes which team-related admin permissions a user has."
@@ -26,7 +27,7 @@ union AdminTier
 struct TeamMemberProfile extends MemberProfile
     "Profile of a user as a member of a team."
 
-    groups List(GroupId)
+    groups List(team_common.GroupId)
         "List of group IDs of groups that the user belongs to."
 
     example default
@@ -37,6 +38,7 @@ struct TeamMemberProfile extends MemberProfile
         status = active
         name = default
         groups = ["g:e2db7665347abcd600000000001a2b3c"]
+        membership_type = full
 
 union MemberSelectorError extends UserSelectorError
     user_not_in_team
@@ -448,12 +450,16 @@ struct MembersRemoveArg extends MembersDeactivateArg
         "If provided, errors during the transfer process will be sent via
         email to this user. If the transfer_dest_id argument was provided,
         then this argument must be provided as well."
+    keep_account Boolean = false
+        "Downgrade the member to a Basic account. The user will retain the email address associated with their Dropbox
+         account and data in their account that is not restricted to team members."
 
     example default
         user = default
         wipe_data = true
         transfer_dest_id = default
         transfer_admin_id = default
+        keep_account = true
 
 union MembersDeactivateError extends UserSelectorError
     user_not_in_team
@@ -480,6 +486,10 @@ union MembersRemoveError extends MembersDeactivateError
         "The transfer_admin_id argument must be provided when file transfer is requested."
     transfer_admin_is_not_admin
         "Specified transfer_admin user is not a team admin."
+    cannot_keep_account_and_transfer
+        "Cannot keep account and transfer the data to another user at the same time."
+    cannot_keep_account_and_delete_data
+        "Cannot keep account and delete the data at the same time."
 
 route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveError)
     "Removes a member from a team.

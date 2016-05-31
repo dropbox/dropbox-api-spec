@@ -1,4 +1,4 @@
-namespace team
+namespace team_common
 
 alias GroupId = String
 
@@ -16,6 +16,29 @@ struct GroupSummary
         group_name = "Test group"
         group_id = "g:e2db7665347abcd600000000001a2b3c"
         member_count = 10
+
+
+struct AlphaGroupSummary extends GroupSummary
+    "Information about a group."
+
+    group_management_type GroupManagementType
+        "Who is allowed to manage the group."
+
+    example default
+        group_name = "Test group"
+        group_id = "g:e2db7665347abcd600000000001a2b3c"
+        member_count = 10
+        group_management_type = user_managed
+
+union GroupManagementType
+    "The group type determines how a group is managed."
+
+    company_managed
+        "A group which is managed by team admins only."
+    user_managed
+        "A group which is managed by selected users."
+    other*
+
 
 union GroupType
     "The group type determines how a group is created and managed."

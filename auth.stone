@@ -7,6 +7,8 @@ union AuthError
         "The access token is invalid."
     invalid_select_user
         "The user specified in 'Dropbox-API-Select-User' is no longer on the team."
+    invalid_select_admin
+        "The user specified in 'Dropbox-API-Select-Admin' is not a Dropbox Business team admin."
     other*
         "An unspecified error."
 

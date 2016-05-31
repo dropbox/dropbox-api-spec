@@ -1,0 +1,15 @@
+namespace stone_cfg
+
+struct Route
+
+    auth String = "user"
+        "The auth type for the route. Valid values: user, team, app, noauth."
+    host String = "meta"
+        "The server to make the request to. Valid values: meta, content,
+        and notify."
+    style String = "rpc"
+        "The RPC format to use for the request. Valid values: rpc, download,
+        and upload."
+    alpha_group String?
+        "Set if the route is part of an alpha release to the name of the
+        feature."

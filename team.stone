@@ -27,6 +27,11 @@ union TeamMemberStatus
         "User is no longer a member of the team, but the account can be un-suspended,
         re-establishing the user as a team member."
 
+union TeamMembershipType
+    full
+        "User uses a license and has full access to team resources like the shared quota."
+    limited
+        "User does not have access to the shared quota and team admins have restricted administrative control."
 
 struct MemberProfile
     "Basic member profile."
@@ -45,6 +50,8 @@ struct MemberProfile
         "The user's status as a member of a specific team."
     name users.Name
         "Representations for a person's name."
+    membership_type TeamMembershipType
+        "The user's membership type: full (normal team member) vs limited (does not use a license; no access to the team's shared quota)."
 
     example default
         team_member_id = "dbmid:1234567"
@@ -52,6 +59,7 @@ struct MemberProfile
         email_verified = true
         status = active
         name = default
+        membership_type = full
 
 union UserSelectorArg
     "Argument for selecting a single user, either by team_member_id, external_id or email."

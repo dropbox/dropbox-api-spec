@@ -1,6 +1,7 @@
 namespace team
 
 import async
+import team_common
 
 #
 # Common types.
@@ -12,16 +13,15 @@ union GroupAccessType
     member
         "User is a member of the group, but has no special permissions."
     owner
-        "A group owner can rename the group, and add/remove members."
+        "User can rename the group, and add/remove members."
 
     example default
         member = null
 
-
 union GroupSelector
     "Argument for selecting a single group, either by group_id or by external group ID."
 
-    group_id GroupId
+    group_id team_common.GroupId
         "Group ID."
     group_external_id String
         "External ID of the group."
@@ -40,10 +40,13 @@ union GroupSelectorError
 union GroupsSelector
     "Argument for selecting a list of groups, either by group_ids, or external group IDs."
 
-    group_ids List(GroupId)
+    group_ids List(team_common.GroupId)
         "List of group IDs."
     group_external_ids List(String)
         "List of external IDs of groups."
+
+    example default
+        group_ids = ["g:e2db7665347abcd600000000001a2b3c", "g:111111147abcd6000000000222222c"]
 
 
 struct GroupMemberSelector
@@ -108,7 +111,25 @@ struct GroupMemberInfo
         profile = default
         access_type = default
 
-struct GroupFullInfo extends GroupSummary
+
+
+struct AlphaGroupFullInfo extends team_common.AlphaGroupSummary
+    "Full description of a group."
+
+    members List(GroupMemberInfo)?
+        "List of group members."
+    created UInt64
+        "The group creation time as a UTC timestamp in milliseconds since the Unix epoch."
+
+    example default
+        group_name = "project launch"
+        group_id = "g:e2db7665347abcd600000000001a2b3c"
+        member_count = 5
+        members = [default]
+        group_management_type = user_managed
+        created = 1447255518000
+
+struct GroupFullInfo extends team_common.GroupSummary
     "Full description of a group."
 
     members List(GroupMemberInfo)?
@@ -136,7 +157,7 @@ struct GroupsListArg
 
 
 struct GroupsListResult
-    groups List(GroupSummary)
+    groups List(team_common.GroupSummary)
     cursor String
         "Pass the cursor into :route:`groups/list/continue` to obtain the additional groups."
     has_more Boolean
@@ -155,6 +176,32 @@ route groups/list(GroupsListArg, GroupsListResult, Void)
 
     attrs
         auth="team"
+
+#
+# route alpha/groups/list
+#
+
+struct AlphaGroupsListResult
+    groups List(team_common.AlphaGroupSummary)
+    cursor String
+        "Pass the cursor into :route:`alpha/groups/list/continue` to obtain the additional groups."
+    has_more Boolean
+        "Is true if there are additional groups that have not been returned
+        yet. An additional call to :route:`alpha/groups/list/continue` can retrieve them."
+
+    example default
+        groups = [default]
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+        has_more = false
+
+route alpha/groups/list(GroupsListArg, AlphaGroupsListResult, Void)
+    "Lists groups on a team.
+
+    Permission : Team Information"
+
+    attrs
+        auth="team"
+        alpha_group="managed_groups"
 
 #
 # route groups/list/continue
@@ -182,6 +229,21 @@ route groups/list/continue(GroupsListContinueArg, GroupsListResult, GroupsListCo
 
     attrs
         auth="team"
+
+
+#
+# route alpha/groups/list/continue
+#
+
+route alpha/groups/list/continue(GroupsListContinueArg, AlphaGroupsListResult, GroupsListContinueError)
+    "Once a cursor has been retrieved from :route:`alpha/groups/list`, use this to paginate
+    through all groups.
+
+    Permission : Team information"
+
+    attrs
+        auth="team"
+        alpha_group="managed_groups"
 
 #
 # route groups/get_info
@@ -215,6 +277,34 @@ route groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
     attrs
         auth="team"
 
+#
+# route alpha/groups/get_info
+#
+
+union AlphaGroupsGetInfoItem
+    id_not_found String
+        "An ID that was provided as a parameter to :route:`alpha/groups/get_info`, and
+        did not match a corresponding group. The ID can be a group ID, or an external ID,
+        depending on how the method was called."
+    group_info AlphaGroupFullInfo
+        "Info about a group."
+
+    example default
+        group_info = default
+
+
+alias AlphaGroupsGetInfoResult = List(AlphaGroupsGetInfoItem)
+
+
+route alpha/groups/get_info(GroupsSelector, AlphaGroupsGetInfoResult, GroupsGetInfoError)
+    "Retrieves information about one or more groups.
+
+    Permission : Team Information"
+
+    attrs
+        auth="team"
+        alpha_group="managed_groups"
+
 
 ##########################
 # Group management methods
@@ -229,7 +319,7 @@ struct GroupCreateArg
     group_name String
         "Group name."
     group_external_id String?
-        "Optional argument. The creator of a team can associate an arbitrary external ID to the group."
+        "The creator of a team can associate an arbitrary external ID to the group."
 
     example default
         group_name = "Europe sales"
@@ -252,6 +342,31 @@ route groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
 
     attrs
         auth="team"
+
+
+#
+# route alpha/groups/create
+#
+
+struct AlphaGroupCreateArg extends GroupCreateArg
+
+    group_management_type team_common.GroupManagementType = company_managed
+        "Whether the team can be managed by selected users, or only by team admins"
+
+    example default
+        group_name = "Europe sales"
+        group_external_id = "group-134"
+
+
+route alpha/groups/create(AlphaGroupCreateArg, AlphaGroupFullInfo, GroupCreateError)
+    "Creates a new, empty group, with a requested name.
+
+    Permission : Team member management"
+
+    attrs
+        auth="team"
+        alpha_group="managed_groups"
+
 
 #
 # route groups/delete  (async method)
@@ -304,6 +419,32 @@ route groups/update(GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
 
     attrs
         auth="team"
+
+
+#
+# route alpha/groups/update
+#
+
+struct AlphaGroupUpdateArgs extends GroupUpdateArgs
+    new_group_management_type team_common.GroupManagementType?
+        "Set new group management type, if provided."
+
+    example default
+        group = default
+        new_group_name = "Europe west sales"
+        new_group_external_id = "sales-234"
+        new_group_management_type = company_managed
+
+
+route alpha/groups/update(AlphaGroupUpdateArgs, AlphaGroupFullInfo, GroupUpdateError)
+    "Updates a group's name, external ID or management type.
+
+    Permission : Team member management"
+
+    attrs
+        auth="team"
+        alpha_group="managed_groups"
+
 
 #
 # Structures common to groups/members/add and  groups/members/remove
@@ -363,7 +504,7 @@ union GroupMembersAddError extends GroupSelectorError
     users_not_found List(String)
         "These users were not found in Dropbox."
     user_must_be_active_to_be_owner
-        "A suspended user cannot be added to a group as owner."
+        "A suspended user cannot be added to a group as :field:`GroupAccessType.owner`."
     user_cannot_be_manager_of_company_managed_group List(String)
         "A company-managed group cannot be managed by a user."
 
@@ -437,6 +578,69 @@ route groups/members/set_access_type(GroupMembersSetAccessTypeArg, GroupsGetInfo
     "Sets a member's access type in a group.
 
     Permission : Team member management"
+
+    attrs
+        auth="team"
+
+
+#
+# route groups/members/list
+#
+
+struct GroupsMembersListArg
+    group GroupSelector
+        "The group whose members are to be listed."
+    limit UInt32(min_value=1, max_value=1000) = 1000
+        "Number of results to return per call."
+
+    example default
+        group = default
+        limit = 100
+
+struct GroupsMembersListResult
+    members List(GroupMemberInfo)
+    cursor String
+        "Pass the cursor into :route:`groups/members/list/continue` to obtain additional group members."
+    has_more Boolean
+        "Is true if there are additional group members that have not been returned
+        yet. An additional call to :route:`groups/members/list/continue` can retrieve them."
+
+    example default
+        members = []
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+        has_more = false
+
+
+route groups/members/list(GroupsMembersListArg, GroupsMembersListResult, GroupSelectorError)
+    "Lists members of a group.
+
+    Permission : Team Information"
+
+    attrs
+        auth="team"
+
+#
+# route groups/members/list/continue
+#
+
+struct GroupsMembersListContinueArg
+    cursor String
+        "Indicates from what point to get the next set of groups."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+union GroupsMembersListContinueError
+    invalid_cursor
+        "The cursor is invalid."
+    other*
+        "An unspecified error."
+
+route groups/members/list/continue(GroupsMembersListContinueArg, GroupsMembersListResult, GroupsMembersListContinueError)
+    "Once a cursor has been retrieved from :route:`groups/members/list`, use this to paginate
+    through all members of the group.
+
+    Permission : Team information"
 
     attrs
         auth="team"
