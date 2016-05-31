@@ -4,8 +4,8 @@ struct Route
 
     auth String = "user"
         "The auth type for the route. Valid values: user, team, app, noauth."
-    host String = "meta"
-        "The server to make the request to. Valid values: meta, content,
+    host String = "api"
+        "The server to make the request to. Valid values: api, content,
         and notify."
     style String = "rpc"
         "The RPC format to use for the request. Valid values: rpc, download,
