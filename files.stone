@@ -12,7 +12,7 @@ alias PathOrId = String(pattern="/(.|[\\r\\n])*|id:.*")
 alias PathR = String(pattern="(/(.|[\\r\\n])*)?")               # A path that can be the root path ("").
 alias Rev = String(min_length=9, pattern="[0-9a-f]+") # TODO: Change pattern to "rev:[0-9a-f]{9,}"
 alias ListFolderCursor = String(min_length=1)
-alias ReadPath = String(pattern="(/(.|[\\r\\n])*|id:.*)|(rev:[0-9a-f]{9,})")
+alias ReadPath = String(pattern="(/(.|[\\r\\n])*|id:.*)|(rev:[0-9a-f]{9,})|(ns:[0-9]+(/.*)?)")
 
 #
 # Metadata definitions and route
@@ -29,14 +29,15 @@ struct Metadata
     name String
         "The last component of the path (including extension).
         This never contains a slash."
-    path_lower String
-        "The lowercased full path in the user's Dropbox.
-        This always starts with a slash."
-    path_display String
+    path_lower String?
+        "The lowercased full path in the user's Dropbox. This always starts with a slash.
+        This field will be null if the file or folder is not mounted."
+    path_display String?
         "The cased path to be used for display purposes only. In rare instances
         the casing will not correctly match the user's filesystem, but this
         behavior will match the path provided in the Core API v1.
-        Changes to the casing of paths won't be returned by :route:`list_folder/continue`"
+        Changes to the casing of paths won't be returned by :route:`list_folder/continue`.
+        This field will be null if the file or folder is not mounted."
     parent_shared_folder_id common.SharedFolderId?
         "Deprecated. Please use :field:`FileSharingInfo.parent_shared_folder_id`
         or :field:`FolderSharingInfo.parent_shared_folder_id` instead."
@@ -260,6 +261,9 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
 
     Note: Metadata for the root folder is unsupported."
 
+    attrs
+        owner = "dev-plat"
+
 #
 # List folder routes
 #
@@ -306,8 +310,9 @@ route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, Lis
     check out our
     :link:`webhooks documentation https://www.dropbox.com/developers/reference/webhooks`."
     attrs
-        host="notify"
-        auth="noauth"
+        host = "notify"
+        auth = "noauth"
+        owner = "dev-plat"
 
 struct ListFolderArg
     path PathR
@@ -369,6 +374,9 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
     "Once a cursor has been retrieved from :route:`list_folder`, use this to
     paginate through all files and retrieve updates to the folder."
 
+    attrs
+        owner = "dev-plat"
+
 struct ListFolderGetLatestCursorResult
     cursor ListFolderCursor
         "Pass the cursor into :route:`list_folder/continue` to see what's
@@ -382,6 +390,9 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
     :route:`list_folder/get_latest_cursor` doesn't return any entries. This endpoint is for app
     which only needs to know about new files and modifications and doesn't need to know about
     files that already exist in Dropbox."
+
+    attrs
+        owner = "dev-plat"
 
 #
 # Download
@@ -411,8 +422,9 @@ route download (DownloadArg, FileMetadata, DownloadError)
     "Download a file from a user's Dropbox."
 
     attrs
-        host="content"
-        style="download"
+        host = "content"
+        style = "download"
+        owner = "dev-plat"
 
 #
 # Upload Routes
@@ -467,8 +479,9 @@ union UploadSessionFinishError
 
 struct UploadSessionStartArg
     close Boolean = false
-        "If true, current session will be closed. You cannot do
-        :route:`upload_session/append` any more to current session"
+        "If true, the current session will be closed, at which point
+        you won't be able to call :route:`upload_session/append_v2`
+        anymore with the current session."
 
     example with_close
         close = true
@@ -476,7 +489,7 @@ struct UploadSessionStartArg
 struct UploadSessionStartResult
     session_id String
         "A unique identifier for the upload session. Pass this to
-        :route:`upload_session/append` and
+        :route:`upload_session/append_v2` and
         :route:`upload_session/finish`."
 
     example default
@@ -485,21 +498,23 @@ struct UploadSessionStartResult
 route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Void)
     "Upload sessions allow you to upload a single file using multiple requests.
     This call starts a new upload session with the given data.  You can
-    then use :route:`upload_session/append` to add more data and
+    then use :route:`upload_session/append_v2` to add more data and
     :route:`upload_session/finish` to save all the data to a file in Dropbox.
 
     A single request should not upload more than 150 MB of file contents."
 
     attrs
-        host="content"
-        style="upload"
+        host = "content"
+        style = "upload"
+        owner = "dev-plat"
 
 struct UploadSessionAppendArg
     cursor UploadSessionCursor
         "Contains the upload session ID and the offset."
     close Boolean = false
-        "If true, current session will be closed. You cannot do
-        :route:`upload_session/append` any more to current session"
+        "If true, the current session will be closed, at which point
+        you won't be able to call :route:`upload_session/append_v2`
+        anymore with the current session."
 
     example default
         cursor = default
@@ -512,8 +527,9 @@ route upload_session/append_v2 (UploadSessionAppendArg, Void, UploadSessionLooku
     A single request should not upload more than 150 MB of file contents."
 
     attrs
-        host="content"
-        style="upload"
+        host = "content"
+        style = "upload"
+        owner = "dev-plat"
 
 
 struct UploadSessionCursor
@@ -534,8 +550,9 @@ route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError
     A single request should not upload more than 150 MB of file contents."
 
     attrs
-        host="content"
-        style="upload"
+        host = "content"
+        style = "upload"
+        owner = "dev-plat"
 
 union WriteMode
     "Your intent when writing a file to some path. This is used to determine
@@ -623,8 +640,9 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
     A single request should not upload more than 150 MB of file contents."
 
     attrs
-        host="content"
-        style="upload"
+        host = "content"
+        style = "upload"
+        owner = "dev-plat"
 
 route upload (CommitInfo, FileMetadata, UploadError)
     "Create a new file with the contents provided in the request.
@@ -633,8 +651,9 @@ route upload (CommitInfo, FileMetadata, UploadError)
     upload session with :route:`upload_session/start`."
 
     attrs
-        host="content"
-        style="upload"
+        host = "content"
+        style = "upload"
+        owner = "dev-plat"
 
 #
 # Search
@@ -727,6 +746,9 @@ route search (SearchArg, SearchResult, SearchError)
 
     Note: Recent changes may not immediately be reflected in search results due to a short delay in indexing."
 
+    attrs
+        owner = "dev-plat"
+
 #
 # Errors shared by various operations
 #
@@ -784,6 +806,9 @@ union CreateFolderError
 route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError)
     "Create a folder at a given path."
 
+    attrs
+        owner = "dev-plat"
+
 #
 # Delete
 #
@@ -808,6 +833,9 @@ route delete (DeleteArg, Metadata, DeleteError)
     A successful response indicates that the file or folder was deleted. The returned metadata will
     be the corresponding :type:`FileMetadata` or :type:`FolderMetadata` for the item at time of
     deletion, and not a :type:`DeletedMetadata` object."
+
+    attrs
+        owner = "dev-plat"
 
 route permanently_delete (DeleteArg, Void, DeleteError)
     "Permanently delete the file or folder at a given path
@@ -855,6 +883,9 @@ route copy (RelocationArg, Metadata, RelocationError)
 
     If the source path is a folder all its contents will be copied."
 
+    attrs
+        owner = "dev-plat"
+
 #
 # Move
 #
@@ -863,6 +894,9 @@ route move (RelocationArg, Metadata, RelocationError)
     "Move a file or folder to a different location in the user's Dropbox.
 
     If the source path is a folder all its contents will be moved."
+
+    attrs
+        owner = "dev-plat"
 
 #
 # Thumbnail
@@ -924,8 +958,9 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
     in size won't be converted to a thumbnail."
 
     attrs
-        host="content"
-        style="download"
+        host = "content"
+        style = "download"
+        owner = "dev-plat"
 
 #
 # Preview
@@ -963,8 +998,9 @@ route get_preview(PreviewArg, FileMetadata, PreviewError)
      .xls, .xlsx, .xlsm, .rtf"
 
     attrs
-        host="content"
-        style="download"
+        host = "content"
+        style = "download"
+        owner = "dev-plat"
 
 #
 # List revisions
@@ -1000,6 +1036,9 @@ struct ListRevisionsResult
 route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
     "Return revisions of a file"
 
+    attrs
+        owner = "dev-plat"
+
 #
 # Restore
 #
@@ -1026,6 +1065,9 @@ union RestoreError
 
 route restore(RestoreArg, FileMetadata, RestoreError)
     "Restore a file to a specific revision"
+
+    attrs
+        owner = "dev-plat"
 
 #
 # Temporary link
@@ -1058,6 +1100,8 @@ route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTempora
     afterwards you will get 410 Gone. Content-Type of the link is determined automatically by
     the file's mime type."
 
+    attrs
+        owner = "dev-plat"
 
 #
 # Copy reference
@@ -1093,6 +1137,9 @@ route copy_reference/get(GetCopyReferenceArg, GetCopyReferenceResult, GetCopyRef
     save that file or folder to another user's Dropbox by passing it to
     :route:`copy_reference/save`."
 
+    attrs
+        owner = "dev-plat"
+
 struct SaveCopyReferenceArg
     copy_reference String
         "A copy reference returned by :route:`copy_reference/get`."
@@ -1116,7 +1163,9 @@ union SaveCopyReferenceError
     invalid_copy_reference
         "The copy reference is invalid."
     no_permission
-        "The app has no permission to access another user's Dropbox."
+        "You don't have permission to save the given copy reference. Please make sure this app
+        is same app which created the copy reference and the source user is still linked to
+        the app."
     not_found
         "The file referenced by the copy reference cannot be found."
     too_many_files
@@ -1125,6 +1174,9 @@ union SaveCopyReferenceError
 
 route copy_reference/save(SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCopyReferenceError)
     "Save a copy reference returned by :route:`copy_reference/get` to the user's Dropbox."
+
+    attrs
+        owner = "dev-plat"
 
 #
 # Save URL
@@ -1158,6 +1210,9 @@ route save_url(SaveUrlArg, SaveUrlResult, SaveUrlError)
     "Save a specified URL into a file in user's Dropbox. If the given path already
     exists, the file will be renamed to avoid the conflict (e.g. myfile (1).txt)."
 
+    attrs
+        owner = "dev-plat"
+
 #
 # Save URL Job
 #
@@ -1170,3 +1225,5 @@ union SaveUrlJobStatus extends async.PollResultBase
 route save_url/check_job_status(async.PollArg, SaveUrlJobStatus, async.PollError)
     "Check the status of a :route:`save_url` job."
 
+    attrs
+        owner = "dev-plat"

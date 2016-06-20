@@ -63,7 +63,8 @@ struct GetStorageReport extends BaseDfbReport
 route reports/get_storage(DateRange, GetStorageReport, DateRangeError)
     "Retrieves reporting data about a team's storage usage."
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # get_activity
@@ -107,7 +108,8 @@ struct GetActivityReport extends BaseDfbReport
 route reports/get_activity(DateRange, GetActivityReport, DateRangeError)
     "Retrieves reporting data about a team's user activity."
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # get_membership
@@ -134,7 +136,8 @@ struct GetMembershipReport extends BaseDfbReport
 route reports/get_membership(DateRange, GetMembershipReport, DateRangeError)
     "Retrieves reporting data about a team's membership."
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # get_devices
@@ -180,5 +183,5 @@ struct GetDevicesReport extends BaseDfbReport
 route reports/get_devices(DateRange, GetDevicesReport, DateRangeError)
     "Retrieves reporting data about a team's linked devices."
     attrs
-        auth="team"
-
+        auth = "team"
+        owner = "adminx"

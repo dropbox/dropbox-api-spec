@@ -30,7 +30,7 @@ union GroupSelector
         group_id = "g:e2db7665347abcd600000000001a2b3c"
 
 union GroupSelectorError
-    "Error that can be raised when :type:`GroupSelector`is used."
+    "Error that can be raised when :type:`GroupSelector` is used."
 
     group_not_found
         "No matching group found. No groups match the specified group ID."
@@ -175,7 +175,8 @@ route groups/list(GroupsListArg, GroupsListResult, Void)
     Permission : Team Information"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # route alpha/groups/list
@@ -200,8 +201,9 @@ route alpha/groups/list(GroupsListArg, AlphaGroupsListResult, Void)
     Permission : Team Information"
 
     attrs
-        auth="team"
-        alpha_group="managed_groups"
+        auth = "team"
+        alpha_group = "managed_groups"
+        owner = "adminx"
 
 #
 # route groups/list/continue
@@ -228,7 +230,8 @@ route groups/list/continue(GroupsListContinueArg, GroupsListResult, GroupsListCo
     Permission : Team information"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -242,8 +245,9 @@ route alpha/groups/list/continue(GroupsListContinueArg, AlphaGroupsListResult, G
     Permission : Team information"
 
     attrs
-        auth="team"
-        alpha_group="managed_groups"
+        auth = "team"
+        alpha_group = "managed_groups"
+        owner = "adminx"
 
 #
 # route groups/get_info
@@ -275,7 +279,8 @@ route groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
     Permission : Team Information"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # route alpha/groups/get_info
@@ -302,8 +307,9 @@ route alpha/groups/get_info(GroupsSelector, AlphaGroupsGetInfoResult, GroupsGetI
     Permission : Team Information"
 
     attrs
-        auth="team"
-        alpha_group="managed_groups"
+        auth = "team"
+        alpha_group = "managed_groups"
+        owner = "adminx"
 
 
 ##########################
@@ -341,7 +347,8 @@ route groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -364,8 +371,9 @@ route alpha/groups/create(AlphaGroupCreateArg, AlphaGroupFullInfo, GroupCreateEr
     Permission : Team member management"
 
     attrs
-        auth="team"
-        alpha_group="managed_groups"
+        auth = "team"
+        alpha_group = "managed_groups"
+        owner = "adminx"
 
 
 #
@@ -387,7 +395,8 @@ route groups/delete(GroupSelector, async.LaunchEmptyResult, GroupDeleteError)
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # route groups/update
@@ -418,7 +427,8 @@ route groups/update(GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -442,8 +452,9 @@ route alpha/groups/update(AlphaGroupUpdateArgs, AlphaGroupFullInfo, GroupUpdateE
     Permission : Team member management"
 
     attrs
-        auth="team"
-        alpha_group="managed_groups"
+        auth = "team"
+        alpha_group = "managed_groups"
+        owner = "adminx"
 
 
 #
@@ -519,7 +530,8 @@ route groups/members/add(GroupMembersAddArg, GroupMembersChangeResult, GroupMemb
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # route groups/members/remove  (async method)
@@ -550,7 +562,8 @@ route groups/members/remove(GroupMembersRemoveArg, GroupMembersChangeResult, Gro
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # route groups/members/set_access_type
@@ -580,7 +593,8 @@ route groups/members/set_access_type(GroupMembersSetAccessTypeArg, GroupsGetInfo
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -617,7 +631,8 @@ route groups/members/list(GroupsMembersListArg, GroupsMembersListResult, GroupSe
     Permission : Team Information"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # route groups/members/list/continue
@@ -643,7 +658,8 @@ route groups/members/list/continue(GroupsMembersListContinueArg, GroupsMembersLi
     Permission : Team information"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # route groups/job_status/get
@@ -662,4 +678,5 @@ route groups/job_status/get(async.PollArg, async.PollEmptyResult, GroupsPollErro
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"

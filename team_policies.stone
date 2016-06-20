@@ -1,6 +1,6 @@
 namespace team_policies
 
-struct TeamPolicies
+struct TeamMemberPolicies
     "Policies governing team members."
 
     sharing TeamSharingPolicies

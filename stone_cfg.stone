@@ -13,3 +13,12 @@ struct Route
     alpha_group String?
         "Set if the route is part of an alpha release to the name of the
         feature."
+    beta_group String?
+        "Set if the route is part of an beta release to the name of the
+        feature."
+    # We can switch the type from String to a Union once all generators support
+    # unions in attributes.
+    owner String(pattern="adminx|dev-plat|sfi|sharing|company-dropbox-team|paper-eng")?
+        "The team that currently owns the route."
+    cluster String(min_length=1) = "meta-api"
+        "The cluster that handles this route."

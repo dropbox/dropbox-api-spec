@@ -42,6 +42,8 @@ struct MemberProfile
         "External ID that a team can attach to the user.
         An application using the API may find it easier to use their
         own IDs instead of Dropbox IDs like account_id or team_member_id."
+    account_id users.AccountId?
+        "A user's account identifier."
     email String
         "Email address of user."
     email_verified Boolean
@@ -55,6 +57,7 @@ struct MemberProfile
 
     example default
         team_member_id = "dbmid:1234567"
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         email = "mary@lamb.com"
         email_verified = true
         status = active
@@ -112,7 +115,7 @@ struct TeamGetInfoResult
         "The number of licenses available to the team."
     num_provisioned_users UInt32
         "The number of accounts that have been invited or are already active members of the team."
-    policies team_policies.TeamPolicies
+    policies team_policies.TeamMemberPolicies
 
     example default
         name="Dropbox Inc."
@@ -123,5 +126,7 @@ struct TeamGetInfoResult
 
 route get_info(Void, TeamGetInfoResult, Void)
     "Retrieves information about a team."
+
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"

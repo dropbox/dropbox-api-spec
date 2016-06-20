@@ -59,7 +59,8 @@ route linked_apps/list_member_linked_apps(ListMemberAppsArg, ListMemberAppsResul
     Note, this endpoint does not list any team-linked applications. "
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Structs for linked_apps/list_members_linked_apps
@@ -111,7 +112,8 @@ route linked_apps/list_members_linked_apps(ListMembersAppsArg, ListMembersAppsRe
     Note, this endpoint does not list any team-linked applications. "
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Structs for linked_apps/revoke_linked_app
@@ -144,7 +146,8 @@ route linked_apps/revoke_linked_app(RevokeLinkedApiAppArg, Void, RevokeLinkedApp
     "Revoke a linked application of the team member"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # structs for linked_apps/revoke_linked_app_batch
@@ -177,7 +180,8 @@ route linked_apps/revoke_linked_app_batch(RevokeLinkedApiAppBatchArg, RevokeLink
     "Revoke a list of linked applications of the team members"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Deprecated endpoints
@@ -218,4 +222,5 @@ route linked_apps/list_team_linked_apps(ListTeamAppsArg, ListTeamAppsResult, Lis
     Note, this endpoint doesn't list any team-linked applications. "
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"

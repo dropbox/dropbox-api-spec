@@ -12,6 +12,9 @@ alias AccountId = String(min_length=40, max_length=40)
 route get_account (GetAccountArg, BasicAccount, GetAccountError)
     "Get information about a user's account."
 
+    attrs
+        owner = "dev-plat"
+
 struct GetAccountArg
     account_id AccountId
         "A user's account identifier."
@@ -103,6 +106,9 @@ struct BasicAccount extends Account
 
 route get_current_account (Void, FullAccount, Void)
     "Get information about the current user's account."
+
+    attrs
+        owner = "dev-plat"
 
 struct FullAccount extends Account
     "Detailed information about the current user's account."
@@ -208,6 +214,9 @@ struct Name
 route get_space_usage(Void, SpaceUsage, Void)
     "Get the space usage information for the current user's account."
 
+    attrs
+        owner = "dev-plat"
+
 struct SpaceUsage
     "Information about a user's space usage and quota."
 
@@ -256,6 +265,9 @@ struct TeamSpaceAllocation
 route get_account_batch (GetAccountBatchArg, GetAccountBatchResult, GetAccountBatchError)
     "Get information about multiple user accounts.  At most 300 accounts may be queried
     per request."
+
+    attrs
+        owner = "dev-plat"
 
 struct GetAccountBatchArg
     account_ids List(AccountId, min_items=1)

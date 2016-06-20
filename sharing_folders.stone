@@ -100,6 +100,8 @@ union MemberPolicy
 union MemberAction
     "Actions that may be taken on members of a shared folder."
 
+    leave_a_copy
+        "Allow the member to keep a copy of the folder when removing."
     make_editor
         "Make the member an editor of the folder."
     make_owner
@@ -166,7 +168,7 @@ union SharedLinkPolicy
         "An unknown shared link policy."
 
 struct MembershipInfo
-    "The information about a member of the shared folder."
+    "The information about a member of the shared content."
 
     access_type AccessLevel
         "The access type for this member."
@@ -176,7 +178,7 @@ struct MembershipInfo
     initials String?
         "Suggested name initials for a member."
     is_inherited Boolean = false
-        "True if the member's access to the file is inherited from a parent folder."
+        "True if the member has access from a parent folder."
 
     example default
         access_type = owner
@@ -202,7 +204,7 @@ struct UserInfo
         team_member_id = "dbmid:abcd1234"
 
 struct UserMembershipInfo extends MembershipInfo
-    "The information about a user member of the shared folder."
+    "The information about a user member of the shared content."
 
     user UserInfo
         "The account information for the membership user."
@@ -213,7 +215,7 @@ struct UserMembershipInfo extends MembershipInfo
         permissions = []
 
 union InviteeInfo
-    "Information about the recipient of a shared folder invitation."
+    "Information about the recipient of a shared content invitation."
 
     email common.EmailAddress
         "E-mail address of invited user."
@@ -223,7 +225,7 @@ union InviteeInfo
         email = "jessica@example.com"
 
 struct InviteeMembershipInfo extends MembershipInfo
-    "Information about an invited member of a shared folder."
+    "Information about an invited member of a shared content."
 
     invitee InviteeInfo
         "Recipient of the invitation."
@@ -255,7 +257,7 @@ struct GroupInfo extends team_common.GroupSummary
         same_team = true
 
 struct GroupMembershipInfo extends MembershipInfo
-    "The information about a group member of the shared folder."
+    "The information about a group member of the shared content."
 
     group GroupInfo
         "The information about the membership group."
@@ -327,6 +329,16 @@ union SharedFolderAccessError
         "The shared folder is unmounted."
     other*
 
+struct MemberAccessLevelResult
+    "Contains information about a member's access level to content after an operation."
+    access_level AccessLevel?
+        "The member still has this level of access to the content through a parent folder."
+    warning String?
+        "A localized string with additional information about why the user
+        has this access level to the content."
+
+    example default
+
 # --
 
 route list_folders(ListFoldersArgs, ListFoldersResult, Void)
@@ -334,11 +346,16 @@ route list_folders(ListFoldersArgs, ListFoldersResult, Void)
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 struct ListFoldersArgs
     limit UInt32(min_value=1, max_value=1000) = 1000
         "The maximum number of results to return per request."
     actions List(FolderAction)?
-        "Folder actions to query."
+        "This is a list indicating whether each returned folder data entry will
+        include a boolean field :field:`FolderPermission.allow` that describes
+        whether the current user can perform the `FolderAction` on the folder."
 
     example default
         limit = 100
@@ -371,6 +388,9 @@ route list_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFolde
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 struct ListFoldersContinueArg
     cursor String
         "The cursor returned by the previous API call specified in the endpoint description."
@@ -390,6 +410,9 @@ route list_mountable_folders(ListFoldersArgs, ListFoldersResult, Void)
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 # --
 
 route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFoldersContinueError)
@@ -399,6 +422,9 @@ route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult,
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 # --
 
 route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAccessError)
@@ -406,11 +432,16 @@ route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAcc
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 struct GetMetadataArgs
     shared_folder_id common.SharedFolderId
         "The ID for the shared folder."
     actions List(FolderAction)?
-        "Folder actions to query."
+        "This is a list indicating whether the returned folder data will include a boolean value
+         :field:`FolderPermission.allow` that describes whether the current user can perform the
+         FolderAction on the folder."
 
     example default
         shared_folder_id = "84528192421"
@@ -423,9 +454,15 @@ route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFold
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 struct ListFolderMembersCursorArg
     actions List(MemberAction)?
-        "Member actions to query."
+        "This is a list indicating whether each returned member will include a boolean value
+        :field:`MemberPermission.allow` that describes whether the current user can perform
+        the MemberAction on the member."
+
     limit UInt32(min_value=1, max_value=1000) = 1000
         "The maximum number of results that include members, groups and invitees to return per request."
 
@@ -469,6 +506,9 @@ route list_folder_members/continue(ListFolderMembersContinueArg, SharedFolderMem
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 struct ListFolderMembersContinueArg
     cursor String
         "The cursor returned by your last call to :route:`list_folder_members` or
@@ -498,6 +538,9 @@ route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError)
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 struct ShareFolderArg
     path files.Path
         "The path to the folder to share. If it does not exist, then a new one
@@ -520,7 +563,7 @@ struct ShareFolderArg
         acl_update_policy = editors
         shared_link_policy = members
 
-union ShareFolderError
+union ShareFolderErrorBase
     email_unverified
         "The current user's e-mail address is unverified."
     bad_path SharePathError
@@ -530,9 +573,11 @@ union ShareFolderError
     disallowed_shared_link_policy
         "The current user's account is not allowed to select the specified
         :field:`ShareFolderArg.shared_link_policy`."
+    other*
+
+union ShareFolderError extends ShareFolderErrorBase
     no_permission
         "The current user does not have permission to perform this action."
-    other*
 
 union SharePathError
     is_file
@@ -581,6 +626,9 @@ route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollErro
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 union JobStatus extends async.PollResultBase
     complete
         "The asynchronous job has finished."
@@ -613,6 +661,9 @@ route check_job_status(async.PollArg, JobStatus, async.PollError)
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 # --
 
 route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderError)
@@ -622,6 +673,9 @@ route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderErr
     completed successfully.
 
     Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
 
 struct UnshareFolderArg
     shared_folder_id common.SharedFolderId
@@ -651,6 +705,9 @@ route transfer_folder(TransferFolderArg, Void, TransferFolderError)
     User must have :field:`AccessLevel.owner` access to the shared folder to perform a transfer.
 
     Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
 
 struct TransferFolderArg
     shared_folder_id common.SharedFolderId
@@ -686,6 +743,9 @@ route update_folder_policy(UpdateFolderPolicyArg, SharedFolderMetadata, UpdateFo
     User must have :field:`AccessLevel.owner` access to the shared folder to update its policies.
 
     Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
 
 struct UpdateFolderPolicyArg
     "If any of the policy's are unset, then they retain their current setting."
@@ -730,6 +790,9 @@ route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
     you will need to call :route:`mount_folder` on their behalf.
 
     Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
 
 struct AddFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -835,11 +898,14 @@ union AddMemberSelectorError
 
 # --
 
-route remove_folder_member(RemoveFolderMemberArg, async.LaunchEmptyResult, RemoveFolderMemberError)
+route remove_folder_member(RemoveFolderMemberArg, async.LaunchResultBase, RemoveFolderMemberError)
     "Allows an owner or editor (if the ACL update policy allows) of a shared
     folder to remove another member.
 
     Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
 
 struct RemoveFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -871,13 +937,33 @@ union RemoveFolderMemberError
         "The current user does not have permission to perform this action."
     other*
 
+union RemoveMemberJobStatus extends async.PollResultBase
+    complete MemberAccessLevelResult
+        "Removing the folder member has finished. The value is information about
+        whether the member has another form of access."
+    failed RemoveFolderMemberError
+
+    example default
+        complete = default
+
+route check_remove_member_job_status(async.PollArg, RemoveMemberJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for sharing a folder.
+
+    Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
+
 # --
 
-route update_folder_member(UpdateFolderMemberArg, Void, UpdateFolderMemberError)
+route update_folder_member(UpdateFolderMemberArg, MemberAccessLevelResult, UpdateFolderMemberError)
     "Allows an owner or editor of a shared folder to update another member's
     permissions.
 
     Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
 
 struct UpdateFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -897,6 +983,9 @@ struct UpdateFolderMemberArg
 union UpdateFolderMemberError
     access_error SharedFolderAccessError
     member_error SharedFolderMemberError
+    no_explicit_access AddFolderMemberError
+        "If updating the access type required the member to be added to the shared folder
+        and there was an error when adding the member."
     insufficient_plan
         "The current user's account doesn't support this action. An example of
         this is when downgrading a member from editor to viewer. This action
@@ -915,6 +1004,9 @@ route mount_folder(MountFolderArg, SharedFolderMetadata, MountFolderError)
     Once mounted, the shared folder will appear in their Dropbox.
 
     Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
 
 # TODO(kelkabany): Consider exposing mount path as an argument. More error
 # cases will be possible.
@@ -951,6 +1043,9 @@ route unmount_folder(UnmountFolderArg, Void, UnmountFolderError)
 
     Apps must have full Dropbox access to use this endpoint."
 
+    attrs
+        owner = "sfi"
+
 struct UnmountFolderArg
     shared_folder_id common.SharedFolderId
         "The ID for the shared folder."
@@ -978,6 +1073,9 @@ route relinquish_folder_membership(RelinquishFolderMembershipArg, async.LaunchEm
     This will run synchronously if leave_a_copy is false, and asynchronously
     if leave_a_copy is true.
     Apps must have full Dropbox access to use this endpoint."
+
+    attrs
+        owner = "sfi"
 
 struct RelinquishFolderMembershipArg
     shared_folder_id common.SharedFolderId

@@ -152,7 +152,8 @@ route devices/list_member_devices(ListMemberDevicesArg, ListMemberDevicesResult,
     "List all device sessions of a team's member."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Structs for devices/list_members_devices
@@ -206,7 +207,8 @@ route devices/list_members_devices(ListMembersDevicesArg, ListMembersDevicesResu
     "List all device sessions of a team."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Structs for devices/revoke_device_session
@@ -247,7 +249,8 @@ route devices/revoke_device_session(RevokeDeviceSessionArg, Void, RevokeDeviceSe
     "Revoke a device session of a team's member"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # structs for devices/revoke_device_session_batch
@@ -278,7 +281,8 @@ route devices/revoke_device_session_batch(RevokeDeviceSessionBatchArg, RevokeDev
     "Revoke a list of device sessions of team members"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -318,4 +322,5 @@ route devices/list_team_devices(ListTeamDevicesArg, ListTeamDevicesResult, ListT
     "List all device sessions of a team."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"

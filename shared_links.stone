@@ -198,7 +198,10 @@ union SharedLinkError
         "An unspecified error"
 
 route get_shared_link_metadata(GetSharedLinkMetadataArg, SharedLinkMetadata, SharedLinkError)
-    "Get the shared link's metadata. "
+    "Get the shared link's metadata."
+
+    attrs
+        owner = "adminx"
 
 #
 # List Shared links definitions and route
@@ -262,6 +265,9 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
     of the given path. Links to parent folders can be suppressed by setting
     direct_only to true."
 
+    attrs
+        owner = "adminx"
+
 #
 # Modify shared link settings definitions and route
 #
@@ -320,6 +326,9 @@ route modify_shared_link_settings(ModifySharedLinkSettingsArgs, SharedLinkMetada
     reflect the actual visibility of the shared link and the
     :field:`LinkPermissions.requested_visibility` will reflect the requested visibility."
 
+    attrs
+        owner = "adminx"
+
 #
 # Create shared link with settings definitions and route
 #
@@ -351,6 +360,8 @@ route create_shared_link_with_settings(CreateSharedLinkWithSettingsArg, SharedLi
     (The resolved visibility, though, may depend on other aspects such as team and shared folder
     settings). "
 
+    attrs
+        owner = "adminx"
 
 #
 # Revoke shared link
@@ -375,6 +386,9 @@ route revoke_shared_link(RevokeSharedLinkArg, Void, RevokeSharedLinkError)
     access to a specific file, you can use the :route:`list_shared_links` with the file as the
     :field:`ListSharedLinksArg.path` argument. "
 
+    attrs
+        owner = "adminx"
+
 #
 # NSLR endpoints
 #
@@ -391,6 +405,7 @@ route get_shared_link_file(GetSharedLinkFileArg, SharedLinkMetadata, GetSharedLi
     attrs
         host="content"
         style="download"
+        owner = "adminx"
 
 #
 # Depracated endpoints
@@ -488,6 +503,9 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
 
     Note that the url field in the response is never the shortened URL."
 
+    attrs
+        owner = "adminx"
+
 union PendingUploadMode
     "Flag to indicate pending upload default (for linking to not-yet-existing paths)."
 
@@ -527,3 +545,5 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
     longer be the case, so your app shouldn't rely on this behavior. Instead, if
     your app needs to revoke a shared link, use :route:`revoke_shared_link`."
 
+    attrs
+        owner = "adminx"

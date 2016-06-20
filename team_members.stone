@@ -32,6 +32,7 @@ struct TeamMemberProfile extends MemberProfile
 
     example default
         team_member_id = "dbmid:FDFSVF-DFSDF"
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         external_id = "244423"
         email = "tami@seagull.com"
         email_verified = false
@@ -100,7 +101,8 @@ route members/list(MembersListArg, MembersListResult, MembersListError)
     Permission : Team information"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -128,7 +130,8 @@ route members/list/continue(MembersListContinueArg, MembersListResult, MembersLi
     Permission : Team information"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -176,7 +179,8 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
     for IDs (or emails) that cannot be matched to a valid team member."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 ##########################
@@ -275,7 +279,8 @@ route members/add(MembersAddArg, MembersAddLaunch, Void)
     the user before they become 'active'."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Route members/add/job_status/get
@@ -299,7 +304,8 @@ route members/add/job_status/get(async.PollArg, MembersAddJobStatus, async.PollE
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Route members/set_profile
@@ -351,7 +357,8 @@ route members/set_profile(MembersSetProfileArg, TeamMemberInfo, MembersSetProfil
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Route members/set_admin_permissions
@@ -401,7 +408,8 @@ route members/set_admin_permissions(MembersSetPermissionsArg, MembersSetPermissi
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -422,7 +430,8 @@ route members/send_welcome_email(UserSelectorArg, Void, MembersSendWelcomeError)
     No-op if team member is not pending."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 
 #
@@ -507,7 +516,8 @@ route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveErr
     of the job, the client should periodically poll :route:`members/remove/job_status/get`."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Route members/remove/job_status/get
@@ -520,7 +530,8 @@ route members/remove/job_status/get(async.PollArg, async.PollEmptyResult, async.
     Permission : Team member management"
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Route members/suspend
@@ -542,7 +553,8 @@ route members/suspend(MembersDeactivateArg, Void, MembersSuspendError)
     Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
 
 #
 # Route members/unsuspend
@@ -572,4 +584,5 @@ route members/unsuspend(MembersUnsuspendArg, Void, MembersUnsuspendError)
     Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
 
     attrs
-        auth="team"
+        auth = "team"
+        owner = "adminx"
