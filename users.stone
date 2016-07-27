@@ -25,9 +25,8 @@ struct GetAccountArg
 union GetAccountError
     no_account
         "The specified :field:`GetAccountArg.account_id` does not exist."
-    unknown*
 
-union AccountType
+union_closed AccountType
     "What type of account this user has."
 
     basic
@@ -236,7 +235,6 @@ union SpaceAllocation
         "The user's space allocation applies only to their individual account."
     team TeamSpaceAllocation
         "The user shares space with other members of their team."
-    other*
 
     example default
         individual = default
@@ -282,7 +280,6 @@ union GetAccountBatchError
     no_account AccountId
         "The value is an account ID specified in :field:`GetAccountBatchArg.account_ids`
         that does not exist."
-    other*
 
     example default
         no_account = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"

@@ -24,7 +24,6 @@ union AccessLevel
     viewer_no_comment
         "The collaborator can only view the shared folder and does
         not have any access to comments."
-    other*
 
 struct FolderPolicy
     "A set of policies governing membership and privileges for a shared
@@ -61,6 +60,8 @@ union FolderAction
         "Invite a user or group to join the folder with read and write permission."
     invite_viewer
         "Invite a user or group to join the folder with read permission."
+    invite_viewer_no_comment
+        "Invite a user or group to join the folder with read permission but no comment permissions."
     relinquish_membership
         "Relinquish one's own membership in the folder."
     unmount
@@ -69,7 +70,8 @@ union FolderAction
         "Stop sharing this folder."
     leave_a_copy
         "Keep a copy of the contents upon leaving or being kicked from the folder."
-    other*
+    share_link
+        "Create a shared link for folder."
 
 struct FolderPermission
     "Whether the user is allowed to take the action on the shared folder."
@@ -95,7 +97,6 @@ union MemberPolicy
         "Only a teammate can become a member."
     anyone
         "Anyone can become a member."
-    other*
 
 union MemberAction
     "Actions that may be taken on members of a shared folder."
@@ -108,9 +109,10 @@ union MemberAction
         "Make the member an owner of the folder."
     make_viewer
         "Make the member a viewer of the folder."
+    make_viewer_no_comment
+        "Make the member a viewer of the folder without commenting permissions."
     remove
         "Remove the member from the folder."
-    other*
 
 struct MemberPermission
     "Whether the user is allowed to take the action on the associated member."
@@ -143,7 +145,8 @@ union PermissionDeniedReason
         "Target is the user itself."
     target_not_active
         "Target is not an active member of the team."
-    other*
+    folder_is_limited_team_folder
+        "Folder is team folder for a limited team."
 
 union AclUpdatePolicy
     "Policy governing who can change a shared folder's access control list
@@ -155,7 +158,6 @@ union AclUpdatePolicy
     editors
         "Any editor can update the ACL. This may be further restricted to
         editors on the same team."
-    other*
 
 union SharedLinkPolicy
     "Policy governing who can view shared links."
@@ -164,8 +166,6 @@ union SharedLinkPolicy
         "Links can be shared with anyone."
     members
         "Links can only be shared among members of the shared folder."
-    other*
-        "An unknown shared link policy."
 
 struct MembershipInfo
     "The information about a member of the shared content."
@@ -219,7 +219,6 @@ union InviteeInfo
 
     email common.EmailAddress
         "E-mail address of invited user."
-    other*
 
     example default
         email = "jessica@example.com"
@@ -252,6 +251,7 @@ struct GroupInfo extends team_common.GroupSummary
         group_name = "Test group"
         group_id = "g:e2db7665347abcd600000000001a2b3c"
         member_count = 10
+        group_management_type = user_managed
         group_type = user_managed
         is_owner = false
         same_team = true
@@ -304,6 +304,8 @@ struct SharedFolderMetadata extends SharedFolderMetadataBase
         The set of permissions corresponds to the FolderActions in the request."
     time_invited common.DropboxTimestamp
         "Timestamp indicating when the current user was invited to this shared folder."
+    preview_url String
+        "URL for displaying a web preview of the shared folder."
 
     example default
         path_lower = "/dir"
@@ -314,6 +316,7 @@ struct SharedFolderMetadata extends SharedFolderMetadataBase
         is_team_folder = false
         policy = default
         time_invited = "2016-01-20T00:00:00Z"
+        preview_url = "https://www.dropbox.com/scl/fo/fir9vjelf"
 
 union SharedFolderAccessError
     "There is an error accessing the shared folder."
@@ -327,7 +330,6 @@ union SharedFolderAccessError
         "The current user's e-mail address is unverified."
     unmounted
         "The shared folder is unmounted."
-    other*
 
 struct MemberAccessLevelResult
     "Contains information about a member's access level to content after an operation."
@@ -336,8 +338,20 @@ struct MemberAccessLevelResult
     warning String?
         "A localized string with additional information about why the user
         has this access level to the content."
+    access_details List(ParentFolderAccessInfo)?
+        "The parent folders that a member has access to. The field is present if the user
+        has access to the first parent folder where the member gains access."
 
     example default
+
+struct ParentFolderAccessInfo
+    "Contains information about a parent folder that a member has access to."
+    folder_name String
+        "Display name for the folder."
+    shared_folder_id common.SharedFolderId
+        "The identifier of the parent shared folder."
+    permissions List(MemberPermission)
+        "The user's permissions for the parent shared folder."
 
 # --
 
@@ -401,7 +415,6 @@ struct ListFoldersContinueArg
 union ListFoldersContinueError
     invalid_cursor
         ":field:`ListFoldersContinueArg.cursor` is invalid."
-    other*
 
 # --
 
@@ -521,7 +534,6 @@ union ListFolderMembersContinueError
     access_error SharedFolderAccessError
     invalid_cursor
         ":field:`ListFolderMembersContinueArg.cursor` is invalid."
-    other*
 
 # --
 
@@ -573,7 +585,6 @@ union ShareFolderErrorBase
     disallowed_shared_link_policy
         "The current user's account is not allowed to select the specified
         :field:`ShareFolderArg.shared_link_policy`."
-    other*
 
 union ShareFolderError extends ShareFolderErrorBase
     no_permission
@@ -603,11 +614,10 @@ union SharePathError
         "We do not support sharing a Mac OS X package."
     inside_osx_package
         "We do not support sharing a folder inside a Mac OS X package."
-    other*
 
 # --
 
-union ShareFolderJobStatus extends async.PollResultBase
+union_closed ShareFolderJobStatus extends async.PollResultBase
     complete SharedFolderMetadata
         "The share job has finished. The value is the metadata for the folder."
     failed ShareFolderError
@@ -615,7 +625,7 @@ union ShareFolderJobStatus extends async.PollResultBase
     example default
         complete = default
 
-union ShareFolderLaunch extends async.LaunchResultBase
+union_closed ShareFolderLaunch extends async.LaunchResultBase
     complete SharedFolderMetadata
 
     example default
@@ -629,7 +639,7 @@ route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollErro
     attrs
         owner = "sfi"
 
-union JobStatus extends async.PollResultBase
+union_closed JobStatus extends async.PollResultBase
     complete
         "The asynchronous job has finished."
     failed JobError
@@ -642,7 +652,8 @@ union SharedFolderMemberError
         "The target dropbox_id is invalid."
     not_a_member
         "The target dropbox_id is not a member of the shared folder."
-    other*
+    no_explicit_access MemberAccessLevelResult
+        "The target member only has inherited access to the shared folder."
 
 union JobError
     "Error occurred while performing an asynchronous job from :route:`unshare_folder`
@@ -654,7 +665,6 @@ union JobError
         "Error occurred while performing :route:`remove_folder_member` action."
     relinquish_folder_membership_error RelinquishFolderMembershipError
         "Error occurred while performing :route:`relinquish_folder_membership` action."
-    other*
 
 route check_job_status(async.PollArg, JobStatus, async.PollError)
     "Returns the status of an asynchronous job.
@@ -695,7 +705,6 @@ union UnshareFolderError
         "This action cannot be performed on a team shared folder."
     no_permission
         "The current user does not have permission to perform this action."
-    other*
 
 # --
 
@@ -733,7 +742,6 @@ union TransferFolderError
         "This action cannot be performed on a team shared folder."
     no_permission
         "The current user does not have permission to perform this action."
-    other*
 
 # --
 
@@ -778,7 +786,8 @@ union UpdateFolderPolicyError
     disallowed_shared_link_policy
         "The current account is not allowed to select the specified
         :field:`ShareFolderArg.shared_link_policy`."
-    other*
+    no_permission
+        "The current user does not have permission to perform this action."
 
 # --
 
@@ -835,7 +844,6 @@ union MemberSelector
         "Dropbox account, team member, or group ID of member."
     email common.EmailAddress
         "E-mail address of member."
-    other*
 
     example default
         email = "justin@example.com"
@@ -860,7 +868,9 @@ union AddFolderMemberError
     too_many_pending_invites UInt64
         "The value is the pending invite limit that was reached."
     rate_limit
-        "The user has reached the rate limit for invitations."
+        "The current user has hit the limit of invites they can send per day. Try again in 24 hours."
+    too_many_invitees
+        "The current user is trying to share with too many people at once."
     insufficient_plan
         "The current user's account doesn't support this action. An example of
         this is when adding a read-only member. This action can only be
@@ -869,7 +879,6 @@ union AddFolderMemberError
         "This action cannot be performed on a team shared folder."
     no_permission
         "The current user does not have permission to perform this action."
-    other*
 
     example default
         no_permission = null
@@ -878,6 +887,8 @@ union AddFolderMemberError
         bad_member = default
 
 union AddMemberSelectorError
+    automatic_group
+        "Automatically created groups can only be added to team folders."
     invalid_dropbox_id DropboxId
         "The value is the ID that could not be identified."
     invalid_email common.EmailAddress
@@ -891,7 +902,6 @@ union AddMemberSelectorError
         is deleted."
     group_not_on_team
         "Sharing to a group that is not on the current user's team."
-    other*
 
     example default
         invalid_dropbox_id = "dbid:AAEufNrMPSPe0dMQijRP0N_aZtBJRm26W4Q"
@@ -935,9 +945,8 @@ union RemoveFolderMemberError
         "This action cannot be performed on a team shared folder."
     no_permission
         "The current user does not have permission to perform this action."
-    other*
 
-union RemoveMemberJobStatus extends async.PollResultBase
+union_closed RemoveMemberJobStatus extends async.PollResultBase
     complete MemberAccessLevelResult
         "Removing the folder member has finished. The value is information about
         whether the member has another form of access."
@@ -993,7 +1002,6 @@ union UpdateFolderMemberError
         plan."
     no_permission
         "The current user does not have permission to perform this action."
-    other*
 
 # --
 
@@ -1017,12 +1025,20 @@ struct MountFolderArg
     example default
         shared_folder_id = "84528192421"
 
+struct InsufficientQuotaAmounts
+    space_needed UInt64
+        "The amount of space needed to add the item (the size of the item)."
+    space_shortage UInt64
+        "The amount of extra space needed to add the item."
+    space_left UInt64
+        "The amount of space left in the user's Dropbox, less than space_needed."
+
 union MountFolderError
     access_error SharedFolderAccessError
     inside_shared_folder
         "Mounting would cause a shared folder to be inside another, which is
         disallowed."
-    insufficient_quota
+    insufficient_quota InsufficientQuotaAmounts
         "The current user does not have enough space to mount the shared
         folder."
     already_mounted
@@ -1033,7 +1049,6 @@ union MountFolderError
         "The shared folder is not mountable. One example where this can occur
         is when the shared folder belongs within a team folder in the user's
         Dropbox."
-    other*
 
 # --
 
@@ -1061,7 +1076,6 @@ union UnmountFolderError
         "The shared folder can't be unmounted. One example where this can occur
         is when the shared folder's parent folder is also a shared folder that
         resides in the current user's Dropbox."
-    other*
 
 # --
 
@@ -1102,4 +1116,3 @@ union RelinquishFolderMembershipError
         "This action cannot be performed on a team shared folder."
     no_permission
         "The current user does not have permission to perform this action."
-    other*

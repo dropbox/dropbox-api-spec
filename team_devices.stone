@@ -61,8 +61,6 @@ union DesktopPlatform
         "Official Mac Dropbox desktop client"
     linux
         "Official Linux Dropbox desktop client"
-    other*
-        "Official Dropbox desktop client for another platform"
 
 struct DesktopClientSession extends DeviceSession
     "Information about linked Dropbox desktop client sessions"
@@ -101,8 +99,6 @@ union MobileClientPlatform
         "Official Dropbox Windows phone client"
     blackberry
         "Official Dropbox Blackberry client"
-    other*
-        "Official Dropbox client for another platform"
 
 struct MobileClientSession extends DeviceSession
     "Information about linked Dropbox mobile client sessions"
@@ -141,8 +137,6 @@ struct ListMemberDevicesResult
 union ListMemberDevicesError
     member_not_found
         "Member not found."
-    other*
-        "An unspecified error."
 
 #
 # Route: devices/list_member_devices
@@ -197,8 +191,6 @@ union ListMembersDevicesError
     reset
         "Indicates that the cursor has been invalidated. Call
         :route:`devices/list_members_devices` again with an empty cursor to obtain a new cursor."
-    other*
-        "An unspecified error."
 
 #
 # Route: devices/list_members_devices
@@ -225,7 +217,7 @@ struct RevokeDesktopClientArg extends DeviceSessionArg
         "Whether to delete all files of the account (this is possible only if supported by
         the desktop client and  will be made the next time the client access the account)"
 
-union RevokeDeviceSessionArg
+union_closed RevokeDeviceSessionArg
     web_session DeviceSessionArg
         "End an active session"
     desktop_client RevokeDesktopClientArg
@@ -238,8 +230,6 @@ union RevokeDeviceSessionError
         "Device session not found."
     member_not_found
         "Member not found."
-    other*
-        "An unspecified error."
 
 #
 # Route: devices/revoke_device_session
@@ -270,8 +260,7 @@ struct RevokeDeviceSessionBatchResult
     revoke_devices_status List(RevokeDeviceSessionStatus)
 
 union RevokeDeviceSessionBatchError
-    unspecified*
-        "An unspecified error."
+    ""
 
 #
 # Route: devices/revoke_device_session_batch
@@ -315,8 +304,6 @@ union ListTeamDevicesError
     reset
         "Indicates that the cursor has been invalidated. Call
         :route:`devices/list_team_devices` again with an empty cursor to obtain a new cursor."
-    other*
-        "An unspecified error."
 
 route devices/list_team_devices(ListTeamDevicesArg, ListTeamDevicesResult, ListTeamDevicesError) deprecated by devices/list_members_devices
     "List all device sessions of a team."

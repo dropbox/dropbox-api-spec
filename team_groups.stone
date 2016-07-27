@@ -7,7 +7,7 @@ import team_common
 # Common types.
 #
 
-union GroupAccessType
+union_closed GroupAccessType
     "Role of a user in group."
 
     member
@@ -18,7 +18,7 @@ union GroupAccessType
     example default
         member = null
 
-union GroupSelector
+union_closed GroupSelector
     "Argument for selecting a single group, either by group_id or by external group ID."
 
     group_id team_common.GroupId
@@ -34,10 +34,9 @@ union GroupSelectorError
 
     group_not_found
         "No matching group found. No groups match the specified group ID."
-    other*
 
 
-union GroupsSelector
+union_closed GroupsSelector
     "Argument for selecting a list of groups, either by group_ids, or external group IDs."
 
     group_ids List(team_common.GroupId)
@@ -112,23 +111,6 @@ struct GroupMemberInfo
         access_type = default
 
 
-
-struct AlphaGroupFullInfo extends team_common.AlphaGroupSummary
-    "Full description of a group."
-
-    members List(GroupMemberInfo)?
-        "List of group members."
-    created UInt64
-        "The group creation time as a UTC timestamp in milliseconds since the Unix epoch."
-
-    example default
-        group_name = "project launch"
-        group_id = "g:e2db7665347abcd600000000001a2b3c"
-        member_count = 5
-        members = [default]
-        group_management_type = user_managed
-        created = 1447255518000
-
 struct GroupFullInfo extends team_common.GroupSummary
     "Full description of a group."
 
@@ -141,6 +123,7 @@ struct GroupFullInfo extends team_common.GroupSummary
         group_name = "project launch"
         group_id = "g:e2db7665347abcd600000000001a2b3c"
         member_count = 5
+        group_management_type = user_managed
         members = [default]
         created = 1447255518000
 
@@ -178,24 +161,7 @@ route groups/list(GroupsListArg, GroupsListResult, Void)
         auth = "team"
         owner = "adminx"
 
-#
-# route alpha/groups/list
-#
-
-struct AlphaGroupsListResult
-    groups List(team_common.AlphaGroupSummary)
-    cursor String
-        "Pass the cursor into :route:`alpha/groups/list/continue` to obtain the additional groups."
-    has_more Boolean
-        "Is true if there are additional groups that have not been returned
-        yet. An additional call to :route:`alpha/groups/list/continue` can retrieve them."
-
-    example default
-        groups = [default]
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-        has_more = false
-
-route alpha/groups/list(GroupsListArg, AlphaGroupsListResult, Void)
+route alpha/groups/list(GroupsListArg, GroupsListResult, Void)
     "Lists groups on a team.
 
     Permission : Team Information"
@@ -219,9 +185,6 @@ struct GroupsListContinueArg
 union GroupsListContinueError
     invalid_cursor
         "The cursor is invalid."
-    other*
-        "An unspecified error."
-
 
 route groups/list/continue(GroupsListContinueArg, GroupsListResult, GroupsListContinueError)
     "Once a cursor has been retrieved from :route:`groups/list`, use this to paginate
@@ -233,12 +196,7 @@ route groups/list/continue(GroupsListContinueArg, GroupsListResult, GroupsListCo
         auth = "team"
         owner = "adminx"
 
-
-#
-# route alpha/groups/list/continue
-#
-
-route alpha/groups/list/continue(GroupsListContinueArg, AlphaGroupsListResult, GroupsListContinueError)
+route alpha/groups/list/continue(GroupsListContinueArg, GroupsListResult, GroupsListContinueError)
     "Once a cursor has been retrieved from :route:`alpha/groups/list`, use this to paginate
     through all groups.
 
@@ -253,7 +211,7 @@ route alpha/groups/list/continue(GroupsListContinueArg, AlphaGroupsListResult, G
 # route groups/get_info
 #
 
-union GroupsGetInfoItem
+union_closed GroupsGetInfoItem
     id_not_found String
         "An ID that was provided as a parameter to :route:`groups/get_info`, and
         did not match a corresponding group. The ID can be a group ID, or an external ID,
@@ -271,7 +229,6 @@ alias GroupsGetInfoResult = List(GroupsGetInfoItem)
 union GroupsGetInfoError
     group_not_on_team
         "The group is not on your team."
-    other*
 
 route groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
     "Retrieves information about one or more groups.
@@ -282,26 +239,7 @@ route groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
         auth = "team"
         owner = "adminx"
 
-#
-# route alpha/groups/get_info
-#
-
-union AlphaGroupsGetInfoItem
-    id_not_found String
-        "An ID that was provided as a parameter to :route:`alpha/groups/get_info`, and
-        did not match a corresponding group. The ID can be a group ID, or an external ID,
-        depending on how the method was called."
-    group_info AlphaGroupFullInfo
-        "Info about a group."
-
-    example default
-        group_info = default
-
-
-alias AlphaGroupsGetInfoResult = List(AlphaGroupsGetInfoItem)
-
-
-route alpha/groups/get_info(GroupsSelector, AlphaGroupsGetInfoResult, GroupsGetInfoError)
+route alpha/groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
     "Retrieves information about one or more groups.
 
     Permission : Team Information"
@@ -310,7 +248,6 @@ route alpha/groups/get_info(GroupsSelector, AlphaGroupsGetInfoResult, GroupsGetI
         auth = "team"
         alpha_group = "managed_groups"
         owner = "adminx"
-
 
 ##########################
 # Group management methods
@@ -326,6 +263,8 @@ struct GroupCreateArg
         "Group name."
     group_external_id String?
         "The creator of a team can associate an arbitrary external ID to the group."
+    group_management_type team_common.GroupManagementType?
+        "Whether the team can be managed by selected users, or only by team admins"
 
     example default
         group_name = "Europe sales"
@@ -338,7 +277,6 @@ union GroupCreateError
         "Group name is empty or has invalid characters."
     external_id_already_in_use
         "The new external ID is already being used by another group."
-    other*
 
 
 route groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
@@ -350,22 +288,7 @@ route groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
         auth = "team"
         owner = "adminx"
 
-
-#
-# route alpha/groups/create
-#
-
-struct AlphaGroupCreateArg extends GroupCreateArg
-
-    group_management_type team_common.GroupManagementType = company_managed
-        "Whether the team can be managed by selected users, or only by team admins"
-
-    example default
-        group_name = "Europe sales"
-        group_external_id = "group-134"
-
-
-route alpha/groups/create(AlphaGroupCreateArg, AlphaGroupFullInfo, GroupCreateError)
+route alpha/groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
     "Creates a new, empty group, with a requested name.
 
     Permission : Team member management"
@@ -374,7 +297,6 @@ route alpha/groups/create(AlphaGroupCreateArg, AlphaGroupFullInfo, GroupCreateEr
         auth = "team"
         alpha_group = "managed_groups"
         owner = "adminx"
-
 
 #
 # route groups/delete  (async method)
@@ -411,11 +333,14 @@ struct GroupUpdateArgs extends IncludeMembersArg
         "Optional argument. New group external ID.
         If the argument is None, the group's external_id won't be updated.
         If the argument is empty string, the group's external id will be cleared."
+    new_group_management_type team_common.GroupManagementType?
+        "Set new group management type, if provided."
 
     example default
         group = default
         new_group_name = "Europe west sales"
         new_group_external_id = "sales-234"
+        new_group_management_type = company_managed
 
 union GroupUpdateError extends GroupSelectorError
     external_id_already_in_use
@@ -430,23 +355,7 @@ route groups/update(GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
         auth = "team"
         owner = "adminx"
 
-
-#
-# route alpha/groups/update
-#
-
-struct AlphaGroupUpdateArgs extends GroupUpdateArgs
-    new_group_management_type team_common.GroupManagementType?
-        "Set new group management type, if provided."
-
-    example default
-        group = default
-        new_group_name = "Europe west sales"
-        new_group_external_id = "sales-234"
-        new_group_management_type = company_managed
-
-
-route alpha/groups/update(AlphaGroupUpdateArgs, AlphaGroupFullInfo, GroupUpdateError)
+route alpha/groups/update(GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
     "Updates a group's name, external ID or management type.
 
     Permission : Team member management"
@@ -455,7 +364,6 @@ route alpha/groups/update(AlphaGroupUpdateArgs, AlphaGroupFullInfo, GroupUpdateE
         auth = "team"
         alpha_group = "managed_groups"
         owner = "adminx"
-
 
 #
 # Structures common to groups/members/add and  groups/members/remove
@@ -559,6 +467,9 @@ route groups/members/remove(GroupMembersRemoveArg, GroupMembersChangeResult, Gro
     may take additional time.
     Use the :route:`groups/job_status/get` to determine whether this process has completed.
 
+    This method permits removing the only owner of a group, even in cases where this is not
+    possible via the web client.
+
     Permission : Team member management"
 
     attrs
@@ -648,8 +559,6 @@ struct GroupsMembersListContinueArg
 union GroupsMembersListContinueError
     invalid_cursor
         "The cursor is invalid."
-    other*
-        "An unspecified error."
 
 route groups/members/list/continue(GroupsMembersListContinueArg, GroupsMembersListResult, GroupsMembersListContinueError)
     "Once a cursor has been retrieved from :route:`groups/members/list`, use this to paginate

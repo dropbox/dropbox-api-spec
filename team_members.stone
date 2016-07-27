@@ -5,7 +5,7 @@ import users
 import common
 import team_common
 
-union AdminTier
+union_closed AdminTier
     "Describes which team-related admin permissions a user has."
 
     team_admin
@@ -41,7 +41,7 @@ struct TeamMemberProfile extends MemberProfile
         groups = ["g:e2db7665347abcd600000000001a2b3c"]
         membership_type = full
 
-union MemberSelectorError extends UserSelectorError
+union_closed MemberSelectorError extends UserSelectorError
     user_not_in_team
         "The user is not a member of the team."
 
@@ -57,9 +57,12 @@ union MemberSelectorError extends UserSelectorError
 struct MembersListArg
     limit UInt32(min_value=1, max_value=1000) = 1000
         "Number of results to return per call."
+    include_removed Boolean = false
+        "Whether to return removed members."
 
     example default
         limit = 100
+        include_removed = false
 
 
 struct TeamMemberInfo
@@ -91,9 +94,7 @@ struct MembersListResult
 
 
 union MembersListError
-    other*
-        "An unspecified error."
-
+    ""
 
 route members/list(MembersListArg, MembersListResult, MembersListError)
     "Lists members of a team.
@@ -119,9 +120,6 @@ struct MembersListContinueArg
 union MembersListContinueError
     invalid_cursor
         "The cursor is invalid."
-    other*
-        "An unspecified error."
-
 
 route members/list/continue(MembersListContinueArg, MembersListResult, MembersListContinueError)
     "Once a cursor has been retrieved from :route:`members/list`, use this to paginate
@@ -145,7 +143,7 @@ struct MembersGetInfoArgs
     example default
         members = [default]
 
-union MembersGetInfoItem
+union_closed MembersGetInfoItem
     "Describes a result obtained for a single user whose id was specified in the
     parameter of :route:`members/get_info`."
 
@@ -166,8 +164,7 @@ alias MembersGetInfoResult = List(MembersGetInfoItem)
 
 
 union MembersGetInfoError
-    other*
-        "An unspecified error."
+    ""
 
 
 route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoError)
@@ -224,7 +221,7 @@ struct MembersAddArg
         new_members = [default]
 
 
-union MemberAddResult
+union_closed MemberAddResult
     "Describes the result of attempting to add a single user to the team.
     'success' is the only value indicating that a user was indeed added to the team -
     the other values explain the type of failure that occurred, and include the email
@@ -254,7 +251,7 @@ union MemberAddResult
     example default
         success = default
 
-union MembersAddLaunch extends async.LaunchResultBase
+union_closed MembersAddLaunch extends async.LaunchResultBase
     complete List(MemberAddResult)
 
     example default
@@ -286,7 +283,7 @@ route members/add(MembersAddArg, MembersAddLaunch, Void)
 # Route members/add/job_status/get
 #
 
-union MembersAddJobStatus extends async.PollResultBase
+union_closed MembersAddJobStatus extends async.PollResultBase
     complete List(MemberAddResult)
         "The asynchronous job has finished. For each member that was specified in the
         parameter :type:`MembersAddArg` that was provided to :route:`members/add`, a
@@ -347,8 +344,6 @@ union MembersSetProfileError extends MemberSelectorError
         "Setting profile disallowed"
     param_cannot_be_empty
         "Parameter new_email cannot be empty."
-    other*
-        "An unspecified error."
 
 
 route members/set_profile(MembersSetProfileArg, TeamMemberInfo, MembersSetProfileError)
@@ -398,10 +393,6 @@ union MembersSetPermissionsError extends UserSelectorError
     team_license_limit
         "Team is full. The organization has no available licenses."
 
-    other*
-        "An unspecified error."
-
-
 route members/set_admin_permissions(MembersSetPermissionsArg, MembersSetPermissionsResult, MembersSetPermissionsError)
     "Updates a team member's permissions.
 
@@ -417,8 +408,7 @@ route members/set_admin_permissions(MembersSetPermissionsArg, MembersSetPermissi
 #
 
 union MembersSendWelcomeError extends MemberSelectorError
-    other*
-        "An unspecified error."
+    ""
 
 route members/send_welcome_email(UserSelectorArg, Void, MembersSendWelcomeError)
     "Sends welcome email to pending team member.
@@ -473,8 +463,6 @@ struct MembersRemoveArg extends MembersDeactivateArg
 union MembersDeactivateError extends UserSelectorError
     user_not_in_team
         "The user is not a member of the team."
-    other*
-        "An unspecified error."
 
 union MembersRemoveError extends MembersDeactivateError
     remove_last_admin
@@ -499,6 +487,9 @@ union MembersRemoveError extends MembersDeactivateError
         "Cannot keep account and transfer the data to another user at the same time."
     cannot_keep_account_and_delete_data
         "Cannot keep account and delete the data at the same time."
+    email_address_too_long_to_be_disabled
+        # Added value in order to handle task T82902.
+        "The email address of the user is too long to be disabled."
 
 route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveError)
     "Removes a member from a team.
@@ -585,4 +576,36 @@ route members/unsuspend(MembersUnsuspendArg, Void, MembersUnsuspendError)
 
     attrs
         auth = "team"
+        owner = "adminx"
+
+#
+# Route members/recover
+#
+
+struct MembersRecoverArg
+    "Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
+
+    user UserSelectorArg
+        "Identity of user to recover."
+
+    example default
+        user = default
+
+
+union MembersRecoverError extends UserSelectorError
+    user_unrecoverable
+        "The user is not recoverable."
+    user_not_in_team
+        "The user is not a member of the team."
+
+route members/recover(MembersRecoverArg, Void, MembersRecoverError)
+    "Recover a deleted member.
+
+    Permission : Team member management
+
+    Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
+
+    attrs
+        auth = "team"
+        beta_group = "deleted_user_recovery"
         owner = "adminx"

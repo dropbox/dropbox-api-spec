@@ -15,7 +15,6 @@ union SharingUserError
     "User account had a problem preventing this action."
     email_unverified
         "The current user must verify the account e-mail address before performing this action."
-    other*
 
 union SharingFileAccessError
     "User could not access this file."
@@ -30,7 +29,6 @@ union SharingFileAccessError
         "A file inside a public folder can't be shared this way. Use a public link instead."
     inside_osx_package
         "A Mac OS X package can't be shared this way. Use a shared link instead."
-    other*
 
 
 union FileErrorResult
@@ -40,7 +38,6 @@ union FileErrorResult
         "User does not have permission to take the specified action on the file."
     permission_denied_error files.Id
         "User does not have permission to access file specified by file.Id."
-    other*
 
 #############################################
 # File metadata and permissions definitions #
@@ -53,11 +50,14 @@ union FileAction
         "Change or edit contents of the file."
     invite_viewer
         "Add a member with view permissions."
+    invite_viewer_no_comment
+        "Add a member with view permissions but no comment permissions."
     unshare
         "Stop sharing this file."
     relinquish_membership
         "Relinquish one's own membership to the file."
-    other*
+    share_link
+        "Create a shared link to the file."
 
     example default
         edit_contents = null
@@ -124,19 +124,19 @@ struct SharedFileMetadata
 
 struct FileMemberActionResult
     "Per-member result for :route:`remove_file_member_2` or
-    :route:`add_file_member`."
+    :route:`add_file_member` or :route:`change_file_member_access`."
 
     member MemberSelector
         "One of specified input members."
     result FileMemberActionIndividualResult
         "The outcome of the action on this member."
 
-union FileMemberActionIndividualResult
+union_closed FileMemberActionIndividualResult
     success AccessLevel?
         "Member was successfully removed from this file. If AccessLevel is given,
         the member still has access via a parent shared folder."
     member_error FileMemberActionError
-        "User was not able to remove this member."
+        "User was not able to perform this action."
 
     example default
         success = null
@@ -146,7 +146,6 @@ union FileMemberRemoveActionResult
         "Member was successfully removed from this file."
     member_error FileMemberActionError
         "User was not able to remove this member."
-    other*
 
 union AddFileMemberError
     "Errors for :route:`add_file_member`."
@@ -156,23 +155,20 @@ union AddFileMemberError
         "The user has reached the rate limit for invitations."
     invalid_comment
         "The custom message did not pass comment permissions checks."
-    other*
 
 union RemoveFileMemberError
     "Errors for :route:`remove_file_member_2`."
     user_error SharingUserError
     access_error SharingFileAccessError
-    no_explicit_access
-        "This member does not have explicit access to the file and therefore cannot be removed."
-    other*
+    no_explicit_access MemberAccessLevelResult
+        "This member does not have explicit access to the file and therefore cannot be removed.
+        The return value is the access that a user might have to the file from a parent folder."
 
 union FileMemberActionError
     invalid_member
         "Specified member was not found."
     no_permission
         "User does not have permission to perform this action on this member."
-    other*
-        "Unknown error when applying action to member."
 
 #####################
 # Route Definitions #
@@ -212,8 +208,34 @@ struct AddFileMemberArgs
 
 # --
 
+route change_file_member_access(ChangeFileMemberAccessArgs, FileMemberActionResult, FileMemberActionError)
+    "Changes a member's access on a shared file."
+
+    attrs
+        owner = "sharing"
+
+struct ChangeFileMemberAccessArgs
+    "Arguments for :route:`change_file_member_access`."
+
+    file PathOrId
+        "File for which we are changing a member's access."
+    member MemberSelector
+        "The member whose access we are changing."
+    access_level AccessLevel
+        "The new access level for the member."
+
+    example default
+        file = "id:3kmLmQFnf1AAAAAAAAAAAw"
+        member = default
+        access_level = viewer_no_comment
+
+# --
+
 route get_file_metadata(GetFileMetadataArg, SharedFileMetadata, GetFileMetadataError)
     "Returns shared file metadata."
+
+    attrs
+        owner = "sharing"
 
 struct GetFileMetadataArg
     "Arguments of :route:`get_file_metadata`"
@@ -232,7 +254,6 @@ union GetFileMetadataError
 
     user_error SharingUserError
     access_error SharingFileAccessError
-    other*
 
 # --
 
@@ -276,7 +297,6 @@ union GetFileMetadataIndividualResult
         "The result for this file if it was successful."
     access_error SharingFileAccessError
         "The result for this file if it was an error."
-    other*
 
     example default
         metadata = default
@@ -336,7 +356,6 @@ union ListFileMembersError
 
     user_error SharingUserError
     access_error SharingFileAccessError
-    other*
 
 # --
 
@@ -396,7 +415,6 @@ union ListFileMembersIndividualResult
         "The results of the query for this file if it was successful"
     access_error SharingFileAccessError
         "The result of the query for this file if it was an error."
-    other*
 
     example default
         result = default
@@ -431,7 +449,6 @@ union ListFileMembersContinueError
     access_error SharingFileAccessError
     invalid_cursor
         ":field:`ListFileMembersContinueArg.cursor` is invalid."
-    other*
 
 # --
 
@@ -440,6 +457,9 @@ route list_received_files(ListFilesArg, ListFilesResult, SharingUserError)
 
      Does not include files the user has received via shared folders, and does
      not include unclaimed invitations."
+
+    attrs
+        owner = "sharing"
 
 struct ListFilesArg
     "Arguments for :route:`list_received_files`."
@@ -471,6 +491,9 @@ struct ListFilesResult
 route list_received_files/continue (ListFilesContinueArg, ListFilesResult, ListFilesContinueError)
     "Get more results with a cursor from :route:`list_received_files`."
 
+    attrs
+        owner = "sharing"
+
 struct ListFilesContinueArg
     "Arguments for :route:`list_received_files/continue`."
 
@@ -487,7 +510,6 @@ union ListFilesContinueError
         "User account had a problem."
     invalid_cursor
         ":field:`ListFilesContinueArg.cursor` is invalid."
-    other*
 
 # --
 
@@ -543,7 +565,6 @@ union RelinquishFileMembershipError
         membership to a file shared via groups."
     no_permission
         "The current user does not have permission to perform this action."
-    other*
 
 # --
 
@@ -566,7 +587,6 @@ union UnshareFileError
     "Error result for :route:`unshare_file`."
     user_error SharingUserError
     access_error SharingFileAccessError
-    other*
 
     example default
         user_error = email_unverified

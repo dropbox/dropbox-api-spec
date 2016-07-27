@@ -13,9 +13,6 @@ struct DateRange
 
 union DateRangeError
     "Errors that can originate from problems in input arguments to reports."
-    other*
-        "An unspecified error."
-
 
 struct StorageBucket
     "Describes the number of users in a specific storage bucket."

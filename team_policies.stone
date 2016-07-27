@@ -41,7 +41,6 @@ union SharedFolderMemberPolicy
         "Only a teammate can be a member of a folder shared by a team member."
     anyone
         "Anyone can be a member of a folder shared by a team member."
-    other*
 
 union SharedFolderJoinPolicy
     "Policy governing which shared folders a team member can join."
@@ -50,7 +49,6 @@ union SharedFolderJoinPolicy
         "Team members can only join folders shared by teammates."
     from_anyone
         "Team members can join any shared folder, including those shared by users outside the team."
-    other*
 
 union SharedLinkCreatePolicy
     "Policy governing the visibility of newly created shared links."
@@ -64,7 +62,6 @@ union SharedLinkCreatePolicy
     team_only
         "Only members of the same team can access newly created shared links.
         Login will be required to access the shared links."
-    other*
 
 union EmmState
     disabled
@@ -73,5 +70,3 @@ union EmmState
         "Emm token is optional"
     required
         "Emm token is required"
-    other*
-        ""

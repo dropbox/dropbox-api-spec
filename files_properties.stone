@@ -103,7 +103,7 @@ union UpdatePropertiesError extends InvalidPropertyGroupError
 union RemovePropertiesError extends PropertiesError
     property_group_lookup LookUpPropertiesError
 
-union LookUpPropertiesError
+union_closed LookUpPropertiesError
     property_group_not_found
         "This property group does not exist for this file."
 
@@ -143,7 +143,7 @@ struct AlphaGetMetadataArg extends GetMetadataArg
     example rev
         path = "rev:a1c10ce0dd78"
 
-union AlphaGetMetadataError extends GetMetadataError
+union_closed AlphaGetMetadataError extends GetMetadataError
     properties_error LookUpPropertiesError
 
 #

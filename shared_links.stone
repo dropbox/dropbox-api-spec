@@ -27,7 +27,7 @@ struct GetSharedLinkMetadataArg
         url = "https://www.dropbox.com/s/2sn712vy1ovegw8/Prime_Numbers.txt?dl=0"
         path = "/Prime_Numbers.txt"
 
-union RequestedVisibility
+union_closed RequestedVisibility
     "The access permission that can be requested by the caller for the shared link.
     Note that the final resolved visibility of the shared link takes into account other aspects,
     such as team and shared folder settings.
@@ -55,8 +55,6 @@ union ResolvedVisibility extends RequestedVisibility
     shared_folder_only
         "Only members of the shared folder containing the linked file
         can access the link. Login is required."
-    other*
-        "An unknown restriction is in place."
 
 union SharedLinkAccessFailureReason
     login_required
@@ -69,8 +67,6 @@ union SharedLinkAccessFailureReason
         "Access is allowed for team members only."
     owner_only
         "Access is allowed for the shared link's owner only."
-    other*
-        "An unknown accessibility failure."
 
 struct LinkPermissions
     resolved_visibility ResolvedVisibility?
@@ -115,7 +111,7 @@ struct TeamMemberInfo
 struct SharedLinkMetadata
     "The metadata of a shared link "
 
-    union*
+    union
         file FileLinkMetadata
         folder FolderLinkMetadata
 
@@ -194,14 +190,12 @@ union SharedLinkError
         "The shared link wasn't found"
     shared_link_access_denied
         "The caller is not allowed to access this shared link"
-    other*
-        "An unspecified error"
 
 route get_shared_link_metadata(GetSharedLinkMetadataArg, SharedLinkMetadata, SharedLinkError)
     "Get the shared link's metadata."
 
     attrs
-        owner = "adminx"
+        owner = "sharing"
 
 #
 # List Shared links definitions and route
@@ -252,7 +246,6 @@ union ListSharedLinksError
     reset
         "Indicates that the cursor has been invalidated. Call
         :route:`list_shared_links` to obtain a new cursor."
-    other*
 
 route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLinksError)
     "List shared links of this user.
@@ -266,7 +259,7 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
     direct_only to true."
 
     attrs
-        owner = "adminx"
+        owner = "sharing"
 
 #
 # Modify shared link settings definitions and route
@@ -296,7 +289,7 @@ struct ModifySharedLinkSettingsArgs
         url = "https://www.dropbox.com/s/2sn712vy1ovegw8/Prime_Numbers.txt?dl=0"
         settings = default
 
-union SharedLinkSettingsError
+union_closed SharedLinkSettingsError
     invalid_settings
         "The given settings are invalid
         (for example, all attributes of the :type:`SharedLinkSettings` are empty,
@@ -343,7 +336,7 @@ struct CreateSharedLinkWithSettingsArg
         path = "/Prime_Numbers.txt"
         settings = default
 
-union CreateSharedLinkWithSettingsError
+union_closed CreateSharedLinkWithSettingsError
     path files.LookupError
     email_not_verified
         "User's email should be verified"
@@ -361,7 +354,8 @@ route create_shared_link_with_settings(CreateSharedLinkWithSettingsArg, SharedLi
     settings). "
 
     attrs
-        owner = "adminx"
+        owner = "sharing"
+
 
 #
 # Revoke shared link
@@ -387,7 +381,7 @@ route revoke_shared_link(RevokeSharedLinkArg, Void, RevokeSharedLinkError)
     :field:`ListSharedLinksArg.path` argument. "
 
     attrs
-        owner = "adminx"
+        owner = "sharing"
 
 #
 # NSLR endpoints
@@ -405,7 +399,7 @@ route get_shared_link_file(GetSharedLinkFileArg, SharedLinkMetadata, GetSharedLi
     attrs
         host="content"
         style="download"
-        owner = "adminx"
+        owner = "sharing"
 
 #
 # Depracated endpoints
@@ -432,14 +426,12 @@ union Visibility
     shared_folder_only
         "Only members of the shared folder containing the linked file
         can access the link. Login is required."
-    other*
-        "An unknown restriction is in place."
 
 struct LinkMetadata
     "Metadata for a shared link. This can be either a
     :type:`PathLinkMetadata` or :type:`CollectionLinkMetadata`."
 
-    union*
+    union
         path PathLinkMetadata
         collection CollectionLinkMetadata
 
@@ -488,7 +480,6 @@ struct GetSharedLinksResult
 
 union GetSharedLinksError
     path files.MalformedPathError
-    other*
 
 route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksError) deprecated by list_shared_links
     "Returns a list of :type:`LinkMetadata` objects for this user,
@@ -504,9 +495,9 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
     Note that the url field in the response is never the shortened URL."
 
     attrs
-        owner = "adminx"
+        owner = "sharing"
 
-union PendingUploadMode
+union_closed PendingUploadMode
     "Flag to indicate pending upload default (for linking to not-yet-existing paths)."
 
     file
@@ -529,7 +520,6 @@ struct CreateSharedLinkArg
 
 union CreateSharedLinkError
     path files.LookupError
-    other*
 
 route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLinkError) deprecated by create_shared_link_with_settings
     "Create a shared link.
@@ -546,4 +536,4 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
     your app needs to revoke a shared link, use :route:`revoke_shared_link`."
 
     attrs
-        owner = "adminx"
+        owner = "sharing"

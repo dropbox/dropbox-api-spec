@@ -46,8 +46,6 @@ union ListMemberAppsError
 
     member_not_found
         "Member not found."
-    other*
-        "An unspecified error."
 
 #
 # Route: linked_apps/list_member_linked_apps
@@ -100,8 +98,6 @@ union ListMembersAppsError
     reset
         "Indicates that the cursor has been invalidated. Call
         :route:`linked_apps/list_members_linked_apps` again with an empty cursor to obtain a new cursor."
-    other*
-        "An unspecified error."
 
 #
 # Route: linked_apps/list_members_linked_apps
@@ -135,8 +131,6 @@ union RevokeLinkedAppError
         "Application not found."
     member_not_found
         "Member not found."
-    other*
-        "An unspecified error."
 
 #
 # Route: linked_apps/revoke_linked_app
@@ -168,9 +162,6 @@ struct RevokeLinkedAppBatchResult
 
 union RevokeLinkedAppBatchError
     "Error returned by :route:`linked_apps/revoke_linked_app_batch`."
-
-    unspecified*
-        "An unspecified error."
 
 #
 # Route: linked_apps/revoke_linked_app_batch
@@ -213,8 +204,6 @@ union ListTeamAppsError
     reset
         "Indicates that the cursor has been invalidated. Call
         :route:`linked_apps/list_team_linked_apps` again with an empty cursor to obtain a new cursor."
-    other*
-        "An unspecified error."
 
 route linked_apps/list_team_linked_apps(ListTeamAppsArg, ListTeamAppsResult, ListTeamAppsError) deprecated by linked_apps/list_members_linked_apps
     "List all applications linked to the team members' accounts.

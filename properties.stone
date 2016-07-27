@@ -56,8 +56,6 @@ union PropertyTemplateError
         "Property template does not exist for given identifier."
     restricted_content
         "You do not have the permissions to modify this property template."
-    other*
-        "An unspecified error."
 
 struct PropertyGroup
     "Collection of custom properties in filled property templates."
@@ -90,7 +88,6 @@ union PropertyType
 
     string
         "The associated property will be of type string. Unicode is supported."
-    other*
 
     example default
         string = null
