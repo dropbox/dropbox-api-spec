@@ -71,6 +71,8 @@ union FolderAction
     leave_a_copy
         "Keep a copy of the contents upon leaving or being kicked from the folder."
     share_link
+        "This action is deprecated. Use create_link instead."
+    create_link
         "Create a shared link for folder."
 
 struct FolderPermission
@@ -290,6 +292,8 @@ struct SharedFolderMetadataBase
         policy = default
         owner_team = default
 
+# NOTE: If you modify this struct, also modify InternalSharedFolderMetadata,
+# which is used by mobile/web
 struct SharedFolderMetadata extends SharedFolderMetadataBase
     "The metadata which includes basic information about the shared folder."
 

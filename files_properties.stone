@@ -131,7 +131,8 @@ route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError)
 
 struct AlphaGetMetadataArg extends GetMetadataArg
     include_property_templates List(properties.TemplateId)?
-        "If true, :field:`FileMetadata.property_groups` is set for files with custom
+        "If set to a valid list of template IDs,
+        :field:`FileMetadata.property_groups` is set for files with custom
         properties."
 
     example default

@@ -199,12 +199,15 @@ struct Name
     display_name String
         "A name that can be used directly to represent the name of a user's
         Dropbox account."
+    abbreviated_name String
+        "An abbreviated form of the person's name. Their initials in most locales."
 
     example default
         given_name = "Franz"
         surname = "Ferdinand"
         familiar_name = "Franz"
         display_name = "Franz Ferdinand (Personal)"
+        abbreviated_name = "FF"
 
 #
 # Route: get_space_usage

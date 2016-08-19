@@ -57,6 +57,8 @@ union FileAction
     relinquish_membership
         "Relinquish one's own membership to the file."
     share_link
+        "This action is deprecated. Use create_link instead."
+    create_link
         "Create a shared link to the file."
 
     example default
@@ -106,6 +108,10 @@ struct SharedFileMetadata
         "The name of this file."
     id FileId
         "The ID of the file."
+    time_invited common.DropboxTimestamp?
+        "Timestamp indicating when the current user was invited to this shared file. If the user was
+        not invited to the shared file, the timestamp will indicate when the user was invited to the
+        parent shared folder. This value may be absent."
 
 
     example default
@@ -117,6 +123,7 @@ struct SharedFileMetadata
         path_display = "/dir/file.txt"
         name = "file.txt"
         id = "id:3kmLmQFnf1AAAAAAAAAAAw"
+        time_invited = "2016-01-20T00:00:00Z"
 
 ##################################
 # File membership mutation types #
@@ -169,6 +176,8 @@ union FileMemberActionError
         "Specified member was not found."
     no_permission
         "User does not have permission to perform this action on this member."
+    access_error SharingFileAccessError
+        "Specified file was invalid or user does not have access."
 
 #####################
 # Route Definitions #

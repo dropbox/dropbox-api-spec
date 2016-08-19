@@ -84,6 +84,14 @@ struct FolderSharingInfo extends SharingInfo
         "If this folder is a shared folder mount point, the ID of the shared
         folder mounted at this location."
 
+    traverse_only Boolean = false
+        "Specifies that the folder can only be traversed and the user can only see
+        a limited subset of the contents of this folder because they don't have
+        read access to this folder. They do, however, have access to some sub folder."
+
+    no_access Boolean = false
+        "Specifies that the folder cannot be accessed by the user"
+
     example default
         "Folder inside a shared folder."
         read_only = false
