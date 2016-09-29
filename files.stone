@@ -90,7 +90,7 @@ struct FolderSharingInfo extends SharingInfo
         read access to this folder. They do, however, have access to some sub folder."
 
     no_access Boolean = false
-        "Specifies that the folder cannot be accessed by the user"
+        "Specifies that the folder cannot be accessed by the user."
 
     example default
         "Folder inside a shared folder."
@@ -359,7 +359,25 @@ union ListFolderError
     path LookupError
 
 route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
-    "Returns the contents of a folder."
+    "Starts returning the contents of a folder. If the result's :field:`ListFolderResult.has_more`
+    field is :val:`true`, call :route:`list_folder/continue` with the returned
+    :field:`ListFolderResult.cursor` to retrieve more entries.
+
+    If you're using :field:`ListFolderArg.recursive` set to :val:`true` to keep a local cache of
+    the contents of a Dropbox account, iterate through each entry in order and process them as
+    follows to keep your local state in sync:
+
+    For each :type:`FileMetadata`, store the new entry at the given path in your local state. If the
+    required parent folders don't exist yet, create them. If there's already something else at the
+    given path, replace it and remove all its children.
+
+    For each :type:`FolderMetadata`, store the new entry at the given path in your local state. If
+    the required parent folders don't exist yet, create them. If there's already something else at
+    the given path, replace it but leave the children as they are. Check the new entry's
+    :field:`FolderSharingInfo.read_only` and set all its children's read-only statuses to match.
+
+    For each :type:`DeletedMetadata`, if your local state has something at the given path, remove it
+    and all its children. If there's nothing at the given path, ignore this entry."
 
 struct ListFolderContinueArg
     cursor ListFolderCursor
@@ -376,8 +394,9 @@ union ListFolderContinueError
         :route:`list_folder` to obtain a new cursor."
 
 route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderContinueError)
-    "Once a cursor has been retrieved from :route:`list_folder`, use this to
-    paginate through all files and retrieve updates to the folder."
+    "Once a cursor has been retrieved from :route:`list_folder`, use this to paginate through all
+    files and retrieve updates to the folder, following the same rules as documented for
+    :route:`list_folder`."
 
     attrs
         owner = "dev-plat"
@@ -410,7 +429,7 @@ struct DownloadArg
     path ReadPath
         "The path of the file to download."
     rev Rev?
-        "Deprecated. Please specify revision in :field:`path` instead"
+        "Deprecated. Please specify revision in :field:`path` instead."
 
     example default
         path = "/Homework/math/Prime_Numbers.txt"
@@ -454,9 +473,9 @@ union UploadSessionLookupError
         "The upload session id was not found."
     incorrect_offset UploadSessionOffsetError
         "The specified offset was incorrect. See the value for the
-        correct offset. (This error may occur when a previous request
+        correct offset. This error may occur when a previous request
         was received and processed successfully but the client did not
-        receive the response, e.g. due to a network error.)"
+        receive the response, e.g. due to a network error."
     closed
         "You are attempting to append data to an upload session that
         has alread been closed (i.e. committed)."
@@ -476,12 +495,12 @@ union UploadSessionFinishError
 
 struct UploadSessionStartArg
     close Boolean = false
-        "If true, the current session will be closed, at which point
-        you won't be able to call :route:`upload_session/append_v2`
-        anymore with the current session."
+        "If true, the current session will be closed, at which point you won't
+        be able to call :route:`upload_session/append_v2` anymore with the
+        current session."
 
     example with_close
-        close = true
+        close = false
 
 struct UploadSessionStartResult
     session_id String
@@ -493,10 +512,12 @@ struct UploadSessionStartResult
         session_id = "1234faaf0678bcde"
 
 route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Void)
-    "Upload sessions allow you to upload a single file using multiple requests.
-    This call starts a new upload session with the given data.  You can
-    then use :route:`upload_session/append_v2` to add more data and
-    :route:`upload_session/finish` to save all the data to a file in Dropbox.
+    "Upload sessions allow you to upload a single file in one or more
+    requests, for example where the size of the file is greater than 150
+    MB.  This call starts a new upload session with the given data. You
+    can then use :route:`upload_session/append_v2` to add more data and
+    :route:`upload_session/finish` to save all the data to a file in
+    Dropbox.
 
     A single request should not upload more than 150 MB of file contents."
 
@@ -690,19 +711,18 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, async.LaunchEmpt
     in a single request.
 
     :field:`UploadSessionStartArg.close` or :field:`UploadSessionAppendArg.close`
-    needs to be true for last
+    needs to be true for the last
     :route:`upload_session/start` or :route:`upload_session/append_v2` call.
 
-    This route will return job_id immediately and do the async commit job in background.
-    We have another route :route:`upload_session/finish_batch/check` to check the job
-    status.
+    This route will return a job_id immediately and do the async commit job in background.
+    Use :route:`upload_session/finish_batch/check` to check the job status.
 
     For the same account, this route should be executed serially. That means you should not start
-    next job before current job finishes. Also we only allow up to 1000 entries in a single request"
+    the next job before current job finishes. We allow up to 1000 entries in a single request."
 
 route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`upload_session/finish_batch`. If
-    success, it returns list of result for each entry"
+    success, it returns list of result for each entry."
 
 #
 # Search
@@ -802,6 +822,10 @@ route search (SearchArg, SearchResult, SearchError)
 
 alias MalformedPathError = String?  # TODO: Maybe a user_message-like thing?
 
+struct PathRootError
+    path_root String?
+        "The user's latest path root value. None if the user no longer has a path root."
+
 union LookupError
     malformed_path MalformedPathError
     not_found
@@ -813,6 +837,8 @@ union LookupError
     restricted_content
         "The file cannot be transferred because the content is restricted.  For example,
         sometimes there are legal restrictions due to copyright claims."
+    invalid_path_root PathRootError
+        "The path root parameter provided is invalid."
 
 union WriteError
     malformed_path MalformedPathError
@@ -840,9 +866,12 @@ union WriteConflictError
 struct CreateFolderArg
     path WritePath
         "Path in the user's Dropbox to create."
+    autorename Boolean = false
+        "If there's a conflict, have the Dropbox server try to autorename
+        the folder to avoid the conflict."
 
     example default
-        path = "/Homework/geometry"
+        path = "/Homework/math"
 
 union_closed CreateFolderError
     path WriteError
@@ -868,6 +897,42 @@ union DeleteError
     path_lookup LookupError
     path_write WriteError
 
+struct DeleteBatchArg
+    entries List(DeleteArg)
+
+    example default
+        entries = [delete]
+
+union_closed DeleteBatchResultEntry
+    success DeleteResult
+    failure DeleteError
+
+    example default
+        success = default
+
+struct DeleteResult
+    metadata Metadata
+
+    example default
+        metadata = default
+
+struct DeleteBatchResult
+    entries List(DeleteBatchResultEntry)
+
+    example default
+        entries = [default]
+
+union DeleteBatchError
+    too_many_write_operations
+        "There are too many write operations in user's Dropbox. Please retry
+        this request."
+
+union DeleteBatchJobStatus extends async.PollResultBase
+    complete DeleteBatchResult
+        "The batch delete has finished."
+    failed DeleteBatchError
+        "The batch delete has failed."
+
 route delete (DeleteArg, Metadata, DeleteError)
     "Delete the file or folder at a given path.
 
@@ -880,6 +945,17 @@ route delete (DeleteArg, Metadata, DeleteError)
     attrs
         owner = "dev-plat"
 
+route delete_batch (DeleteBatchArg, async.LaunchEmptyResult, Void)
+    "Delete multiple files/folders at once.
+
+    This route is asynchronous, which returns a job ID immediately and runs
+    the delete batch asynchronously. Use :route:`delete_batch/check` to check
+    the job status."
+
+route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`delete_batch`. If
+    success, it returns list of result for each entry."
+
 route permanently_delete (DeleteArg, Void, DeleteError)
     "Permanently delete the file or folder at a given path
     (see https://www.dropbox.com/en/help/40).
@@ -890,7 +966,7 @@ route permanently_delete (DeleteArg, Void, DeleteError)
 # Args and error shared by copy and move
 #
 
-struct RelocationArg
+struct RelocationPath
     from_path WritePath
         "Path in the user's Dropbox to be copied or moved."
     to_path WritePath
@@ -900,6 +976,19 @@ struct RelocationArg
         from_path = "/Homework/math"
         to_path = "/Homework/algebra"
 
+struct RelocationArg extends RelocationPath
+    allow_shared_folder Boolean = false
+        "If true, :route:`copy` will copy contents in shared folder,
+        otherwise :field:`RelocationError.cant_copy_shared_folder` will be
+        returned if :field:`from_path` contains shared folder. This field is
+        always true for :route:`move`."
+    autorename Boolean = false
+        "If there's a conflict, have the Dropbox server try to autorename
+        the file to avoid the conflict."
+
+    example default
+        from_path = "/Homework/math"
+        to_path = "/Homework/algebra"
 
 union RelocationError
     from_lookup LookupError
@@ -915,6 +1004,46 @@ union RelocationError
     too_many_files
         "The operation would involve more than 10,000 files and folders."
 
+struct RelocationBatchArg
+    entries List(RelocationPath)
+        "List of entries to be moved or copied. Each entry is :type:`RelocationPath`."
+    allow_shared_folder Boolean = false
+        "If true, :route:`copy_batch` will copy contents in shared folder,
+        otherwise :field:`RelocationError.cant_copy_shared_folder` will be
+        returned if :field:`RelocationPath.from_path` contains shared folder.
+         This field is always true for :route:`move_batch`."
+    autorename Boolean = false
+        "If there's a conflict with any file, have the Dropbox server try to
+        autorename that file to avoid the conflict."
+
+    example default
+        entries = [default]
+
+struct RelocationBatchResult
+    entries List(RelocationResult)
+
+    example default
+        entries = [default]
+
+union_closed RelocationBatchJobStatus extends async.PollResultBase
+    complete RelocationBatchResult
+        "The copy or move batch job has finished."
+    failed RelocationBatchError
+        "The copy or move batch job has failed with exception."
+
+struct RelocationResult
+    metadata Metadata
+
+    example default
+        metadata = default
+
+union RelocationBatchError extends RelocationError
+    duplicated_or_nested_paths
+        "There are duplicated/nested paths among :field:`RelocationArg.from_path`
+        and :field:`RelocationArg.to_path`."
+    too_many_write_operations
+        "There are too many write operations in user's Dropbox. Please retry
+        this request."
 #
 # Copy
 #
@@ -927,6 +1056,24 @@ route copy (RelocationArg, Metadata, RelocationError)
     attrs
         owner = "dev-plat"
 
+
+route copy_batch (RelocationBatchArg, async.LaunchEmptyResult, Void)
+    "Copy multiple files or folders to different locations at once in the
+    user's Dropbox.
+
+    If :field:`RelocationBatchArg.allow_shared_folder` is false, this
+    route is atomic. If on entry failes, the whole transaction will abort. If
+    :field:`RelocationBatchArg.allow_shared_folder` is true, not
+    atomicity is guaranteed, but you will be able to copy the contents of
+    shared folders to new locations.
+
+    This route will return job ID immediately and do the async copy job in
+    background. Please use :route:`copy_batch/check` to check the job status."
+
+route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`copy_batch`. If
+    success, it returns list of results for each entry."
+
 #
 # Move
 #
@@ -938,6 +1085,20 @@ route move (RelocationArg, Metadata, RelocationError)
 
     attrs
         owner = "dev-plat"
+
+route move_batch (RelocationBatchArg, async.LaunchEmptyResult, Void)
+    "Move multiple files or folders to different locations at once in the
+    user's Dropbox.
+
+    This route is 'all or nothing', which means if one entry fails, the
+    whole transaction will abort.
+
+    This route will return job ID immediately and do the async moving job in
+    background. Please use :route:`move_batch/check` to check the job status."
+
+route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`move_batch`. If
+    success, it returns list of results for each entry."
 
 #
 # Thumbnail
@@ -953,7 +1114,7 @@ union_closed ThumbnailSize
     w640h480
         "640 by 480 px."
     w1024h768
-        "1024 by 768"
+        "1024 by 768."
 
 union_closed ThumbnailFormat
     jpeg
@@ -1011,7 +1172,7 @@ struct PreviewArg
     path ReadPath
         "The path of the file to preview."
     rev Rev?
-        "Deprecated. Please specify revision in :field:`path` instead"
+        "Deprecated. Please specify revision in :field:`path` instead."
 
     example default
         path = "/word.docx"
@@ -1036,7 +1197,7 @@ union_closed PreviewError
 route get_preview(PreviewArg, FileMetadata, PreviewError)
     "Get a preview for a file. Currently previews are only generated for the files with
      the following extensions: .doc, .docx, .docm, .ppt, .pps, .ppsx, .ppsm, .pptx, .pptm,
-     .xls, .xlsx, .xlsm, .rtf"
+     .xls, .xlsx, .xlsm, .rtf."
 
     attrs
         host = "content"
@@ -1074,7 +1235,7 @@ struct ListRevisionsResult
         entries = [default]
 
 route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
-    "Return revisions of a file"
+    "Return revisions of a file."
 
     attrs
         owner = "dev-plat"
@@ -1102,7 +1263,7 @@ union RestoreError
         "The revision is invalid. It may point to a different file."
 
 route restore(RestoreArg, FileMetadata, RestoreError)
-    "Restore a file to a specific revision"
+    "Restore a file to a specific revision."
 
     attrs
         owner = "dev-plat"

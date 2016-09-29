@@ -9,6 +9,8 @@ union AuthError
         "The user specified in 'Dropbox-API-Select-User' is no longer on the team."
     invalid_select_admin
         "The user specified in 'Dropbox-API-Select-Admin' is not a Dropbox Business team admin."
+    user_suspended
+        "The user has been suspended."
 
 route token/revoke(Void, Void, Void)
     "Disables the access token used to authenticate the call."

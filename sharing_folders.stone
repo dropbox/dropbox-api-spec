@@ -558,7 +558,7 @@ route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError)
         owner = "sfi"
 
 struct ShareFolderArg
-    path files.Path
+    path files.WritePath
         "The path to the folder to share. If it does not exist, then a new one
         is created."
     member_policy MemberPolicy = anyone
@@ -601,6 +601,10 @@ union SharePathError
         "We do not support sharing a folder inside a shared folder."
     contains_shared_folder
         "We do not support shared folders that contain shared folders."
+    contains_app_folder
+        "We do not support shared folders that contain app folders."
+    contains_team_folder
+        "We do not support shared folders that contain team folders."
     is_app_folder
         "We do not support sharing an app folder."
     inside_app_folder
@@ -618,6 +622,8 @@ union SharePathError
         "We do not support sharing a Mac OS X package."
     inside_osx_package
         "We do not support sharing a folder inside a Mac OS X package."
+    invalid_path_root files.PathRootError
+        "The path root parameter provided is invalid."
 
 # --
 

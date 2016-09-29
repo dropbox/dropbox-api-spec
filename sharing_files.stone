@@ -4,7 +4,7 @@ import common
 import files
 import users
 
-alias PathOrId = String(pattern="((\/|id:).*|nspath:[^:]*:[^:]*)", min_length=1)
+alias PathOrId = String(pattern="((\/|id:).*|nspath:[0-9]+:.*)|ns:[0-9]+(/.*)?", min_length=1)
 alias FileId = String(pattern="id:.*", min_length=1)
 
 ###########################################

@@ -597,6 +597,8 @@ union MembersRecoverError extends UserSelectorError
         "The user is not recoverable."
     user_not_in_team
         "The user is not a member of the team."
+    team_license_limit
+        "Team is full. The organization has no available licenses."
 
 route members/recover(MembersRecoverArg, Void, MembersRecoverError)
     "Recover a deleted member.
@@ -607,5 +609,4 @@ route members/recover(MembersRecoverArg, Void, MembersRecoverError)
 
     attrs
         auth = "team"
-        beta_group = "deleted_user_recovery"
         owner = "adminx"
