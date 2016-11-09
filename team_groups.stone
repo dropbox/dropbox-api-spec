@@ -272,11 +272,11 @@ struct GroupCreateArg
 
 union GroupCreateError
     group_name_already_used
-        "There is already an existing group with the requested name."
+        "The requested group name is already being used by another group."
     group_name_invalid
         "Group name is empty or has invalid characters."
     external_id_already_in_use
-        "The new external ID is already being used by another group."
+        "The requested external ID is already being used by another group."
 
 
 route groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
@@ -343,8 +343,12 @@ struct GroupUpdateArgs extends IncludeMembersArg
         new_group_management_type = company_managed
 
 union GroupUpdateError extends GroupSelectorError
+    group_name_already_used
+        "The requested group name is already being used by another group."
+    group_name_invalid
+        "Group name is empty or has invalid characters."
     external_id_already_in_use
-        "The new external ID is already being used by another group."
+        "The requested external ID is already being used by another group."
 
 route groups/update(GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
     "Updates a group's name and/or external ID.

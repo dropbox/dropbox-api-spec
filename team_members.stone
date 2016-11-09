@@ -451,14 +451,14 @@ struct MembersRemoveArg extends MembersDeactivateArg
         then this argument must be provided as well."
     keep_account Boolean = false
         "Downgrade the member to a Basic account. The user will retain the email address associated with their Dropbox
-         account and data in their account that is not restricted to team members."
+         account and data in their account that is not restricted to team members. In order to keep the account the argument wipe_data should be set to False."
 
     example default
         user = default
         wipe_data = true
         transfer_dest_id = default
         transfer_admin_id = default
-        keep_account = true
+        keep_account = false
 
 union MembersDeactivateError extends UserSelectorError
     user_not_in_team
@@ -486,7 +486,7 @@ union MembersRemoveError extends MembersDeactivateError
     cannot_keep_account_and_transfer
         "Cannot keep account and transfer the data to another user at the same time."
     cannot_keep_account_and_delete_data
-        "Cannot keep account and delete the data at the same time."
+        "Cannot keep account and delete the data at the same time. To keep the account the argument wipe_data should be set to False."
     email_address_too_long_to_be_disabled
         # Added value in order to handle task T82902.
         "The email address of the user is too long to be disabled."

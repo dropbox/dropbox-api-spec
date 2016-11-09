@@ -34,11 +34,11 @@ struct Metadata
         "The lowercased full path in the user's Dropbox. This always starts with a slash.
         This field will be null if the file or folder is not mounted."
     path_display String?
-        "The cased path to be used for display purposes only. In rare instances
-        the casing will not correctly match the user's filesystem, but this
-        behavior will match the path provided in the Core API v1.
-        Changes to the casing of paths won't be returned by :route:`list_folder/continue`.
-        This field will be null if the file or folder is not mounted."
+        "The cased path to be used for display purposes only. In rare instances the casing will not
+        correctly match the user's filesystem, but this behavior will match the path provided in
+        the Core API v1, and at least the last path component will have the correct casing. Changes
+        to only the casing of paths won't be returned by :route:`list_folder/continue`. This field
+        will be null if the file or folder is not mounted."
     parent_shared_folder_id common.SharedFolderId?
         "Deprecated. Please use :field:`FileSharingInfo.parent_shared_folder_id`
         or :field:`FolderSharingInfo.parent_shared_folder_id` instead."
@@ -587,9 +587,9 @@ union_closed WriteMode
     path with contents different from the contents you're trying to write."
 
     add
-        "Never overwrite the existing file. The autorename strategy is to append
-        a number to the file name. For example, \"document.txt\" might become
-        \"document (2).txt\"."
+        "Do not overwrite an existing file if there is a conflict. The
+        autorename strategy is to append a number to the file name. For example,
+        \"document.txt\" might become \"document (2).txt\"."
     overwrite
         "Always overwrite the existing file. The autorename
         strategy is the same as it is for :field:`add`."
@@ -702,7 +702,22 @@ union_closed UploadSessionFinishBatchJobStatus extends async.PollResultBase
     complete UploadSessionFinishBatchResult
         "The :route:`upload_session/finish_batch` has finished."
 
-route upload_session/finish_batch (UploadSessionFinishBatchArg, async.LaunchEmptyResult, Void)
+    example default
+        complete = default
+
+union UploadSessionFinishBatchLaunch extends async.LaunchResultBase
+    "Result returned by :route:`upload_session/finish_batch` that may either launch an
+    asynchronous job or complete synchronously."
+
+    complete UploadSessionFinishBatchResult
+
+    example complete
+        complete = default
+
+    example async_job_id
+        async_job_id = "34g93hh34h04y384084"
+
+route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFinishBatchLaunch, Void)
     "This route helps you commit many files at once into a user's Dropbox. Use
     :route:`upload_session/start` and :route:`upload_session/append_v2` to
     upload file contents. We recommend uploading many files in parallel to increase
@@ -933,6 +948,21 @@ union DeleteBatchJobStatus extends async.PollResultBase
     failed DeleteBatchError
         "The batch delete has failed."
 
+    example default
+        complete = default
+
+union DeleteBatchLaunch extends async.LaunchResultBase
+    "Result returned by :route:`delete_batch` that may either launch an asynchronous job or complete
+    synchronously."
+
+    complete DeleteBatchResult
+
+    example complete
+        complete = default
+
+    example async_job_id
+        async_job_id = "34g93hh34h04y384084"
+
 route delete (DeleteArg, Metadata, DeleteError)
     "Delete the file or folder at a given path.
 
@@ -945,7 +975,7 @@ route delete (DeleteArg, Metadata, DeleteError)
     attrs
         owner = "dev-plat"
 
-route delete_batch (DeleteBatchArg, async.LaunchEmptyResult, Void)
+route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     "Delete multiple files/folders at once.
 
     This route is asynchronous, which returns a job ID immediately and runs
@@ -1031,6 +1061,22 @@ union_closed RelocationBatchJobStatus extends async.PollResultBase
     failed RelocationBatchError
         "The copy or move batch job has failed with exception."
 
+    example default
+        complete = default
+
+union RelocationBatchLaunch extends async.LaunchResultBase
+
+    "Result returned by :route:`copy_batch` or :route:`move_batch` that may either launch an
+    asynchronous job or complete synchronously."
+
+    complete RelocationBatchResult
+
+    example complete
+        complete = default
+
+    example async_job_id
+        async_job_id = "34g93hh34h04y384084"
+
 struct RelocationResult
     metadata Metadata
 
@@ -1057,7 +1103,7 @@ route copy (RelocationArg, Metadata, RelocationError)
         owner = "dev-plat"
 
 
-route copy_batch (RelocationBatchArg, async.LaunchEmptyResult, Void)
+route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     "Copy multiple files or folders to different locations at once in the
     user's Dropbox.
 
@@ -1086,7 +1132,7 @@ route move (RelocationArg, Metadata, RelocationError)
     attrs
         owner = "dev-plat"
 
-route move_batch (RelocationBatchArg, async.LaunchEmptyResult, Void)
+route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     "Move multiple files or folders to different locations at once in the
     user's Dropbox.
 

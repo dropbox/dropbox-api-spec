@@ -374,7 +374,7 @@ route list_file_members/batch(ListFileMembersBatchArg, List(ListFileMembersBatch
     is more strict. To customize the results more, use the individual file
     endpoint.
 
-    Inherited users are not included in the result, and permissions are not
+    Inherited users and groups are not included in the result, and permissions are not
     returned for this endpoint."
 
     attrs

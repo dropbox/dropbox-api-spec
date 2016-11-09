@@ -18,7 +18,10 @@ struct Route
         feature."
     # We can switch the type from String to a Union once all generators support
     # unions in attributes.
-    owner String(pattern="adminx|dev-plat|sfi|sharing|company-dropbox-team|paper-eng|notifications-team|sub-growth")?
+    owner String(pattern="adminx|dev-plat|sfi|sharing|company-dropbox-team|paper-eng|notifications-team|sub-growth|productivity-infra-team")?
         "The team that currently owns the route."
     cluster String(min_length=1) = "meta-api"
         "The cluster that handles this route."
+    feature String?
+        "Set if the route belongs to an orion feature. Accounts must have access to the feature to
+        successfully make a request to the route. Only features with boolean value are supported"

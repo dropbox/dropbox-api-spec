@@ -187,9 +187,11 @@ struct FolderLinkMetadata extends SharedLinkMetadata
 
 union SharedLinkError
     shared_link_not_found
-        "The shared link wasn't found"
+        "The shared link wasn't found."
     shared_link_access_denied
-        "The caller is not allowed to access this shared link"
+        "The caller is not allowed to access this shared link."
+    unsupported_link_type
+        "This type of link is not supported."
 
 route get_shared_link_metadata(GetSharedLinkMetadataArg, SharedLinkMetadata, SharedLinkError)
     "Get the shared link's metadata."
