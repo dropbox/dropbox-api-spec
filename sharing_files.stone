@@ -46,8 +46,12 @@ union FileErrorResult
 union FileAction
     "Sharing actions that may be taken on files."
 
+    disable_viewer_info
+        "Disable viewer information on the file."
     edit_contents
         "Change or edit contents of the file."
+    enable_viewer_info
+        "Enable viewer information on the file."
     invite_viewer
         "Add a member with view permissions."
     invite_viewer_no_comment
@@ -73,7 +77,7 @@ struct FilePermission
         "True if the user is allowed to take the action."
     reason PermissionDeniedReason?
         "The reason why the user is denied the permission. Not present if the action
-        is allowed"
+        is allowed."
 
     example default
         action = edit_contents
@@ -83,6 +87,8 @@ struct FilePermission
 struct SharedFileMetadata
     "Properties of the shared file."
 
+    link_metadata SharedContentLinkMetadata?
+        "The metadata of the link associated for the file."
     policy FolderPolicy
         "Policies governing this shared file."
     permissions List(FilePermission)?
@@ -125,13 +131,18 @@ struct SharedFileMetadata
         id = "id:3kmLmQFnf1AAAAAAAAAAAw"
         time_invited = "2016-01-20T00:00:00Z"
 
+union ViewerInfoPolicy
+    enabled
+        "Viewer information is available on this file."
+    disabled
+        "Viewer information is disabled on this file."
+
 ##################################
 # File membership mutation types #
 ##################################
 
 struct FileMemberActionResult
-    "Per-member result for :route:`remove_file_member_2` or
-    :route:`add_file_member` or :route:`change_file_member_access`."
+    "Per-member result for :route:`add_file_member` or :route:`change_file_member_access`."
 
     member MemberSelector
         "One of specified input members."
@@ -178,6 +189,9 @@ union FileMemberActionError
         "User does not have permission to perform this action on this member."
     access_error SharingFileAccessError
         "Specified file was invalid or user does not have access."
+    no_explicit_access MemberAccessLevelResult
+        "The action cannot be completed because the target member does not have explicit access
+        to the file. The return value is the access that the member has to the file from a parent folder."
 
 #####################
 # Route Definitions #
@@ -217,8 +231,8 @@ struct AddFileMemberArgs
 
 # --
 
-route change_file_member_access(ChangeFileMemberAccessArgs, FileMemberActionResult, FileMemberActionError)
-    "Changes a member's access on a shared file."
+route change_file_member_access(ChangeFileMemberAccessArgs, FileMemberActionResult, FileMemberActionError) deprecated by update_file_member
+    "Identical to update_file_member but with less information returned."
 
     attrs
         owner = "sharing"
@@ -236,7 +250,21 @@ struct ChangeFileMemberAccessArgs
     example default
         file = "id:3kmLmQFnf1AAAAAAAAAAAw"
         member = default
-        access_level = viewer_no_comment
+        access_level = viewer
+
+struct UpdateFileMemberArgs extends ChangeFileMemberAccessArgs
+    "Arguments for :route:`update_file_member`."
+
+    example default
+        file = "id:3kmLmQFnf1AAAAAAAAAAAw"
+        member = default
+        access_level = viewer
+
+route update_file_member(UpdateFileMemberArgs, MemberAccessLevelResult, FileMemberActionError)
+    "Changes a member's access on a shared file."
+
+    attrs
+        owner = "sharing"
 
 # --
 
@@ -245,9 +273,10 @@ route get_file_metadata(GetFileMetadataArg, SharedFileMetadata, GetFileMetadataE
 
     attrs
         owner = "sharing"
+        api_group = "truelink-alpha"
 
 struct GetFileMetadataArg
-    "Arguments of :route:`get_file_metadata`"
+    "Arguments of :route:`get_file_metadata`."
 
     file PathOrId
         "The file to query."
@@ -273,7 +302,7 @@ route get_file_metadata/batch(GetFileMetadataBatchArg, List(GetFileMetadataBatch
         owner = "sharing"
 
 struct GetFileMetadataBatchArg
-    "Arguments of :route:`get_file_metadata/batch`"
+    "Arguments of :route:`get_file_metadata/batch`."
 
     files List(PathOrId, max_items=100)
         "The files to query."
@@ -285,13 +314,13 @@ struct GetFileMetadataBatchArg
         actions = []
 
 struct GetFileMetadataBatchResult
-    "Per file results of :route:`get_file_metadata/batch`"
+    "Per file results of :route:`get_file_metadata/batch`."
 
     file PathOrId
         "This is the input file identifier corresponding to one of
         :field:`GetFileMetadataBatchArg.files`."
     result GetFileMetadataIndividualResult
-        "The result for this particular file"
+        "The result for this particular file."
 
     example default
         file = "id:3kmLmQFnf1AAAAAAAAAAAw"
@@ -328,7 +357,7 @@ struct ListFileMembersArg
     file PathOrId
         "The file for which you want to see members."
     actions List(MemberAction)?
-        "The actions for which to return permissions on a member"
+        "The actions for which to return permissions on a member."
     include_inherited Boolean = true
         "Whether to include members who only have access from a parent shared folder."
     limit UInt32(min_value=1, max_value=300) = 100
@@ -398,7 +427,7 @@ struct ListFileMembersBatchResult
     file PathOrId
         "This is the input file identifier, whether an ID or a path."
     result ListFileMembersIndividualResult
-        "The result for this particular file"
+        "The result for this particular file."
 
     example default
         file = "id:3kmLmQFnf1AAAAAAAAAAAw"
@@ -413,7 +442,7 @@ struct ListFileMembersCountResult
     members SharedFileMembers
         "A list of members on this file."
     member_count UInt32
-        "The number of members on this file. This does not include inherited members"
+        "The number of members on this file. This does not include inherited members."
 
     example default
         members = default
@@ -421,7 +450,7 @@ struct ListFileMembersCountResult
 
 union ListFileMembersIndividualResult
     result ListFileMembersCountResult
-        "The results of the query for this file if it was successful"
+        "The results of the query for this file if it was successful."
     access_error SharingFileAccessError
         "The result of the query for this file if it was an error."
 
@@ -507,7 +536,7 @@ struct ListFilesContinueArg
     "Arguments for :route:`list_received_files/continue`."
 
     cursor String
-        "Cursor in :field:`ListFilesResult.cursor`"
+        "Cursor in :field:`ListFilesResult.cursor`."
 
     example default
         cursor = "AzJJbGlzdF90eXBdofe9c3RPbGlzdGFyZ3NfYnlfZ2lkMRhcbric7Rdog9emfGRlc2MCRWxpbWl0BGRId"
@@ -582,6 +611,7 @@ route unshare_file(UnshareFileArg, Void, UnshareFileError)
 
     attrs
         owner = "sharing"
+        api_group = "truelink-alpha"
 
 struct UnshareFileArg
     "Arguments for :route:`unshare_file`."

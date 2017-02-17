@@ -23,7 +23,7 @@ union_closed GroupSelector
 
     group_id team_common.GroupId
         "Group ID."
-    group_external_id String
+    group_external_id team_common.GroupExternalId
         "External ID of the group."
 
     example default
@@ -34,6 +34,13 @@ union GroupSelectorError
 
     group_not_found
         "No matching group found. No groups match the specified group ID."
+
+union GroupSelectorWithTeamGroupError extends GroupSelectorError
+    "Error that can be raised when :type:`GroupSelector` is used and team groups are disallowed from
+    being used."
+
+    system_managed_group_disallowed
+        "This operation is not supported on system-managed groups."
 
 
 union_closed GroupsSelector
@@ -61,7 +68,7 @@ struct GroupMemberSelector
         user = default
 
 
-union GroupMemberSelectorError extends GroupSelectorError
+union GroupMemberSelectorError extends GroupSelectorWithTeamGroupError
     "Error that can be raised when :type:`GroupMemberSelector` is used, and the user
     is required to be a member of the specified group."
 
@@ -78,7 +85,7 @@ struct GroupMembersSelector
         "A list of users that are members of :field:`group`."
 
 
-union GroupMembersSelectorError extends GroupSelectorError
+union GroupMembersSelectorError extends GroupSelectorWithTeamGroupError
     "Error that can be raised when :type:`GroupMembersSelector` is used, and the users
     are required to be members of the specified group."
 
@@ -155,20 +162,10 @@ struct GroupsListResult
 route groups/list(GroupsListArg, GroupsListResult, Void)
     "Lists groups on a team.
 
-    Permission : Team Information"
+    Permission : Team Information."
 
     attrs
         auth = "team"
-        owner = "adminx"
-
-route alpha/groups/list(GroupsListArg, GroupsListResult, Void)
-    "Lists groups on a team.
-
-    Permission : Team Information"
-
-    attrs
-        auth = "team"
-        alpha_group = "managed_groups"
         owner = "adminx"
 
 #
@@ -190,21 +187,10 @@ route groups/list/continue(GroupsListContinueArg, GroupsListResult, GroupsListCo
     "Once a cursor has been retrieved from :route:`groups/list`, use this to paginate
     through all groups.
 
-    Permission : Team information"
+    Permission : Team Information."
 
     attrs
         auth = "team"
-        owner = "adminx"
-
-route alpha/groups/list/continue(GroupsListContinueArg, GroupsListResult, GroupsListContinueError)
-    "Once a cursor has been retrieved from :route:`alpha/groups/list`, use this to paginate
-    through all groups.
-
-    Permission : Team information"
-
-    attrs
-        auth = "team"
-        alpha_group = "managed_groups"
         owner = "adminx"
 
 #
@@ -231,22 +217,13 @@ union GroupsGetInfoError
         "The group is not on your team."
 
 route groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
-    "Retrieves information about one or more groups.
+    "Retrieves information about one or more groups. Note that the optional field
+     :field:`GroupFullInfo.members` is not returned for system-managed groups.
 
-    Permission : Team Information"
-
-    attrs
-        auth = "team"
-        owner = "adminx"
-
-route alpha/groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
-    "Retrieves information about one or more groups.
-
-    Permission : Team Information"
+    Permission : Team Information."
 
     attrs
         auth = "team"
-        alpha_group = "managed_groups"
         owner = "adminx"
 
 ##########################
@@ -261,10 +238,10 @@ route alpha/groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoEr
 struct GroupCreateArg
     group_name String
         "Group name."
-    group_external_id String?
+    group_external_id team_common.GroupExternalId?
         "The creator of a team can associate an arbitrary external ID to the group."
     group_management_type team_common.GroupManagementType?
-        "Whether the team can be managed by selected users, or only by team admins"
+        "Whether the team can be managed by selected users, or only by team admins."
 
     example default
         group_name = "Europe sales"
@@ -277,32 +254,24 @@ union GroupCreateError
         "Group name is empty or has invalid characters."
     external_id_already_in_use
         "The requested external ID is already being used by another group."
+    system_managed_group_disallowed
+        "System-managed group cannot be manually created."
 
 
 route groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
     "Creates a new, empty group, with a requested name.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
-        owner = "adminx"
-
-route alpha/groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
-    "Creates a new, empty group, with a requested name.
-
-    Permission : Team member management"
-
-    attrs
-        auth = "team"
-        alpha_group = "managed_groups"
         owner = "adminx"
 
 #
 # route groups/delete  (async method)
 #
 
-union GroupDeleteError extends GroupSelectorError
+union GroupDeleteError extends GroupSelectorWithTeamGroupError
     group_already_deleted
         "This group has already been deleted."
 
@@ -314,7 +283,7 @@ route groups/delete(GroupSelector, async.LaunchEmptyResult, GroupDeleteError)
     may take additional time.
     Use the :route:`groups/job_status/get` to determine whether this process has completed.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
@@ -329,7 +298,7 @@ struct GroupUpdateArgs extends IncludeMembersArg
         "Specify a group."
     new_group_name String?
         "Optional argument. Set group name to this if provided."
-    new_group_external_id String?
+    new_group_external_id team_common.GroupExternalId?
         "Optional argument. New group external ID.
         If the argument is None, the group's external_id won't be updated.
         If the argument is empty string, the group's external id will be cleared."
@@ -342,7 +311,7 @@ struct GroupUpdateArgs extends IncludeMembersArg
         new_group_external_id = "sales-234"
         new_group_management_type = company_managed
 
-union GroupUpdateError extends GroupSelectorError
+union GroupUpdateError extends GroupSelectorWithTeamGroupError
     group_name_already_used
         "The requested group name is already being used by another group."
     group_name_invalid
@@ -353,20 +322,10 @@ union GroupUpdateError extends GroupSelectorError
 route groups/update(GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
     "Updates a group's name and/or external ID.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
-        owner = "adminx"
-
-route alpha/groups/update(GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
-    "Updates a group's name, external ID or management type.
-
-    Permission : Team member management"
-
-    attrs
-        auth = "team"
-        alpha_group = "managed_groups"
         owner = "adminx"
 
 #
@@ -412,7 +371,7 @@ struct GroupMembersAddArg extends IncludeMembersArg
         members = [default]
 
 
-union GroupMembersAddError extends GroupSelectorError
+union GroupMembersAddError extends GroupSelectorWithTeamGroupError
     duplicate_user
         "You cannot add duplicate users. One or more of the members
         you are trying to add is already a member of the group."
@@ -439,7 +398,7 @@ route groups/members/add(GroupMembersAddArg, GroupMembersChangeResult, GroupMemb
     may take additional time.
     Use the :route:`groups/job_status/get` to determine whether this process has completed.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
@@ -463,6 +422,10 @@ union GroupMembersRemoveError extends GroupMembersSelectorError
     group_not_in_team
         "Group is not in this team. You cannot remove members from a group
         that is outside of your team."
+    members_not_in_team List(String)
+        "These members are not part of your team."
+    users_not_found List(String)
+        "These users were not found in Dropbox."
 
 route groups/members/remove(GroupMembersRemoveArg, GroupMembersChangeResult, GroupMembersRemoveError)
     "Removes members from a group.
@@ -474,7 +437,7 @@ route groups/members/remove(GroupMembersRemoveArg, GroupMembersChangeResult, Gro
     This method permits removing the only owner of a group, even in cases where this is not
     possible via the web client.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
@@ -505,7 +468,7 @@ union GroupMemberSetAccessTypeError extends GroupMemberSelectorError
 route groups/members/set_access_type(GroupMembersSetAccessTypeArg, GroupsGetInfoResult, GroupMemberSetAccessTypeError)
     "Sets a member's access type in a group.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
@@ -543,7 +506,7 @@ struct GroupsMembersListResult
 route groups/members/list(GroupsMembersListArg, GroupsMembersListResult, GroupSelectorError)
     "Lists members of a group.
 
-    Permission : Team Information"
+    Permission : Team Information."
 
     attrs
         auth = "team"
@@ -568,7 +531,7 @@ route groups/members/list/continue(GroupsMembersListContinueArg, GroupsMembersLi
     "Once a cursor has been retrieved from :route:`groups/members/list`, use this to paginate
     through all members of the group.
 
-    Permission : Team information"
+    Permission : Team information."
 
     attrs
         auth = "team"
@@ -588,7 +551,7 @@ route groups/job_status/get(async.PollArg, async.PollEmptyResult, GroupsPollErro
     use this method to poll the status of granting/revoking
     group members' access to group-owned resources.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"

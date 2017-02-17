@@ -13,4 +13,5 @@ alias NamePart = String(pattern="[^\/:?*<>\"|]*", min_length=1, max_length=100)
 # Display name. We don't limit the length because it's always generated from the first & last names.
 alias DisplayName = String(pattern="[^\/:?*<>\"|]*", min_length=1)
 
-alias SharedFolderId = String(pattern="[-_0-9a-zA-Z:]+")
+alias NamespaceId = String(pattern="[-_0-9a-zA-Z:]+")
+alias SharedFolderId = NamespaceId

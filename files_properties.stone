@@ -10,14 +10,16 @@ route properties/add(PropertyGroupWithPath, Void, AddPropertiesError)
     See properties/template/add to create new property templates."
 
     attrs
-        beta_group="properties"
+        api_group="properties"
+        is_preview=true
 
 route properties/overwrite(PropertyGroupWithPath, Void, InvalidPropertyGroupError)
     "Overwrite custom properties from a specified template
     associated with a file."
 
     attrs
-        beta_group="properties"
+        api_group="properties"
+        is_preview=true
 
 route properties/update(UpdatePropertyGroupArg, Void, UpdatePropertiesError)
     "Add, update or remove custom properties from a specified template
@@ -25,7 +27,8 @@ route properties/update(UpdatePropertyGroupArg, Void, UpdatePropertiesError)
     the request will not be modified."
 
     attrs
-        beta_group="properties"
+        api_group="properties"
+        is_preview=true
 
 route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
     "Remove all custom properties from a specified template associated with a file.
@@ -34,20 +37,23 @@ route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
     Property templates can't be removed once created."
 
     attrs
-        beta_group="properties"
+        api_group="properties"
+        is_preview=true
 
 route properties/template/get(properties.GetPropertyTemplateArg, properties.GetPropertyTemplateResult, properties.PropertyTemplateError)
     "Get the schema for a specified template."
 
     attrs
-        beta_group="properties"
+        api_group="properties"
+        is_preview=true
 
 route properties/template/list(Void, properties.ListPropertyTemplateIds, properties.PropertyTemplateError)
     "Get the property template identifiers for a user. To get the schema of
     each template use :route:`properties/template/get`."
 
     attrs
-        beta_group="properties"
+        api_group="properties"
+        is_preview=true
 
 struct RemovePropertiesArg
     path PathOrId
@@ -127,7 +133,8 @@ route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError)
     Note: Metadata for the root folder is unsupported."
 
     attrs
-        beta_group="properties"
+        api_group="properties"
+        is_preview=true
 
 struct AlphaGetMetadataArg extends GetMetadataArg
     include_property_templates List(properties.TemplateId)?
@@ -162,7 +169,8 @@ route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithPrope
     attrs
         host="content"
         style="upload"
-        beta_group="properties"
+        api_group="properties"
+        is_preview=true
 
 struct CommitInfoWithProperties extends CommitInfo
     property_groups List(properties.PropertyGroup)?

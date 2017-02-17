@@ -1,13 +1,20 @@
 namespace team_common
 
+import common
+
+alias TeamMemberId = String
+alias MemberExternalId = String(max_length=64)
+alias GroupExternalId = String
+
 alias GroupId = String
+alias ResellerId = String
 
 struct GroupSummary
     "Information about a group."
 
     group_name String
     group_id GroupId
-    group_external_id String?
+    group_external_id GroupExternalId?
         "External ID of group. This is an arbitrary ID that an admin can attach to a group."
     member_count UInt32?
         "The number of members in the group."
@@ -24,10 +31,12 @@ struct GroupSummary
 union GroupManagementType
     "The group type determines how a group is managed."
 
-    company_managed
-        "A group which is managed by team admins only."
     user_managed
         "A group which is managed by selected users."
+    company_managed
+        "A group which is managed by team admins only."
+    system_managed
+        "A group which is managed automatically by Dropbox."
 
 
 union GroupType
@@ -38,3 +47,10 @@ union GroupType
         :link:`team folders https://www.dropbox.com/help/986` only."
     user_managed
         "A group is created and managed by a user."
+
+struct TimeRange
+    "Time range."
+    start_time common.DropboxTimestamp?
+        "Optional starting time (inclusive)."
+    end_time common.DropboxTimestamp?
+        "Optional ending time (exclusive)."

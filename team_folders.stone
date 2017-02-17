@@ -10,6 +10,8 @@ union TeamFolderStatus
         "The team folder and sub-folders are available to all members."
     archived
         "The team folder is not accessible outside of the team folder manager."
+    archive_in_progress
+        "The team folder is not accessible outside of the team folder manager."
 
 struct TeamFolderIdArg
     team_folder_id common.SharedFolderId
@@ -53,13 +55,20 @@ union TeamFolderInvalidStatusError
         "The folder is active and the operation did not succeed."
     archived
         "The folder is archived and the operation did not succeed."
+    archive_in_progress
+        "The folder is being archived and the operation did not succeed."
+
+union BaseTeamFolderError
+    "Base error that all errors for existing team folders should extend."
+    access_error TeamFolderAccessError
+    status_error TeamFolderInvalidStatusError
 
 #
 # Team folder create
 #
 
 route team_folder/create(TeamFolderCreateArg, TeamFolderMetadata, TeamFolderCreateError)
-    "Creates a new, active, team folder. This endpoint is only available to teams with :link:`improved team folders /help/986`.
+    "Creates a new, active, team folder.
 
     Permission : Team member file access.
     "
@@ -80,13 +89,15 @@ union TeamFolderCreateError
         "The provided name cannot be used."
     folder_name_already_used
         "There is already a team folder with the provided name."
+    folder_name_reserved
+        "The provided name cannot be used because it is reserved."
 
 #
 # Team folder rename
 #
 
 route team_folder/rename(TeamFolderRenameArg, TeamFolderMetadata, TeamFolderRenameError)
-    "Changes an active team folder's name. This endpoint is only available to teams with :link:`improved team folders /help/986`.
+    "Changes an active team folder's name.
 
     Permission : Team member file access.
     "
@@ -103,19 +114,20 @@ struct TeamFolderRenameArg extends TeamFolderIdArg
         team_folder_id = "123456789"
         name = "Sales"
 
-union TeamFolderRenameError
-    access_error TeamFolderAccessError
+union TeamFolderRenameError extends BaseTeamFolderError
     invalid_folder_name
         "The provided folder name cannot be used."
     folder_name_already_used
         "There is already a team folder with the same name."
+    folder_name_reserved
+        "The provided name cannot be used because it is reserved."
 
 #
 # Team folder list
 #
 
 route team_folder/list(TeamFolderListArg, TeamFolderListResult, TeamFolderListError)
-    "Lists all team folders. This endpoint is only available to teams with :link:`improved team folders /help/986`.
+    "Lists all team folders.
 
     Permission : Team member file access.
     "
@@ -148,7 +160,7 @@ struct TeamFolderListError
 #
 
 route team_folder/get_info(TeamFolderIdListArg, List(TeamFolderGetInfoItem), Void)
-    "Retrieves metadata for team folders. This endpoint is only available to teams with :link:`improved team folders /help/986`.
+    "Retrieves metadata for team folders.
 
     Permission : Team member file access.
     "
@@ -169,7 +181,7 @@ union_closed TeamFolderGetInfoItem
 #
 
 route team_folder/activate(TeamFolderIdArg, TeamFolderMetadata, TeamFolderActivateError)
-    "Sets an archived team folder's status to active. This endpoint is only available to teams with :link:`improved team folders /help/986`.
+    "Sets an archived team folder's status to active.
 
     Permission : Team member file access.
     "
@@ -178,16 +190,15 @@ route team_folder/activate(TeamFolderIdArg, TeamFolderMetadata, TeamFolderActiva
         owner = "company-dropbox-team"
         auth = "team"
 
-union TeamFolderActivateError
-    access_error TeamFolderAccessError
-    status_error TeamFolderInvalidStatusError
+union TeamFolderActivateError extends BaseTeamFolderError
+    ""
 
 #
 # Team folder archive
 #
 
 route team_folder/archive(TeamFolderArchiveArg, TeamFolderArchiveLaunch, TeamFolderArchiveError)
-    "Sets an active team folder's status to archived and removes all folder and file members. This endpoint is only available to teams with :link:`improved team folders /help/986`.
+    "Sets an active team folder's status to archived and removes all folder and file members.
 
     Permission : Team member file access.
     "
@@ -210,12 +221,11 @@ union_closed TeamFolderArchiveLaunch extends async.LaunchResultBase
     example default
         complete = default
 
-union TeamFolderArchiveError
-    access_error TeamFolderAccessError
-    status_error TeamFolderInvalidStatusError
+union TeamFolderArchiveError extends BaseTeamFolderError
+    ""
 
 route team_folder/archive/check(async.PollArg, TeamFolderArchiveJobStatus, async.PollError)
-    "Returns the status of an asynchronous job for archiving a team folder. This endpoint is only available to teams with :link:`improved team folders /help/986`.
+    "Returns the status of an asynchronous job for archiving a team folder.
 
     Permission : Team member file access.
     "
@@ -238,7 +248,7 @@ union_closed TeamFolderArchiveJobStatus extends async.PollResultBase
 #
 
 route team_folder/permanently_delete(TeamFolderIdArg, Void, TeamFolderPermanentlyDeleteError)
-    "Permanently deletes an archived team folder. This endpoint is only available to teams with :link:`improved team folders /help/986`.
+    "Permanently deletes an archived team folder.
 
     Permission : Team member file access.
     "
@@ -247,6 +257,5 @@ route team_folder/permanently_delete(TeamFolderIdArg, Void, TeamFolderPermanentl
         owner = "company-dropbox-team"
         auth = "team"
 
-union TeamFolderPermanentlyDeleteError
-    access_error TeamFolderAccessError
-    status_error TeamFolderInvalidStatusError
+union TeamFolderPermanentlyDeleteError extends BaseTeamFolderError
+    ""

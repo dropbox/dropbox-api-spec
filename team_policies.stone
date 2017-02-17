@@ -25,7 +25,7 @@ struct TeamSharingPolicies
     shared_folder_join_policy SharedFolderJoinPolicy
         "Which shared folders team members can join."
     shared_link_create_policy SharedLinkCreatePolicy
-        "What is the visibility of newly created shared links."
+        "Who can view shared links owned by team members."
 
     example default
         shared_folder_member_policy = team
@@ -51,7 +51,8 @@ union SharedFolderJoinPolicy
         "Team members can join any shared folder, including those shared by users outside the team."
 
 union SharedLinkCreatePolicy
-    "Policy governing the visibility of newly created shared links."
+    "Policy governing the visibility of shared links. This policy can apply to newly created shared
+    links, or all shared links."
 
     default_public
         "By default, anyone can access newly created shared links.
@@ -60,8 +61,8 @@ union SharedLinkCreatePolicy
         "By default, only members of the same team can access newly created shared links.
         Login will be required to access the shared links unless overridden."
     team_only
-        "Only members of the same team can access newly created shared links.
-        Login will be required to access the shared links."
+        "Only members of the same team can access all shared links.
+        Login will be required to access all shared links."
 
 union EmmState
     disabled

@@ -10,15 +10,15 @@ struct Route
     style String = "rpc"
         "The RPC format to use for the request. Valid values: rpc, download,
         and upload."
-    alpha_group String?
-        "Set if the route is part of an alpha release to the name of the
-        feature."
-    beta_group String?
-        "Set if the route is part of an beta release to the name of the
-        feature."
+    api_group String?
+        "The API group to which this route belongs (useful for filtering
+        via Stone's -f command line argument)."
+    is_preview Boolean = false
+        "A flag indicating whether the route is subject to breaking
+        changes without notice."
     # We can switch the type from String to a Union once all generators support
     # unions in attributes.
-    owner String(pattern="adminx|dev-plat|sfi|sharing|company-dropbox-team|paper-eng|notifications-team|sub-growth|productivity-infra-team")?
+    owner String(pattern="adminx|dev-plat|sfi|home|sharing|company-dropbox-team|paper-eng|notifications-team|sub-growth|productivity-infra-team|prodsec")?
         "The team that currently owns the route."
     cluster String(min_length=1) = "meta-api"
         "The cluster that handles this route."

@@ -14,6 +14,7 @@ alias Rev = String(min_length=9, pattern="[0-9a-f]+") # TODO: Change pattern to 
 alias ListFolderCursor = String(min_length=1)
 alias ReadPath = String(pattern="(/(.|[\\r\\n])*|id:.*)|(rev:[0-9a-f]{9,})|(ns:[0-9]+(/.*)?)")
 alias WritePath = String(pattern="(/(.|[\\r\\n])*)|(ns:[0-9]+(/.*)?)")
+alias Sha256HexHash = String(min_length=64, max_length=64)
 
 #
 # Metadata definitions and route
@@ -198,6 +199,9 @@ struct FileMetadata extends Metadata
          members. This is different from sharing_info in that this could be true
          in the case where a file has explicit members but is not contained within
          a shared folder."
+    content_hash Sha256HexHash?
+        "A hash of the file content. This field can be used to verify data integrity. For more
+        information see our :link:`Content hash /developers/reference/content-hash` page."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
@@ -211,6 +215,7 @@ struct FileMetadata extends Metadata
         size = 7212
         property_groups = [default]
         has_explicit_shared_members = false
+        content_hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 struct FolderMetadata extends Metadata
     id Id
@@ -525,6 +530,7 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
         host = "content"
         style = "upload"
         owner = "dev-plat"
+        feature = "upload_api_rate_limit"
 
 struct UploadSessionAppendArg
     cursor UploadSessionCursor
@@ -548,6 +554,7 @@ route upload_session/append_v2 (UploadSessionAppendArg, Void, UploadSessionLooku
         host = "content"
         style = "upload"
         owner = "dev-plat"
+        feature = "upload_api_rate_limit"
 
 
 struct UploadSessionCursor
@@ -571,6 +578,7 @@ route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError
         host = "content"
         style = "upload"
         owner = "dev-plat"
+        feature = "upload_api_rate_limit"
 
 union_closed WriteMode
     "Your intent when writing a file to some path. This is used to determine
@@ -661,6 +669,7 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
         host = "content"
         style = "upload"
         owner = "dev-plat"
+        feature = "upload_api_rate_limit"
 
 route upload (CommitInfo, FileMetadata, UploadError)
     "Create a new file with the contents provided in the request.
@@ -672,6 +681,7 @@ route upload (CommitInfo, FileMetadata, UploadError)
         host = "content"
         style = "upload"
         owner = "dev-plat"
+        feature = "upload_api_rate_limit"
 
 #
 # Batch Upload
@@ -734,6 +744,10 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFin
 
     For the same account, this route should be executed serially. That means you should not start
     the next job before current job finishes. We allow up to 1000 entries in a single request."
+
+    attrs
+        owner = "dev-plat"
+        feature = "upload_api_rate_limit"
 
 route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`upload_session/finish_batch`. If
@@ -1033,6 +1047,9 @@ union RelocationError
         "You cannot move a folder into itself."
     too_many_files
         "The operation would involve more than 10,000 files and folders."
+    duplicated_or_nested_paths
+        "There are duplicated/nested paths among :field:`RelocationArg.from_path`
+        and :field:`RelocationArg.to_path`."
 
 struct RelocationBatchArg
     entries List(RelocationPath)
@@ -1084,9 +1101,6 @@ struct RelocationResult
         metadata = default
 
 union RelocationBatchError extends RelocationError
-    duplicated_or_nested_paths
-        "There are duplicated/nested paths among :field:`RelocationArg.from_path`
-        and :field:`RelocationArg.to_path`."
     too_many_write_operations
         "There are too many write operations in user's Dropbox. Please retry
         this request."

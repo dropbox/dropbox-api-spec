@@ -40,6 +40,7 @@ struct TeamMemberProfile extends MemberProfile
         name = default
         groups = ["g:e2db7665347abcd600000000001a2b3c"]
         membership_type = full
+        joined_on = "2015-05-12T15:50:38Z"
 
 union_closed MemberSelectorError extends UserSelectorError
     user_not_in_team
@@ -195,8 +196,10 @@ struct MemberAddArg
         "Member's first name."
     member_surname common.NamePart
         "Member's last name."
-    member_external_id MemberExternalId?
+    member_external_id team_common.MemberExternalId?
         "External ID for member."
+    member_persistent_id String?
+        "Persistent ID for member. This field is only available to teams using persistent ID SAML configuration."
     send_welcome_email Boolean = true
         "Whether to send a welcome email to the member.
         If send_welcome_email is false, no email invitation will be sent to the user.
@@ -245,6 +248,10 @@ union_closed MemberAddResult
         "User migration has failed."
     duplicate_external_member_id common.EmailAddress
         "A user with the given external member ID already exists on the team (including in recoverable state)."
+    duplicate_member_persistent_id common.EmailAddress
+        "A user with the given persistent ID already exists on the team (including in recoverable state)."
+    persistent_id_disabled common.EmailAddress
+        "Persistent ID is only available to teams with persistent ID SAML configuration. Please contact Dropbox for more information."
     user_creation_failed common.EmailAddress
         "User creation has failed."
 
@@ -319,12 +326,14 @@ struct MembersSetProfileArg
         "Identity of user whose profile will be set."
     new_email common.EmailAddress?
         "New email for member."
-    new_external_id MemberExternalId?
+    new_external_id team_common.MemberExternalId?
         "New external ID for member."
     new_given_name common.NamePart?
         "New given name for member."
     new_surname common.NamePart?
         "New surname for member."
+    new_persistent_id String?
+        "New persistent ID. This field only available to teams using persistent ID SAML configuration."
 
     example default
         user = default
@@ -341,9 +350,13 @@ union MembersSetProfileError extends MemberSelectorError
     external_id_used_by_other_user
         "The external ID is already in use by another team member."
     set_profile_disallowed
-        "Setting profile disallowed"
+        "Pending team member's email cannot be modified."
     param_cannot_be_empty
         "Parameter new_email cannot be empty."
+    persistent_id_disabled
+        "Persistent ID is only available to teams with persistent ID SAML configuration. Please contact Dropbox for more information."
+    persistent_id_used_by_other_user
+        "The persistent ID is already in use by another team member."
 
 
 route members/set_profile(MembersSetProfileArg, TeamMemberInfo, MembersSetProfileError)
@@ -373,7 +386,7 @@ struct MembersSetPermissionsArg
 
 
 struct MembersSetPermissionsResult
-    team_member_id TeamMemberId
+    team_member_id team_common.TeamMemberId
         "The member ID of the user to which the change was applied."
     role AdminTier
         "The role after the change."
@@ -498,10 +511,10 @@ route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveErr
 
     Exactly one of team_member_id, email, or external_id must be provided to identify the user account.
 
-    This is not a deactivation where the account can be re-activated again.
-    Calling :route:`members/add` with the removed user's email address will create a new account
-    with a new team_member_id that will not have access to any content that was shared with the initial
-    account.
+    Accounts can be recovered via :route:`members/recover` for a 7 day period
+    or until the account has been permanently deleted or transferred to another account
+    (whichever comes first). Calling :route:`members/add` while a user is still recoverable
+    on your team will return with :field:`MemberAddResult.user_already_on_team`.
 
     This endpoint may initiate an asynchronous job. To obtain the final result
     of the job, the client should periodically poll :route:`members/remove/job_status/get`."
