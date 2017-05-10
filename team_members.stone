@@ -192,9 +192,9 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
 
 struct MemberAddArg
     member_email common.EmailAddress
-    member_given_name common.NamePart
+    member_given_name common.NamePart?
         "Member's first name."
-    member_surname common.NamePart
+    member_surname common.NamePart?
         "Member's last name."
     member_external_id team_common.MemberExternalId?
         "External ID for member."

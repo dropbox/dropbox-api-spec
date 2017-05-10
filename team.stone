@@ -3,7 +3,7 @@ namespace team
 import common
 import team_common
 import team_policies
-import users
+import users_common
 
 # Note that in the database, we also have members that are in state "deleted"
 # meaning that the User has been permanently removed from the team.
@@ -26,7 +26,7 @@ union_closed TeamMemberStatus
 
 struct RemovedStatus
     is_recoverable Boolean
-        "True if the removed team member is recoverable"
+        "True if the removed team member is recoverable."
 
     example default
         is_recoverable = false
@@ -46,7 +46,7 @@ struct MemberProfile
         "External ID that a team can attach to the user.
         An application using the API may find it easier to use their
         own IDs instead of Dropbox IDs like account_id or team_member_id."
-    account_id users.AccountId?
+    account_id users_common.AccountId?
         "A user's account identifier."
     email String
         "Email address of user."
@@ -140,3 +140,104 @@ route get_info(Void, TeamGetInfoResult, Void)
     attrs
         auth = "team"
         owner = "adminx"
+
+
+#
+# Structs for token/get_authenticated_admin
+#
+
+struct TokenGetAuthenticatedAdminResult
+    "Results for :route:`token/get_authenticated_admin`."
+
+    admin_profile TeamMemberProfile
+        "The admin who authorized the token."
+
+    example default
+        admin_profile = default
+
+union TokenGetAuthenticatedAdminError
+    "Error returned by :route:`token/get_authenticated_admin`."
+
+    mapping_not_found
+        "The current token is not associated with a team admin, because mappings were not
+        recorded when the token was created. Consider re-authorizing a new access token
+        to record its authenticating admin."
+    admin_not_active
+        "Either the team admin that authorized this token is no longer an active member of the
+        team or no longer a team admin."
+
+#
+# Route: token/get_authenticated_admin
+#
+
+route token/get_authenticated_admin(Void, TokenGetAuthenticatedAdminResult, TokenGetAuthenticatedAdminError)
+    "Returns the member profile of the admin who generated the team access token used to make the call."
+
+    attrs
+        auth = "team"
+        owner = "dev-plat"
+
+#
+# Common types
+#
+
+union Feature
+    "A set of features that Dropbox for Business account support."
+
+    upload_api_rate_limit
+        "The number of upload API calls allowed per month."
+
+union FeatureValue
+    "The values correspond to entries in :type:`Feature`. You may get different value according
+    to your Dropbox for Business plan."
+
+    upload_api_rate_limit UploadApiRateLimitValue
+
+    example uploadRateLimited
+        upload_api_rate_limit = limited
+
+union UploadApiRateLimitValue
+    "The value for :field:`Feature.upload_api_rate_limit`."
+
+    unlimited
+        "This team has unlimited upload API quota. So far both server version account and legacy
+         account type have unlimited monthly upload api quota."
+    limit UInt32
+        "The number of upload API calls allowed per month."
+
+    example limited
+        limit = 25000
+
+#
+# Route: feature/get_value_batch
+#
+
+struct FeaturesGetValuesBatchArg
+    features List(Feature)
+        "A list of features in :type:`Feature`. If the list is empty,
+        this route will return :type:`FeaturesGetValuesBatchError`."
+
+    example uploadRateLimit
+        features = [upload_api_rate_limit]
+
+
+struct FeaturesGetValuesBatchResult
+    values List(FeatureValue)
+
+    example uploadRateLimit
+        values = [uploadRateLimited]
+
+union FeaturesGetValuesBatchError
+    empty_features_list
+        "At least one :type:`Feature` must be included in the
+        :type:`FeaturesGetValuesBatchArg`.features list."
+
+route features/get_values(FeaturesGetValuesBatchArg, FeaturesGetValuesBatchResult, FeaturesGetValuesBatchError)
+    "Get the values for one or more featues. This route allows you to check your account's
+    capability for what feature you can access or what value you have for certain features.
+
+    Permission : Team information."
+
+    attrs
+        auth = "team"
+        owner = "dev-plat"

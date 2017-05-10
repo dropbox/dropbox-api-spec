@@ -1,12 +1,10 @@
-# TODO(kelkabany/krieb): This spec is under development. Do not make public!
-
 namespace sharing
 
 import async
 import common
 import files
 import team_common
-import users
+import users_common
 
 alias DropboxId = String(min_length=1)
 
@@ -210,7 +208,7 @@ struct UserInfo
     "Basic information about a user. Use :route:`users.get_account` and
     :route:`users.get_account_batch` to obtain more detailed information."
 
-    account_id users.AccountId
+    account_id users_common.AccountId
         "The account ID of the user."
     same_team Boolean
         "If the user is in the same team as current user."
@@ -321,7 +319,7 @@ struct SharedFolderMetadata extends SharedFolderMetadataBase
     "The metadata which includes basic information about the shared folder."
     link_metadata SharedContentLinkMetadata?
         "The metadata of the shared content link to this shared folder. Absent if there is no
-        link on the folder."
+        link on the folder. This is for an unreleased feature so it may not be returned yet."
     name String
         "The name of the this shared folder."
     permissions List(FolderPermission)?
@@ -383,6 +381,14 @@ struct ParentFolderAccessInfo
         "The identifier of the parent shared folder."
     permissions List(MemberPermission)
         "The user's permissions for the parent shared folder."
+    path String
+        "The full path to the parent shared folder relative to the acting user's root."
+
+    example default
+        folder_name = "Shared Folder"
+        shared_folder_id = "84528192421"
+        permissions = []
+        path = "/Shared Folder"
 
 # --
 
@@ -398,9 +404,9 @@ struct ListFoldersArgs
     limit UInt32(min_value=1, max_value=1000) = 1000
         "The maximum number of results to return per request."
     actions List(FolderAction)?
-        "This is a list indicating whether each returned folder data entry will
-        include a boolean field :field:`FolderPermission.allow` that describes
-        whether the current user can perform the `FolderAction` on the folder."
+        "A list of `FolderAction`s corresponding to `FolderPermission`s that should appear in the
+         response's :field:`SharedFolderMetadata.permissions` field describing the actions the
+         authenticated user can perform on the folder."
 
     example default
         limit = 100
@@ -484,9 +490,9 @@ struct GetMetadataArgs
     shared_folder_id common.SharedFolderId
         "The ID for the shared folder."
     actions List(FolderAction)?
-        "This is a list indicating whether the returned folder data will include a boolean value
-         :field:`FolderPermission.allow` that describes whether the current user can perform the
-         FolderAction on the folder."
+        "A list of `FolderAction`s corresponding to `FolderPermission`s that should appear in the
+         response's :field:`SharedFolderMetadata.permissions` field describing the actions the
+         authenticated user can perform on the folder."
 
     example default
         shared_folder_id = "84528192421"
@@ -602,9 +608,9 @@ struct ShareFolderArg
     force_async Boolean = false
         "Whether to force the share to happen asynchronously."
     actions List(FolderAction)?
-        "This is a list indicating whether each returned folder data entry will include a
-        boolean field :field:`FolderPermission.allow` that describes whether the current user can
-        perform the `FolderAction` on the folder."
+        "A list of `FolderAction`s corresponding to `FolderPermission`s that should appear in the
+         response's :field:`SharedFolderMetadata.permissions` field describing the actions the
+         authenticated user can perform on the folder."
     link_settings LinkSettings?
         "Settings on the link for this folder."
     viewer_info_policy ViewerInfoPolicy?
@@ -660,8 +666,6 @@ union SharePathError
         "We do not support sharing a Mac OS X package."
     inside_osx_package
         "We do not support sharing a folder inside a Mac OS X package."
-    invalid_path_root files.PathRootError
-        "The path root parameter provided is invalid."
 
 # --
 
@@ -825,7 +829,10 @@ struct UpdateFolderPolicyArg
         :field:`SharedLinkPolicy.members`."
     link_settings LinkSettings?
         "Settings on the link for this folder."
-
+    actions List(FolderAction)?
+        "A list of `FolderAction`s corresponding to `FolderPermission`s that should appear in the
+         response's :field:`SharedFolderMetadata.permissions` field describing the actions the
+         authenticated user can perform on the folder."
     example default
         shared_folder_id = "84528192421"
         member_policy = team
@@ -844,6 +851,8 @@ union UpdateFolderPolicyError
         :field:`ShareFolderArg.shared_link_policy`."
     no_permission
         "The current user does not have permission to perform this action."
+    team_folder
+        "This action cannot be performed on a team shared folder."
 
 # --
 

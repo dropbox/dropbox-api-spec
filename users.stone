@@ -1,9 +1,11 @@
 namespace users
     "This namespace contains endpoints and data types for user management."
 
+import common
+
 import team_policies
 
-alias AccountId = String(min_length=40, max_length=40)
+import users_common
 
 #
 # Route: get_account
@@ -14,9 +16,10 @@ route get_account (GetAccountArg, BasicAccount, GetAccountError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 struct GetAccountArg
-    account_id AccountId
+    account_id users_common.AccountId
         "A user's account identifier."
 
     example default
@@ -26,27 +29,11 @@ union GetAccountError
     no_account
         "The specified :field:`GetAccountArg.account_id` does not exist."
 
-union_closed AccountType
-    "What type of account this user has."
-
-    basic
-        "The basic account type."
-    pro
-        "The Dropbox Pro account type."
-    business
-        "The Dropbox Business account type."
-
-    example default
-        basic = null
-
-    example business
-        business = null
-
 struct Account
     "The amount of detail revealed about an account depends on the user
     being queried and the user making the query."
 
-    account_id AccountId
+    account_id users_common.AccountId
         "The user's unique Dropbox ID."
     name Name
         "Details of a user's name."
@@ -71,7 +58,6 @@ struct Account
 
 struct BasicAccount extends Account
     "Basic information about any account."
-
 
     is_teammate Boolean
         "Whether this user is a teammate of the current user. If this account
@@ -108,6 +94,7 @@ route get_current_account (Void, FullAccount, Void)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 struct FullAccount extends Account
     "Detailed information about the current user's account."
@@ -129,7 +116,7 @@ struct FullAccount extends Account
         "Whether the user has a personal and work account. If the current
         account is personal, then :field:`team` will always be :val:`null`,
         but :field:`is_paired` will indicate if a work account is linked."
-    account_type AccountType
+    account_type users_common.AccountType
         "What type of account this user has."
 
     example default
@@ -218,6 +205,7 @@ route get_space_usage(Void, SpaceUsage, Void)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 struct SpaceUsage
     "Information about a user's space usage and quota."
@@ -269,9 +257,10 @@ route get_account_batch (GetAccountBatchArg, GetAccountBatchResult, GetAccountBa
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 struct GetAccountBatchArg
-    account_ids List(AccountId, min_items=1)
+    account_ids List(users_common.AccountId, min_items=1)
         "List of user account identifiers.  Should not contain any duplicate account IDs."
 
     example default
@@ -280,7 +269,7 @@ struct GetAccountBatchArg
 alias GetAccountBatchResult = List(BasicAccount)
 
 union GetAccountBatchError
-    no_account AccountId
+    no_account users_common.AccountId
         "The value is an account ID specified in :field:`GetAccountBatchArg.account_ids`
         that does not exist."
 

@@ -15,3 +15,5 @@ alias DisplayName = String(pattern="[^\/:?*<>\"|]*", min_length=1)
 
 alias NamespaceId = String(pattern="[-_0-9a-zA-Z:]+")
 alias SharedFolderId = NamespaceId
+
+alias SessionId = String

@@ -12,6 +12,7 @@ route properties/add(PropertyGroupWithPath, Void, AddPropertiesError)
     attrs
         api_group="properties"
         is_preview=true
+        allow_app_folder_app = true
 
 route properties/overwrite(PropertyGroupWithPath, Void, InvalidPropertyGroupError)
     "Overwrite custom properties from a specified template
@@ -20,6 +21,7 @@ route properties/overwrite(PropertyGroupWithPath, Void, InvalidPropertyGroupErro
     attrs
         api_group="properties"
         is_preview=true
+        allow_app_folder_app = true
 
 route properties/update(UpdatePropertyGroupArg, Void, UpdatePropertiesError)
     "Add, update or remove custom properties from a specified template
@@ -29,6 +31,7 @@ route properties/update(UpdatePropertyGroupArg, Void, UpdatePropertiesError)
     attrs
         api_group="properties"
         is_preview=true
+        allow_app_folder_app = true
 
 route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
     "Remove all custom properties from a specified template associated with a file.
@@ -39,6 +42,7 @@ route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
     attrs
         api_group="properties"
         is_preview=true
+        allow_app_folder_app = true
 
 route properties/template/get(properties.GetPropertyTemplateArg, properties.GetPropertyTemplateResult, properties.PropertyTemplateError)
     "Get the schema for a specified template."
@@ -46,6 +50,7 @@ route properties/template/get(properties.GetPropertyTemplateArg, properties.GetP
     attrs
         api_group="properties"
         is_preview=true
+        allow_app_folder_app = true
 
 route properties/template/list(Void, properties.ListPropertyTemplateIds, properties.PropertyTemplateError)
     "Get the property template identifiers for a user. To get the schema of
@@ -54,6 +59,7 @@ route properties/template/list(Void, properties.ListPropertyTemplateIds, propert
     attrs
         api_group="properties"
         is_preview=true
+        allow_app_folder_app = true
 
 struct RemovePropertiesArg
     path PathOrId
@@ -135,6 +141,7 @@ route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError)
     attrs
         api_group="properties"
         is_preview=true
+        allow_app_folder_app = true
 
 struct AlphaGetMetadataArg extends GetMetadataArg
     include_property_templates List(properties.TemplateId)?
@@ -171,6 +178,7 @@ route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithPrope
         style="upload"
         api_group="properties"
         is_preview=true
+        allow_app_folder_app = true
 
 struct CommitInfoWithProperties extends CommitInfo
     property_groups List(properties.PropertyGroup)?

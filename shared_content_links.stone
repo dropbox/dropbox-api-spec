@@ -17,6 +17,9 @@ union LinkPassword
 
 struct LinkSettings
     "Settings that apply to a link."
+    access_level AccessLevel?
+        "The access level on the link for this file. Currently,
+        it only accepts 'viewer' and 'viewer_no_comment'."
     audience LinkAudience?
         "The type of audience on the link for this file."
     expiry LinkExpiry?
@@ -44,6 +47,8 @@ struct LinkPermission
 
 union LinkAction
     "Actions that can be performed on a link."
+    change_access_level
+        "Change the access level of the link."
     change_audience
         "Change the audience of the link."
     remove_expiry
@@ -56,11 +61,16 @@ union LinkAction
         "Create or modify the password of the link."
 
 struct SharedContentLinkMetadataBase
+    access_level AccessLevel?
+        "The access level on the link for this file."
     audience_options List(LinkAudience)
         "The audience options that are available for the content. Some audience options may be
         unavailable. For example, team_only may be unavailable if the content is not owned by a
         user on a team. The 'default' audience option is always available if the user can modify
         link settings."
+    audience_restricting_shared_folder AudienceRestrictingSharedFolder?
+        "The shared folder that prevents the link audience for this link from being more
+        restrictive."
     current_audience LinkAudience
         "The current audience of the link."
     expiry common.DropboxTimestamp?
@@ -82,3 +92,23 @@ struct SharedContentLinkMetadata extends SharedContentLinkMetadataBase
         link_permissions = [default]
         password_protected = false
         url = ""
+
+struct ExpectedSharedContentLinkMetadata extends SharedContentLinkMetadataBase
+    "The expected metadata of a shared link for a file or folder when a link is first created for
+     the content. Absent if the link already exists."
+
+    example default
+        audience_options = [public, team, members]
+        current_audience = public
+        link_permissions = [default]
+        password_protected = false
+
+struct AudienceRestrictingSharedFolder
+    "Information about the shared folder that prevents the link audience for this link from being
+    more restrictive."
+    shared_folder_id common.SharedFolderId
+        "The ID of the shared folder."
+    name String
+        "The name of the shared folder."
+    audience LinkAudience
+        "The link audience of the shared folder."

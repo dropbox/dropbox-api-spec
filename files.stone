@@ -2,8 +2,9 @@ namespace files
     "This namespace contains endpoints and data types for basic file operations."
 
 import async
+import auth
 import common
-import users
+import users_common
 import properties
 
 alias Id = String(min_length=1)
@@ -65,7 +66,7 @@ struct FileSharingInfo extends SharingInfo
     parent_shared_folder_id common.SharedFolderId
         "ID of shared folder that holds this file."
 
-    modified_by users.AccountId?
+    modified_by users_common.AccountId?
         "The last user who modified the file. This field will be null if
         the user's account has been deleted."
 
@@ -277,6 +278,8 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
+        takes_path_root = true
 
 #
 # List folder routes
@@ -322,10 +325,12 @@ route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, Lis
     for client-side apps. If you're looking for server-side notifications,
     check out our
     :link:`webhooks documentation https://www.dropbox.com/developers/reference/webhooks`."
+
     attrs
         host = "notify"
         auth = "noauth"
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 struct ListFolderArg
     path PathR
@@ -382,7 +387,16 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
     :field:`FolderSharingInfo.read_only` and set all its children's read-only statuses to match.
 
     For each :type:`DeletedMetadata`, if your local state has something at the given path, remove it
-    and all its children. If there's nothing at the given path, ignore this entry."
+    and all its children. If there's nothing at the given path, ignore this entry.
+
+    Note: :type:`auth.RateLimitError` may be returned if multiple :route:`list_folder` or
+    :route:`list_folder/continue` calls with same parameters are made simultaneously by same
+    API app for same user. If your app implements retry logic, please hold off the retry until
+    the previous request finishes."
+
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
 
 struct ListFolderContinueArg
     cursor ListFolderCursor
@@ -405,6 +419,7 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 struct ListFolderGetLatestCursorResult
     cursor ListFolderCursor
@@ -422,6 +437,7 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Download
@@ -452,6 +468,7 @@ route download (DownloadArg, FileMetadata, DownloadError)
         host = "content"
         style = "download"
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Upload Routes
@@ -475,7 +492,8 @@ struct UploadSessionOffsetError
 
 union UploadSessionLookupError
     not_found
-        "The upload session id was not found."
+        "The upload session ID was not found or has expired. Upload sessions are
+        valid for 48 hours."
     incorrect_offset UploadSessionOffsetError
         "The specified offset was incorrect. See the value for the
         correct offset. This error may occur when a previous request
@@ -495,6 +513,9 @@ union UploadSessionFinishError
     too_many_shared_folder_targets
         "The batch request commits files into too many different shared folders.
         Please limit your batch request to files contained in a single shared folder."
+    too_many_write_operations
+        "There are too many write operations happening in the user's Dropbox. You should
+        retry uploading this file."
 
 # Req/Resp
 
@@ -524,13 +545,20 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
     :route:`upload_session/finish` to save all the data to a file in
     Dropbox.
 
-    A single request should not upload more than 150 MB of file contents."
+    A single request should not upload more than 150 MB.
+
+    An upload session can be used for a maximum of 48 hours. Attempting
+    to use an :field:`UploadSessionStartResult.session_id` with
+    :route:`upload_session/append_v2` or :route:`upload_session/finish` more
+    than 48 hours after its creation will return a
+    :field:`UploadSessionLookupError.not_found`."
 
     attrs
         host = "content"
         style = "upload"
         owner = "dev-plat"
         feature = "upload_api_rate_limit"
+        allow_app_folder_app = true
 
 struct UploadSessionAppendArg
     cursor UploadSessionCursor
@@ -548,13 +576,14 @@ route upload_session/append_v2 (UploadSessionAppendArg, Void, UploadSessionLooku
 
     When the parameter close is set, this call will close the session.
 
-    A single request should not upload more than 150 MB of file contents."
+    A single request should not upload more than 150 MB."
 
     attrs
         host = "content"
         style = "upload"
         owner = "dev-plat"
         feature = "upload_api_rate_limit"
+        allow_app_folder_app = true
 
 
 struct UploadSessionCursor
@@ -572,13 +601,14 @@ struct UploadSessionCursor
 route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError) deprecated by upload_session/append_v2
     "Append more data to an upload session.
 
-    A single request should not upload more than 150 MB of file contents."
+    A single request should not upload more than 150 MB."
 
     attrs
         host = "content"
         style = "upload"
         owner = "dev-plat"
         feature = "upload_api_rate_limit"
+        allow_app_folder_app = true
 
 union_closed WriteMode
     "Your intent when writing a file to some path. This is used to determine
@@ -663,13 +693,14 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
     "Finish an upload session and save the uploaded data to the given file
     path.
 
-    A single request should not upload more than 150 MB of file contents."
+    A single request should not upload more than 150 MB."
 
     attrs
         host = "content"
         style = "upload"
         owner = "dev-plat"
         feature = "upload_api_rate_limit"
+        allow_app_folder_app = true
 
 route upload (CommitInfo, FileMetadata, UploadError)
     "Create a new file with the contents provided in the request.
@@ -682,6 +713,8 @@ route upload (CommitInfo, FileMetadata, UploadError)
         style = "upload"
         owner = "dev-plat"
         feature = "upload_api_rate_limit"
+        allow_app_folder_app = true
+        takes_path_root = true
 
 #
 # Batch Upload
@@ -748,10 +781,15 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFin
     attrs
         owner = "dev-plat"
         feature = "upload_api_rate_limit"
+        allow_app_folder_app = true
 
 route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`upload_session/finish_batch`. If
     success, it returns list of result for each entry."
+
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Search
@@ -844,16 +882,13 @@ route search (SearchArg, SearchResult, SearchError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Errors shared by various operations
 #
 
 alias MalformedPathError = String?  # TODO: Maybe a user_message-like thing?
-
-struct PathRootError
-    path_root String?
-        "The user's latest path root value. None if the user no longer has a path root."
 
 union LookupError
     malformed_path MalformedPathError
@@ -866,8 +901,6 @@ union LookupError
     restricted_content
         "The file cannot be transferred because the content is restricted.  For example,
         sometimes there are legal restrictions due to copyright claims."
-    invalid_path_root PathRootError
-        "The path root parameter provided is invalid."
 
 union WriteError
     malformed_path MalformedPathError
@@ -879,6 +912,8 @@ union WriteError
         "The user doesn't have enough available space (bytes) to write more data."
     disallowed_name
         "Dropbox will not save the file or folder because of its name."
+    team_folder
+        "This endpoint cannot modify or delete team folders."
 
 union WriteConflictError
     file
@@ -910,6 +945,7 @@ route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Delete
@@ -988,6 +1024,7 @@ route delete (DeleteArg, Metadata, DeleteError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     "Delete multiple files/folders at once.
@@ -996,9 +1033,17 @@ route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     the delete batch asynchronously. Use :route:`delete_batch/check` to check
     the job status."
 
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
+
 route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`delete_batch`. If
     success, it returns list of result for each entry."
+
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
 
 route permanently_delete (DeleteArg, Void, DeleteError)
     "Permanently delete the file or folder at a given path
@@ -1115,6 +1160,7 @@ route copy (RelocationArg, Metadata, RelocationError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 
 route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
@@ -1130,9 +1176,17 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     This route will return job ID immediately and do the async copy job in
     background. Please use :route:`copy_batch/check` to check the job status."
 
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
+
 route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`copy_batch`. If
     success, it returns list of results for each entry."
+
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Move
@@ -1145,6 +1199,7 @@ route move (RelocationArg, Metadata, RelocationError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     "Move multiple files or folders to different locations at once in the
@@ -1156,9 +1211,17 @@ route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     This route will return job ID immediately and do the async moving job in
     background. Please use :route:`move_batch/check` to check the job status."
 
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
+
 route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`move_batch`. If
     success, it returns list of results for each entry."
+
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Thumbnail
@@ -1223,6 +1286,7 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
         host = "content"
         style = "download"
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Preview
@@ -1255,14 +1319,20 @@ union_closed PreviewError
         "The file content is not supported for preview generation."
 
 route get_preview(PreviewArg, FileMetadata, PreviewError)
-    "Get a preview for a file. Currently previews are only generated for the files with
-     the following extensions: .doc, .docx, .docm, .ppt, .pps, .ppsx, .ppsm, .pptx, .pptm,
-     .xls, .xlsx, .xlsm, .rtf."
+    "Get a preview for a file.
+
+    Currently, PDF previews are generated for files with the following extensions:
+    .ai, .doc, .docm, .docx, .eps, .odp, .odt, .pps, .ppsm, .ppsx, .ppt, .pptm, .pptx, .rtf.
+
+    HTML previews are generated for files with the following extensions: .csv, .ods, .xls, .xlsm, .xlsx.
+
+    Other formats will return an unsupported extension error."
 
     attrs
         host = "content"
         style = "download"
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # List revisions
@@ -1299,6 +1369,7 @@ route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Restore
@@ -1327,6 +1398,7 @@ route restore(RestoreArg, FileMetadata, RestoreError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Temporary link
@@ -1359,6 +1431,7 @@ route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTempora
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Copy reference
@@ -1395,6 +1468,7 @@ route copy_reference/get(GetCopyReferenceArg, GetCopyReferenceResult, GetCopyRef
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 struct SaveCopyReferenceArg
     copy_reference String
@@ -1432,6 +1506,7 @@ route copy_reference/save(SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCop
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Save URL
@@ -1466,6 +1541,7 @@ route save_url(SaveUrlArg, SaveUrlResult, SaveUrlError)
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 #
 # Save URL Job
@@ -1481,3 +1557,4 @@ route save_url/check_job_status(async.PollArg, SaveUrlJobStatus, async.PollError
 
     attrs
         owner = "dev-plat"
+        allow_app_folder_app = true

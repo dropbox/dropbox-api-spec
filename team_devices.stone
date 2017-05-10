@@ -43,6 +43,8 @@ struct ActiveWebSession extends DeviceSession
         "Information on the hosting operating system"
     browser String
         "Information on the browser used for this web session"
+    expires common.DropboxTimestamp?
+        "The time this session expires"
 
     example default
         session_id = "dbwsid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
@@ -53,6 +55,7 @@ struct ActiveWebSession extends DeviceSession
         user_agent = "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.815.0 Safari/535.1"
         os = "Windows"
         browser = "Chrome"
+        expires = "2015-05-13T15:51:22Z"
 
 union DesktopPlatform
     windows

@@ -15,6 +15,10 @@ union AuthError
 route token/revoke(Void, Void, Void)
     "Disables the access token used to authenticate the call."
 
+    attrs
+        owner = "dev-plat"
+        allow_app_folder_app = true
+
 union RateLimitReason
     too_many_requests
         "You are making too many requests in the past few minutes."
@@ -63,6 +67,7 @@ route token/from_oauth1(TokenFromOAuth1Arg, TokenFromOAuth1Result, TokenFromOAut
     attrs
         auth = "app"
         owner = "dev-plat"
+        allow_app_folder_app = true
 
 union AccessError
     "Error occurred because the account doesn't have permission to access the resource."

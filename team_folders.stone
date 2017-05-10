@@ -131,7 +131,6 @@ route team_folder/list(TeamFolderListArg, TeamFolderListResult, TeamFolderListEr
 
     Permission : Team member file access.
     "
-    # TODO (#contentmanager): add pagination
     attrs
         owner = "company-dropbox-team"
         auth = "team"
@@ -144,16 +143,48 @@ struct TeamFolderListArg
         limit = 100
 
 struct TeamFolderListResult
-    "Result for :route:`team_folder/list`."
+    "Result for :route:`team_folder/list` and :route:`team_folder/list/continue`."
 
     team_folders List(TeamFolderMetadata)
         "List of all team folders in the authenticated team."
+    cursor String
+        "Pass the cursor into :route:`team_folder/list/continue` to obtain additional team folders."
+    has_more Boolean
+        "Is true if there are additional team folders that have not been returned
+        yet. An additional call to :route:`team_folder/list/continue` can retrieve them."
 
     example default
         team_folders = [default]
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+        has_more = false
 
 struct TeamFolderListError
     access_error TeamFolderAccessError
+
+#
+# Team folder list/continue
+#
+
+route team_folder/list/continue(TeamFolderListContinueArg, TeamFolderListResult, TeamFolderListContinueError)
+    "Once a cursor has been retrieved from :route:`team_folder/list`, use this to paginate
+    through all team folders.
+
+    Permission : Team member file access."
+
+    attrs
+        owner = "company-dropbox-team"
+        auth = "team"
+
+struct TeamFolderListContinueArg
+    cursor String
+        "Indicates from what point to get the next set of team folders."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+union TeamFolderListContinueError
+    invalid_cursor
+        "The cursor is invalid."
 
 #
 # Team folder get info

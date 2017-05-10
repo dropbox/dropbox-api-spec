@@ -5,19 +5,20 @@ import common
 import sharing
 
 alias PaperDocId = String
-    "Paper doc id."
+    "Paper doc ID."
 
 struct RefPaperDoc
     doc_id PaperDocId
+        "The Paper doc ID."
 
     example default
         doc_id = "uaSvRuxvnkFa12PTkBv5q"
 
 union ListPaperDocsFilterBy
     docs_accessed
-        "Fetches all Paper doc ids that the user has ever accessed."
+        "Fetches all Paper doc IDs that the user has ever accessed."
     docs_created
-        "Fetches only the Paper doc ids that the user has created."
+        "Fetches only the Paper doc IDs that the user has created."
 
 union ListPaperDocsSortBy
     accessed
@@ -83,7 +84,7 @@ struct Cursor
 
 struct ListPaperDocsResponse
     doc_ids List(String)
-        "The list of Paper doc ids that can be used to access the given Paper docs or
+        "The list of Paper doc IDs that can be used to access the given Paper docs or
         supplied to other API methods.
         The list is sorted in the order specified by the initial call to :route:`docs/list`."
     cursor Cursor
@@ -118,7 +119,7 @@ struct PaperDocExport extends RefPaperDoc
 
 struct PaperDocExportResult
     owner String
-        "The Paper doc owner's email."
+        "The Paper doc owner's email address."
     title String
         "The Paper doc title."
     revision Int64
@@ -137,25 +138,25 @@ union_closed DocSubscriptionLevel
     "The subscription level of a Paper doc."
 
     default
-        "No change e-mails unless you're the creator."
+        "No change email messages unless you're the creator."
     ignore
-        "Ignored: Not shown in pad lists or activity and no email is sent."
+        "Ignored: Not shown in pad lists or activity and no email message is sent."
     every
-        "Subscribed: Shown in pad lists and activity and change e-mails are sent."
+        "Subscribed: Shown in pad lists and activity and change email messages are sent."
     no_email
-        "Unsubscribed: Shown in pad lists, but not in activity and no change e-mails are sent."
+        "Unsubscribed: Shown in pad lists, but not in activity and no change email messages are sent."
 
 union_closed FolderSubscriptionLevel
     "The subscription level of a Paper folder."
 
     none
-        "Not shown in activity, no e-mails."
+        "Not shown in activity, no email messages."
     activity_only
-        "Shown in activity, no e-mails."
+        "Shown in activity, no email messages."
     daily_emails
-        "Shown in activity, daily e-mails."
+        "Shown in activity, daily email messages."
     weekly_emails
-        "Shown in activity, weekly e-mails."
+        "Shown in activity, weekly email messages."
 
 union_closed FolderSharingPolicyType
     "The sharing policy of a Paper folder.
@@ -197,7 +198,7 @@ struct Folder
     "Data structure representing a Paper folder."
 
     id String
-        "Paper folder id. This id uniquely identifies the folder."
+        "Paper folder ID. This ID uniquely identifies the folder."
     name String
         "Paper folder name."
 
@@ -228,8 +229,8 @@ struct PaperDocSharingPolicy extends RefPaperDoc
 
 struct RemovePaperDocUser extends RefPaperDoc
     member sharing.MemberSelector
-        "User which should be removed from the Paper doc. Specify only email or
-        Dropbox account id."
+        "User which should be removed from the Paper doc. Specify only email address or
+        Dropbox account ID."
 
     example default
         doc_id = "uaSvRuxvnkFa12PTkBv5q"
@@ -245,8 +246,8 @@ struct AddMember
     permission_level PaperDocPermissionLevel = edit
         "Permission for the user."
     member sharing.MemberSelector
-        "User which should be added to the Paper doc. Specify only email or
-        Dropbox account id."
+        "User which should be added to the Paper doc. Specify only email address or
+        Dropbox account ID."
 
     example default
         member = default
@@ -284,7 +285,7 @@ struct ListUsersOnPaperDocContinueArgs extends RefPaperDoc
 
 struct InviteeInfoWithPermissionLevel
     invitee sharing.InviteeInfo
-        "Email invited to the Paper doc."
+        "Email address invited to the Paper doc."
 
     permission_level PaperDocPermissionLevel
         "Permission level for the invitee."
@@ -335,12 +336,12 @@ struct ListUsersOnPaperDocResponse
 
 struct AddPaperDocUser extends RefPaperDoc
     members List(AddMember, max_items = 20)
-        "User which should be added to the Paper doc. Specify only email or
-        Dropbox account id."
+        "User which should be added to the Paper doc. Specify only email address or
+        Dropbox account ID."
     custom_message String?
         "A personal message that will be emailed to each successfully added member."
     quiet Boolean = false
-        "Clients should set this to true if no email shall be sent to added users."
+        "Clients should set this to true if no email message shall be sent to added users."
 
     example default
         doc_id = "uaSvRuxvnkFa12PTkBv5q"
@@ -467,11 +468,9 @@ route docs/sharing_policy/set (PaperDocSharingPolicy, Void, DocLookupError)
         owner="paper-eng"
 
 route docs/archive (RefPaperDoc, Void, DocLookupError)
-    "Marks the given Paper doc as deleted. This operation is non-destructive and the doc
-    can be revived by the owner.
+    "Marks the given Paper doc as archived.
 
-
-    Note: This action can be performed only by the doc owner."
+    Note: This action can be performed or undone by anyone with edit permissions to the doc."
     attrs
         owner="paper-eng"
 
@@ -505,7 +504,7 @@ route docs/get_folder_info (RefPaperDoc, FoldersContainingPaperDoc, DocLookupErr
 
 route docs/users/add (AddPaperDocUser, List(AddPaperDocUserMemberResult), DocLookupError)
     "Allows an owner or editor to add users to a Paper doc or change their permissions
-    using their email or Dropbox account id.
+    using their email address or Dropbox account ID.
 
 
     Note: The Doc owner's permissions cannot be changed."
@@ -513,8 +512,8 @@ route docs/users/add (AddPaperDocUser, List(AddPaperDocUserMemberResult), DocLoo
         owner="paper-eng"
 
 route docs/users/remove (RemovePaperDocUser, Void, DocLookupError)
-    "Allows an owner or editor to remove users from a Paper doc using their email or
-    Dropbox account id.
+    "Allows an owner or editor to remove users from a Paper doc using their email address or
+    Dropbox account ID.
 
 
     Note: Doc owner cannot be removed."

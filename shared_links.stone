@@ -198,6 +198,7 @@ route get_shared_link_metadata(GetSharedLinkMetadataArg, SharedLinkMetadata, Sha
 
     attrs
         owner = "sharing"
+        allow_app_folder_app = true
 
 #
 # List Shared links definitions and route
@@ -261,6 +262,7 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
 
     attrs
         owner = "sharing"
+        allow_app_folder_app = true
 
 #
 # Modify shared link settings definitions and route
@@ -322,6 +324,7 @@ route modify_shared_link_settings(ModifySharedLinkSettingsArgs, SharedLinkMetada
 
     attrs
         owner = "adminx"
+        allow_app_folder_app = true
 
 #
 # Create shared link with settings definitions and route
@@ -356,6 +359,7 @@ route create_shared_link_with_settings(CreateSharedLinkWithSettingsArg, SharedLi
 
     attrs
         owner = "sharing"
+        allow_app_folder_app = true
 
 
 #
@@ -383,6 +387,7 @@ route revoke_shared_link(RevokeSharedLinkArg, Void, RevokeSharedLinkError)
 
     attrs
         owner = "sharing"
+        allow_app_folder_app = true
 
 #
 # NSLR endpoints
@@ -401,6 +406,7 @@ route get_shared_link_file(GetSharedLinkFileArg, SharedLinkMetadata, GetSharedLi
         host="content"
         style="download"
         owner = "sharing"
+        allow_app_folder_app = true
 
 #
 # Depracated endpoints
@@ -497,6 +503,7 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
 
     attrs
         owner = "sharing"
+        allow_app_folder_app = true
 
 union_closed PendingUploadMode
     "Flag to indicate pending upload default (for linking to not-yet-existing paths)."
@@ -538,3 +545,4 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
 
     attrs
         owner = "sharing"
+        allow_app_folder_app = true
