@@ -17,3 +17,44 @@ alias NamespaceId = String(pattern="[-_0-9a-zA-Z:]+")
 alias SharedFolderId = NamespaceId
 
 alias SessionId = String
+
+alias PathRootId = NamespaceId
+
+union PathRoot
+    home
+        "Paths are relative to the authenticating user's home directory,
+        whether or not that user belongs to a team."
+
+    member_home
+        "Paths are relative to the authenticating team member's home
+        directory. (This results in :field:`PathRootError.invalid' if the
+        user does not belong to a team.)"
+
+    team PathRootId
+        "Paths are relative to the given team directory. (This results in
+        :field:`PathRootError.invalid` if the user is not a member of
+        the team associated with that path root id.)"
+
+    user_home
+        "Paths are relative to the user's home directory. (This results in
+        :field:`PathRootError.invalid` if the belongs to a team.)"
+
+    shared_folder PathRootId
+        "Paths are relative to given shared folder id (This results in
+        :field:`PathRootError.no_permission` if you don't have access
+        to  this shared folder.)"
+
+
+struct InvalidPathRootError
+    path_root PathRootId?
+        "The latest path root id for user's team if the user is still in
+        a team."
+
+
+union PathRootError
+    invalid InvalidPathRootError
+        "The path root id value in Dropbox-API-Path-Root header is no longer
+        valid."
+    no_permission
+        "You don't have permission to access the path root id in Dropbox-API-Path-Root
+         header."
