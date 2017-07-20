@@ -18,23 +18,34 @@ alias RequestId = String
 # Union types that are used by events.
 ########################################
 
+union AccountCaptureAvailability
+    unavailable
+    available
+
 union AccountCapturePolicy
     disabled
     invited_users
     all_users
 
+union AdminRole
+    user
+    limited_admin
+    support_admin
+    user_management_admin
+    team_admin
+
 union Confidentiality
     confidential
     non_confidential
 
+union ContentPermanentDeletePolicy
+    "Policy for pemanent content deletion"
+    disabled
+    enabled
+
 union DeviceApprovalsPolicy
     unlimited
-    zero
-    one
-    two
-    three
-    four
-    five
+    limited
 
 union DeviceApprovalsRolloutPolicy
     remove_oldest
@@ -42,29 +53,37 @@ union DeviceApprovalsRolloutPolicy
     add_exception
 
 union DeviceType
-    mobile
     desktop
+    mobile
 
 union DeviceUnlinkPolicy
     remove
     keep
 
-union EnableDisableChangePolicy
+union EmmPolicy
+    "Enterprise mobility management policy"
     disabled
-    enabled
+    optional
+    required
 
 union ExtendedVersionHistoryPolicy
     limited
     unlimited
 
-union ExternalSharingAccessibilityPolicy
-    team_only
-    default_team_only
-    default_anyone
+union FileCommentsPolicy
+    "File comments policy"
+    disabled
+    enabled
 
-union ExternalSharingPolicy
-    team_only
-    anyone
+union FileRequestsPolicy
+    "File requests policy"
+    disabled
+    enabled
+
+union GoogleSsoPolicy
+    "Google SSO policy"
+    disabled
+    enabled
 
 union GroupJoinPolicy
     open
@@ -74,7 +93,7 @@ union GroupManagementType
     admin_management_group
     member_management_group
 
-union GroupsUserManagementPolicy
+union GroupUserManagementPolicy
     all_users
     only_admins
 
@@ -83,15 +102,32 @@ union LinkAudience
     team
     members
 
-union MemberRequestsChangePolicy
+union MemberRequestsPolicy
     disabled
     require_approval
     auto_approval
 
-union OptionalChangePolicy
+union MemberStatus
+    not_joined
+    invited
+    active
+    suspended
+    removed
+
+union MemberSuggestionsPolicy
+    "Member suggestions policy"
     disabled
-    optional
-    required
+    enabled
+
+union MicrosoftOfficeAddinPolicy
+    "Microsoft Office addin policy"
+    disabled
+    enabled
+
+union NetworkControlPolicy
+    "Network control policy"
+    disabled
+    enabled
 
 union PaperAccessType
     viewer
@@ -107,36 +143,64 @@ union PaperDownloadFormat
     html
     markdown
 
+union PaperMemberPolicy
+    "Policy for controlling if team members can share Paper documents externally."
+    team_only
+    default_team_only
+    default_anyone
+
+union PaperPolicy
+    "Policy for enabling or disabling Dropbox Paper for the team."
+    disabled
+    enabled
+
 union PlacementRestriction
     europe_only
     none
 
-union SessionsManagementIdleLengthPolicy
-    none
-    minute_10
-    minute_30
-    hour_1
-    hour_8
-    hour_24
-    hour_48
+union SharedContentDownloadsPolicy
+    "Shared content downloads policy"
+    disabled
+    enabled
 
-union SessionsManagementSessionLengthPolicy
-    day_1
-    day_7
-    day_14
-    month_1
-    month_3
-    month_6
-    year_1
+union SharedContentViewerInfoPolicy
+    "Shared content viewer info policy"
+    disabled
+    enabled
 
 union SharedFolderLinkPolicy
     members_only
     members_and_team
     anyone
 
+union SharedFolderMemberPolicy
+    "Policy for controlling who can become a member of a shared folder"
+    team_only
+    anyone
+
 union SharedFolderMembershipManagementPolicy
     owner
     editors
+
+union SharingFolderJoinPolicy
+    "Policy for controlling if team members can join shared folders owned by non team members."
+    team_only
+    anyone
+
+union SharingLinkPolicy
+    "Policy for controlling if team members can share links externally"
+    team_only
+    default_team_only
+    default_anyone
+
+union SharingMemberPolicy
+    "External sharing policy"
+    team_only
+    anyone
+
+union SmartSyncOptOutPolicy
+    opted_out
+    default
 
 union SmartSyncPolicy
     local_only
@@ -153,15 +217,47 @@ union SpaceLimitsStatus
     near_quota
     over_quota
 
+union SsoPolicy
+    "SSO policy"
+    disabled
+    optional
+    required
+
 union TeamFolderStatus
     archive
     unarchive
 
+union TeamMembershipType
+    free
+    full
+
 union TfaConfiguration
+    "Two factor authentication configuration. Note: the enabled option is deprecated."
     disabled
     enabled
     sms
     authenticator
+
+union TfaPolicy
+    "Two factor authentication policy"
+    disabled
+    optional
+    required
+
+union TimeUnit
+    milliseconds
+    seconds
+    minutes
+    hours
+    days
+    weeks
+    months
+    years
+
+union TwoAccountPolicy
+    "Policy for pairing personal account to work account"
+    disabled
+    enabled
 
 ##################
 # Built-in types
@@ -493,6 +589,22 @@ struct OriginLogInfo
         host = default2
         access_method = default2
 
+struct DurationLogInfo 
+    "Represents a time duration: unit and amount"
+
+    unit TimeUnit
+        "Time unit."
+    amount UInt64
+        "Amount of time."
+
+    example default
+        unit = milliseconds
+        amount = 3
+
+    example default2
+        unit = milliseconds
+        amount = 4
+
 struct MissingDetails 
     "An indication that an event was returned with missing details"
 
@@ -518,6 +630,8 @@ struct DeviceLogInfo
         "IP address. Might be missing due to historical data gap."
     last_activity String?
         "Last activity. Might be missing due to historical data gap."
+    app_version String?
+        "Linking app version. Might be missing due to historical data gap."
 
     example default
         device_id = "abc"
@@ -529,6 +643,7 @@ struct DeviceLogInfo
         device_type = "abc"
         ip_address = "10.1.1.100"
         last_activity = "abc"
+        app_version = "abc"
 
     example default2
         device_id = "xyz"
@@ -540,6 +655,39 @@ struct DeviceLogInfo
         device_type = "xyz"
         ip_address = "10.1.1.100"
         last_activity = "xyz"
+        app_version = "xyz"
+
+struct RelocateAssetReferencesLogInfo 
+    "Provides the indices of the source asset and the destination asset for a relocate action."
+
+    src_index Int64
+        "Source asset index."
+    dest_index Int64
+        "Destination asset index."
+
+    example default
+        src_index = 3
+        dest_index = 3
+
+    example default2
+        src_index = 4
+        dest_index = 4
+
+struct FailureDetailsLogInfo 
+    "Provides details about a failure"
+
+    user_friendly_message String?
+        "A user friendly explanation of the error. Might be missing due to historical data gap."
+    technical_error_message String?
+        "A technical explanation of the error. This is relevant for some errors."
+
+    example default
+        user_friendly_message = "abc"
+        technical_error_message = "abc"
+
+    example default2
+        user_friendly_message = "xyz"
+        technical_error_message = "xyz"
 
 struct UserNameLogInfo 
     "User's name logged information"
@@ -561,21 +709,25 @@ struct UserNameLogInfo
         surname = "xyz"
         locale = "xyz"
 
-struct SharedFolderLogInfo 
-    "SharedFolder's logged information."
+struct JoinTeamDetails 
+    "Additional information relevant when a new member joins the team."
 
-    ns_id common.NamespaceId?
-        "Namespace ID. Might be missing due to historical data gap."
-    display_name String
-        "Shared folder display name."
+    linked_apps List(AppLogInfo)
+        "Linked applications."
+    linked_devices List(DeviceLogInfo)
+        "Linked devices."
+    linked_shared_folders List(FolderLogInfo)
+        "Linked shared folders."
 
     example default
-        ns_id = "1234"
-        display_name = "abc"
+        linked_apps = [default]
+        linked_devices = [default]
+        linked_shared_folders = [default]
 
     example default2
-        ns_id = "1234"
-        display_name = "xyz"
+        linked_apps = [default2]
+        linked_devices = [default2]
+        linked_shared_folders = [default2]
 
 struct PaperTaggedValue 
     "Paper tagged value."
@@ -588,6 +740,58 @@ struct PaperTaggedValue
 
     example default2
         tag = "xyz"
+
+struct Certificate 
+    "Certificate details."
+
+    subject String
+        "Certificate subject."
+    issuer String
+        "Certificate issuer."
+    issue_date String
+        "Certificate issue date."
+    expiration_date String
+        "Certificate expiration date."
+    serial_number String
+        "Certificate serial number."
+    sha1_fingerprint String
+        "Certificate sha1 fingerprint."
+    common_name String
+        "Certificate common name."
+
+    example default
+        subject = "abc"
+        issuer = "abc"
+        issue_date = "abc"
+        expiration_date = "abc"
+        serial_number = "abc"
+        sha1_fingerprint = "abc"
+        common_name = "abc"
+
+    example default2
+        subject = "xyz"
+        issuer = "xyz"
+        issue_date = "xyz"
+        expiration_date = "xyz"
+        serial_number = "xyz"
+        sha1_fingerprint = "xyz"
+        common_name = "xyz"
+
+struct TeamName 
+    "Team name details"
+
+    team_display_name String
+        "Team's display name."
+    team_legal_name String
+        "Team's legal name."
+
+    example default
+        team_display_name = "abc"
+        team_legal_name = "abc"
+
+    example default2
+        team_display_name = "xyz"
+        team_legal_name = "xyz"
 
 struct GeoLocationLogInfo 
     "Geographic location details."
@@ -697,6 +901,34 @@ union ParticipantLogInfo
     example default2
         user = default2
 
+union WebSessionsFixedLengthPolicy
+    "Web sessions fixed length policy."
+
+    defined DurationLogInfo
+        "Defined fixed session length."
+    undefined 
+        "Undefined fixed session length."
+
+    example default
+        defined = default
+
+    example default2
+        defined = default2
+
+union WebSessionsIdleLengthPolicy
+    "Web sessions idle length policy."
+
+    defined DurationLogInfo
+        "Defined idle session length."
+    undefined 
+        "Undefined idle session length."
+
+    example default
+        defined = default
+
+    example default2
+        defined = default2
+
 union AccessMethodLogInfo
     "Indicates the method in which the action was performed."
 
@@ -793,14 +1025,14 @@ union EventCategory
 struct MemberChangeMembershipTypeDetails
     "Changed the membership type (limited vs full) for team member."
 
-    prev_membership_type Int64
+    prev_value TeamMembershipType
         "Previous membership type."
-    new_membership_type Int64
+    new_value TeamMembershipType
         "New membership type."
 
     example default
-        prev_membership_type = 3
-        new_membership_type = 3
+        prev_value = full
+        new_value = full
 
 struct MemberPermanentlyDeleteAccountContentsDetails
     "Permanently deleted contents of a removed team member account."
@@ -808,14 +1040,14 @@ struct MemberPermanentlyDeleteAccountContentsDetails
 struct MemberSpaceLimitsChangeStatusDetails
     "Changed the status with respect to whether the team member is under or over storage quota specified by policy."
 
-    previous_status SpaceLimitsStatus
+    previous_value SpaceLimitsStatus
         "Previous storage quota status."
-    new_status SpaceLimitsStatus
+    new_value SpaceLimitsStatus
         "New storage quota status."
 
     example default
-        previous_status = within_quota
-        new_status = within_quota
+        previous_value = within_quota
+        new_value = within_quota
 
 struct MemberTransferAccountContentsDetails
     "Transferred contents of a removed team member account to another member."
@@ -847,17 +1079,23 @@ struct PaperExternalViewForbidDetails
 struct SfExternalInviteWarnDetails
     "Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE)."
 
-struct TeamMergeDetails
-    "Merged the team into another team."
+struct TeamMergeFromDetails
+    "Merged another team into this team."
 
-    merged_from_team_name String?
-        "Merged from team name. Might be missing due to historical data gap."
-    merged_to_team_name String?
-        "Merged to team name. Might be missing due to historical data gap."
+    team_name String
+        "The name of the team that was merged into this team."
 
     example default
-        merged_from_team_name = "abc"
-        merged_to_team_name = "abc"
+        team_name = "abc"
+
+struct TeamMergeToDetails
+    "Merged this team into another team."
+
+    team_name String
+        "The name of the team that this team was merged into."
+
+    example default
+        team_name = "abc"
 
 struct AppLinkTeamDetails
     "Linked an app for team."
@@ -916,10 +1154,13 @@ struct DeviceChangeIpMobileDetails
 struct DeviceChangeIpWebDetails
     "IP address associated with active Web session changed."
 
+    device_info DeviceLogInfo?
+        "Device information. Might be missing due to historical data gap."
     user_agent String
         "Web browser name."
 
     example default
+        device_info = default
         user_agent = "abc"
 
 struct DeviceDeleteOnUnlinkFailDetails
@@ -946,23 +1187,23 @@ struct DeviceDeleteOnUnlinkSuccessDetails
 struct DeviceLinkFailDetails
     "Failed to link a device."
 
+    device_info DeviceLogInfo?
+        "Device information. Might be missing due to historical data gap."
     device_type DeviceType
         "A description of the device used while user approval blocked."
 
     example default
-        device_type = mobile
+        device_info = default
+        device_type = desktop
 
 struct DeviceLinkSuccessDetails
     "Linked a device."
 
     device_info DeviceLogInfo
         "Device information."
-    app_version String?
-        "Linking app version. Might be missing due to historical data gap."
 
     example default
         device_info = default
-        app_version = "abc"
 
 struct DeviceManagementDisabledDetails
     "Disable Device Management."
@@ -988,23 +1229,32 @@ struct EmmRefreshAuthTokenDetails
 struct AccountCaptureChangeAvailabilityDetails
     "Granted or revoked the option to enable account capture on domains belonging to the team."
 
+    new_value AccountCaptureAvailability
+        "New account capture availabilty value."
+    previous_value AccountCaptureAvailability?
+        "Previous account capture availabilty value. Might be missing due to historical data gap."
+
+    example default
+        new_value = unavailable
+        previous_value = unavailable
+
 struct AccountCaptureMigrateAccountDetails
     "Account captured user migrated their account to the team."
 
-    domain_name List(String)
-        "Domain names."
+    domain_name String
+        "Domain name."
 
     example default
-        domain_name = ["abc"]
+        domain_name = "abc"
 
 struct AccountCaptureRelinquishAccountDetails
     "Account captured user relinquished their account by changing the email address associated with it."
 
-    domain_name List(String)
-        "Domain names."
+    domain_name String
+        "Domain name."
 
     example default
-        domain_name = ["abc"]
+        domain_name = "abc"
 
 struct DisabledDomainInvitesDetails
     "Disabled domain invites."
@@ -1039,13 +1289,13 @@ struct DomainInvitesSetInviteNewUserPrefToYesDetails
 struct DomainVerificationAddDomainFailDetails
     "Failed to verify a domain belonging to the team."
 
-    domain_names List(String)
-        "Domain names."
+    domain_name String
+        "Domain name."
     verification_method String?
-        "Domain name verification method."
+        "Domain name verification method. Might be missing due to historical data gap."
 
     example default
-        domain_names = ["abc"]
+        domain_name = "abc"
         verification_method = "abc"
 
 struct DomainVerificationAddDomainSuccessDetails
@@ -1054,7 +1304,7 @@ struct DomainVerificationAddDomainSuccessDetails
     domain_names List(String)
         "Domain names."
     verification_method String?
-        "Domain name verification method."
+        "Domain name verification method. Might be missing due to historical data gap."
 
     example default
         domain_names = ["abc"]
@@ -1065,9 +1315,12 @@ struct DomainVerificationRemoveDomainDetails
 
     domain_names List(String)
         "Domain names."
+    verification_method String?
+        "Domain name verification method. Might be missing due to historical data gap."
 
     example default
         domain_names = ["abc"]
+        verification_method = "abc"
 
 struct EnabledDomainInvitesDetails
     "Enabled domain invites."
@@ -1081,14 +1334,11 @@ struct FileAddDetails
 struct FileCopyDetails
     "Copied files and/or folders."
 
-    src_index Int64
-        "Source asset index."
-    dest_index Int64
-        "Destination asset index."
+    relocate_action_details List(RelocateAssetReferencesLogInfo)
+        "Relocate action details."
 
     example default
-        src_index = 3
-        dest_index = 3
+        relocate_action_details = [default]
 
 struct FileDeleteDetails
     "Deleted files and/or folders."
@@ -1105,14 +1355,11 @@ struct FileGetCopyReferenceDetails
 struct FileMoveDetails
     "Moved files and/or folders."
 
-    src_index Int64
-        "Source asset index."
-    dest_index Int64
-        "Destination asset index."
+    relocate_action_details List(RelocateAssetReferencesLogInfo)
+        "Relocate action details."
 
     example default
-        src_index = 3
-        dest_index = 3
+        relocate_action_details = [default]
 
 struct FilePermanentlyDeleteDetails
     "Permanently deleted files and/or folders."
@@ -1123,14 +1370,11 @@ struct FilePreviewDetails
 struct FileRenameDetails
     "Renamed files and/or folders."
 
-    src_index Int64
-        "Source asset index."
-    dest_index Int64
-        "Destination asset index."
+    relocate_action_details List(RelocateAssetReferencesLogInfo)
+        "Relocate action details."
 
     example default
-        src_index = 3
-        dest_index = 3
+        relocate_action_details = [default]
 
 struct FileRestoreDetails
     "Restored deleted files and/or folders."
@@ -1144,14 +1388,11 @@ struct FileRollbackChangesDetails
 struct FileSaveCopyReferenceDetails
     "Save a file or folder using a copy reference."
 
-    src_index Int64
-        "Source asset index."
-    dest_index Int64
-        "Destination asset index."
+    relocate_action_details List(RelocateAssetReferencesLogInfo)
+        "Relocate action details."
 
     example default
-        src_index = 3
-        dest_index = 3
+        relocate_action_details = [default]
 
 struct FileRequestAddDeadlineDetails
     "Added a deadline to a file request."
@@ -1231,160 +1472,112 @@ struct FileRequestSendDetails
 struct GroupAddExternalIdDetails
     "Added an external ID for group."
 
-    group_info GroupLogInfo
-        "Group details."
     new_value team_common.GroupExternalId
         "Current external id."
 
     example default
-        group_info = default
         new_value = "some group id"
 
 struct GroupAddMemberDetails
     "Added team members to a group."
 
-    group_info GroupLogInfo
-        "Group details."
     is_group_owner Boolean
         "Is group owner."
 
     example default
-        group_info = default
         is_group_owner = true
 
 struct GroupChangeExternalIdDetails
     "Changed the external ID for group."
 
-    group_info GroupLogInfo
-        "Group details."
     new_value team_common.GroupExternalId
         "Current external id."
     previous_value team_common.GroupExternalId
         "Old external id."
 
     example default
-        group_info = default
         new_value = "some group id"
         previous_value = "some group id"
 
 struct GroupChangeManagementTypeDetails
     "Changed group management type."
 
-    group_info GroupLogInfo
-        "Group details."
     new_value GroupManagementType
         "New group management type."
     previous_value GroupManagementType?
         "Previous group management type. Might be missing due to historical data gap."
 
     example default
-        group_info = default
         new_value = admin_management_group
         previous_value = admin_management_group
 
 struct GroupChangeMemberRoleDetails
     "Changed the manager permissions belonging to a group member."
 
-    group_info GroupLogInfo
-        "Group details."
     is_group_owner Boolean
         "Is group owner."
 
     example default
-        group_info = default
         is_group_owner = true
 
 struct GroupCreateDetails
     "Created a group."
 
-    group_info GroupLogInfo
-        "Group details."
     is_admin_managed Boolean?
         "Is admin managed group. Might be missing due to historical data gap."
     join_policy GroupJoinPolicy
         "Group join policy."
 
     example default
-        group_info = default
         is_admin_managed = true
-        join_policy = open
+        join_policy = request_to_join
 
 struct GroupDeleteDetails
     "Deleted a group."
 
-    group_info GroupLogInfo
-        "Group details."
     is_admin_managed Boolean?
         "Is admin managed group. Might be missing due to historical data gap."
 
     example default
-        group_info = default
         is_admin_managed = true
 
 struct GroupDescriptionUpdatedDetails
     "Updated a group."
 
-    group_info GroupLogInfo
-        "Group details."
-
-    example default
-        group_info = default
-
 struct GroupJoinPolicyUpdatedDetails
     "Updated a group join policy."
 
-    group_info GroupLogInfo
-        "Group details."
     is_admin_managed Boolean?
         "Is admin managed group. Might be missing due to historical data gap."
     join_policy GroupJoinPolicy
         "Group join policy."
 
     example default
-        group_info = default
         is_admin_managed = true
-        join_policy = open
+        join_policy = request_to_join
 
 struct GroupMovedDetails
     "Moved a group."
 
-    group_info GroupLogInfo
-        "Group details."
-
-    example default
-        group_info = default
-
 struct GroupRemoveExternalIdDetails
     "Removed the external ID for group."
 
-    group_info GroupLogInfo
-        "Group details."
     previous_value team_common.GroupExternalId
         "Old external id."
 
     example default
-        group_info = default
         previous_value = "some group id"
 
 struct GroupRemoveMemberDetails
     "Removed team members from a group."
 
-    group_info GroupLogInfo
-        "Group details."
-
-    example default
-        group_info = default
-
 struct GroupRenameDetails
     "Renamed a group."
 
-    group_info GroupLogInfo
-        "Group details."
     previous_value String
         "Previous display name."
 
     example default
-        group_info = default
         previous_value = "abc"
 
 struct EmmLoginSuccessDetails
@@ -1396,20 +1589,14 @@ struct LogoutDetails
 struct PasswordLoginFailDetails
     "Failed to sign in using a password."
 
-    failure_reason String?
-        "Login failure reason. Might be missing due to historical data gap."
+    error_details FailureDetailsLogInfo
+        "Login failure details."
 
     example default
-        failure_reason = "abc"
+        error_details = default
 
 struct PasswordLoginSuccessDetails
     "Signed in using a password."
-
-    is_emm_managed Boolean
-        "Tells if the user signed in from an EMM managed device."
-
-    example default
-        is_emm_managed = true
 
 struct ResellerSupportSessionEndDetails
     "Ended reseller support session."
@@ -1426,23 +1613,32 @@ struct SignInAsSessionStartDetails
 struct SsoLoginFailDetails
     "Failed to sign in using SSO."
 
-    system_message String
-        "A technical description of the error."
-    admin_message String
-        "A user friendly description of the error."
+    error_details FailureDetailsLogInfo
+        "Login failure details."
 
     example default
-        system_message = "abc"
-        admin_message = "abc"
+        error_details = default
 
 struct MemberAddNameDetails
     "Set team member name when joining team."
 
-    new_value UserNameLogInfo
+    value UserNameLogInfo
         "User's name."
 
     example default
-        new_value = default
+        value = default
+
+struct MemberChangeAdminRoleDetails
+    "Change the admin role belonging to team member."
+
+    new_value AdminRole?
+        "New admin role. This field is relevant when the admin role is changed or whenthe user role changes from no admin rights to with admin rights."
+    previous_value AdminRole?
+        "Previous admin role. This field is relevant when the admin role is changed or when the admin role is removed."
+
+    example default
+        new_value = user
+        previous_value = user
 
 struct MemberChangeEmailDetails
     "Changed team member email address."
@@ -1468,56 +1664,23 @@ struct MemberChangeNameDetails
         new_value = default
         previous_value = default
 
-struct MemberChangeRoleDetails
-    "Change the admin permissions belonging to team member."
+struct MemberChangeStatusDetails
+    "Changed the membership status of a team member."
 
-    new_value String?
-        "New admin role. Might be missing due to historical data gap."
-    previous_value String?
-        "Previous admin role. Might be missing due to historical data gap."
-
-    example default
-        new_value = "abc"
-        previous_value = "abc"
-
-struct MemberInviteDetails
-    "Invited a user to join the team."
-
-struct MemberJoinDetails
-    "Joined the team."
-
-    linked_apps List(AppLogInfo)
-        "Linked Applications."
-    initial_shared_folders List(SharedFolderLogInfo)
-        "Shared folders."
-    linked_devices List(DeviceLogInfo)
-        "Linked devices."
+    previous_value MemberStatus?
+        "Previous member status. Might be missing due to historical data gap."
+    new_value MemberStatus
+        "New member status."
+    team_join_details JoinTeamDetails?
+        "Additional information relevant when a new member joins the team."
 
     example default
-        linked_apps = [default]
-        initial_shared_folders = [default]
-        linked_devices = [default]
-
-struct MemberLeaveDetails
-    "Removed a team member."
-
-    member_was_on_team Boolean
-        "True if the member had joined the team before leaving, False otherwise."
-
-    example default
-        member_was_on_team = true
-
-struct MemberRecoverDetails
-    "Recovered a removed member."
+        previous_value = not_joined
+        new_value = not_joined
+        team_join_details = default
 
 struct MemberSuggestDetails
     "Suggested a new team member to be added to the team."
-
-struct MemberSuspendDetails
-    "Suspended a team member."
-
-struct MemberUnsuspendDetails
-    "Unsuspended a team member."
 
 struct PaperContentAddMemberDetails
     "Added users to the membership of a Paper doc or folder."
@@ -1849,14 +2012,14 @@ struct SmartSyncCreateAdminPrivilegeReportDetails
 struct TeamActivityCreateReportDetails
     "Created a team activity report."
 
-    start_date String
+    start_date common.Date
         "Report start date."
-    end_date String
+    end_date common.Date
         "Report end date."
 
     example default
-        start_date = "abc"
-        end_date = "abc"
+        start_date = "2017-01-25"
+        end_date = "2017-01-25"
 
 struct CollectionShareDetails
     "Shared an album."
@@ -2027,15 +2190,15 @@ struct SfTeamInviteChangeRoleDetails
         "Target asset index."
     original_folder_name String
         "Original shared folder name."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
+    new_sharing_permission String?
+        "New sharing permission. Might be missing due to historical data gap."
     previous_sharing_permission String?
         "Previous sharing permission. Might be missing due to historical data gap."
 
     example default
         target_index = 3
         original_folder_name = "abc"
-        sharing_permission = "abc"
+        new_sharing_permission = "abc"
         previous_sharing_permission = "abc"
 
 struct SfTeamJoinDetails
@@ -2158,9 +2321,9 @@ struct SharedContentChangeDownloadsPolicyDetails
         "Original shared folder name."
     shared_folder_type String?
         "Shared folder type. Might be missing due to historical data gap."
-    new_value EnableDisableChangePolicy
+    new_value SharedContentDownloadsPolicy
         "New downlaod policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value SharedContentDownloadsPolicy?
         "Previous downlaod policy. Might be missing due to historical data gap."
 
     example default
@@ -2177,16 +2340,16 @@ struct SharedContentChangeInviteeRoleDetails
         "Target asset index."
     original_folder_name String
         "Original shared folder name."
+    new_sharing_permission String?
+        "New sharing permission. Might be missing due to historical data gap."
     previous_sharing_permission String?
         "Previous sharing permission. Might be missing due to historical data gap."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
 
     example default
         target_index = 3
         original_folder_name = "abc"
+        new_sharing_permission = "abc"
         previous_sharing_permission = "abc"
-        sharing_permission = "abc"
 
 struct SharedContentChangeLinkAudienceDetails
     "Changed the audience of the link for a shared file or folder."
@@ -2252,19 +2415,19 @@ struct SharedContentChangeMemberRoleDetails
         "Target asset index."
     original_folder_name String?
         "Original shared folder name."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
+    new_sharing_permission String?
+        "New sharing permission. Might be missing due to historical data gap."
     previous_sharing_permission String?
         "Previous sharing permission. Might be missing due to historical data gap."
+    shared_folder_type String?
+        "Shared folder type. Might be missing due to historical data gap."
 
     example default
         target_index = 3
         original_folder_name = "abc"
-        sharing_permission = "abc"
-        shared_folder_type = "abc"
+        new_sharing_permission = "abc"
         previous_sharing_permission = "abc"
+        shared_folder_type = "abc"
 
 struct SharedContentChangeViewerInfoPolicyDetails
     "Changed whether members can see who viewed the shared file or folder."
@@ -2275,9 +2438,9 @@ struct SharedContentChangeViewerInfoPolicyDetails
         "Original shared folder name."
     shared_folder_type String?
         "Shared folder type. Might be missing due to historical data gap."
-    new_value EnableDisableChangePolicy
+    new_value SharedContentViewerInfoPolicy
         "New viewer info policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value SharedContentViewerInfoPolicy?
         "Previous view info policy. Might be missing due to historical data gap."
 
     example default
@@ -2309,19 +2472,16 @@ struct SharedContentCopyDetails
         "Shared content link."
     sharing_permission String?
         "Sharing permission. Might be missing due to historical data gap."
-    src_index Int64
-        "Source asset index."
-    dest_index Int64
-        "Destination asset index."
     target_index Int64
         "Target asset index."
+    relocate_action_details RelocateAssetReferencesLogInfo
+        "Specifies the source and destination indices in the assets list."
 
     example default
         shared_content_link = "abc"
         sharing_permission = "abc"
-        src_index = 3
-        dest_index = 3
         target_index = 3
+        relocate_action_details = default
 
 struct SharedContentDownloadDetails
     "Downloaded the shared file or folder."
@@ -2521,9 +2681,9 @@ struct SharedFolderChangeMemberPolicyDetails
         "Original shared folder name."
     shared_folder_type String?
         "Shared folder type. Might be missing due to historical data gap."
-    new_value ExternalSharingPolicy
+    new_value SharedFolderMemberPolicy
         "New external invite policy."
-    previous_value ExternalSharingPolicy?
+    previous_value SharedFolderMemberPolicy?
         "Previous external invite policy. Might be missing due to historical data gap."
 
     example default
@@ -2671,98 +2831,80 @@ struct ShmodelVisibilityTeamOnlyDetails
 struct RemoveLogoutUrlDetails
     "Removed single sign-on logout URL."
 
-    previous_sso_logout_url String
+    previous_value String
         "Previous single sign-on logout URL."
-    new_sso_logout_url String?
+    new_value String?
         "New single sign-on logout URL. Might be missing due to historical data gap."
 
     example default
-        previous_sso_logout_url = "abc"
-        new_sso_logout_url = "abc"
+        previous_value = "abc"
+        new_value = "abc"
 
 struct RemoveSsoUrlDetails
     "Changed the sign-out URL for SSO."
 
-    previous_sso_url String
-        "Previous SSO Url."
+    previous_value String
+        "Previous single sign-on logout URL."
 
     example default
-        previous_sso_url = "abc"
+        previous_value = "abc"
 
 struct SsoChangeCertDetails
     "Changed the X.509 certificate for SSO."
 
-    subject String
-        "Certificate subject."
-    issuer String
-        "Certificate issuer."
-    issue_date String
-        "Certificate issue date."
-    expiration_date String
-        "Certificate expiration date."
-    serial_number String
-        "Certificate serial number."
-    sha1_fingerprint String
-        "Certificate sha1 fingerprint."
-    common_name String
-        "Certificate common name."
+    certificate_details Certificate
+        "SSO certificate details."
 
     example default
-        subject = "abc"
-        issuer = "abc"
-        issue_date = "abc"
-        expiration_date = "abc"
-        serial_number = "abc"
-        sha1_fingerprint = "abc"
-        common_name = "abc"
+        certificate_details = default
 
 struct SsoChangeLoginUrlDetails
     "Changed the sign-in URL for SSO."
 
-    previous_sso_url String
-        "Previous SSO Url."
-    new_sso_url String
-        "New SSO Url."
+    previous_value String
+        "Previous single sign-on login URL."
+    new_value String
+        "New single sign-on login URL."
 
     example default
-        previous_sso_url = "abc"
-        new_sso_url = "abc"
+        previous_value = "abc"
+        new_value = "abc"
 
 struct SsoChangeLogoutUrlDetails
     "Changed the sign-out URL for SSO."
 
-    previous_sso_logout_url String
+    previous_value String
         "Previous single sign-on logout URL."
-    new_sso_logout_url String?
+    new_value String?
         "New single sign-on logout URL. Might be missing due to historical data gap."
 
     example default
-        previous_sso_logout_url = "abc"
-        new_sso_logout_url = "abc"
+        previous_value = "abc"
+        new_value = "abc"
 
 struct SsoChangeSamlIdentityModeDetails
     "Changed the SAML identity mode for SSO."
 
-    previous_saml_identity_mode Int64
+    previous_value Int64
         "Previous single sign-on identity mode."
-    new_saml_identity_mode Int64
+    new_value Int64
         "New single sign-on identity mode."
 
     example default
-        previous_saml_identity_mode = 3
-        new_saml_identity_mode = 3
+        previous_value = 3
+        new_value = 3
 
 struct TeamFolderChangeStatusDetails
     "Changed the archival status of a team folder."
 
-    new_status TeamFolderStatus
+    new_value TeamFolderStatus
         "New team folder status."
-    previous_status TeamFolderStatus?
+    previous_value TeamFolderStatus?
         "Previous team folder status. Might be missing due to historical data gap."
 
     example default
-        new_status = archive
-        previous_status = archive
+        new_value = archive
+        previous_value = archive
 
 struct TeamFolderCreateDetails
     "Created a new team folder in active status."
@@ -2782,14 +2924,11 @@ struct TeamFolderPermanentlyDeleteDetails
 struct TeamFolderRenameDetails
     "Renamed an active or archived team folder."
 
-    src_index Int64
-        "Source asset index."
-    dest_index Int64
-        "Destination asset index."
+    relocate_action_details RelocateAssetReferencesLogInfo
+        "Specifies the source and destination indices in the assets list."
 
     example default
-        src_index = 3
-        dest_index = 3
+        relocate_action_details = default
 
 struct AccountCaptureChangePolicyDetails
     "Changed the account capture policy on a domain belonging to the team."
@@ -2818,8 +2957,8 @@ struct DataPlacementRestrictionChangePolicyDetails
         "New placement restriction."
 
     example default
-        previous_value = europe_only
-        new_value = europe_only
+        previous_value = none
+        new_value = none
 
 struct DataPlacementRestrictionSatisfyPolicyDetails
     "Satisfied a previously set restriction policy regarding the location of data centers where team data resides (i.e. all data have been migrated according to the restriction placed)."
@@ -2828,7 +2967,7 @@ struct DataPlacementRestrictionSatisfyPolicyDetails
         "Placement restriction."
 
     example default
-        placement_restriction = europe_only
+        placement_restriction = none
 
 struct DeviceApprovalsChangeDesktopPolicyDetails
     "Set or removed a limit on the number of computers each team member can link to their work Dropbox account."
@@ -2884,9 +3023,9 @@ struct EmmAddExceptionDetails
 struct EmmChangePolicyDetails
     "Enabled or disabled enterprise mobility management for team members."
 
-    new_value OptionalChangePolicy
+    new_value EmmPolicy
         "New enterprise mobility management policy."
-    previous_value OptionalChangePolicy?
+    previous_value EmmPolicy?
         "Previous enterprise mobility management policy. Might be missing due to historical data gap."
 
     example default
@@ -2911,9 +3050,9 @@ struct ExtendedVersionHistoryChangePolicyDetails
 struct FileCommentsChangePolicyDetails
     "Enabled or disabled commenting on team files."
 
-    new_value EnableDisableChangePolicy
+    new_value FileCommentsPolicy
         "New commenting on team files policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value FileCommentsPolicy?
         "Previous commenting on team files policy. Might be missing due to historical data gap."
 
     example default
@@ -2923,9 +3062,9 @@ struct FileCommentsChangePolicyDetails
 struct FileRequestsChangePolicyDetails
     "Enabled or disabled file requests."
 
-    new_value EnableDisableChangePolicy
+    new_value FileRequestsPolicy
         "New file requests policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value FileRequestsPolicy?
         "Previous file requests policy. Might be missing due to historical data gap."
 
     example default
@@ -2941,9 +3080,9 @@ struct FileRequestsEmailsRestrictedToTeamOnlyDetails
 struct GoogleSsoChangePolicyDetails
     "Enabled or disabled Google single sign-on for the team."
 
-    new_value EnableDisableChangePolicy
+    new_value GoogleSsoPolicy
         "New Google single sign-on policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value GoogleSsoPolicy?
         "Previous Google single sign-on policy. Might be missing due to historical data gap."
 
     example default
@@ -2953,9 +3092,9 @@ struct GoogleSsoChangePolicyDetails
 struct GroupUserManagementChangePolicyDetails
     "Changed who can create groups."
 
-    new_value GroupsUserManagementPolicy
+    new_value GroupUserManagementPolicy
         "New group users management policy."
-    previous_value GroupsUserManagementPolicy?
+    previous_value GroupUserManagementPolicy?
         "Previous group users management policy. Might be missing due to historical data gap."
 
     example default
@@ -2965,9 +3104,9 @@ struct GroupUserManagementChangePolicyDetails
 struct MemberRequestsChangePolicyDetails
     "Changed whether users can find the team when not invited."
 
-    new_value MemberRequestsChangePolicy
+    new_value MemberRequestsPolicy
         "New member change requests policy."
-    previous_value MemberRequestsChangePolicy?
+    previous_value MemberRequestsPolicy?
         "Previous member change requests policy. Might be missing due to historical data gap."
 
     example default
@@ -2995,9 +3134,9 @@ struct MemberSpaceLimitsRemoveExceptionDetails
 struct MemberSuggestionsChangePolicyDetails
     "Enabled or disabled the option for team members to suggest new members to add to the team."
 
-    new_value EnableDisableChangePolicy
+    new_value MemberSuggestionsPolicy
         "New team member suggestions policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value MemberSuggestionsPolicy?
         "Previous team member suggestions policy. Might be missing due to historical data gap."
 
     example default
@@ -3007,9 +3146,9 @@ struct MemberSuggestionsChangePolicyDetails
 struct MicrosoftOfficeAddinChangePolicyDetails
     "Enabled or disabled the Microsoft Office add-in, which lets team members save files to Dropbox directly from Microsoft Office."
 
-    new_value EnableDisableChangePolicy
+    new_value MicrosoftOfficeAddinPolicy
         "New Microsoft Office addin policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value MicrosoftOfficeAddinPolicy?
         "Previous Microsoft Office addin policy. Might be missing due to historical data gap."
 
     example default
@@ -3019,9 +3158,9 @@ struct MicrosoftOfficeAddinChangePolicyDetails
 struct NetworkControlChangePolicyDetails
     "Enabled or disabled network control."
 
-    new_value EnableDisableChangePolicy
+    new_value NetworkControlPolicy
         "New network control policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value NetworkControlPolicy?
         "Previous network control policy. Might be missing due to historical data gap."
 
     example default
@@ -3043,9 +3182,9 @@ struct PaperChangeDeploymentPolicyDetails
 struct PaperChangeMemberPolicyDetails
     "Changed whether team members can share Paper documents externally (i.e. outside the team), and if so, whether they should be accessible only by team members or anyone by default."
 
-    new_value ExternalSharingAccessibilityPolicy
+    new_value PaperMemberPolicy
         "New paper external accessibility policy."
-    previous_value ExternalSharingAccessibilityPolicy?
+    previous_value PaperMemberPolicy?
         "Previous paper external accessibility policy. Might be missing due to historical data gap."
 
     example default
@@ -3055,9 +3194,9 @@ struct PaperChangeMemberPolicyDetails
 struct PaperChangePolicyDetails
     "Enabled or disabled Dropbox Paper for the team."
 
-    new_value EnableDisableChangePolicy
+    new_value PaperPolicy
         "New Dropbox Paper policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value PaperPolicy?
         "Previous Dropbox Paper policy. Might be missing due to historical data gap."
 
     example default
@@ -3067,9 +3206,9 @@ struct PaperChangePolicyDetails
 struct PermanentDeleteChangePolicyDetails
     "Enabled or disabled the ability of team members to permanently delete content."
 
-    new_value EnableDisableChangePolicy
+    new_value ContentPermanentDeletePolicy
         "New permanent delete content policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value ContentPermanentDeletePolicy?
         "Previous permanent delete content policy. Might be missing due to historical data gap."
 
     example default
@@ -3079,9 +3218,9 @@ struct PermanentDeleteChangePolicyDetails
 struct SharingChangeFolderJoinPolicyDetails
     "Changed whether team members can join shared folders owned externally (i.e. outside the team)."
 
-    new_value ExternalSharingPolicy
+    new_value SharingFolderJoinPolicy
         "New external join policy."
-    previous_value ExternalSharingPolicy?
+    previous_value SharingFolderJoinPolicy?
         "Previous external join policy. Might be missing due to historical data gap."
 
     example default
@@ -3091,9 +3230,9 @@ struct SharingChangeFolderJoinPolicyDetails
 struct SharingChangeLinkPolicyDetails
     "Changed whether team members can share links externally (i.e. outside the team), and if so, whether links should be accessible only by team members or anyone by default."
 
-    new_value ExternalSharingAccessibilityPolicy
+    new_value SharingLinkPolicy
         "New external link accessibility policy."
-    previous_value ExternalSharingAccessibilityPolicy?
+    previous_value SharingLinkPolicy?
         "Previous external link accessibility policy. Might be missing due to historical data gap."
 
     example default
@@ -3103,9 +3242,9 @@ struct SharingChangeLinkPolicyDetails
 struct SharingChangeMemberPolicyDetails
     "Changed whether team members can share files and folders externally (i.e. outside the team)."
 
-    new_value ExternalSharingPolicy
+    new_value SharingMemberPolicy
         "New external invite policy."
-    previous_value ExternalSharingPolicy?
+    previous_value SharingMemberPolicy?
         "Previous external invite policy. Might be missing due to historical data gap."
 
     example default
@@ -3124,12 +3263,36 @@ struct SmartSyncChangePolicyDetails
         new_value = local_only
         previous_value = local_only
 
+struct SmartSyncNotOptOutDetails
+    "Opted team into Smart Sync."
+
+    previous_value SmartSyncOptOutPolicy
+        "Previous Smart Sync opt out policy."
+    new_value SmartSyncOptOutPolicy
+        "New Smart Sync opt out policy."
+
+    example default
+        previous_value = opted_out
+        new_value = opted_out
+
+struct SmartSyncOptOutDetails
+    "Opted team out of Smart Sync."
+
+    previous_value SmartSyncOptOutPolicy
+        "Previous Smart Sync opt out policy."
+    new_value SmartSyncOptOutPolicy
+        "New Smart Sync opt out policy."
+
+    example default
+        previous_value = opted_out
+        new_value = opted_out
+
 struct SsoChangePolicyDetails
     "Change the single sign-on policy for the team."
 
-    new_value OptionalChangePolicy
+    new_value SsoPolicy
         "New single sign-on policy."
-    previous_value OptionalChangePolicy?
+    previous_value SsoPolicy?
         "Previous single sign-on policy. Might be missing due to historical data gap."
 
     example default
@@ -3139,9 +3302,9 @@ struct SsoChangePolicyDetails
 struct TfaChangePolicyDetails
     "Change two-step verification policy for the team."
 
-    new_value OptionalChangePolicy
+    new_value TfaPolicy
         "New change policy."
-    previous_value OptionalChangePolicy?
+    previous_value TfaPolicy?
         "Previous change policy. Might be missing due to historical data gap."
 
     example default
@@ -3151,9 +3314,9 @@ struct TfaChangePolicyDetails
 struct TwoAccountChangePolicyDetails
     "Enabled or disabled the option for team members to link a personal Dropbox account in addition to their work account to the same computer."
 
-    new_value EnableDisableChangePolicy
+    new_value TwoAccountPolicy
         "New two account policy."
-    previous_value EnableDisableChangePolicy?
+    previous_value TwoAccountPolicy?
         "Previous two account policy. Might be missing due to historical data gap."
 
     example default
@@ -3163,26 +3326,26 @@ struct TwoAccountChangePolicyDetails
 struct WebSessionsChangeFixedLengthPolicyDetails
     "Changed how long team members can stay signed in to Dropbox on the web."
 
-    new_value SessionsManagementSessionLengthPolicy
+    new_value WebSessionsFixedLengthPolicy
         "New session length policy."
-    previous_value SessionsManagementSessionLengthPolicy
+    previous_value WebSessionsFixedLengthPolicy
         "Previous session length policy."
 
     example default
-        new_value = day_1
-        previous_value = day_1
+        new_value = default
+        previous_value = default
 
 struct WebSessionsChangeIdleLengthPolicyDetails
     "Changed how long team members can be idle while signed in to Dropbox on the web."
 
-    new_value SessionsManagementIdleLengthPolicy
+    new_value WebSessionsIdleLengthPolicy
         "New idle length policy."
-    previous_value SessionsManagementIdleLengthPolicy
+    previous_value WebSessionsIdleLengthPolicy
         "Previous idle length policy."
 
     example default
-        new_value = none
-        previous_value = none
+        new_value = default
+        previous_value = default
 
 struct TeamProfileAddLogoDetails
     "Added a team logo to be displayed on shared link headers."
@@ -3193,14 +3356,14 @@ struct TeamProfileChangeLogoDetails
 struct TeamProfileChangeNameDetails
     "Changed the team name."
 
-    team_display_name String
-        "Team's display name."
-    team_legal_name String
-        "Team's legal name."
+    previous_value TeamName?
+        "Previous teams name. Might be missing due to historical data gap."
+    new_value TeamName
+        "New team name."
 
     example default
-        team_display_name = "abc"
-        team_legal_name = "abc"
+        previous_value = default
+        new_value = default
 
 struct TeamProfileRemoveLogoDetails
     "Removed the team logo to be displayed on shared link headers."
@@ -3222,7 +3385,7 @@ struct TfaChangeStatusDetails
     previous_value TfaConfiguration?
         "The previous two factor authentication configuration. Might be missing due to historical data gap."
     used_rescue_code Boolean?
-        "Used two factor authentication code."
+        "Used two factor authentication rescue code. This flag is relevant when the two factor authentication configuration is disabled."
 
     example default
         new_value = disabled
@@ -3265,8 +3428,10 @@ union EventDetails
         "Paper external sharing policy changed: team-only."
     sf_external_invite_warn_details SfExternalInviteWarnDetails
         "Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE)."
-    team_merge_details TeamMergeDetails
-        "Merged the team into another team."
+    team_merge_from_details TeamMergeFromDetails
+        "Merged another team into this team."
+    team_merge_to_details TeamMergeToDetails
+        "Merged this team into another team."
     app_link_team_details AppLinkTeamDetails
         "Linked an app for team."
     app_link_user_details AppLinkUserDetails
@@ -3417,26 +3582,16 @@ union EventDetails
         "Failed to sign in using SSO."
     member_add_name_details MemberAddNameDetails
         "Set team member name when joining team."
+    member_change_admin_role_details MemberChangeAdminRoleDetails
+        "Change the admin role belonging to team member."
     member_change_email_details MemberChangeEmailDetails
         "Changed team member email address."
     member_change_name_details MemberChangeNameDetails
         "Changed team member name."
-    member_change_role_details MemberChangeRoleDetails
-        "Change the admin permissions belonging to team member."
-    member_invite_details MemberInviteDetails
-        "Invited a user to join the team."
-    member_join_details MemberJoinDetails
-        "Joined the team."
-    member_leave_details MemberLeaveDetails
-        "Removed a team member."
-    member_recover_details MemberRecoverDetails
-        "Recovered a removed member."
+    member_change_status_details MemberChangeStatusDetails
+        "Changed the membership status of a team member."
     member_suggest_details MemberSuggestDetails
         "Suggested a new team member to be added to the team."
-    member_suspend_details MemberSuspendDetails
-        "Suspended a team member."
-    member_unsuspend_details MemberUnsuspendDetails
-        "Unsuspended a team member."
     paper_content_add_member_details PaperContentAddMemberDetails
         "Added users to the membership of a Paper doc or folder."
     paper_content_add_to_folder_details PaperContentAddToFolderDetails
@@ -3733,6 +3888,10 @@ union EventDetails
         "Changed whether team members can share files and folders externally (i.e. outside the team)."
     smart_sync_change_policy_details SmartSyncChangePolicyDetails
         "Changed the default Smart Sync policy for team members."
+    smart_sync_not_opt_out_details SmartSyncNotOptOutDetails
+        "Opted team into Smart Sync."
+    smart_sync_opt_out_details SmartSyncOptOutDetails
+        "Opted team out of Smart Sync."
     sso_change_policy_details SsoChangePolicyDetails
         "Change the single sign-on policy for the team."
     tfa_change_policy_details TfaChangePolicyDetails
@@ -3799,8 +3958,10 @@ union EventType
         "Paper external sharing policy changed: team-only. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
     sf_external_invite_warn
         "Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE). This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    team_merge
-        "Merged the team into another team."
+    team_merge_from
+        "Merged another team into this team."
+    team_merge_to
+        "Merged this team into another team."
     app_link_team
         "Linked an app for team."
     app_link_user
@@ -3951,26 +4112,16 @@ union EventType
         "Failed to sign in using SSO."
     member_add_name
         "Set team member name when joining team."
+    member_change_admin_role
+        "Change the admin role belonging to team member."
     member_change_email
         "Changed team member email address."
     member_change_name
         "Changed team member name."
-    member_change_role
-        "Change the admin permissions belonging to team member."
-    member_invite
-        "Invited a user to join the team."
-    member_join
-        "Joined the team."
-    member_leave
-        "Removed a team member."
-    member_recover
-        "Recovered a removed member."
+    member_change_status
+        "Changed the membership status of a team member."
     member_suggest
         "Suggested a new team member to be added to the team."
-    member_suspend
-        "Suspended a team member."
-    member_unsuspend
-        "Unsuspended a team member."
     paper_content_add_member
         "Added users to the membership of a Paper doc or folder."
     paper_content_add_to_folder
@@ -4267,6 +4418,10 @@ union EventType
         "Changed whether team members can share files and folders externally (i.e. outside the team)."
     smart_sync_change_policy
         "Changed the default Smart Sync policy for team members."
+    smart_sync_not_opt_out
+        "Opted team into Smart Sync."
+    smart_sync_opt_out
+        "Opted team out of Smart Sync."
     sso_change_policy
         "Change the single sign-on policy for the team."
     tfa_change_policy
@@ -4309,8 +4464,8 @@ struct TeamEvent
 
     timestamp common.DropboxTimestamp
         "The Dropbox timestamp representing when the action was taken."
-    event_categories List(EventCategory, min_items=1)
-        "One or more categories that this type of action belongs to."
+    event_category EventCategory
+        "The category that this type of action belongs to."
     actor ActorLogInfo
         "The entity who actually performed the action."
     origin OriginLogInfo?
@@ -4332,7 +4487,7 @@ struct TeamEvent
         details = default
         event_type = shared_content_download
         timestamp = "2017-01-25T15:51:30Z"
-        event_categories = [default]
+        event_category = tfa
         actor = default
         origin = default
         participants = [default2]

@@ -39,10 +39,14 @@ struct TeamFolderMetadata
     status TeamFolderStatus
         "The status of the team folder."
 
+    is_team_shared_dropbox Boolean
+        "True if this team folder is the team shared dropbox."
+
     example default
         name = "Marketing"
         team_folder_id = "123456789"
         status = active
+        is_team_shared_dropbox = false
 
 union TeamFolderAccessError
     invalid_team_folder_id
@@ -58,10 +62,15 @@ union TeamFolderInvalidStatusError
     archive_in_progress
         "The folder is being archived and the operation did not succeed."
 
+union TeamFolderTeamSharedDropboxError
+    disallowed
+        "This action is not allowed for a team shared dropbox."
+
 union BaseTeamFolderError
     "Base error that all errors for existing team folders should extend."
     access_error TeamFolderAccessError
     status_error TeamFolderInvalidStatusError
+    team_shared_dropbox_error TeamFolderTeamSharedDropboxError
 
 #
 # Team folder create

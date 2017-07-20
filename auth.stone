@@ -16,7 +16,7 @@ route token/revoke(Void, Void, Void)
     "Disables the access token used to authenticate the call."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 union RateLimitReason
@@ -66,7 +66,7 @@ route token/from_oauth1(TokenFromOAuth1Arg, TokenFromOAuth1Result, TokenFromOAut
     "Creates an OAuth 2.0 access token from the supplied OAuth 1.0 access token."
     attrs
         auth = "app"
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 union AccessError

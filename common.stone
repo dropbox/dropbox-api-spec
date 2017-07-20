@@ -11,7 +11,7 @@ alias EmailAddress = String(pattern="^['&A-Za-z0-9._%+-]+@[A-Za-z0-9-][A-Za-z0-9
 alias NamePart = String(pattern="[^\/:?*<>\"|]*", min_length=1, max_length=100)
 
 # Display name. We don't limit the length because it's always generated from the first & last names.
-alias DisplayName = String(pattern="[^\/:?*<>\"|]*", min_length=1)
+alias DisplayName = String(pattern="[^\/:?<>\"|]*", min_length=1)
 
 alias NamespaceId = String(pattern="[-_0-9a-zA-Z:]+")
 alias SharedFolderId = NamespaceId
@@ -39,10 +39,10 @@ union PathRoot
         "Paths are relative to the user's home directory. (This results in
         :field:`PathRootError.invalid` if the belongs to a team.)"
 
-    shared_folder PathRootId
-        "Paths are relative to given shared folder id (This results in
+    namespace_id PathRootId
+        "Paths are relative to given namespace id (This results in
         :field:`PathRootError.no_permission` if you don't have access
-        to  this shared folder.)"
+        to this namespace.)"
 
 
 struct InvalidPathRootError

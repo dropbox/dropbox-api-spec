@@ -164,6 +164,14 @@ union PermissionDeniedReason
         "The user needs to be on a Dropbox team to perform this action."
     folder_is_inside_shared_folder
         "Folder is inside of another shared folder."
+    insufficient_plan InsufficientPlan
+
+struct InsufficientPlan
+    message String
+        "A message to tell the user to upgrade in order to support expected action."
+    upsell_url String?
+        "A URL to send the user to in order to obtain the account type they need, e.g. upgrading.
+        Absent if there is no action the user can take to upgrade."
 
 union AclUpdatePolicy
     "Who can change a shared folder's access control list (ACL). In other words, who can add,
@@ -298,6 +306,10 @@ struct SharedFolderMetadataBase
     is_team_folder Boolean
         "Whether this folder is a
         :link:`team folder https://www.dropbox.com/en/help/986`."
+    owner_display_names List(String)?
+        "The display names of the users that own the folder. If the folder is
+        part of a team folder, the display names of the team admins are also
+        included. Absent if the owner display names cannot be fetched."
     owner_team users.Team?
         "The team that owns the folder. This field is not present if the folder
         is not owned by a team."
@@ -311,6 +323,7 @@ struct SharedFolderMetadataBase
         access_type = owner
         is_inside_team_folder = false
         is_team_folder = false
+        owner_display_names = ["Jane Doe"]
         owner_team = default
 
 # NOTE: If you modify this struct, also modify InternalSharedFolderMetadata,
@@ -398,7 +411,7 @@ route list_folders(ListFoldersArgs, ListFoldersResult, Void)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct ListFoldersArgs
     limit UInt32(min_value=1, max_value=1000) = 1000
@@ -440,7 +453,7 @@ route list_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFolde
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct ListFoldersContinueArg
     cursor String
@@ -461,7 +474,7 @@ route list_mountable_folders(ListFoldersArgs, ListFoldersResult, Void)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 # --
 
@@ -473,7 +486,7 @@ route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult,
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 # --
 
@@ -483,7 +496,7 @@ route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAcc
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
         api_group = "truelink-alpha"
 
 struct GetMetadataArgs
@@ -506,7 +519,7 @@ route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFold
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct ListFolderMembersCursorArg
     actions List(MemberAction)?
@@ -558,7 +571,7 @@ route list_folder_members/continue(ListFolderMembersContinueArg, SharedFolderMem
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct ListFolderMembersContinueArg
     cursor String
@@ -589,33 +602,40 @@ route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError )
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
         api_group = "truelink-alpha"
 
-struct ShareFolderArg
-    path files.WritePath
-        "The path to the folder to share. If it does not exist, then a new one
-        is created."
+# As of 2017-05, there are three kinds of arg:
+# ShareFolderArg: The public stable version. We cannot make backwards-incompatible changes at all.
+# ShareFolderInternalArg: The private stable version. We cannot make backwards-incompatible changes
+#   unless we are sure no clients in the wild are using the endpoint.
+# AlphaShareFolderArg: The private experimental version. We can do what we want as long as it
+#   doesn't break web.
+struct ShareFolderArgBase
+    acl_update_policy AclUpdatePolicy?
+        "Who can add and remove members of this shared folder."
+    force_async Boolean = false
+        "Whether to force the share to happen asynchronously."
     member_policy MemberPolicy?
         "Who can be a member of this shared folder. Only applicable if the
         current user is on a team."
-    acl_update_policy AclUpdatePolicy?
-        "Who can add and remove members of this shared folder."
+    path files.WritePath
+        "The path to the folder to share. If it does not exist, then a new one
+        is created."
     shared_link_policy SharedLinkPolicy?
         "The policy to apply to shared links created for content inside this
         shared folder.  The current user must be on a team to set this policy to
         :field:`SharedLinkPolicy.members`."
-    force_async Boolean = false
-        "Whether to force the share to happen asynchronously."
+    viewer_info_policy ViewerInfoPolicy?
+        "Who can enable/disable viewer info for this shared folder."
+
+struct ShareFolderArg extends ShareFolderArgBase
     actions List(FolderAction)?
         "A list of `FolderAction`s corresponding to `FolderPermission`s that should appear in the
          response's :field:`SharedFolderMetadata.permissions` field describing the actions the
          authenticated user can perform on the folder."
     link_settings LinkSettings?
         "Settings on the link for this folder."
-    viewer_info_policy ViewerInfoPolicy?
-        "Who can enable/disable viewer info for this shared folder."
-
 
     example default
         path = "/example/workspace"
@@ -689,7 +709,7 @@ route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollErro
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 union_closed JobStatus extends async.PollResultBase
     complete
@@ -724,7 +744,7 @@ route check_job_status(async.PollArg, JobStatus, async.PollError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 # --
 
@@ -737,7 +757,7 @@ route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderErr
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
         api_group = "truelink-alpha"
 
 struct UnshareFolderArg
@@ -771,7 +791,7 @@ route transfer_folder(TransferFolderArg, Void, TransferFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct TransferFolderArg
     shared_folder_id common.SharedFolderId
@@ -808,7 +828,7 @@ route update_folder_policy(UpdateFolderPolicyArg, SharedFolderMetadata, UpdateFo
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
         api_group = "truelink-alpha"
 
 struct UpdateFolderPolicyArg
@@ -866,7 +886,7 @@ route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct AddFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -980,7 +1000,7 @@ route remove_folder_member(RemoveFolderMemberArg, async.LaunchResultBase, Remove
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct RemoveFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -1026,7 +1046,7 @@ route check_remove_member_job_status(async.PollArg, RemoveMemberJobStatus, async
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 # --
 
@@ -1037,7 +1057,7 @@ route update_folder_member(UpdateFolderMemberArg, MemberAccessLevelResult, Updat
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct UpdateFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -1079,7 +1099,7 @@ route mount_folder(MountFolderArg, SharedFolderMetadata, MountFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 # TODO(kelkabany): Consider exposing mount path as an argument. More error
 # cases will be possible.
@@ -1124,7 +1144,7 @@ route unmount_folder(UnmountFolderArg, Void, UnmountFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct UnmountFolderArg
     shared_folder_id common.SharedFolderId
@@ -1154,7 +1174,7 @@ route relinquish_folder_membership(RelinquishFolderMembershipArg, async.LaunchEm
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sfi"
+        owner = "sharing-platform"
 
 struct RelinquishFolderMembershipArg
     shared_folder_id common.SharedFolderId

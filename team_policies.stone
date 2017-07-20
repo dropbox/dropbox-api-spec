@@ -12,10 +12,13 @@ struct TeamMemberPolicies
         Dropbox usage on mobile devices.
         This is a new feature and in the future we'll be adding more new fields and additional
         documentation."
+    office_addin OfficeAddInPolicy
+        "The admin policy around the Dropbox Office Add-In for this team."
 
     example default
         sharing = default
         emm_state = disabled
+        office_addin = disabled
 
 struct TeamSharingPolicies
     "Policies governing sharing within and outside of the team."
@@ -71,3 +74,9 @@ union EmmState
         "Emm token is optional"
     required
         "Emm token is required"
+
+union OfficeAddInPolicy
+    disabled
+        "Office Add-In is disabled"
+    enabled
+        "Office Add-In is enabled"

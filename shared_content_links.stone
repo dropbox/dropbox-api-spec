@@ -83,6 +83,10 @@ struct SharedContentLinkMetadataBase
 
 struct SharedContentLinkMetadata extends SharedContentLinkMetadataBase
     "Metadata of a shared link for a file or folder."
+    audience_exceptions AudienceExceptions?
+        "The content inside this folder with link audience different than this folder's. This is
+        only returned when an endpoint that returns metadata for a single shared folder is called,
+        e.g. /get_folder_metadata."
     url String
         "The URL of the link."
 
@@ -95,7 +99,7 @@ struct SharedContentLinkMetadata extends SharedContentLinkMetadataBase
 
 struct ExpectedSharedContentLinkMetadata extends SharedContentLinkMetadataBase
     "The expected metadata of a shared link for a file or folder when a link is first created for
-     the content. Absent if the link already exists."
+    the content. Absent if the link already exists."
 
     example default
         audience_options = [public, team, members]
@@ -112,3 +116,24 @@ struct AudienceRestrictingSharedFolder
         "The name of the shared folder."
     audience LinkAudience
         "The link audience of the shared folder."
+
+struct AudienceExceptions
+    "The total count and truncated list of information of content inside this folder that has a
+    different audience than the link on this folder. This is only returned for folders."
+    count UInt32
+    exceptions List(AudienceExceptionContentInfo)
+        "A truncated list of some of the content that is an exception. The length of this list could
+        be smaller than the count since it is only a sample but will not be empty as long as
+        count is not 0."
+
+    example default
+        count = 0
+        exceptions = []
+
+struct AudienceExceptionContentInfo
+    "Information about the content that has a link audience different than that of this folder."
+    name String
+        "The name of the content, which is either a file or a folder."
+
+    example default
+        name = "sample file name"

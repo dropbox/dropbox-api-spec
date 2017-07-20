@@ -166,7 +166,7 @@ route groups/list(GroupsListArg, GroupsListResult, Void)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # route groups/list/continue
@@ -191,7 +191,7 @@ route groups/list/continue(GroupsListContinueArg, GroupsListResult, GroupsListCo
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # route groups/get_info
@@ -224,7 +224,7 @@ route groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 ##########################
 # Group management methods
@@ -265,7 +265,7 @@ route groups/create(GroupCreateArg, GroupFullInfo, GroupCreateError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # route groups/delete  (async method)
@@ -287,7 +287,7 @@ route groups/delete(GroupSelector, async.LaunchEmptyResult, GroupDeleteError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # route groups/update
@@ -326,7 +326,7 @@ route groups/update(GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # Structures common to groups/members/add and  groups/members/remove
@@ -402,7 +402,7 @@ route groups/members/add(GroupMembersAddArg, GroupMembersChangeResult, GroupMemb
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # route groups/members/remove  (async method)
@@ -441,7 +441,7 @@ route groups/members/remove(GroupMembersRemoveArg, GroupMembersChangeResult, Gro
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # route groups/members/set_access_type
@@ -472,7 +472,7 @@ route groups/members/set_access_type(GroupMembersSetAccessTypeArg, GroupsGetInfo
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 
 #
@@ -510,7 +510,7 @@ route groups/members/list(GroupsMembersListArg, GroupsMembersListResult, GroupSe
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # route groups/members/list/continue
@@ -535,7 +535,7 @@ route groups/members/list/continue(GroupsMembersListContinueArg, GroupsMembersLi
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # route groups/job_status/get
@@ -555,4 +555,4 @@ route groups/job_status/get(async.PollArg, async.PollEmptyResult, GroupsPollErro
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"

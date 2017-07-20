@@ -61,7 +61,7 @@ route reports/get_storage(DateRange, GetStorageReport, DateRangeError)
     "Retrieves reporting data about a team's storage usage."
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "identity"
 
 #
 # get_activity
@@ -106,7 +106,7 @@ route reports/get_activity(DateRange, GetActivityReport, DateRangeError)
     "Retrieves reporting data about a team's user activity."
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "audit-log-team"
 
 #
 # get_membership
@@ -134,7 +134,7 @@ route reports/get_membership(DateRange, GetMembershipReport, DateRangeError)
     "Retrieves reporting data about a team's membership."
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # get_devices
@@ -181,4 +181,4 @@ route reports/get_devices(DateRange, GetDevicesReport, DateRangeError)
     "Retrieves reporting data about a team's linked devices."
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "tools-and-insights"

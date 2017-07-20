@@ -13,7 +13,7 @@ route properties/template/add(AddPropertyTemplateArg, AddPropertyTemplateResult,
         auth="team"
         api_group="properties"
         is_preview=true
-        owner="dev-plat"
+        owner = "api-platform"
 
 route properties/template/update(UpdatePropertyTemplateArg, UpdatePropertyTemplateResult, properties.ModifyPropertyTemplateError)
     "Update a property template. This route can update the template name,
@@ -23,7 +23,7 @@ route properties/template/update(UpdatePropertyTemplateArg, UpdatePropertyTempla
         auth="team"
         api_group="properties"
         is_preview=true
-        owner="dev-plat"
+        owner = "api-platform"
 
 route properties/template/get(properties.GetPropertyTemplateArg, properties.GetPropertyTemplateResult, properties.PropertyTemplateError)
     "Get the schema for a specified template."
@@ -32,7 +32,7 @@ route properties/template/get(properties.GetPropertyTemplateArg, properties.GetP
         auth="team"
         api_group="properties"
         is_preview=true
-        owner="dev-plat"
+        owner = "api-platform"
 
 route properties/template/list(Void, properties.ListPropertyTemplateIds, properties.PropertyTemplateError)
     "Get the property template identifiers for a team. To get the schema of
@@ -42,7 +42,7 @@ route properties/template/list(Void, properties.ListPropertyTemplateIds, propert
         auth="team"
         api_group="properties"
         is_preview=true
-        owner="dev-plat"
+        owner = "api-platform"
 
 struct AddPropertyTemplateArg extends properties.PropertyGroupTemplate
     "Arguments for adding property templates."

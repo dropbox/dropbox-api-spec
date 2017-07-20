@@ -10,11 +10,13 @@ import properties
 alias Id = String(min_length=1)
 alias Path = String(pattern="/(.|[\\r\\n])*")
 alias PathOrId = String(pattern="/(.|[\\r\\n])*|id:.*|(ns:[0-9]+(/.*)?)")
+alias PathROrId = String(pattern="(/(.|[\\r\\n])*)?|id:.*|(ns:[0-9]+(/.*)?)")
 alias PathR = String(pattern="(/(.|[\\r\\n])*)?|(ns:[0-9]+(/.*)?)")               # A path that can be the root path ("").
 alias Rev = String(min_length=9, pattern="[0-9a-f]+") # TODO: Change pattern to "rev:[0-9a-f]{9,}"
 alias ListFolderCursor = String(min_length=1)
 alias ReadPath = String(pattern="(/(.|[\\r\\n])*|id:.*)|(rev:[0-9a-f]{9,})|(ns:[0-9]+(/.*)?)")
 alias WritePath = String(pattern="(/(.|[\\r\\n])*)|(ns:[0-9]+(/.*)?)")
+alias WritePathOrId = String(pattern="(/(.|[\\r\\n])*)|(ns:[0-9]+(/.*)?)|(id:.*)")
 alias Sha256HexHash = String(min_length=64, max_length=64)
 
 #
@@ -277,9 +279,17 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
     Note: Metadata for the root folder is unsupported."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
         takes_path_root = true
+        select_admin_enabled = true
+
+#
+# General fileops
+#
+
+struct FileOpsResult
+    example default
 
 #
 # List folder routes
@@ -329,12 +339,13 @@ route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, Lis
     attrs
         host = "notify"
         auth = "noauth"
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 struct ListFolderArg
-    path PathR
-        "The path to the folder you want to see the contents of."
+    path PathROrId
+        "A unique identifier for the file."
     recursive Boolean = false
         "If true, the list folder operation will be applied recursively to all subfolders
         and the response will contain contents of all subfolders."
@@ -395,7 +406,7 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
     the previous request finishes."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 struct ListFolderContinueArg
@@ -418,7 +429,7 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
     :route:`list_folder`."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 struct ListFolderGetLatestCursorResult
@@ -436,7 +447,7 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
     files that already exist in Dropbox."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -467,8 +478,9 @@ route download (DownloadArg, FileMetadata, DownloadError)
     attrs
         host = "content"
         style = "download"
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 #
 # Upload Routes
@@ -556,9 +568,10 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
     attrs
         host = "content"
         style = "upload"
-        owner = "dev-plat"
+        owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 struct UploadSessionAppendArg
     cursor UploadSessionCursor
@@ -581,9 +594,10 @@ route upload_session/append_v2 (UploadSessionAppendArg, Void, UploadSessionLooku
     attrs
         host = "content"
         style = "upload"
-        owner = "dev-plat"
+        owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 
 struct UploadSessionCursor
@@ -606,7 +620,7 @@ route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError
     attrs
         host = "content"
         style = "upload"
-        owner = "dev-plat"
+        owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
 
@@ -615,10 +629,10 @@ union_closed WriteMode
     what constitutes a conflict and what the autorename strategy is.
 
     In some situations, the conflict behavior is identical:
-    (a) If the target path doesn't contain anything, the file is always written;
+    (a) If the target path doesn't refer to anything, the file is always written;
     no conflict.
-    (b) If the target path contains a folder, it's always a conflict.
-    (c) If the target path contains a file with identical contents, nothing gets
+    (b) If the target path refers to a folder, it's always a conflict.
+    (c) If the target path refers to a file with identical contents, nothing gets
     written; no conflict.
 
     The conflict checking differs in the case where there's a file at the target
@@ -647,7 +661,7 @@ union_closed WriteMode
         update = "a1c10ce0dd78"
 
 struct CommitInfo
-    path WritePath
+    path WritePathOrId
         "Path in the user's Dropbox to save the file."
     mode WriteMode = add
         "Selects what to do if the file already exists."
@@ -698,7 +712,7 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
     attrs
         host = "content"
         style = "upload"
-        owner = "dev-plat"
+        owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
 
@@ -711,7 +725,7 @@ route upload (CommitInfo, FileMetadata, UploadError)
     attrs
         host = "content"
         style = "upload"
-        owner = "dev-plat"
+        owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         takes_path_root = true
@@ -779,7 +793,7 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFin
     the next job before current job finishes. We allow up to 1000 entries in a single request."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
 
@@ -788,7 +802,7 @@ route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJ
     success, it returns list of result for each entry."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -813,7 +827,7 @@ union_closed SearchMode
         deleted_filename = null
 
 struct SearchArg
-    path PathR
+    path PathROrId
         "The path in the user's Dropbox to search. Should probably be
         a folder."
     query String
@@ -881,7 +895,7 @@ route search (SearchArg, SearchResult, SearchError)
     Note: Recent changes may not immediately be reflected in search results due to a short delay in indexing."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -937,22 +951,38 @@ struct CreateFolderArg
     example default
         path = "/Homework/math"
 
+struct CreateFolderResult extends FileOpsResult
+    metadata FolderMetadata
+        "Metadata of the created folder."
+
+    example default
+        metadata = default
+
 union_closed CreateFolderError
     path WriteError
 
-route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError)
+route create_folder_v2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
     "Create a folder at a given path."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
+
+route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) deprecated by create_folder_v2
+    "Create a folder at a given path."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_enabled = true
 
 #
 # Delete
 #
 
 struct DeleteArg
-    path WritePath
+    path WritePathOrId
         "Path in the user's Dropbox to delete."
 
     example delete
@@ -961,6 +991,12 @@ struct DeleteArg
 union DeleteError
     path_lookup LookupError
     path_write WriteError
+    too_many_write_operations
+        "There are too many write operations in user's Dropbox. Please retry
+        this request."
+    too_many_files
+        "There are too many files in one request. Please retry with fewer files."
+
 
 struct DeleteBatchArg
     entries List(DeleteArg)
@@ -968,20 +1004,28 @@ struct DeleteBatchArg
     example default
         entries = [delete]
 
+struct DeleteBatchResultData
+    metadata Metadata
+        "Metadata of the deleted object."
+
+    example default
+        metadata = default
+
 union_closed DeleteBatchResultEntry
-    success DeleteResult
+    success DeleteBatchResultData
     failure DeleteError
 
     example default
         success = default
 
-struct DeleteResult
+struct DeleteResult extends FileOpsResult
     metadata Metadata
+        "Metadata of the deleted object."
 
     example default
         metadata = default
 
-struct DeleteBatchResult
+struct DeleteBatchResult extends FileOpsResult
     entries List(DeleteBatchResultEntry)
 
     example default
@@ -989,8 +1033,8 @@ struct DeleteBatchResult
 
 union DeleteBatchError
     too_many_write_operations
-        "There are too many write operations in user's Dropbox. Please retry
-        this request."
+        "Deprecated by :field:`DeleteError.too_many_write_operations`. :route:`delete_batch` now
+        provides smaller granularity about which entry has failed because of this."
 
 union DeleteBatchJobStatus extends async.PollResultBase
     complete DeleteBatchResult
@@ -1013,7 +1057,7 @@ union DeleteBatchLaunch extends async.LaunchResultBase
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
-route delete (DeleteArg, Metadata, DeleteError)
+route delete_v2 (DeleteArg, DeleteResult, DeleteError)
     "Delete the file or folder at a given path.
 
     If the path is a folder, all its contents will be deleted too.
@@ -1023,8 +1067,23 @@ route delete (DeleteArg, Metadata, DeleteError)
     deletion, and not a :type:`DeletedMetadata` object."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
+
+route delete (DeleteArg, Metadata, DeleteError) deprecated by delete_v2
+    "Delete the file or folder at a given path.
+
+    If the path is a folder, all its contents will be deleted too.
+
+    A successful response indicates that the file or folder was deleted. The returned metadata will
+    be the corresponding :type:`FileMetadata` or :type:`FolderMetadata` for the item at time of
+    deletion, and not a :type:`DeletedMetadata` object."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_enabled = true
 
 route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     "Delete multiple files/folders at once.
@@ -1034,7 +1093,7 @@ route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     the job status."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
@@ -1042,7 +1101,7 @@ route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
     success, it returns list of result for each entry."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 route permanently_delete (DeleteArg, Void, DeleteError)
@@ -1056,9 +1115,9 @@ route permanently_delete (DeleteArg, Void, DeleteError)
 #
 
 struct RelocationPath
-    from_path WritePath
+    from_path WritePathOrId
         "Path in the user's Dropbox to be copied or moved."
-    to_path WritePath
+    to_path WritePathOrId
         "Path in the user's Dropbox that is the destination."
 
     example default
@@ -1074,6 +1133,9 @@ struct RelocationArg extends RelocationPath
     autorename Boolean = false
         "If there's a conflict, have the Dropbox server try to autorename
         the file to avoid the conflict."
+    allow_ownership_transfer Boolean = false
+        "Allow moves by owner even if it would result in an ownership transfer
+        for the content being moved. This does not apply to copies."
 
     example default
         from_path = "/Homework/math"
@@ -1095,6 +1157,10 @@ union RelocationError
     duplicated_or_nested_paths
         "There are duplicated/nested paths among :field:`RelocationArg.from_path`
         and :field:`RelocationArg.to_path`."
+    cant_transfer_ownership
+        "Your move operation would result in an ownership transfer.
+        You may reissue the request with
+        the field :field:`RelocationArg.allow_ownership_transfer` to true."
 
 struct RelocationBatchArg
     entries List(RelocationPath)
@@ -1107,12 +1173,22 @@ struct RelocationBatchArg
     autorename Boolean = false
         "If there's a conflict with any file, have the Dropbox server try to
         autorename that file to avoid the conflict."
+    allow_ownership_transfer Boolean = false
+        "Allow moves by owner even if it would result in an ownership transfer
+        for the content being moved. This does not apply to copies."
 
     example default
         entries = [default]
 
-struct RelocationBatchResult
-    entries List(RelocationResult)
+struct RelocationBatchResultData
+    metadata Metadata
+        "Metadata of the relocated object."
+
+    example default
+        metadata = default
+
+struct RelocationBatchResult extends FileOpsResult
+    entries List(RelocationBatchResultData)
 
     example default
         entries = [default]
@@ -1139,8 +1215,9 @@ union RelocationBatchLaunch extends async.LaunchResultBase
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
-struct RelocationResult
+struct RelocationResult extends FileOpsResult
     metadata Metadata
+        "Metadata of the relocated object."
 
     example default
         metadata = default
@@ -1153,14 +1230,25 @@ union RelocationBatchError extends RelocationError
 # Copy
 #
 
-route copy (RelocationArg, Metadata, RelocationError)
+route copy_v2 (RelocationArg, RelocationResult, RelocationError)
     "Copy a file or folder to a different location in the user's Dropbox.
 
     If the source path is a folder all its contents will be copied."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
+
+route copy (RelocationArg, Metadata, RelocationError) deprecated by copy_v2
+    "Copy a file or folder to a different location in the user's Dropbox.
+
+    If the source path is a folder all its contents will be copied."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_enabled = true
 
 
 route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
@@ -1177,7 +1265,7 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     background. Please use :route:`copy_batch/check` to check the job status."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
@@ -1185,21 +1273,32 @@ route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     success, it returns list of results for each entry."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 #
 # Move
 #
 
-route move (RelocationArg, Metadata, RelocationError)
+route move_v2 (RelocationArg, RelocationResult, RelocationError)
     "Move a file or folder to a different location in the user's Dropbox.
 
     If the source path is a folder all its contents will be moved."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
+
+route move (RelocationArg, Metadata, RelocationError) deprecated by move_v2
+    "Move a file or folder to a different location in the user's Dropbox.
+
+    If the source path is a folder all its contents will be moved."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_enabled = true
 
 route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     "Move multiple files or folders to different locations at once in the
@@ -1212,7 +1311,7 @@ route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     background. Please use :route:`move_batch/check` to check the job status."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
@@ -1220,7 +1319,7 @@ route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     success, it returns list of results for each entry."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -1285,8 +1384,9 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
     attrs
         host = "content"
         style = "download"
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 #
 # Preview
@@ -1331,8 +1431,9 @@ route get_preview(PreviewArg, FileMetadata, PreviewError)
     attrs
         host = "content"
         style = "download"
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 #
 # List revisions
@@ -1357,8 +1458,10 @@ union ListRevisionsError
 struct ListRevisionsResult
     is_deleted Boolean
         "If the file is deleted."
+    server_deleted common.DropboxTimestamp?
+        "The time of deletion if the file was deleted."
     entries List(FileMetadata)
-        "The revisions for the file. Only non-delete revisions will show up here."
+        "The revisions for the file. Only revisions that are not deleted will show up here."
 
     example default
         is_deleted = false
@@ -1368,8 +1471,9 @@ route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
     "Return revisions of a file."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 #
 # Restore
@@ -1397,8 +1501,9 @@ route restore(RestoreArg, FileMetadata, RestoreError)
     "Restore a file to a specific revision."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 #
 # Temporary link
@@ -1430,8 +1535,9 @@ route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTempora
     the file's mime type."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_enabled = true
 
 #
 # Copy reference
@@ -1467,7 +1573,7 @@ route copy_reference/get(GetCopyReferenceArg, GetCopyReferenceResult, GetCopyRef
     :route:`copy_reference/save`."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 struct SaveCopyReferenceArg
@@ -1505,7 +1611,7 @@ route copy_reference/save(SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCop
     "Save a copy reference returned by :route:`copy_reference/get` to the user's Dropbox."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -1540,7 +1646,7 @@ route save_url(SaveUrlArg, SaveUrlResult, SaveUrlError)
     exists, the file will be renamed to avoid the conflict (e.g. myfile (1).txt)."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -1556,5 +1662,5 @@ route save_url/check_job_status(async.PollArg, SaveUrlJobStatus, async.PollError
     "Check the status of a :route:`save_url` job."
 
     attrs
-        owner = "dev-plat"
+        owner = "api-platform"
         allow_app_folder_app = true

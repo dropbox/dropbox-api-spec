@@ -100,6 +100,10 @@ struct SharedFileMetadata
         it may not be returned yet."
     name String
         "The name of this file."
+    owner_display_names List(String)?
+        "The display names of the users that own the file. If the file is part
+        of a team folder, the display names of the team admins are also
+        included. Absent if the owner display names cannot be fetched."
     owner_team users.Team?
         "The team that owns the file. This field is not present if the file
         is not owned by a team."
@@ -130,6 +134,7 @@ struct SharedFileMetadata
     example default
         policy = default
         permissions = []
+        owner_display_names = ["Jane Doe"]
         owner_team = default
         preview_url = "https://www.dropbox.com/scl/fi/fir9vjelf"
         path_lower = "/dir/file.txt"

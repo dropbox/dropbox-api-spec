@@ -29,6 +29,8 @@ struct TeamMemberProfile extends MemberProfile
 
     groups List(team_common.GroupId)
         "List of group IDs of groups that the user belongs to."
+    member_folder_id common.NamespaceId
+        "The namespace id of the user's root folder."
 
     example default
         team_member_id = "dbmid:FDFSVF-DFSDF"
@@ -41,6 +43,7 @@ struct TeamMemberProfile extends MemberProfile
         groups = ["g:e2db7665347abcd600000000001a2b3c"]
         membership_type = full
         joined_on = "2015-05-12T15:50:38Z"
+        member_folder_id = "20"
 
 union_closed MemberSelectorError extends UserSelectorError
     user_not_in_team
@@ -104,7 +107,7 @@ route members/list(MembersListArg, MembersListResult, MembersListError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 
 #
@@ -130,7 +133,7 @@ route members/list/continue(MembersListContinueArg, MembersListResult, MembersLi
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 
 #
@@ -178,7 +181,7 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 
 ##########################
@@ -284,7 +287,7 @@ route members/add(MembersAddArg, MembersAddLaunch, Void)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # Route members/add/job_status/get
@@ -309,7 +312,7 @@ route members/add/job_status/get(async.PollArg, MembersAddJobStatus, async.PollE
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # Route members/set_profile
@@ -350,7 +353,7 @@ union MembersSetProfileError extends MemberSelectorError
     external_id_used_by_other_user
         "The external ID is already in use by another team member."
     set_profile_disallowed
-        "Pending team member's email cannot be modified."
+        "Modifying deleted users is not allowed."
     param_cannot_be_empty
         "Parameter new_email cannot be empty."
     persistent_id_disabled
@@ -366,7 +369,7 @@ route members/set_profile(MembersSetProfileArg, TeamMemberInfo, MembersSetProfil
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "identity"
 
 #
 # Route members/set_admin_permissions
@@ -413,7 +416,7 @@ route members/set_admin_permissions(MembersSetPermissionsArg, MembersSetPermissi
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 
 #
@@ -434,7 +437,7 @@ route members/send_welcome_email(UserSelectorArg, Void, MembersSendWelcomeError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "onboarding-intent"
 
 
 #
@@ -521,7 +524,7 @@ route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveErr
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # Route members/remove/job_status/get
@@ -535,7 +538,7 @@ route members/remove/job_status/get(async.PollArg, async.PollEmptyResult, async.
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # Route members/suspend
@@ -558,7 +561,7 @@ route members/suspend(MembersDeactivateArg, Void, MembersSuspendError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # Route members/unsuspend
@@ -589,7 +592,7 @@ route members/unsuspend(MembersUnsuspendArg, Void, MembersUnsuspendError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 #
 # Route members/recover
@@ -622,4 +625,4 @@ route members/recover(MembersRecoverArg, Void, MembersRecoverError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "tools-and-insights"

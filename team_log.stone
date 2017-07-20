@@ -17,14 +17,12 @@ struct GetTeamEventsArg
         Actor, Context, or Participants."
     time team_common.TimeRange?
         "Filter by time range."
-    # category filtering is disablled for now. to be enabled when
-    # TeamEventGetEvents.SUPPORT_CATEGORY_BASED_FILTERING_FLAG is changed
-    # category EventCategory?
-    #    "Filter the returned events to a single category."
+    category EventCategory?
+        "Filter the returned events to a single category."
 
     example default
         limit=50
-        #category=groups
+        category=groups
 
 
 struct GetTeamEventsResult
@@ -59,7 +57,7 @@ route get_events(GetTeamEventsArg, GetTeamEventsResult, GetTeamEventsError)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "audit-log-team"
         is_preview = true
 
 struct GetTeamEventsContinueArg
@@ -86,5 +84,5 @@ route get_events/continue(GetTeamEventsContinueArg, GetTeamEventsResult, GetTeam
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "audit-log-team"
         is_preview = true

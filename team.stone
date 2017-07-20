@@ -139,7 +139,7 @@ route get_info(Void, TeamGetInfoResult, Void)
 
     attrs
         auth = "team"
-        owner = "adminx"
+        owner = "teams-and-groups"
 
 
 #
@@ -175,7 +175,7 @@ route token/get_authenticated_admin(Void, TokenGetAuthenticatedAdminResult, Toke
 
     attrs
         auth = "team"
-        owner = "dev-plat"
+        owner = "api-platform"
 
 #
 # Common types
@@ -186,15 +186,23 @@ union Feature
 
     upload_api_rate_limit
         "The number of upload API calls allowed per month."
+    has_team_shared_dropbox
+        "Does this team have a have a company shared dropbox."
+
 
 union FeatureValue
     "The values correspond to entries in :type:`Feature`. You may get different value according
     to your Dropbox for Business plan."
 
     upload_api_rate_limit UploadApiRateLimitValue
+    has_team_shared_dropbox  HasTeamSharedDropboxValue
 
     example uploadRateLimited
         upload_api_rate_limit = limited
+
+    example hasTeamSharedDropbox
+        has_team_shared_dropbox  = default
+
 
 union UploadApiRateLimitValue
     "The value for :field:`Feature.upload_api_rate_limit`."
@@ -208,6 +216,16 @@ union UploadApiRateLimitValue
     example limited
         limit = 25000
 
+
+union HasTeamSharedDropboxValue
+    "The value for :field:`Feature.has_team_shared_dropbox`."
+
+    has_team_shared_dropbox Boolean
+        "Does this team have a team shared dropbox."
+
+    example default
+        has_team_shared_dropbox = false
+
 #
 # Route: feature/get_value_batch
 #
@@ -217,15 +235,15 @@ struct FeaturesGetValuesBatchArg
         "A list of features in :type:`Feature`. If the list is empty,
         this route will return :type:`FeaturesGetValuesBatchError`."
 
-    example uploadRateLimit
-        features = [upload_api_rate_limit]
+    example listOfValues
+        features = [upload_api_rate_limit, has_team_shared_dropbox]
 
 
 struct FeaturesGetValuesBatchResult
     values List(FeatureValue)
 
-    example uploadRateLimit
-        values = [uploadRateLimited]
+    example listOfResults
+        values = [uploadRateLimited, hasTeamSharedDropbox]
 
 union FeaturesGetValuesBatchError
     empty_features_list
@@ -240,4 +258,4 @@ route features/get_values(FeaturesGetValuesBatchArg, FeaturesGetValuesBatchResul
 
     attrs
         auth = "team"
-        owner = "dev-plat"
+        owner = "api-platform"

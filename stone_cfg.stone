@@ -18,7 +18,7 @@ struct Route
         changes without notice."
     # We can switch the type from String to a Union once all generators support
     # unions in attributes.
-    owner String(pattern="adminx|dev-plat|sfi|home|sharing|company-dropbox-team|paper-eng|notifications-team|sub-growth|productivity-infra-team|prodsec|cash-team|premium-labs")?
+    owner String(min_length=1) = "api-platform"
         "The team that currently owns the route."
     cluster String(min_length=1) = "meta-api"
         "The cluster that handles this route."
@@ -30,3 +30,5 @@ struct Route
     takes_path_root Boolean = false
         "A flag indicating whether the route's behavior is affected by use of
         the Dropbox-API-Path-Root header."
+    select_admin_enabled Boolean = false
+        "Whether the Dropbox-API-Select-Admin header can be used in this route."

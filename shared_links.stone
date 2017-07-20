@@ -323,7 +323,7 @@ route modify_shared_link_settings(ModifySharedLinkSettingsArgs, SharedLinkMetada
     :field:`LinkPermissions.requested_visibility` will reflect the requested visibility."
 
     attrs
-        owner = "adminx"
+        owner = "sharing"
         allow_app_folder_app = true
 
 #
@@ -345,7 +345,7 @@ union_closed CreateSharedLinkWithSettingsError
     email_not_verified
         "User's email should be verified"
     shared_link_already_exists
-        "The shared link already exists"
+        "The shared link already exists. You can call :route:`list_shared_links` to get the existing link."
     settings_error SharedLinkSettingsError
         "There is an error with the given settings"
     access_denied
@@ -493,7 +493,7 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
     including collection links.
 
     If no path is given, returns a list of all shared links for the current
-    user, including collection links.
+    user, including collection links, up to a maximum of 1000 links.
 
     If a non-empty path is given, returns a list of all shared links
     that allow access to the given path.  Collection links are never
