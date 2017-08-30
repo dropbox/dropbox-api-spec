@@ -32,7 +32,7 @@ union_closed RequestedVisibility
     Note that the final resolved visibility of the shared link takes into account other aspects,
     such as team and shared folder settings.
     Check the :type:`ResolvedVisibility` for more info on the possible resolved visibility values
-    of shared links. "
+    of shared links."
 
     public
         "Anyone who has received the link can access it. No login required."
@@ -47,7 +47,7 @@ union ResolvedVisibility extends RequestedVisibility
     "The actual access permissions values of shared links after taking into account user
     preferences and the team and shared folder settings.
     Check the :type:`RequestedVisibility` for more info on the possible visibility values
-    that can be set by the shared link's owner. "
+    that can be set by the shared link's owner."
 
     team_and_password
         "Only members of the same team who
@@ -82,7 +82,7 @@ struct LinkPermissions
         owner."
 
     can_revoke Boolean
-        "Whether the caller can revoke the shared link"
+        "Whether the caller can revoke the shared link."
     revoke_failure_reason SharedLinkAccessFailureReason?
         "The failure reason for revoking the link. This field will only be present if the
         :field:`can_revoke` is :val:`false`."
@@ -96,9 +96,11 @@ struct TeamMemberInfo
     "Information about a team member."
 
     team_info TeamInfo
-        "Information about the member's team"
+        "Information about the member's team."
+
     display_name String
         "The display name of the user."
+
     member_id String?
         "ID of user as a member of a team. This field will only be present if the member is in the
         same team as current user."
@@ -109,7 +111,7 @@ struct TeamMemberInfo
         member_id = "dbmid:abcd1234"
 
 struct SharedLinkMetadata
-    "The metadata of a shared link "
+    "The metadata of a shared link."
 
     union
         file FileLinkMetadata
@@ -117,22 +119,29 @@ struct SharedLinkMetadata
 
     url String
         "URL of the shared link."
+
     id Id?
         "A unique identifier for the linked file."
+
     name String
         "The linked file name (including extension).
         This never contains a slash."
+
     expires common.DropboxTimestamp?
         "Expiration time, if set. By default the link won't expire."
+
     path_lower String?
         "The lowercased full path in the user's Dropbox. This always starts with a slash.
         This field will only be present only if the linked file is in the authenticated user's
          dropbox."
+
     link_permissions LinkPermissions
         "The link's access permissions."
+
     team_member_info TeamMemberInfo?
         "The team membership information of the link's owner.  This field will only be present
          if the link's owner is a team member."
+
     content_owner_team_info TeamInfo?
         "The team information of the content's owner. This field will only be present if
         the content's owner is a team member and the content's owner team is different from the
@@ -145,7 +154,7 @@ struct SharedLinkMetadata
         folder = default
 
 struct FileLinkMetadata extends SharedLinkMetadata
-    "The metadata of a file shared link "
+    "The metadata of a file shared link."
 
     client_modified common.DropboxTimestamp
         "The modification time set by the desktop client
@@ -175,7 +184,7 @@ struct FileLinkMetadata extends SharedLinkMetadata
         size = 7212
 
 struct FolderLinkMetadata extends SharedLinkMetadata
-    "The metadata of a folder shared link "
+    "The metadata of a folder shared link."
 
     example default
         url = "https://www.dropbox.com/sh/s6fvw6ol7rmqo1x/AAAgWRSbjmYDvPpDB30Sykjfa?dl=0"
@@ -213,7 +222,7 @@ struct ListSharedLinksArg
         "See :route:`list_shared_links` description."
 
     example default
-        "List all links"
+        "List all links."
         cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
 
     example path
@@ -271,9 +280,11 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
 struct SharedLinkSettings
     requested_visibility RequestedVisibility?
         "The requested access for this shared link."
+
     link_password String?
         "If :field:`requested_visibility` is :field:`RequestedVisibility.password` this is needed
-        to specify the password to access the link. "
+        to specify the password to access the link."
+
     expires common.DropboxTimestamp?
         "Expiration time of the shared link. By default the link won't expire."
 
@@ -282,7 +293,7 @@ struct SharedLinkSettings
 
 struct ModifySharedLinkSettingsArgs
     url String
-        "URL of the shared link to change its settings"
+        "URL of the shared link to change its settings."
     settings SharedLinkSettings
         "Set of settings for the shared link."
     remove_expiration Boolean = false
@@ -304,14 +315,14 @@ union_closed SharedLinkSettingsError
         "User is not allowed to modify the settings of this link. Note that basic
         users can only set :field:`RequestedVisibility.public`
         as the :field:`SharedLinkSettings.requested_visibility` and cannot
-        set :field:`SharedLinkSettings.expires`"
+        set :field:`SharedLinkSettings.expires`."
 
 
 union ModifySharedLinkSettingsError extends SharedLinkError
     settings_error SharedLinkSettingsError
-        "There is an error with the given settings"
+        "There is an error with the given settings."
     email_not_verified
-        "The caller's email should be verified"
+        "The caller's email should be verified."
 
 route modify_shared_link_settings(ModifySharedLinkSettingsArgs, SharedLinkMetadata, ModifySharedLinkSettingsError)
     "Modify the shared link's settings.
@@ -332,9 +343,9 @@ route modify_shared_link_settings(ModifySharedLinkSettingsArgs, SharedLinkMetada
 
 struct CreateSharedLinkWithSettingsArg
     path ReadPath
-        "The path to be shared by the shared link"
+        "The path to be shared by the shared link."
     settings SharedLinkSettings?
-        "The requested settings for the newly created shared link"
+        "The requested settings for the newly created shared link."
 
     example default
         path = "/Prime_Numbers.txt"
@@ -343,19 +354,19 @@ struct CreateSharedLinkWithSettingsArg
 union_closed CreateSharedLinkWithSettingsError
     path files.LookupError
     email_not_verified
-        "User's email should be verified"
+        "User's email should be verified."
     shared_link_already_exists
         "The shared link already exists. You can call :route:`list_shared_links` to get the existing link."
     settings_error SharedLinkSettingsError
-        "There is an error with the given settings"
+        "There is an error with the given settings."
     access_denied
-        "Access to the requested path is forbidden"
+        "Access to the requested path is forbidden."
 
 route create_shared_link_with_settings(CreateSharedLinkWithSettingsArg, SharedLinkMetadata, CreateSharedLinkWithSettingsError)
     "Create a shared link with custom settings.
     If no settings are given then the default visibility is :field:`RequestedVisibility.public`
     (The resolved visibility, though, may depend on other aspects such as team and shared folder
-    settings). "
+    settings)."
 
     attrs
         owner = "sharing"
@@ -383,7 +394,7 @@ route revoke_shared_link(RevokeSharedLinkArg, Void, RevokeSharedLinkError)
     Note that even after revoking a shared link to a file, the file may be accessible if there are
     shared links leading to any of the file parent folders. To list all shared links that enable
     access to a specific file, you can use the :route:`list_shared_links` with the file as the
-    :field:`ListSharedLinksArg.path` argument. "
+    :field:`ListSharedLinksArg.path` argument."
 
     attrs
         owner = "sharing"
@@ -474,11 +485,11 @@ struct GetSharedLinksArg
         "See :route:`get_shared_links` description."
 
     example default
-        "Get all links, including collection links"
+        "Get all links, including collection links."
         path = ""
 
     example math_homework_links
-        "Get links giving access to /Homework/Math"
+        "Get links giving access to /Homework/Math."
         path = "/Homework/Math"
 
 struct GetSharedLinksResult
@@ -516,8 +527,10 @@ union_closed PendingUploadMode
 struct CreateSharedLinkArg
     path String
         "The path to share."
+
     short_url Boolean = false
         "Whether to return a shortened URL."
+
     pending_upload PendingUploadMode?
         "If it's okay to share a path that does not yet exist, set this to
         either :field:`PendingUploadMode.file` or :field:`PendingUploadMode.folder`

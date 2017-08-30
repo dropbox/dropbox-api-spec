@@ -69,11 +69,9 @@ route namespaces/list(TeamNamespacesListArg, TeamNamespacesListResult, Void)
         auth = "team"
 
 struct TeamNamespacesListArg
-    limit UInt32(min_value=1, max_value=1000) = 1000
-        "The approximate maximum number of results to return per request. This limit may be exceeded."
 
-    example default
-        limit = 100
+    limit UInt32(min_value=1, max_value=1000) = 1000
+        "Specifying a value here has no effect."
 
 #
 # Route namespaces/list/continue

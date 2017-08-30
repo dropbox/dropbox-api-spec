@@ -7,9 +7,9 @@ alias NumberPerDay = List(UInt64?)
 struct DateRange
     "Input arguments that can be provided for most reports."
     start_date common.Date?
-        "Optional starting date (inclusive)"
+        "Optional starting date (inclusive)."
     end_date common.Date?
-        "Optional ending date (exclusive)"
+        "Optional ending date (exclusive)."
 
 union DateRangeError
     "Errors that can originate from problems in input arguments to reports."

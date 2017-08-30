@@ -164,6 +164,8 @@ union PermissionDeniedReason
         "The user needs to be on a Dropbox team to perform this action."
     folder_is_inside_shared_folder
         "Folder is inside of another shared folder."
+    restricted_by_parent_folder
+        "Policy cannot be changed due to restrictions from parent folder."
     insufficient_plan InsufficientPlan
 
 struct InsufficientPlan
@@ -301,21 +303,27 @@ struct SharedFolderMetadataBase
 
     access_type AccessLevel
         "The current user's access level for this shared folder."
+
     is_inside_team_folder Boolean
         "Whether this folder is inside of a team folder."
+
     is_team_folder Boolean
         "Whether this folder is a
         :link:`team folder https://www.dropbox.com/en/help/986`."
+
     owner_display_names List(String)?
         "The display names of the users that own the folder. If the folder is
         part of a team folder, the display names of the team admins are also
         included. Absent if the owner display names cannot be fetched."
+
     owner_team users.Team?
         "The team that owns the folder. This field is not present if the folder
         is not owned by a team."
+
     parent_shared_folder_id common.SharedFolderId?
         "The ID of the parent shared folder. This field is present only if the
         folder is contained within another shared folder."
+
     path_lower String?
         "The lower-cased full path of this shared folder. Absent for unmounted folders."
 
@@ -330,20 +338,27 @@ struct SharedFolderMetadataBase
 # which is used by mobile
 struct SharedFolderMetadata extends SharedFolderMetadataBase
     "The metadata which includes basic information about the shared folder."
+
     link_metadata SharedContentLinkMetadata?
         "The metadata of the shared content link to this shared folder. Absent if there is no
         link on the folder. This is for an unreleased feature so it may not be returned yet."
+
     name String
         "The name of the this shared folder."
+
     permissions List(FolderPermission)?
         "Actions the current user may perform on the folder and its contents.
         The set of permissions corresponds to the FolderActions in the request."
+
     policy FolderPolicy
         "Policies governing this shared folder."
+
     preview_url String
         "URL for displaying a web preview of the shared folder."
+
     shared_folder_id common.SharedFolderId
         "The ID of the shared folder."
+
     time_invited common.DropboxTimestamp
         "Timestamp indicating when the current user was invited to this shared folder."
 
@@ -388,12 +403,16 @@ struct MemberAccessLevelResult
 
 struct ParentFolderAccessInfo
     "Contains information about a parent folder that a member has access to."
+
     folder_name String
         "Display name for the folder."
+
     shared_folder_id common.SharedFolderId
         "The identifier of the parent shared folder."
+
     permissions List(MemberPermission)
         "The user's permissions for the parent shared folder."
+
     path String
         "The full path to the parent shared folder relative to the acting user's root."
 
@@ -891,12 +910,15 @@ route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
 struct AddFolderMemberArg
     shared_folder_id common.SharedFolderId
         "The ID for the shared folder."
+
     members List(AddMember)
         "The intended list of members to add.  Added members will receive
         invites to join the shared folder."
+
     quiet Boolean = false
         "Whether added members should be notified via email and device
         notifications of their invite."
+
     custom_message String(min_length=1)?
         "Optional message to display to added members in their invitation."
 

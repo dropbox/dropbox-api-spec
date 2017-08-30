@@ -8,15 +8,25 @@ import users_common
 import properties
 
 alias Id = String(min_length=1)
+
 alias Path = String(pattern="/(.|[\\r\\n])*")
+
 alias PathOrId = String(pattern="/(.|[\\r\\n])*|id:.*|(ns:[0-9]+(/.*)?)")
+
 alias PathROrId = String(pattern="(/(.|[\\r\\n])*)?|id:.*|(ns:[0-9]+(/.*)?)")
+
 alias PathR = String(pattern="(/(.|[\\r\\n])*)?|(ns:[0-9]+(/.*)?)")               # A path that can be the root path ("").
+
 alias Rev = String(min_length=9, pattern="[0-9a-f]+") # TODO: Change pattern to "rev:[0-9a-f]{9,}"
+
 alias ListFolderCursor = String(min_length=1)
+
 alias ReadPath = String(pattern="(/(.|[\\r\\n])*|id:.*)|(rev:[0-9a-f]{9,})|(ns:[0-9]+(/.*)?)")
+
 alias WritePath = String(pattern="(/(.|[\\r\\n])*)|(ns:[0-9]+(/.*)?)")
+
 alias WritePathOrId = String(pattern="(/(.|[\\r\\n])*)|(ns:[0-9]+(/.*)?)|(id:.*)")
+
 alias Sha256HexHash = String(min_length=64, max_length=64)
 
 #
@@ -34,17 +44,20 @@ struct Metadata
     name String
         "The last component of the path (including extension).
         This never contains a slash."
+
     path_lower String?
         "The lowercased full path in the user's Dropbox. This always starts with a slash.
         This field will be null if the file or folder is not mounted."
+
     path_display String?
         "The cased path to be used for display purposes only. In rare instances the casing will not
         correctly match the user's filesystem, but this behavior will match the path provided in
         the Core API v1, and at least the last path component will have the correct casing. Changes
         to only the casing of paths won't be returned by :route:`list_folder/continue`. This field
         will be null if the file or folder is not mounted."
+
     parent_shared_folder_id common.SharedFolderId?
-        "Deprecated. Please use :field:`FileSharingInfo.parent_shared_folder_id`
+        "Please use :field:`FileSharingInfo.parent_shared_folder_id`
         or :field:`FolderSharingInfo.parent_shared_folder_id` instead."
 
     example default
@@ -172,29 +185,38 @@ union_closed MediaInfo
         "The metadata for the photo/video."
 
 struct FileMetadata extends Metadata
+
     id Id
         "A unique identifier for the file."
+
     client_modified common.DropboxTimestamp
         "For files, this is the modification time set by the desktop client
         when the file was added to Dropbox. Since this time is not verified
         (the Dropbox server stores whatever the desktop client sends up), this
         should only be used for display purposes (such as sorting) and not,
         for example, to determine if a file has changed or not."
+
     server_modified common.DropboxTimestamp
         "The last time the file was modified on Dropbox."
+
     rev Rev
         "A unique identifier for the current revision of a file. This field is
         the same rev as elsewhere in the API and can be used to detect changes
         and avoid conflicts."
+
     size UInt64
         "The file size in bytes."
+
     media_info MediaInfo?
         "Additional information if the file is a photo or video."
+
     sharing_info FileSharingInfo?
         "Set if this file is contained in a shared folder."
+
     property_groups List(properties.PropertyGroup)?
         "Additional information if the file has custom properties with the
         property template specified."
+
     has_explicit_shared_members Boolean?
         "This flag will only be present if include_has_explicit_shared_members
          is true in :route:`list_folder` or :route:`get_metadata`. If this
@@ -202,6 +224,7 @@ struct FileMetadata extends Metadata
          members. This is different from sharing_info in that this could be true
          in the case where a file has explicit members but is not contained within
          a shared folder."
+
     content_hash Sha256HexHash?
         "A hash of the file content. This field can be used to verify data integrity. For more
         information see our :link:`Content hash /developers/reference/content-hash` page."
@@ -223,10 +246,13 @@ struct FileMetadata extends Metadata
 struct FolderMetadata extends Metadata
     id Id
         "A unique identifier for the folder."
+
     shared_folder_id common.SharedFolderId?
-        "Deprecated. Please use :field:`sharing_info` instead."
+        "Please use :field:`sharing_info` instead."
+
     sharing_info FolderSharingInfo?
         "Set if the folder is contained in a shared folder or is a shared folder mount point."
+
     property_groups List(properties.PropertyGroup)?
         "Additional information if the file has custom properties with the
         property template specified."
@@ -356,6 +382,12 @@ struct ListFolderArg
     include_has_explicit_shared_members Boolean = false
         "If true, the results will include a flag for each file indicating whether or not
          that file has any explicit members."
+    include_mounted_folders Boolean = true
+        "If true, the results will include entries under mounted folders which includes app folder,
+        shared folder and team folder."
+    limit UInt32(min_value=1, max_value=2000)?
+        "The maximum number of results to return per request. Note: This is an approximate number
+        and there can be slightly more entries returned in some cases."
 
     example default
         path = "/Homework/math"
@@ -458,10 +490,12 @@ union DownloadError
     path LookupError
 
 struct DownloadArg
+
     path ReadPath
         "The path of the file to download."
+
     rev Rev?
-        "Deprecated. Please specify revision in :field:`path` instead."
+        "Please specify revision in :field:`path` instead."
 
     example default
         path = "/Homework/math/Prime_Numbers.txt"
@@ -830,15 +864,19 @@ struct SearchArg
     path PathROrId
         "The path in the user's Dropbox to search. Should probably be
         a folder."
+
     query String
         "The string to search for. The search string is split on spaces into
         multiple tokens. For file name searching, the last token is used for
         prefix matching (i.e. \"bat c\" matches \"bat cave\" but not \"batman
         car\")."
+
     start UInt64 = 0
         "The starting index within the search results (used for paging)."
+
     max_results UInt64(min_value=1, max_value=1000) = 100
         "The maximum number of search results to return."
+
     mode SearchMode = filename
         "The search mode (filename, filename_and_content, or deleted_filename).
         Note that searching file content is only available for Dropbox Business
@@ -1032,8 +1070,9 @@ struct DeleteBatchResult extends FileOpsResult
         entries = [default]
 
 union DeleteBatchError
+
     too_many_write_operations
-        "Deprecated by :field:`DeleteError.too_many_write_operations`. :route:`delete_batch` now
+        "Use :field:`DeleteError.too_many_write_operations`. :route:`delete_batch` now
         provides smaller granularity about which entry has failed because of this."
 
 union DeleteBatchJobStatus extends async.PollResultBase
@@ -1364,6 +1403,42 @@ struct ThumbnailArg
         path = "rev:a1c10ce0dd78"
         format = jpeg
 
+struct GetThumbnailBatchArg
+    "Arguments for :route:`get_thumbnail_batch`."
+
+    entries List(ThumbnailArg)
+        "List of files to get thumbnails."
+
+    example default
+        entries = [default]
+
+struct GetThumbnailBatchResult
+    entries List(GetThumbnailBatchResultEntry)
+        "List of files and their thumbnails."
+
+    example default
+        entries = [default]
+
+union GetThumbnailBatchResultEntry
+    success GetThumbnailBatchResultData
+    failure ThumbnailError
+        "The result for this file if it was an error."
+
+    example default
+        success = default
+
+struct GetThumbnailBatchResultData
+    metadata FileMetadata
+    thumbnail String
+
+    example default
+        metadata = default
+        thumbnail = "iVBORw0KGgoAAAANSUhEUgAAAdcAAABrCAMAAAI="
+
+union GetThumbnailBatchError
+    too_many_files
+        "The operation involves more than 25 files."
+
 union_closed ThumbnailError
     path LookupError
         "An error occurs when downloading metadata for the image."
@@ -1388,6 +1463,18 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
         allow_app_folder_app = true
         select_admin_enabled = true
 
+route get_thumbnail_batch(GetThumbnailBatchArg, GetThumbnailBatchResult, GetThumbnailBatchError)
+    "Get thumbnails for a list of images. We allow up to 25 thumbnails in a single batch.
+
+    This method currently supports files with the following file extensions:
+    jpg, jpeg, png, tiff, tif, gif and bmp. Photos that are larger than 20MB
+    in size won't be converted to a thumbnail."
+
+    attrs
+        host = "content"
+        owner = "api-platform"
+        allow_app_folder_app = true
+
 #
 # Preview
 #
@@ -1395,8 +1482,9 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
 struct PreviewArg
     path ReadPath
         "The path of the file to preview."
+
     rev Rev?
-        "Deprecated. Please specify revision in :field:`path` instead."
+        "Please specify revision in :field:`path` instead."
 
     example default
         path = "/word.docx"

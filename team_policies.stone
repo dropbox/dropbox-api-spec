@@ -69,14 +69,14 @@ union SharedLinkCreatePolicy
 
 union EmmState
     disabled
-        "Emm token is disabled"
+        "Emm token is disabled."
     optional
-        "Emm token is optional"
+        "Emm token is optional."
     required
-        "Emm token is required"
+        "Emm token is required."
 
 union OfficeAddInPolicy
     disabled
-        "Office Add-In is disabled"
+        "Office Add-In is disabled."
     enabled
-        "Office Add-In is enabled"
+        "Office Add-In is enabled."

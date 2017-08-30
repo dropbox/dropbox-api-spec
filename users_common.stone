@@ -1,5 +1,7 @@
 namespace users_common
-    "This namespace contains common data types used within the users namespace"
+    "This namespace contains common data types used within the users namespace."
+
+import common
 
 alias AccountId = String(min_length=40, max_length=40)
 

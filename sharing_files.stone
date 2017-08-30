@@ -5,6 +5,7 @@ import files
 import users
 
 alias PathOrId = String(pattern="((\/|id:).*|nspath:[0-9]+:.*)|ns:[0-9]+(/.*)?", min_length=1)
+
 alias FileId = String(pattern="id:.*", min_length=1)
 
 ###########################################
@@ -48,20 +49,28 @@ union FileAction
 
     disable_viewer_info
         "Disable viewer information on the file."
+
     edit_contents
         "Change or edit contents of the file."
+
     enable_viewer_info
         "Enable viewer information on the file."
+
     invite_viewer
         "Add a member with view permissions."
+
     invite_viewer_no_comment
         "Add a member with view permissions but no comment permissions."
+
     unshare
         "Stop sharing this file."
+
     relinquish_membership
         "Relinquish one's own membership to the file."
+
     share_link
-        "This action is deprecated. Use create_link instead."
+        "Use create_link instead."
+
     create_link
         "Create a shared link to the file."
 
@@ -89,42 +98,55 @@ struct SharedFileMetadata
 
     access_type AccessLevel?
         "The current user's access level for this shared file."
+
     id FileId
         "The ID of the file."
+
     expected_link_metadata ExpectedSharedContentLinkMetadata?
         "The expected metadata of the link associated for the file when it is first shared.
         Absent if the link already exists. This is for an unreleased feature so it may not be
         returned yet."
+
     link_metadata SharedContentLinkMetadata?
         "The metadata of the link associated for the file. This is for an unreleased feature so
         it may not be returned yet."
+
     name String
         "The name of this file."
+
     owner_display_names List(String)?
         "The display names of the users that own the file. If the file is part
         of a team folder, the display names of the team admins are also
         included. Absent if the owner display names cannot be fetched."
+
     owner_team users.Team?
         "The team that owns the file. This field is not present if the file
         is not owned by a team."
+
     parent_shared_folder_id common.SharedFolderId?
         "The ID of the parent shared folder. This field is present only if the
         file is contained within a shared folder."
+
     path_display String?
         "The cased path to be used for display purposes only. In rare instances
         the casing will not correctly match the user's filesystem, but this
         behavior will match the path provided in the Core API v1.
         Absent for unmounted files."
+
     path_lower String?
         "The lower-case full path of this file. Absent for unmounted files."
+
     permissions List(FilePermission)?
         "The sharing permissions that requesting user has on this file. This
         corresponds to the entries given in :field:`GetFileMetadataBatchArg.actions`
         or :field:`GetFileMetadataArg.actions`."
+
     policy FolderPolicy
         "Policies governing this shared file."
+
     preview_url String
         "URL for displaying a web preview of the shared file."
+
     time_invited common.DropboxTimestamp?
         "Timestamp indicating when the current user was invited to this shared file. If the user was
         not invited to the shared file, the timestamp will indicate when the user was invited to the
@@ -222,17 +244,22 @@ struct AddFileMemberArgs
 
     file PathOrId
         "File to which to add members."
+
     members List(MemberSelector)
         "Members to add. Note that even an email address is given, this
         may result in a user being directy added to the membership if that
         email is the user's main account email."
+
     custom_message String?
         "Message to send to added members in their invitation."
+
     quiet Boolean = false
         "Whether added members should be notified via device notifications of
         their invitation."
+
     access_level AccessLevel = viewer
         "AccessLevel union object, describing what access level we want to give new members."
+
     add_message_as_comment Boolean = false
         "If the custom message should be added as a comment on the file."
 
