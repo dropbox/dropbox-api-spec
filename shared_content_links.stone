@@ -12,6 +12,7 @@ union LinkExpiry
 union LinkPassword
     remove_password
         "Remove the currently set password for the link."
+
     set_password String
         "Set a new password or change an existing password."
 
@@ -83,10 +84,12 @@ struct SharedContentLinkMetadataBase
 
 struct SharedContentLinkMetadata extends SharedContentLinkMetadataBase
     "Metadata of a shared link for a file or folder."
+
     audience_exceptions AudienceExceptions?
         "The content inside this folder with link audience different than this folder's. This is
         only returned when an endpoint that returns metadata for a single shared folder is called,
         e.g. /get_folder_metadata."
+
     url String
         "The URL of the link."
 

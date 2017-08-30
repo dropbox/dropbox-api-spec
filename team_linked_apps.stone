@@ -8,26 +8,26 @@ import common
 
 struct ListMemberAppsArg
     team_member_id String
-        "The team member id"
+        "The team member id."
 
     example default
         team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
 
 struct ApiApp
-    "Information on linked third party applications"
+    "Information on linked third party applications."
 
     app_id String
-        "The application unique id"
+        "The application unique id."
     app_name String
-        "The application name"
+        "The application name."
     publisher String?
-        "The application publisher name"
+        "The application publisher name."
     publisher_url String?
-        "The publisher's URL"
+        "The publisher's URL."
     linked common.DropboxTimestamp?
-        "The time this application was linked"
+        "The time this application was linked."
     is_app_folder Boolean
-        "Whether the linked application uses a dedicated folder"
+        "Whether the linked application uses a dedicated folder."
 
     example default
         app_id = "dbaid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
@@ -39,7 +39,7 @@ struct ApiApp
 
 struct ListMemberAppsResult
     linked_api_apps List(ApiApp)
-        "List of third party applications linked by this team member"
+        "List of third party applications linked by this team member."
 
 union ListMemberAppsError
     "Error returned by :route:`linked_apps/list_member_linked_apps`."
@@ -54,7 +54,7 @@ union ListMemberAppsError
 route linked_apps/list_member_linked_apps(ListMemberAppsArg, ListMemberAppsResult, ListMemberAppsError)
     "List all linked applications of the team member.
 
-    Note, this endpoint does not list any team-linked applications. "
+    Note, this endpoint does not list any team-linked applications."
 
     attrs
         auth = "team"
@@ -70,21 +70,21 @@ struct ListMembersAppsArg
     cursor String?
         "At the first call to the :route:`linked_apps/list_members_linked_apps` the cursor shouldn't be
         passed. Then, if the result of the call includes a cursor, the following requests should
-        include the received cursors in order to receive the next sub list of the team applications"
+        include the received cursors in order to receive the next sub list of the team applications."
 
 struct MemberLinkedApps
     "Information on linked applications of a team member."
 
     team_member_id String
-        "The member unique Id"
+        "The member unique Id."
     linked_api_apps List(ApiApp)
-        "List of third party applications linked by this team member"
+        "List of third party applications linked by this team member."
 
 struct ListMembersAppsResult
     "Information returned by :route:`linked_apps/list_members_linked_apps`."
 
     apps List(MemberLinkedApps)
-        "The linked applications of each member of the team"
+        "The linked applications of each member of the team."
     has_more Boolean
         "If true, then there are more apps available. Pass the
         cursor to :route:`linked_apps/list_members_linked_apps` to retrieve the rest."
@@ -93,7 +93,7 @@ struct ListMembersAppsResult
         sub list of team's applications."
 
 union ListMembersAppsError
-    "Error returned by :route:`linked_apps/list_members_linked_apps`"
+    "Error returned by :route:`linked_apps/list_members_linked_apps`."
 
     reset
         "Indicates that the cursor has been invalidated. Call
@@ -105,7 +105,7 @@ union ListMembersAppsError
 route linked_apps/list_members_linked_apps(ListMembersAppsArg, ListMembersAppsResult, ListMembersAppsError)
     "List all applications linked to the team members' accounts.
 
-    Note, this endpoint does not list any team-linked applications. "
+    Note, this endpoint does not list any team-linked applications."
 
     attrs
         auth = "team"
@@ -117,12 +117,12 @@ route linked_apps/list_members_linked_apps(ListMembersAppsArg, ListMembersAppsRe
 
 struct RevokeLinkedApiAppArg
     app_id String
-        "The application's unique id"
+        "The application's unique id."
     team_member_id String
-        "The unique id of the member owning the device"
+        "The unique id of the member owning the device."
     keep_app_folder Boolean = true
         "Whether to keep the application dedicated folder (in case the application uses
-         one)"
+         one)."
 
 union RevokeLinkedAppError
     "Error returned by :route:`linked_apps/revoke_linked_app`."
@@ -137,7 +137,7 @@ union RevokeLinkedAppError
 #
 
 route linked_apps/revoke_linked_app(RevokeLinkedApiAppArg, Void, RevokeLinkedAppError)
-    "Revoke a linked application of the team member"
+    "Revoke a linked application of the team member."
 
     attrs
         auth = "team"
@@ -153,9 +153,9 @@ struct RevokeLinkedApiAppBatchArg
 struct RevokeLinkedAppStatus
 
     success Boolean
-        "Result of the revoking request"
+        "Result of the revoking request."
     error_type RevokeLinkedAppError?
-        "The error cause in case of a failure"
+        "The error cause in case of a failure."
 
 struct RevokeLinkedAppBatchResult
     revoke_linked_app_status List(RevokeLinkedAppStatus)
@@ -168,7 +168,7 @@ union RevokeLinkedAppBatchError
 #
 
 route linked_apps/revoke_linked_app_batch(RevokeLinkedApiAppBatchArg, RevokeLinkedAppBatchResult, RevokeLinkedAppBatchError)
-    "Revoke a list of linked applications of the team members"
+    "Revoke a list of linked applications of the team members."
 
     attrs
         auth = "team"
@@ -184,13 +184,13 @@ struct ListTeamAppsArg
     cursor String?
         "At the first call to the :route:`linked_apps/list_team_linked_apps` the cursor shouldn't be
         passed. Then, if the result of the call includes a cursor, the following requests should
-        include the received cursors in order to receive the next sub list of the team applications"
+        include the received cursors in order to receive the next sub list of the team applications."
 
 struct ListTeamAppsResult
     "Information returned by :route:`linked_apps/list_team_linked_apps`."
 
     apps List(MemberLinkedApps)
-        "The linked applications of each member of the team"
+        "The linked applications of each member of the team."
     has_more Boolean
         "If true, then there are more apps available. Pass the
         cursor to :route:`linked_apps/list_team_linked_apps` to retrieve the rest."
@@ -199,7 +199,7 @@ struct ListTeamAppsResult
         sub list of team's applications."
 
 union ListTeamAppsError
-    "Error returned by :route:`linked_apps/list_team_linked_apps`"
+    "Error returned by :route:`linked_apps/list_team_linked_apps`."
 
     reset
         "Indicates that the cursor has been invalidated. Call
@@ -208,7 +208,7 @@ union ListTeamAppsError
 route linked_apps/list_team_linked_apps(ListTeamAppsArg, ListTeamAppsResult, ListTeamAppsError) deprecated by linked_apps/list_members_linked_apps
     "List all applications linked to the team members' accounts.
 
-    Note, this endpoint doesn't list any team-linked applications. "
+    Note, this endpoint doesn't list any team-linked applications."
 
     attrs
         auth = "team"

@@ -8,43 +8,50 @@ import common
 
 struct ListMemberDevicesArg
     team_member_id String
-        "The team's member id"
+        "The team's member id."
     include_web_sessions Boolean = true
-        "Whether to list web sessions of the team's member"
+        "Whether to list web sessions of the team's member."
     include_desktop_clients Boolean = true
-        "Whether to list linked desktop devices of the team's member"
+        "Whether to list linked desktop devices of the team's member."
     include_mobile_clients Boolean = true
-        "Whether to list linked mobile devices of the team's member"
+        "Whether to list linked mobile devices of the team's member."
 
     example default
         team_member_id="dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
 
 struct DeviceSession
     session_id String
-        "The session id"
+        "The session id."
+
     ip_address String?
-        "The IP address of the last activity from this session"
+        "The IP address of the last activity from this session."
+
     country String?
-        "The country from which the last activity from this session was made"
+        "The country from which the last activity from this session was made."
+
     created common.DropboxTimestamp?
-        "The time this session was created"
+        "The time this session was created."
+
     updated common.DropboxTimestamp?
-        "The time of the last activity from this session"
+        "The time of the last activity from this session."
 
 # TODO(gal) - for mobile, camera uploads don't count for updated activity (See T25556
 # for more context). This needs to be documented somewhere.
 
 struct ActiveWebSession extends DeviceSession
-    "Information on active web sessions"
+    "Information on active web sessions."
 
     user_agent String
-        "Information on the hosting device"
+        "Information on the hosting device."
+
     os String
-        "Information on the hosting operating system"
+        "Information on the hosting operating system."
+
     browser String
-        "Information on the browser used for this web session"
+        "Information on the browser used for this web session."
+
     expires common.DropboxTimestamp?
-        "The time this session expires"
+        "The time this session expires."
 
     example default
         session_id = "dbwsid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
@@ -59,25 +66,29 @@ struct ActiveWebSession extends DeviceSession
 
 union DesktopPlatform
     windows
-        "Official Windows Dropbox desktop client"
+        "Official Windows Dropbox desktop client."
     mac
-        "Official Mac Dropbox desktop client"
+        "Official Mac Dropbox desktop client."
     linux
-        "Official Linux Dropbox desktop client"
+        "Official Linux Dropbox desktop client."
 
 struct DesktopClientSession extends DeviceSession
-    "Information about linked Dropbox desktop client sessions"
+    "Information about linked Dropbox desktop client sessions."
 
     host_name String
-        "Name of the hosting desktop"
+        "Name of the hosting desktop."
+
     client_type DesktopPlatform
-        "The Dropbox desktop client type"
+        "The Dropbox desktop client type."
+
     client_version String
-        "The Dropbox client version"
+        "The Dropbox client version."
+
     platform String
-        "Information on the hosting platform"
+        "Information on the hosting platform."
+
     is_delete_on_unlink_supported Boolean
-        "Whether it's possible to delete all of the account files upon unlinking"
+        "Whether it's possible to delete all of the account files upon unlinking."
 
     example default
         session_id= "dbdsid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
@@ -93,29 +104,33 @@ struct DesktopClientSession extends DeviceSession
 
 union MobileClientPlatform
     iphone
-        "Official Dropbox iPhone client"
+        "Official Dropbox iPhone client."
     ipad
-        "Official Dropbox iPad client"
+        "Official Dropbox iPad client."
     android
-        "Official Dropbox Android client"
+        "Official Dropbox Android client."
     windows_phone
-        "Official Dropbox Windows phone client"
+        "Official Dropbox Windows phone client."
     blackberry
-        "Official Dropbox Blackberry client"
+        "Official Dropbox Blackberry client."
 
 struct MobileClientSession extends DeviceSession
-    "Information about linked Dropbox mobile client sessions"
+    "Information about linked Dropbox mobile client sessions."
 
     device_name String
-        "The device name"
+        "The device name."
+
     client_type MobileClientPlatform
-        "The mobile application type"
+        "The mobile application type."
+
     client_version String?
-        "The dropbox client version"
+        "The dropbox client version."
+
     os_version String?
-        "The hosting OS version"
+        "The hosting OS version."
+
     last_carrier String?
-        "last carrier used by the device"
+        "last carrier used by the device."
 
     example default
         session_id = "dbmsid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
@@ -131,11 +146,11 @@ struct MobileClientSession extends DeviceSession
 
 struct ListMemberDevicesResult
     active_web_sessions List(ActiveWebSession)?
-        "List of web sessions made by this team member"
+        "List of web sessions made by this team member."
     desktop_client_sessions List(DesktopClientSession)?
-        "List of desktop clients used by this team member"
+        "List of desktop clients used by this team member."
     mobile_client_sessions List(MobileClientSession)?
-        "List of mobile client used by this team member"
+        "List of mobile client used by this team member."
 
 union ListMemberDevicesError
     member_not_found
@@ -160,29 +175,29 @@ struct ListMembersDevicesArg
     cursor String?
         "At the first call to the :route:`devices/list_members_devices` the cursor shouldn't be passed.
         Then, if the result of the call includes a cursor, the following requests should include the
-        received cursors in order to receive the next sub list of team devices"
+        received cursors in order to receive the next sub list of team devices."
     include_web_sessions Boolean = true
-        "Whether to list web sessions of the team members"
+        "Whether to list web sessions of the team members."
     include_desktop_clients Boolean = true
-        "Whether to list desktop clients of the team members"
+        "Whether to list desktop clients of the team members."
     include_mobile_clients Boolean = true
-        "Whether to list mobile clients of the team members"
+        "Whether to list mobile clients of the team members."
 
 struct MemberDevices
     "Information on devices of a team's member."
 
     team_member_id String
-        "The member unique Id"
+        "The member unique Id."
     web_sessions List(ActiveWebSession)?
-        "List of web sessions made by this team member"
+        "List of web sessions made by this team member."
     desktop_clients List(DesktopClientSession)?
-        "List of desktop clients by this team member"
+        "List of desktop clients by this team member."
     mobile_clients List(MobileClientSession)?
-        "List of mobile clients by this team member"
+        "List of mobile clients by this team member."
 
 struct ListMembersDevicesResult
     devices List(MemberDevices)
-        "The devices of each member of the team"
+        "The devices of each member of the team."
     has_more Boolean
         "If true, then there are more devices available. Pass the
         cursor to :route:`devices/list_members_devices` to retrieve the rest."
@@ -211,22 +226,22 @@ route devices/list_members_devices(ListMembersDevicesArg, ListMembersDevicesResu
 
 struct DeviceSessionArg
     session_id String
-        "The session id"
+        "The session id."
     team_member_id String
-        "The unique id of the member owning the device"
+        "The unique id of the member owning the device."
 
 struct RevokeDesktopClientArg extends DeviceSessionArg
     delete_on_unlink Boolean = false
         "Whether to delete all files of the account (this is possible only if supported by
-        the desktop client and  will be made the next time the client access the account)"
+        the desktop client and  will be made the next time the client access the account)."
 
 union_closed RevokeDeviceSessionArg
     web_session DeviceSessionArg
-        "End an active session"
+        "End an active session."
     desktop_client RevokeDesktopClientArg
-        "Unlink a linked desktop device"
+        "Unlink a linked desktop device."
     mobile_client DeviceSessionArg
-        "Unlink a linked mobile device"
+        "Unlink a linked mobile device."
 
 union RevokeDeviceSessionError
     device_session_not_found
@@ -239,7 +254,7 @@ union RevokeDeviceSessionError
 #
 
 route devices/revoke_device_session(RevokeDeviceSessionArg, Void, RevokeDeviceSessionError)
-    "Revoke a device session of a team's member"
+    "Revoke a device session of a team's member."
 
     attrs
         auth = "team"
@@ -255,9 +270,9 @@ struct RevokeDeviceSessionBatchArg
 struct RevokeDeviceSessionStatus
 
     success Boolean
-        "Result of the revoking request"
+        "Result of the revoking request."
     error_type RevokeDeviceSessionError?
-        "The error cause in case of a failure"
+        "The error cause in case of a failure."
 
 struct RevokeDeviceSessionBatchResult
     revoke_devices_status List(RevokeDeviceSessionStatus)
@@ -270,7 +285,7 @@ union RevokeDeviceSessionBatchError
 #
 
 route devices/revoke_device_session_batch(RevokeDeviceSessionBatchArg, RevokeDeviceSessionBatchResult, RevokeDeviceSessionBatchError)
-    "Revoke a list of device sessions of team members"
+    "Revoke a list of device sessions of team members."
 
     attrs
         auth = "team"
@@ -285,17 +300,17 @@ struct ListTeamDevicesArg
     cursor String?
         "At the first call to the :route:`devices/list_team_devices` the cursor shouldn't be passed.
         Then, if the result of the call includes a cursor, the following requests should include the
-        received cursors in order to receive the next sub list of team devices"
+        received cursors in order to receive the next sub list of team devices."
     include_web_sessions Boolean = true
-        "Whether to list web sessions of the team members"
+        "Whether to list web sessions of the team members."
     include_desktop_clients Boolean = true
-        "Whether to list desktop clients of the team members"
+        "Whether to list desktop clients of the team members."
     include_mobile_clients Boolean = true
-        "Whether to list mobile clients of the team members"
+        "Whether to list mobile clients of the team members."
 
 struct ListTeamDevicesResult
     devices List(MemberDevices)
-        "The devices of each member of the team"
+        "The devices of each member of the team."
     has_more Boolean
         "If true, then there are more devices available. Pass the
         cursor to :route:`devices/list_team_devices` to retrieve the rest."

@@ -79,8 +79,7 @@ union BaseTeamFolderError
 route team_folder/create(TeamFolderCreateArg, TeamFolderMetadata, TeamFolderCreateError)
     "Creates a new, active, team folder.
 
-    Permission : Team member file access.
-    "
+    Permission : Team member file access."
 
     attrs
         owner = "company-dropbox-team"
@@ -108,8 +107,7 @@ union TeamFolderCreateError
 route team_folder/rename(TeamFolderRenameArg, TeamFolderMetadata, TeamFolderRenameError)
     "Changes an active team folder's name.
 
-    Permission : Team member file access.
-    "
+    Permission : Team member file access."
 
     attrs
         owner = "company-dropbox-team"
@@ -138,8 +136,7 @@ union TeamFolderRenameError extends BaseTeamFolderError
 route team_folder/list(TeamFolderListArg, TeamFolderListResult, TeamFolderListError)
     "Lists all team folders.
 
-    Permission : Team member file access.
-    "
+    Permission : Team member file access."
     attrs
         owner = "company-dropbox-team"
         auth = "team"
@@ -202,8 +199,7 @@ union TeamFolderListContinueError
 route team_folder/get_info(TeamFolderIdListArg, List(TeamFolderGetInfoItem), Void)
     "Retrieves metadata for team folders.
 
-    Permission : Team member file access.
-    "
+    Permission : Team member file access."
 
     attrs
         owner = "company-dropbox-team"
@@ -223,8 +219,7 @@ union_closed TeamFolderGetInfoItem
 route team_folder/activate(TeamFolderIdArg, TeamFolderMetadata, TeamFolderActivateError)
     "Sets an archived team folder's status to active.
 
-    Permission : Team member file access.
-    "
+    Permission : Team member file access."
 
     attrs
         owner = "company-dropbox-team"
@@ -240,8 +235,7 @@ union TeamFolderActivateError extends BaseTeamFolderError
 route team_folder/archive(TeamFolderArchiveArg, TeamFolderArchiveLaunch, TeamFolderArchiveError)
     "Sets an active team folder's status to archived and removes all folder and file members.
 
-    Permission : Team member file access.
-    "
+    Permission : Team member file access."
 
     attrs
         owner = "company-dropbox-team"
@@ -267,8 +261,7 @@ union TeamFolderArchiveError extends BaseTeamFolderError
 route team_folder/archive/check(async.PollArg, TeamFolderArchiveJobStatus, async.PollError)
     "Returns the status of an asynchronous job for archiving a team folder.
 
-    Permission : Team member file access.
-    "
+    Permission : Team member file access."
 
     attrs
         owner = "company-dropbox-team"
@@ -290,8 +283,7 @@ union_closed TeamFolderArchiveJobStatus extends async.PollResultBase
 route team_folder/permanently_delete(TeamFolderIdArg, Void, TeamFolderPermanentlyDeleteError)
     "Permanently deletes an archived team folder.
 
-    Permission : Team member file access.
-    "
+    Permission : Team member file access."
 
     attrs
         owner = "company-dropbox-team"

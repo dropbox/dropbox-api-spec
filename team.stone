@@ -42,24 +42,33 @@ struct MemberProfile
 
     team_member_id team_common.TeamMemberId
         "ID of user as a member of a team."
+
     external_id String?
         "External ID that a team can attach to the user.
         An application using the API may find it easier to use their
         own IDs instead of Dropbox IDs like account_id or team_member_id."
+
     account_id users_common.AccountId?
         "A user's account identifier."
+
     email String
         "Email address of user."
+
     email_verified Boolean
         "Is true if the user's email is verified to be owned by the user."
+
     status TeamMemberStatus
         "The user's status as a member of a specific team."
+
     name users.Name
         "Representations for a person's name."
+
     membership_type TeamMembershipType
         "The user's membership type: full (normal team member) vs limited (does not use a license; no access to the team's shared quota)."
+
     joined_on common.DropboxTimestamp?
         "The date and time the user joined as a member of a specific team."
+
     persistent_id String?
         "Persistent ID that a team can attach to the user.
         The persistent ID is unique ID to be used for SAML authentication."
@@ -116,15 +125,18 @@ union_closed UsersSelectorArg
 #
 
 struct TeamGetInfoResult
-
     name String
         "The name of the team."
+
     team_id String
         "The ID of the team."
+
     num_licensed_users UInt32
         "The number of licenses available to the team."
+
     num_provisioned_users UInt32
         "The number of accounts that have been invited or are already active members of the team."
+
     policies team_policies.TeamMemberPolicies
 
     example default

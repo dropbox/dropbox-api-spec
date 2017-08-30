@@ -1,5 +1,7 @@
 namespace auth
 
+import common
+
 union AuthError
     "Errors occurred during authentication."
 
@@ -42,6 +44,7 @@ struct RateLimitError
 struct TokenFromOAuth1Arg
     oauth1_token String(min_length=1)
         "The supplied OAuth 1.0 access token."
+
     oauth1_token_secret String(min_length=1)
         "The token secret associated with the supplied access token."
 

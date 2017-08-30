@@ -103,7 +103,7 @@ union MembersListError
 route members/list(MembersListArg, MembersListResult, MembersListError)
     "Lists members of a team.
 
-    Permission : Team information"
+    Permission : Team information."
 
     attrs
         auth = "team"
@@ -129,7 +129,7 @@ route members/list/continue(MembersListContinueArg, MembersListResult, MembersLi
     "Once a cursor has been retrieved from :route:`members/list`, use this to paginate
     through all team members.
 
-    Permission : Team information"
+    Permission : Team information."
 
     attrs
         auth = "team"
@@ -297,7 +297,7 @@ union_closed MembersAddJobStatus extends async.PollResultBase
     complete List(MemberAddResult)
         "The asynchronous job has finished. For each member that was specified in the
         parameter :type:`MembersAddArg` that was provided to :route:`members/add`, a
-        corresponding item is returned in this list. "
+        corresponding item is returned in this list."
     failed String
         "The asynchronous job returned an error. The string contains an error message."
 
@@ -308,7 +308,7 @@ route members/add/job_status/get(async.PollArg, MembersAddJobStatus, async.PollE
     "Once an async_job_id is returned from :route:`members/add` ,
     use this to poll the status of the asynchronous request.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
@@ -331,9 +331,9 @@ struct MembersSetProfileArg
         "New email for member."
     new_external_id team_common.MemberExternalId?
         "New external ID for member."
-    new_given_name common.NamePart?
+    new_given_name common.OptionalNamePart?
         "New given name for member."
-    new_surname common.NamePart?
+    new_surname common.OptionalNamePart?
         "New surname for member."
     new_persistent_id String?
         "New persistent ID. This field only available to teams using persistent ID SAML configuration."
@@ -345,9 +345,9 @@ struct MembersSetProfileArg
 
 union MembersSetProfileError extends MemberSelectorError
     external_id_and_new_external_id_unsafe
-        "It is unsafe to use both external_id and new_external_id"
+        "It is unsafe to use both external_id and new_external_id."
     no_new_data_specified
-        "None of new_email, new_given_name, new_surname, or new_external_id are specified"
+        "None of new_email, new_given_name, new_surname, or new_external_id are specified."
     email_reserved_for_other_user
         "Email is already reserved for another user."
     external_id_used_by_other_user
@@ -365,7 +365,7 @@ union MembersSetProfileError extends MemberSelectorError
 route members/set_profile(MembersSetProfileArg, TeamMemberInfo, MembersSetProfileError)
     "Updates a team member's profile.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
@@ -412,7 +412,7 @@ union MembersSetPermissionsError extends UserSelectorError
 route members/set_admin_permissions(MembersSetPermissionsArg, MembersSetPermissionsResult, MembersSetPermissionsError)
     "Updates a team member's permissions.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"
@@ -484,7 +484,7 @@ union MembersRemoveError extends MembersDeactivateError
     remove_last_admin
         "The user is the last admin of the team, so it cannot be removed from it."
     removed_and_transfer_dest_should_differ
-        "Expected removed user and transfer_dest user to be different"
+        "Expected removed user and transfer_dest user to be different."
     removed_and_transfer_admin_should_differ
         "Expected removed user and transfer_admin user to be different."
     transfer_dest_user_not_found
@@ -534,7 +534,7 @@ route members/remove/job_status/get(async.PollArg, async.PollEmptyResult, async.
     "Once an async_job_id is returned from :route:`members/remove` ,
     use this to poll the status of the asynchronous request.
 
-    Permission : Team member management"
+    Permission : Team member management."
 
     attrs
         auth = "team"

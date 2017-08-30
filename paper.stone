@@ -76,8 +76,7 @@ struct Cursor
 
         2. on the other hand, listing docs sorted by the last modified time will have
         a very short expiration as docs do get modified very often and the modified time
-        can be changed while the iteration is happening thus altering the results.
-        "
+        can be changed while the iteration is happening thus altering the results."
     example default
         value = "zHZvTPBnXilGgm1AmDgVyZ10zf7qb0qznd5sAVQbbIvoteSnWLjUdLU7aR25hb"
         expiration = "2016-08-07T14:56:15Z"
@@ -90,8 +89,7 @@ struct ListPaperDocsResponse
     cursor Cursor
         "Pass the cursor into :route:`docs/list/continue` to paginate through all files.
         The cursor preserves all properties as specified in the original call
-        to :route:`docs/list`.
-        "
+        to :route:`docs/list`."
     has_more Boolean
         "Will be set to True if a subsequent call with the provided cursor
         to :route:`docs/list/continue` returns immediately with some results. If set to False
@@ -120,10 +118,13 @@ struct PaperDocExport extends RefPaperDoc
 struct PaperDocExportResult
     owner String
         "The Paper doc owner's email address."
+
     title String
         "The Paper doc title."
+
     revision Int64
         "The Paper doc revision. Simply an ever increasing number."
+
     mime_type String
         "MIME type of the export. This corresponds to :type:`ExportFormat` specified
         in the request."
@@ -199,6 +200,7 @@ struct Folder
 
     id String
         "Paper folder ID. This ID uniquely identifies the folder."
+
     name String
         "Paper folder name."
 
@@ -319,8 +321,7 @@ struct ListUsersOnPaperDocResponse
         "Pass the cursor into :route:`docs/users/list/continue` to paginate
         through all users.
         The cursor preserves all properties as specified in the original call
-        to :route:`docs/users/list`.
-        "
+        to :route:`docs/users/list`."
     has_more Boolean
         "Will be set to True if a subsequent call with the provided cursor
         to :route:`docs/users/list/continue` returns immediately with some results.
@@ -338,8 +339,10 @@ struct AddPaperDocUser extends RefPaperDoc
     members List(AddMember, max_items = 20)
         "User which should be added to the Paper doc. Specify only email address or
         Dropbox account ID."
+
     custom_message String?
         "A personal message that will be emailed to each successfully added member."
+
     quiet Boolean = false
         "Clients should set this to true if no email message shall be sent to added users."
 
@@ -407,8 +410,7 @@ struct ListUsersOnFolderResponse
         "Pass the cursor into :route:`docs/folder_users/list/continue` to paginate
         through all users.
         The cursor preserves all properties as specified in the original call
-        to :route:`docs/folder_users/list`.
-        "
+        to :route:`docs/folder_users/list`."
     has_more Boolean
         "Will be set to True if a subsequent call with the provided cursor
         to :route:`docs/folder_users/list/continue` returns immediately with some results.
@@ -438,6 +440,111 @@ struct ListUsersOnFolderContinueArgs extends RefPaperDoc
     example default
         doc_id = "uaSvRuxvnkFa12PTkBv5q"
         cursor = "U60b6BxT43ySd5sAVQbbIvoteSnWLjUdLU7aR25hbt3ySd5sAVQbbIvoteSnWLjUd"
+
+union ImportFormat
+    "The import format of the incoming data."
+
+    html
+        "The provided data is interpreted as standard HTML."
+    markdown
+        "The provided data is interpreted as markdown.
+
+        Note: The first line of the provided document will be used as the doc title."
+    plain_text
+        "The provided data is interpreted as plain text.
+
+        Note: The first line of the provided document will be used as the doc title."
+
+struct PaperDocCreateArgs
+    parent_folder_id String?
+        "The Paper folder ID where the Paper document should be created. The API user has to have
+        write access to this folder or error is thrown."
+    import_format ImportFormat
+        "The format of provided data."
+
+    example default
+        "Create new Paper doc (unfiled)."
+        import_format = markdown
+
+    example createDocInFolder
+        "Create new Paper doc inside Paper folder."
+        import_format = html
+        parent_folder_id = "e.gGYT6HSafpMej9bUv306GarglI7GGeAM3yvfZvXHO9u4mV"
+
+struct PaperDocCreateUpdateResult
+    doc_id String
+        "Doc ID of the newly created doc."
+
+    revision Int64
+        "The Paper doc revision. Simply an ever increasing number."
+
+    title String
+        "The Paper doc title."
+
+    example default
+        doc_id = "uaSvRuxvnkFa12PTkBv5q"
+        revision = 456736745
+        title = "Week one retention"
+
+union PaperDocCreateError extends PaperApiBaseError
+    content_malformed
+        "The provided content was malformed and cannot be imported to Paper."
+    folder_not_found
+        "The specified Paper folder is cannot be found."
+    doc_length_exceeded
+        "The newly created Paper doc would be too large.
+        Please split the content into multiple docs."
+    image_size_exceeded
+        "The imported document contains an image that is too large. The current limit is 1MB.
+        Note: This only applies to HTML with data uri."
+
+union PaperDocUpdatePolicy
+    append
+        "The content will be appended to the doc."
+    prepend
+        "The content will be prepended to the doc.
+
+        Note: the doc title will not be affected."
+    overwrite_all
+        "The document will be overwitten at the head with the provided content."
+
+struct PaperDocUpdateArgs extends RefPaperDoc
+    doc_update_policy PaperDocUpdatePolicy
+        "The policy used for the current update call."
+    revision Int64
+        "The latest doc revision. This value must match the head revision or
+        an error code will be returned. This is to prevent colliding writes."
+    import_format ImportFormat
+        "The format of provided data."
+
+    example default
+        "Overwrite the doc content with provided content."
+        doc_update_policy = overwrite_all
+        import_format = html
+        doc_id = "uaSvRuxvnkFa12PTkBv5q"
+        revision = 12345
+
+    example prepend_example
+        "Prepend the content into the doc (the doc title will remain unchanged)."
+        doc_update_policy = prepend
+        import_format = plain_text
+        doc_id = "uaSvRuxvnkFa12PTkBv5q"
+        revision = 56556
+
+union PaperDocUpdateError extends DocLookupError
+    content_malformed
+        "The provided content was malformed and cannot be imported to Paper."
+    revision_mismatch
+        "The provided revision does not match the document head."
+    doc_length_exceeded
+        "The newly created Paper doc would be too large, split the content into multiple docs."
+    image_size_exceeded
+        "The imported document contains an image that is too large. The current limit is 1MB.
+        Note: This only applies to HTML with data uri."
+    doc_archived
+        "This operation is not allowed on archived Paper docs."
+    doc_deleted
+        "This operation is not allowed on deleted Paper docs."
 
 route docs/folder_users/list (ListUsersOnFolderArgs, ListUsersOnFolderResponse, DocLookupError)
     "Lists the users who are explicitly invited to the Paper folder in which the Paper doc
@@ -546,4 +653,16 @@ route docs/list/continue (ListPaperDocsContinueArgs, ListPaperDocsResponse, List
     "Once a cursor has been retrieved from :route:`docs/list`, use this to
     paginate through all Paper doc."
     attrs
+        owner="paper-eng"
+
+route docs/create (PaperDocCreateArgs, PaperDocCreateUpdateResult, PaperDocCreateError)
+    "Creates a new Paper doc with the provided content."
+    attrs
+        style="upload"
+        owner="paper-eng"
+
+route docs/update (PaperDocUpdateArgs, PaperDocCreateUpdateResult, PaperDocUpdateError)
+    "Updates an existing Paper doc with the provided content."
+    attrs
+        style="upload"
         owner="paper-eng"

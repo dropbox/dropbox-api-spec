@@ -35,16 +35,21 @@ struct Account
 
     account_id users_common.AccountId
         "The user's unique Dropbox ID."
+
     name Name
         "Details of a user's name."
+
     email String
         "The user's e-mail address. Do not rely on this without checking the
         :field:`email_verified` field. Even then, it's possible that the user
         has since lost access to their e-mail."
+
     email_verified Boolean
         "Whether the user has verified their e-mail address."
+
     profile_photo_url String?
         "URL for the photo representing the user, if one is set."
+
     disabled Boolean
         "Whether the user has been disabled."
 
@@ -120,7 +125,7 @@ struct FullAccount extends Account
         "What type of account this user has."
 
     example default
-        "Paired account"
+        "Paired account."
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
         email = "franz@dropbox.com"
@@ -181,15 +186,19 @@ struct Name
 
     given_name String
         "Also known as a first name."
+
     surname String
         "Also known as a last name or family name."
+
     familiar_name String
         "Locale-dependent name. In the US, a person's familiar name is their
         :field:`given_name`, but elsewhere, it could be any combination of a
         person's :field:`given_name` and :field:`surname`."
+
     display_name String
         "A name that can be used directly to represent the name of a user's
         Dropbox account."
+
     abbreviated_name String
         "An abbreviated form of the person's name. Their initials in most locales."
 
