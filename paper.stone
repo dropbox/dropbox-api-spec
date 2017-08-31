@@ -593,6 +593,7 @@ route docs/permanently_delete (RefPaperDoc, Void, DocLookupError)
 route docs/download (PaperDocExport, PaperDocExportResult, DocLookupError)
     "Exports and downloads Paper doc either as HTML or markdown."
     attrs
+        host="content"
         style="download"
         owner="paper-eng"
 
@@ -658,11 +659,13 @@ route docs/list/continue (ListPaperDocsContinueArgs, ListPaperDocsResponse, List
 route docs/create (PaperDocCreateArgs, PaperDocCreateUpdateResult, PaperDocCreateError)
     "Creates a new Paper doc with the provided content."
     attrs
+        host="content"
         style="upload"
         owner="paper-eng"
 
 route docs/update (PaperDocUpdateArgs, PaperDocCreateUpdateResult, PaperDocUpdateError)
     "Updates an existing Paper doc with the provided content."
     attrs
+        host="content"
         style="upload"
         owner="paper-eng"
