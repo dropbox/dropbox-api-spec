@@ -1,6 +1,7 @@
 namespace team
 
 import common
+import file_properties
 import team_common
 import team_policies
 import users_common
@@ -268,6 +269,30 @@ route features/get_values(FeaturesGetValuesBatchArg, FeaturesGetValuesBatchResul
 
     Permission : Team information."
 
+    attrs
+        auth = "team"
+        owner = "api-platform"
+
+#
+# Deprecated File Properties Routes
+#
+
+route properties/template/add(file_properties.AddTemplateArg, file_properties.AddTemplateResult, file_properties.ModifyTemplateError) deprecated
+    attrs
+        auth = "team"
+        owner = "api-platform"
+
+route properties/template/update(file_properties.UpdateTemplateArg, file_properties.UpdateTemplateResult, file_properties.ModifyTemplateError) deprecated
+    attrs
+        auth = "team"
+        owner = "api-platform"
+
+route properties/template/get(file_properties.GetTemplateArg, file_properties.GetTemplateResult, file_properties.TemplateError) deprecated
+    attrs
+        auth = "team"
+        owner = "api-platform"
+
+route properties/template/list(Void, file_properties.ListTemplateResult, file_properties.TemplateError) deprecated
     attrs
         auth = "team"
         owner = "api-platform"

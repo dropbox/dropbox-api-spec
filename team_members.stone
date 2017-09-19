@@ -195,9 +195,9 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
 
 struct MemberAddArg
     member_email common.EmailAddress
-    member_given_name common.NamePart?
+    member_given_name common.OptionalNamePart?
         "Member's first name."
-    member_surname common.NamePart?
+    member_surname common.OptionalNamePart?
         "Member's last name."
     member_external_id team_common.MemberExternalId?
         "External ID for member."
@@ -518,6 +518,9 @@ route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveErr
     or until the account has been permanently deleted or transferred to another account
     (whichever comes first). Calling :route:`members/add` while a user is still recoverable
     on your team will return with :field:`MemberAddResult.user_already_on_team`.
+
+    Accounts can have their files transferred via the admin console for a limited time, based on the version history
+    length associated with the team (120 days for most teams).
 
     This endpoint may initiate an asynchronous job. To obtain the final result
     of the job, the client should periodically poll :route:`members/remove/job_status/get`."

@@ -24,6 +24,7 @@ alias DisplayName = String(pattern="[^\/:?*<>\"|]*", min_length=1)
 alias DisplayNameLegacy = String(min_length=1)
 
 alias NamespaceId = String(pattern="[-_0-9a-zA-Z:]+")
+
 alias SharedFolderId = NamespaceId
 
 alias SessionId = String
@@ -37,22 +38,22 @@ union PathRoot
 
     member_home
         "Paths are relative to the authenticating team member's home
-        directory. (This results in :field:`PathRootError.invalid' if the
-        user does not belong to a team.)"
+        directory. (This results in :field:`PathRootError.invalid` if the
+        user does not belong to a team.)."
 
     team PathRootId
         "Paths are relative to the given team directory. (This results in
         :field:`PathRootError.invalid` if the user is not a member of
-        the team associated with that path root id.)"
+        the team associated with that path root id.)."
 
     user_home
         "Paths are relative to the user's home directory. (This results in
-        :field:`PathRootError.invalid` if the belongs to a team.)"
+        :field:`PathRootError.invalid` if the belongs to a team.)."
 
     namespace_id PathRootId
         "Paths are relative to given namespace id (This results in
         :field:`PathRootError.no_permission` if you don't have access
-        to this namespace.)"
+        to this namespace.)."
 
 
 struct InvalidPathRootError

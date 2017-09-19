@@ -30,5 +30,9 @@ struct Route
     takes_path_root Boolean = false
         "A flag indicating whether the route's behavior is affected by use of
         the Dropbox-API-Path-Root header."
-    select_admin_enabled Boolean = false
-        "Whether the Dropbox-API-Select-Admin header can be used in this route."
+    select_admin_mode String?
+        "Which mode for Dropbox-API-Select-Admin header can be used in this route.
+        Valid values: team_admin, whole_team."
+    is_web_alpha Boolean = false
+        "Whether the endpoint is a Dropbox web-only alpha endpoint. All legacy web alpha endpoints
+        will eventually be migrated."

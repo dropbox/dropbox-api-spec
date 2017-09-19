@@ -309,7 +309,7 @@ union_closed SharedLinkSettingsError
         (for example, all attributes of the :type:`SharedLinkSettings` are empty,
         the requested visibility is :field:`RequestedVisibility.password` but the
         :field:`SharedLinkSettings.link_password` is missing, :field:`SharedLinkSettings.expires`
-        is set to the past, etc.)"
+        is set to the past, etc.)."
 
     not_authorized
         "User is not allowed to modify the settings of this link. Note that basic

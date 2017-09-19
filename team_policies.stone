@@ -80,3 +80,42 @@ union OfficeAddInPolicy
         "Office Add-In is disabled."
     enabled
         "Office Add-In is enabled."
+
+union SsoPolicy
+    disabled
+        "Users will be able to sign in with their Dropbox credentials."
+    optional
+        "Users will be able to sign in with either their Dropbox or single sign-on credentials."
+    required
+        "Users will be required to sign in with their single sign-on credentials."
+
+union PaperDeploymentPolicy
+    full
+        "All team members have access to Paper."
+    partial
+        "Only whitelisted team members can access Paper.
+        To see which user is whitelisted, check 'is_paper_whitelisted' on 'account/info'."
+
+union_closed RolloutMethod
+    unlink_all
+        "Unlink all."
+    unlink_most_inactive
+        "Unlink devices with the most inactivity."
+    add_member_to_exceptions
+        "Add member to Exceptions."
+
+union PaperEnabledPolicy
+    disabled
+        "Paper is disabled."
+    enabled
+        "Paper is enabled."
+    unspecified
+        "Unspecified policy."
+
+union PasswordStrengthPolicy
+    minimal_requirements
+        "User passwords will adhere to the minimal password strength policy."
+    moderate_password
+        "User passwords will adhere to the moderate password strength policy."
+    strong_password
+        "User passwords will adhere to the very strong password strength policy."
