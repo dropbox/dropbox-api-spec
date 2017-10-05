@@ -215,11 +215,6 @@ union TfaConfiguration
     sms
     authenticator
 
-union TfaPolicy
-    "Two factor authentication policy"
-    allow_disable
-    sticky_enable
-
 union TimeUnit
     milliseconds
     seconds
@@ -1369,12 +1364,9 @@ struct DomainVerificationRemoveDomainDetails
 
     domain_names List(String)
         "Domain names."
-    verification_method String?
-        "Domain name verification method. Might be missing due to historical data gap."
 
     example default
         domain_names = ["abc"]
-        verification_method = "abc"
 
 struct EnabledDomainInvitesDetails
     "Enabled domain invites."
@@ -1577,23 +1569,23 @@ struct GroupChangeMemberRoleDetails
 struct GroupCreateDetails
     "Created a group."
 
-    is_admin_managed Boolean?
-        "Is admin managed group. Might be missing due to historical data gap."
+    is_company_managed Boolean?
+        "Is company managed group. Might be missing due to historical data gap."
     join_policy GroupJoinPolicy
         "Group join policy."
 
     example default
-        is_admin_managed = true
+        is_company_managed = true
         join_policy = request_to_join
 
 struct GroupDeleteDetails
     "Deleted a group."
 
-    is_admin_managed Boolean?
-        "Is admin managed group. Might be missing due to historical data gap."
+    is_company_managed Boolean?
+        "Is company managed group. Might be missing due to historical data gap."
 
     example default
-        is_admin_managed = true
+        is_company_managed = true
 
 struct GroupMovedDetails
     "Moved a group."
@@ -2867,6 +2859,15 @@ struct ShmodelVisibilityPublicDetails
 struct ShmodelVisibilityTeamOnlyDetails
     "Made a file/folder visible only to team members with the link."
 
+struct SsoAddCertDetails
+    "Added the X.509 certificate for SSO."
+
+    certificate_details Certificate
+        "SSO certificate details."
+
+    example default
+        certificate_details = default
+
 struct SsoAddLoginUrlDetails
     "Added sign-in URL for SSO."
 
@@ -2888,11 +2889,14 @@ struct SsoAddLogoutUrlDetails
 struct SsoChangeCertDetails
     "Changed the X.509 certificate for SSO."
 
-    certificate_details Certificate
-        "SSO certificate details."
+    previous_certificate_details Certificate?
+        "Previous SSO certificate details."
+    new_certificate_details Certificate
+        "New SSO certificate details."
 
     example default
-        certificate_details = default
+        previous_certificate_details = default
+        new_certificate_details = default
 
 struct SsoChangeLoginUrlDetails
     "Changed the sign-in URL for SSO."
@@ -2929,6 +2933,9 @@ struct SsoChangeSamlIdentityModeDetails
     example default
         previous_value = 3
         new_value = 3
+
+struct SsoRemoveCertDetails
+    "Removed the X.509 certificate for SSO."
 
 struct SsoRemoveLoginUrlDetails
     "Removed the sign-in URL for SSO."
@@ -3233,6 +3240,15 @@ struct PaperChangeDeploymentPolicyDetails
         new_value = full
         previous_value = full
 
+struct PaperChangeMemberLinkPolicyDetails
+    "Changed whether non team members can view Paper documents using a link."
+
+    new_value PaperMemberPolicy
+        "New paper external link accessibility policy."
+
+    example default
+        new_value = only_team
+
 struct PaperChangeMemberPolicyDetails
     "Changed whether team members can share Paper documents externally (i.e. outside the team), and if so, whether they should be accessible only by team members or anyone by default."
 
@@ -3356,14 +3372,14 @@ struct SsoChangePolicyDetails
 struct TfaChangePolicyDetails
     "Change two-step verification policy for the team."
 
-    new_value TfaPolicy
+    new_value team_policies.TwoStepVerificationPolicy
         "New change policy."
-    previous_value TfaPolicy?
+    previous_value team_policies.TwoStepVerificationPolicy?
         "Previous change policy. Might be missing due to historical data gap."
 
     example default
-        new_value = allow_disable
-        previous_value = allow_disable
+        new_value = require_tfa_disable
+        previous_value = require_tfa_disable
 
 struct TwoAccountChangePolicyDetails
     "Enabled or disabled the option for team members to link a personal Dropbox account in addition to their work account to the same computer."
@@ -3403,6 +3419,18 @@ struct WebSessionsChangeIdleLengthPolicyDetails
 
 struct TeamProfileAddLogoDetails
     "Added a team logo to be displayed on shared link headers."
+
+struct TeamProfileChangeDefaultLanguageDetails
+    "Changed the default language for the team."
+
+    new_value common.LanguageCode
+        "New team's default language."
+    previous_value common.LanguageCode
+        "Previous team's default language."
+
+    example default
+        new_value = "en_GB"
+        previous_value = "en"
 
 struct TeamProfileChangeLogoDetails
     "Changed the team logo to be displayed on shared link headers."
@@ -3864,6 +3892,8 @@ union EventDetails
         "Made a file/folder visible to anyone with the link."
     shmodel_visibility_team_only_details ShmodelVisibilityTeamOnlyDetails
         "Made a file/folder visible only to team members with the link."
+    sso_add_cert_details SsoAddCertDetails
+        "Added the X.509 certificate for SSO."
     sso_add_login_url_details SsoAddLoginUrlDetails
         "Added sign-in URL for SSO."
     sso_add_logout_url_details SsoAddLogoutUrlDetails
@@ -3876,6 +3906,8 @@ union EventDetails
         "Changed the sign-out URL for SSO."
     sso_change_saml_identity_mode_details SsoChangeSamlIdentityModeDetails
         "Changed the SAML identity mode for SSO."
+    sso_remove_cert_details SsoRemoveCertDetails
+        "Removed the X.509 certificate for SSO."
     sso_remove_login_url_details SsoRemoveLoginUrlDetails
         "Removed the sign-in URL for SSO."
     sso_remove_logout_url_details SsoRemoveLogoutUrlDetails
@@ -3944,6 +3976,8 @@ union EventDetails
         "Enabled or disabled network control."
     paper_change_deployment_policy_details PaperChangeDeploymentPolicyDetails
         "Changed whether Dropbox Paper, when enabled, is deployed to all teams or to specific members of the team."
+    paper_change_member_link_policy_details PaperChangeMemberLinkPolicyDetails
+        "Changed whether non team members can view Paper documents using a link."
     paper_change_member_policy_details PaperChangeMemberPolicyDetails
         "Changed whether team members can share Paper documents externally (i.e. outside the team), and if so, whether they should be accessible only by team members or anyone by default."
     paper_change_policy_details PaperChangePolicyDetails
@@ -3974,6 +4008,8 @@ union EventDetails
         "Changed how long team members can be idle while signed in to Dropbox on the web."
     team_profile_add_logo_details TeamProfileAddLogoDetails
         "Added a team logo to be displayed on shared link headers."
+    team_profile_change_default_language_details TeamProfileChangeDefaultLanguageDetails
+        "Changed the default language for the team."
     team_profile_change_logo_details TeamProfileChangeLogoDetails
         "Changed the team logo to be displayed on shared link headers."
     team_profile_change_name_details TeamProfileChangeNameDetails
@@ -4410,6 +4446,8 @@ union EventType
         "Made a file/folder visible to anyone with the link."
     shmodel_visibility_team_only
         "Made a file/folder visible only to team members with the link."
+    sso_add_cert
+        "Added the X.509 certificate for SSO."
     sso_add_login_url
         "Added sign-in URL for SSO."
     sso_add_logout_url
@@ -4422,6 +4460,8 @@ union EventType
         "Changed the sign-out URL for SSO."
     sso_change_saml_identity_mode
         "Changed the SAML identity mode for SSO."
+    sso_remove_cert
+        "Removed the X.509 certificate for SSO."
     sso_remove_login_url
         "Removed the sign-in URL for SSO."
     sso_remove_logout_url
@@ -4490,6 +4530,8 @@ union EventType
         "Enabled or disabled network control."
     paper_change_deployment_policy
         "Changed whether Dropbox Paper, when enabled, is deployed to all teams or to specific members of the team."
+    paper_change_member_link_policy
+        "Changed whether non team members can view Paper documents using a link. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
     paper_change_member_policy
         "Changed whether team members can share Paper documents externally (i.e. outside the team), and if so, whether they should be accessible only by team members or anyone by default."
     paper_change_policy
@@ -4520,6 +4562,8 @@ union EventType
         "Changed how long team members can be idle while signed in to Dropbox on the web."
     team_profile_add_logo
         "Added a team logo to be displayed on shared link headers."
+    team_profile_change_default_language
+        "Changed the default language for the team."
     team_profile_change_logo
         "Changed the team logo to be displayed on shared link headers."
     team_profile_change_name

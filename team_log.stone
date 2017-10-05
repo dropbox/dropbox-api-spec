@@ -24,6 +24,9 @@ struct GetTeamEventsArg
         limit=50
         category=groups
 
+# This is used only for `json_encode` in metaserver/tests/util/event_helper.py
+# simply because I don't know how to use the list.
+alias TeamEventList = List(TeamEvent)
 
 struct GetTeamEventsResult
     events List(TeamEvent)

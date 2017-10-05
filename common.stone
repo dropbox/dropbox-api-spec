@@ -69,3 +69,6 @@ union PathRootError
     no_permission
         "You don't have permission to access the path root id in Dropbox-API-Path-Root
          header."
+
+alias LanguageCode = String(min_length=2)
+    "A ISO639-1 code."

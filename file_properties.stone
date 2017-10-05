@@ -144,7 +144,7 @@ union TemplateError
 union PropertiesError extends TemplateError
     path LookupError
     unsupported_folder
-        "This folder cannot be tagged. Shared folders and team folders are not supported for team-owned tags."
+        "This folder cannot be tagged. Tagging folders is not supported for team-owned templates."
 
 union InvalidPropertyGroupError extends PropertiesError
     property_field_too_large
@@ -242,7 +242,7 @@ union RemovePropertiesError extends PropertiesError
 
 route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
     "Remove the specified property group from the file. To remove specific property field key
-    value pairs, see route :route:`properties/update`. To update a template, see
+    value pairs, see :route:`properties/update`. To update a template, see
     :route:`templates/update_for_user` or :route:`templates/update_for_team`. Templates can't
     be removed once created."
 
@@ -281,14 +281,15 @@ union ModifyTemplateError extends TemplateError
         "The template name, description or one or more of the property field keys is too large."
 
 route templates/add_for_user(AddTemplateArg, AddTemplateResult, ModifyTemplateError)
-    "Add a template associated with a user. See route :route:`properties/add` to add properties to a file."
+    "Add a template associated with a user. See :route:`properties/add` to add properties to a file. This
+    endpoint can't be called on a team member or admin's behalf."
 
     attrs
         api_group="properties"
         owner = "api-platform"
 
 route templates/add_for_team(AddTemplateArg, AddTemplateResult, ModifyTemplateError)
-    "Add a template associated with a team. See route :route:`properties/add` to add properties to a file or folder."
+    "Add a template associated with a team. See :route:`properties/add` to add properties to a file or folder."
 
     attrs
         auth="team"
@@ -311,7 +312,7 @@ struct GetTemplateResult extends PropertyGroupTemplate
         fields = [default]
 
 route templates/get_for_user(GetTemplateArg, GetTemplateResult, TemplateError)
-    "Get the schema for a specified template."
+    "Get the schema for a specified template. This endpoint can't be called on a team member or admin's behalf."
 
     attrs
         api_group="properties"
@@ -355,7 +356,8 @@ struct UpdateTemplateResult
 
 route templates/update_for_user(UpdateTemplateArg, UpdateTemplateResult, ModifyTemplateError)
     "Update a template associated with a user. This route can update the template name,
-    the template description and add optional properties to templates."
+    the template description and add optional properties to templates. This endpoint can't
+    be called on a team member or admin's behalf."
 
     attrs
         api_group="properties"
@@ -380,7 +382,8 @@ struct ListTemplateResult
 
 route templates/list_for_user(Void, ListTemplateResult, TemplateError)
     "Get the template identifiers for a team. To get the schema of
-    each template use :route:`templates/get_for_user`."
+    each template use :route:`templates/get_for_user`. This endpoint can't be
+    called on a team member or admin's behalf."
 
     attrs
         api_group="properties"

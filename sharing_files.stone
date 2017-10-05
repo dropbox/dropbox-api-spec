@@ -423,7 +423,7 @@ struct SharedFileMembers
     :route:`list_file_members/continue`, and used as part of the results
     for :route:`list_file_members/batch`."
 
-    users List(UserMembershipInfo)
+    users List(UserFileMembershipInfo)
         "The list of user members of the shared file."
     groups List(GroupMembershipInfo)
         "The list of group members of the shared file."
@@ -444,6 +444,18 @@ union ListFileMembersError
 
     user_error SharingUserError
     access_error SharingFileAccessError
+
+struct UserFileMembershipInfo extends UserMembershipInfo
+    "The information about a user member of the shared content with an appended last seen timestamp."
+
+    time_last_seen common.DropboxTimestamp?
+        "The UTC timestamp of when the user has last seen the content, if they have."
+
+    example default
+        user = default
+        access_type = owner
+        permissions = []
+        time_last_seen = "2016-01-20T00:00:00Z"
 
 # --
 

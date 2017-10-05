@@ -77,7 +77,7 @@ union BaseTeamFolderError
 #
 
 route team_folder/create(TeamFolderCreateArg, TeamFolderMetadata, TeamFolderCreateError)
-    "Creates a new, active, team folder.
+    "Creates a new, active, team folder with no members.
 
     Permission : Team member file access."
 
@@ -254,6 +254,9 @@ union_closed TeamFolderArchiveLaunch extends async.LaunchResultBase
 
     example default
         complete = default
+
+    example async_job_id
+        async_job_id = "34g93hh34h04y384084"
 
 union TeamFolderArchiveError extends BaseTeamFolderError
     ""

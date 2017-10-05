@@ -119,3 +119,9 @@ union PasswordStrengthPolicy
         "User passwords will adhere to the moderate password strength policy."
     strong_password
         "User passwords will adhere to the very strong password strength policy."
+
+union TwoStepVerificationPolicy
+    require_tfa_enable
+        "Enabled require two factor authorization."
+    require_tfa_disable
+        "Disabled require two factor authorization."

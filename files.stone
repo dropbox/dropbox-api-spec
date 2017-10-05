@@ -9,6 +9,8 @@ import users_common
 
 alias Id = String(min_length=1)
 
+alias ListFolderCursor = String(min_length=1)
+
 alias Path = String(pattern="/(.|[\\r\\n])*")
 
 alias PathOrId = String(pattern="/(.|[\\r\\n])*|id:.*|(ns:[0-9]+(/.*)?)")
@@ -17,17 +19,17 @@ alias PathROrId = String(pattern="(/(.|[\\r\\n])*)?|id:.*|(ns:[0-9]+(/.*)?)")
 
 alias PathR = String(pattern="(/(.|[\\r\\n])*)?|(ns:[0-9]+(/.*)?)")               # A path that can be the root path ("").
 
+alias ReadPath = String(pattern="(/(.|[\\r\\n])*|id:.*)|(rev:[0-9a-f]{9,})|(ns:[0-9]+(/.*)?)")
+
 alias Rev = String(min_length=9, pattern="[0-9a-f]+") # TODO: Change pattern to "rev:[0-9a-f]{9,}"
 
-alias ListFolderCursor = String(min_length=1)
+alias Sha256HexHash = String(min_length=64, max_length=64)
 
-alias ReadPath = String(pattern="(/(.|[\\r\\n])*|id:.*)|(rev:[0-9a-f]{9,})|(ns:[0-9]+(/.*)?)")
+alias SharedLinkUrl = String
 
 alias WritePath = String(pattern="(/(.|[\\r\\n])*)|(ns:[0-9]+(/.*)?)")
 
 alias WritePathOrId = String(pattern="(/(.|[\\r\\n])*)|(ns:[0-9]+(/.*)?)|(id:.*)")
-
-alias Sha256HexHash = String(min_length=64, max_length=64)
 
 #
 # Metadata definitions and route
@@ -324,8 +326,8 @@ struct FileOpsResult
 struct ListFolderLongpollArg
     cursor ListFolderCursor
         "A cursor as returned by :route:`list_folder` or :route:`list_folder/continue`. Cursors
-        retrieved by setting :field:`ListFolderArg.include_media_info` to :val:`true` are not
-        supported."
+        retrieved by setting :field:`ListFolderArg.include_media_info` to :val:`true` are
+        not supported."
 
     timeout UInt64(min_value=30, max_value=480) = 30
         "A timeout in seconds. The request will block for at most this length
@@ -369,9 +371,23 @@ route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, Lis
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
+struct SharedLink
+    url SharedLinkUrl
+        "Shared link url."
+    password String?
+        "Password for the shared link."
+
+    example default
+        url = "https://www.dropbox.com/s/2sn712vy1ovegw8?dl=0"
+        password = "password"
+
 struct ListFolderArg
     path PathROrId
         "A unique identifier for the file."
+    shared_link SharedLink?
+        "A shared link to list the contents of, if the link is protected provide the password.
+        if this field is present, :field:`ListFolderArg.path` will be relative to root of the
+        shared link. Only non-recursive mode is supported for shared link."
     recursive Boolean = false
         "If true, the list folder operation will be applied recursively to all subfolders
         and the response will contain contents of all subfolders."
@@ -962,7 +978,7 @@ union WriteError
     disallowed_name
         "Dropbox will not save the file or folder because of its name."
     team_folder
-        "This endpoint cannot modify or delete team folders."
+        "This endpoint cannot move or delete team folders."
 
 union WriteConflictError
     file
