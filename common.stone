@@ -1,5 +1,11 @@
 namespace common
 
+# Annotates fields to serialize a subset of total fields, depending on caller type
+
+# Annotates fields to redact information before storing in logs
+
+# Annotates fields for documentation changes
+
 alias DropboxTimestamp = Timestamp("%Y-%m-%dT%H:%M:%SZ")
 
 alias Date = Timestamp("%Y-%m-%d")
