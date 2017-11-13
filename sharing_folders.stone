@@ -54,28 +54,40 @@ union FolderAction
 
     change_options
         "Change folder options, such as who can be invited to join the folder."
+
     disable_viewer_info
         "Disable viewer information for this folder."
+
     edit_contents
         "Change or edit contents of the folder."
+
     enable_viewer_info
         "Enable viewer information on the folder."
+
     invite_editor
         "Invite a user or group to join the folder with read and write permission."
+
     invite_viewer
         "Invite a user or group to join the folder with read permission."
+
     invite_viewer_no_comment
         "Invite a user or group to join the folder with read permission but no comment permissions."
+
     relinquish_membership
         "Relinquish one's own membership in the folder."
+
     unmount
         "Unmount the folder."
+
     unshare
         "Stop sharing this folder."
+
     leave_a_copy
         "Keep a copy of the contents upon leaving or being kicked from the folder."
+
     share_link
-        "This action is deprecated. Use create_link instead."
+        "Use create_link instead."
+
     create_link
         "Create a shared link for folder."
 
@@ -517,6 +529,7 @@ route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAcc
     attrs
         owner = "sharing-platform"
         api_group = "truelink-alpha"
+        select_admin_mode = "whole_team"
 
 struct GetMetadataArgs
     shared_folder_id common.SharedFolderId
@@ -539,6 +552,7 @@ route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFold
 
     attrs
         owner = "sharing-platform"
+        select_admin_mode = "whole_team"
 
 struct ListFolderMembersCursorArg
     actions List(MemberAction)?
@@ -591,6 +605,7 @@ route list_folder_members/continue(ListFolderMembersContinueArg, SharedFolderMem
 
     attrs
         owner = "sharing-platform"
+        select_admin_mode = "whole_team"
 
 struct ListFolderMembersContinueArg
     cursor String
@@ -647,6 +662,9 @@ struct ShareFolderArgBase
         :field:`SharedLinkPolicy.members`."
     viewer_info_policy ViewerInfoPolicy?
         "Who can enable/disable viewer info for this shared folder."
+
+    example default
+        path = "/example/workspace"
 
 struct ShareFolderArg extends ShareFolderArgBase
     actions List(FolderAction)?
@@ -1052,6 +1070,9 @@ union RemoveFolderMemberError
         "This action cannot be performed on a team shared folder."
     no_permission
         "The current user does not have permission to perform this action."
+    too_many_files
+        "This shared folder has too many files for leaving a copy. You can
+        still remove this user without leaving a copy."
 
 union_closed RemoveMemberJobStatus extends async.PollResultBase
     complete MemberAccessLevelResult

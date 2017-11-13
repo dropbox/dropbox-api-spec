@@ -11,6 +11,7 @@ alias DropboxTimestamp = Timestamp("%Y-%m-%dT%H:%M:%SZ")
 alias Date = Timestamp("%Y-%m-%d")
 
 # Note - "\\." is needed in order to translate to "\."
+
 alias EmailAddress = String(pattern="^['&A-Za-z0-9._%+-]+@[A-Za-z0-9-][A-Za-z0-9.-]*.[A-Za-z]{2,15}$", max_length=255)
 
 # First name or Last name. NOTE: max_length should be synced with USER_NAME_MAX_LEN
@@ -35,45 +36,59 @@ alias SharedFolderId = NamespaceId
 
 alias SessionId = String
 
-alias PathRootId = NamespaceId
+struct RootInfo
+    "Information about current user's root."
+
+    union
+        team TeamRootInfo
+        user UserRootInfo
+
+    root_namespace_id NamespaceId
+        "The namespace id for user's root namespace. It will be the namespace id
+        of the shared team root if the user is member of a CDM team. Otherwise it
+        will be same as :field:`RootInfo.home_namespace_id`."
+
+    home_namespace_id NamespaceId
+        "The namespace id for user's home namespace."
+
+    example default
+        user = default
+
+struct TeamRootInfo extends RootInfo
+    "Root info when user is member of a CDM team."
+
+    home_path String
+        "The path for user's home directory under the shared team root."
+
+struct UserRootInfo extends RootInfo
+    "Root info when user is not member of a CDM team."
+
+    example default
+        home_namespace_id = "3235641"
+        root_namespace_id = "3235641"
 
 union PathRoot
     home
-        "Paths are relative to the authenticating user's home directory,
+        "Paths are relative to the authenticating user's home namespace,
         whether or not that user belongs to a team."
 
-    member_home
-        "Paths are relative to the authenticating team member's home
-        directory. (This results in :field:`PathRootError.invalid` if the
-        user does not belong to a team.)."
+    root NamespaceId
+        "Paths are relative to the authenticating user's root namespace
+        (This results in :field:`PathRootError.invalid_root` if the
+        user's root namespace has changed.)."
 
-    team PathRootId
-        "Paths are relative to the given team directory. (This results in
-        :field:`PathRootError.invalid` if the user is not a member of
-        the team associated with that path root id.)."
-
-    user_home
-        "Paths are relative to the user's home directory. (This results in
-        :field:`PathRootError.invalid` if the belongs to a team.)."
-
-    namespace_id PathRootId
+    namespace_id NamespaceId
         "Paths are relative to given namespace id (This results in
         :field:`PathRootError.no_permission` if you don't have access
         to this namespace.)."
 
 
-struct InvalidPathRootError
-    path_root PathRootId?
-        "The latest path root id for user's team if the user is still in
-        a team."
-
-
 union PathRootError
-    invalid InvalidPathRootError
-        "The path root id value in Dropbox-API-Path-Root header is no longer
-        valid."
+    invalid_root RootInfo
+        "The root namespace id in Dropbox-API-Path-Root header is not valid. The value
+        of this error is use's latest root info."
     no_permission
-        "You don't have permission to access the path root id in Dropbox-API-Path-Root
+        "You don't have permission to access the namespace id in Dropbox-API-Path-Root
          header."
 
 alias LanguageCode = String(min_length=2)

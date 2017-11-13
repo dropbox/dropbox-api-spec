@@ -116,8 +116,10 @@ struct PaperDocExport extends RefPaperDoc
         doc_id = "uaSvRuxvnkFa12PTkBv5q"
 
 struct PaperDocExportResult
+
     owner String
         "The Paper doc owner's email address."
+
 
     title String
         "The Paper doc title."

@@ -42,6 +42,7 @@ struct RateLimitError
 #
 
 struct TokenFromOAuth1Arg
+
     oauth1_token String(min_length=1)
         "The supplied OAuth 1.0 access token."
 
@@ -53,6 +54,7 @@ struct TokenFromOAuth1Arg
         oauth1_token_secret = "qomoftv0472git7"
 
 struct TokenFromOAuth1Result
+
     oauth2_token String(min_length=1)
         "The OAuth 2.0 token generated from the supplied OAuth 1.0 token."
 

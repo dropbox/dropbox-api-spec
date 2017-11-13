@@ -21,11 +21,28 @@ namespace file_properties
 
     You can think of a property group template as a class definition for a particular key/value
     metadata object, and the property groups themselves as the instantiations of these objects.
+
+
+    Templates are owned either by a user/app pair or team/app pair. Templates and their associated
+    properties can't be accessed by any app other than the app that created them, and even then, only
+    when the app is linked with the owner of the template (either a user or team).
+
+
+    User-owned templates are accessed via the user-auth template/*_for_user endpoints, while
+    team-owned templates are accessed via the team-auth template/*_for_team endpoints. Properties
+    associated with either type of template can be accessed via the user-auth properties/* endpoints.
+
+
+    Finally, properties can be accessed from a number of endpoints that return metadata, including
+    `files/get_metadata`, and `files/list_folder`. Properties can also be added during upload, using
+    `files/upload`.
+
     "
 
 alias TemplateId = String(min_length=1,pattern="(/|ptid:).*")
 alias PathOrId = String(pattern="/(.|[\\r\\n])*|id:.*|(ns:[0-9]+(/.*)?)")
 alias Id = String(min_length=1)
+alias PropertiesSearchCursor = String(min_length=1)
 
 #
 # Core data types
@@ -241,7 +258,7 @@ union RemovePropertiesError extends PropertiesError
     property_group_lookup LookUpPropertiesError
 
 route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
-    "Remove the specified property group from the file. To remove specific property field key
+    "Permanently removes the specified property group from the file. To remove specific property field key
     value pairs, see :route:`properties/update`. To update a template, see
     :route:`templates/update_for_user` or :route:`templates/update_for_team`. Templates can't
     be removed once created."
@@ -289,7 +306,9 @@ route templates/add_for_user(AddTemplateArg, AddTemplateResult, ModifyTemplateEr
         owner = "api-platform"
 
 route templates/add_for_team(AddTemplateArg, AddTemplateResult, ModifyTemplateError)
-    "Add a template associated with a team. See :route:`properties/add` to add properties to a file or folder."
+    "Add a template associated with a team. See :route:`properties/add` to add properties to a file or folder.
+
+    Note: this endpoint will create team-owned templates."
 
     attrs
         auth="team"
@@ -398,6 +417,35 @@ route templates/list_for_team(Void, ListTemplateResult, TemplateError)
         api_group="properties"
         owner = "api-platform"
 
+struct RemoveTemplateArg
+    template_id TemplateId
+        "An identifier for a template created by :route:`templates/add_for_user` or
+        :route:`templates/add_for_team`."
+
+    example default
+        template_id = "ptid:1a5n2i6d3OYEAAAAAAAAAYa"
+
+route templates/remove_for_user(RemoveTemplateArg, Void, TemplateError)
+    "Permanently removes the specified template created from :route:`templates/add_for_user`.
+    All properties associated with the template will also be removed. This action
+    cannot be undone."
+
+    attrs
+        api_group="properties"
+        allow_app_folder_app = true
+        owner = "api-platform"
+
+route templates/remove_for_team(RemoveTemplateArg, Void, TemplateError)
+    "Permanently removes the specified template created from :route:`templates/add_for_user`.
+    All properties associated with the template will also be removed. This action
+    cannot be undone."
+
+    attrs
+        auth="team"
+        api_group="properties"
+        allow_app_folder_app = true
+        owner = "api-platform"
+
 union TemplateOwnerType
     user
         "Template will be associated with a user."
@@ -436,12 +484,17 @@ struct PropertiesSearchQuery
         mode = default
         logical_operator = default
 
-union TemplateFilter
-    filter_none
-        "No templates will be filtered from the result (all templates will be returned)."
+union TemplateFilterBase
     filter_some List(TemplateId, min_items=1)
         "Only templates with an ID in the supplied list will be returned (a subset of
         templates will be returned)."
+
+    example default
+        filter_some = ["ptid:1a5n2i6d3OYEAAAAAAAAAYa"]
+
+union TemplateFilter extends TemplateFilterBase
+    filter_none
+        "No templates will be filtered from the result (all templates will be returned)."
 
     example default
         filter_none = null
@@ -461,17 +514,23 @@ struct PropertiesSearchMatch
         "The ID for the matched file or folder."
     path String
         "The path for the matched file or folder."
+    is_deleted Boolean
+        "Whether the file or folder is deleted."
     property_groups List(PropertyGroup)
         "List of custom property groups associated with the file."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXz"
         path =  "/my_awesome/word.docx"
+        is_deleted = false
         property_groups = [default]
 
 struct PropertiesSearchResult
     matches List(PropertiesSearchMatch)
         "A list (possibly empty) of matches for the query."
+    cursor PropertiesSearchCursor?
+        "Pass the cursor into :route:`properties/search/continue` to continue to receive
+        search results. Cursor will be null when there are no more results."
 
     example default
         matches = [default]
@@ -484,3 +543,25 @@ route properties/search(PropertiesSearchArg, PropertiesSearchResult, PropertiesS
 
     attrs
         api_group="properties"
+        owner = "api-platform"
+
+struct PropertiesSearchContinueArg
+    cursor PropertiesSearchCursor
+        "The cursor returned by your last call to :route:`properties/search` or
+        :route:`properties/search/continue`."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+union PropertiesSearchContinueError
+    reset
+        "Indicates that the cursor has been invalidated. Call
+        :route:`properties/search` to obtain a new cursor."
+
+route properties/search/continue (PropertiesSearchContinueArg, PropertiesSearchResult, PropertiesSearchContinueError)
+    "Once a cursor has been retrieved from :route:`properties/search`, use this to paginate through all
+    search results."
+
+    attrs
+        api_group="properties"
+        owner = "api-platform"

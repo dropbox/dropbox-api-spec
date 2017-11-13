@@ -125,3 +125,15 @@ union TwoStepVerificationPolicy
         "Enabled require two factor authorization."
     require_tfa_disable
         "Disabled require two factor authorization."
+
+union SmartSyncPolicy
+    local
+        "The specified content will be synced as local files by default."
+    on_demand
+        "The specified content will be synced as on-demand files by default."
+
+union_closed GroupCreation
+    admins_and_members
+        "Team admins and members can create groups."
+    admins_only
+        "Only team admins can create groups."

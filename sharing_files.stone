@@ -184,6 +184,10 @@ struct FileMemberActionResult
     result FileMemberActionIndividualResult
         "The outcome of the action on this member."
 
+    example default
+        member = default
+        result = default
+
 union_closed FileMemberActionIndividualResult
     success AccessLevel?
         "Member was successfully removed from this file. If AccessLevel is given,

@@ -73,6 +73,9 @@ struct TeamNamespacesListArg
     limit UInt32(min_value=1, max_value=1000) = 1000
         "Specifying a value here has no effect."
 
+    example default
+        limit = 1
+
 #
 # Route namespaces/list/continue
 #

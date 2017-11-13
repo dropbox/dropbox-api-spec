@@ -10,6 +10,7 @@ union LinkExpiry
         "Set a new expiry or change an existing expiry."
 
 union LinkPassword
+
     remove_password
         "Remove the currently set password for the link."
 

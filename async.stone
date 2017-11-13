@@ -30,6 +30,8 @@ union_closed LaunchResultBase
         "This response indicates that the processing is asynchronous.
         The string is an id that can be used to obtain the status of the asynchronous job."
 
+    example default
+        async_job_id = "34g93hh34h04y384084"
 
 union_closed LaunchEmptyResult extends LaunchResultBase
     "Result returned by methods that may either launch an asynchronous job or complete synchronously.

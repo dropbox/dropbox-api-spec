@@ -126,6 +126,7 @@ union_closed UsersSelectorArg
 #
 
 struct TeamGetInfoResult
+
     name String
         "The name of the team."
 
@@ -201,6 +202,8 @@ union Feature
         "The number of upload API calls allowed per month."
     has_team_shared_dropbox
         "Does this team have a have a company shared dropbox."
+    has_team_file_events
+        "Does this team have file events."
 
 
 union FeatureValue
@@ -209,12 +212,16 @@ union FeatureValue
 
     upload_api_rate_limit UploadApiRateLimitValue
     has_team_shared_dropbox  HasTeamSharedDropboxValue
+    has_team_file_events HasTeamFileEventsValue
 
     example uploadRateLimited
         upload_api_rate_limit = limited
 
     example hasTeamSharedDropbox
         has_team_shared_dropbox  = default
+
+    example hasTeamFileEvents
+        has_team_file_events = ex_no_file_events
 
 
 union UploadApiRateLimitValue
@@ -238,6 +245,16 @@ union HasTeamSharedDropboxValue
 
     example default
         has_team_shared_dropbox = false
+
+
+union HasTeamFileEventsValue
+    "The value for :field:`Feature.has_team_file_events`."
+
+    enabled Boolean
+        "Does this team have file events."
+
+    example ex_no_file_events
+        enabled = false
 
 #
 # Route: feature/get_value_batch

@@ -123,6 +123,8 @@ struct FullAccount extends Account
         but :field:`is_paired` will indicate if a work account is linked."
     account_type users_common.AccountType
         "What type of account this user has."
+    root_info common.RootInfo
+        "The root info for this account."
 
     example default
         "Paired account."
@@ -138,6 +140,7 @@ struct FullAccount extends Account
         is_paired = true
         account_type = business
         disabled = false
+        root_info = default
 
     example unpaired
         "A personal account that is not paired with a team."
@@ -153,6 +156,7 @@ struct FullAccount extends Account
         account_type = default
         profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416673259&size=128x128"
         disabled = false
+        root_info = default
 
 struct Team
     "Information about a team."

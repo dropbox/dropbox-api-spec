@@ -460,6 +460,9 @@ struct LinkMetadata
     expires common.DropboxTimestamp?
         "Expiration time, if set. By default the link won't expire."
 
+    example default
+        path = default
+
 struct PathLinkMetadata extends LinkMetadata
     "Metadata for a path-based shared link."
 
@@ -481,6 +484,7 @@ struct CollectionLinkMetadata extends LinkMetadata
         visibility = public
 
 struct GetSharedLinksArg
+
     path String?
         "See :route:`get_shared_links` description."
 
@@ -495,6 +499,9 @@ struct GetSharedLinksArg
 struct GetSharedLinksResult
     links List(LinkMetadata)
         "Shared links applicable to the path argument."
+
+    example default
+        links = [default]
 
 union GetSharedLinksError
     path files.MalformedPathError
@@ -525,6 +532,7 @@ union_closed PendingUploadMode
         "Assume pending uploads are folders."
 
 struct CreateSharedLinkArg
+
     path String
         "The path to share."
 

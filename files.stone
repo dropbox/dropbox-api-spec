@@ -257,7 +257,8 @@ struct FolderMetadata extends Metadata
 
     property_groups List(file_properties.PropertyGroup)?
         "Additional information if the file has custom properties with the
-        property template specified."
+        property template specified. Note that only properties associated with
+        user-owned templates, not team-owned templates, can be attached to folders."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXz"
@@ -291,6 +292,10 @@ struct GetMetadataArg
     include_has_explicit_shared_members Boolean = false
         "If true, the results will include a flag for each file indicating whether or not
          that file has any explicit members."
+    include_property_groups file_properties.TemplateFilterBase?
+        "If set to a valid list of template IDs, :field:`FileMetadata.property_groups`
+        is set if there exists property data associated with the file and each of the
+        listed templates."
 
     example default
         path = "/Homework/math"
@@ -404,6 +409,10 @@ struct ListFolderArg
         "A shared link to list the contents of. If the link is password-protected, the password
         must be provided. If this field is present, :field:`ListFolderArg.path` will be relative
         to root of the shared link. Only non-recursive mode is supported for shared link."
+    include_property_groups file_properties.TemplateFilterBase?
+        "If set to a valid list of template IDs, :field:`FileMetadata.property_groups`
+        is set if there exists property data associated with the file and each of the
+        listed templates."
 
     example default
         path = "/Homework/math"
@@ -456,6 +465,7 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 struct ListFolderContinueArg
     cursor ListFolderCursor
@@ -479,6 +489,7 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 struct ListFolderGetLatestCursorResult
     cursor ListFolderCursor
@@ -497,6 +508,7 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 #
 # Download
@@ -726,6 +738,8 @@ struct CommitInfo
         Dropbox account via notifications in the client software. If
         :val:`true`, this tells the clients that this modification shouldn't
         result in a user notification."
+    property_groups List(file_properties.PropertyGroup)?
+        "List of custom properties to add to file."
 
     example default
         path = "/Homework/math/Matrices.txt"
@@ -735,6 +749,7 @@ struct CommitInfo
         path = "/Homework/math/Matrices.txt"
         mode = with_revision
         autorename = false
+        property_groups = [default]
 
 struct UploadSessionFinishArg
     cursor UploadSessionCursor
@@ -1209,6 +1224,8 @@ union RelocationError
         "Your move operation would result in an ownership transfer.
         You may reissue the request with
         the field :field:`RelocationArg.allow_ownership_transfer` to true."
+    insufficient_quota
+        "The current user does not have enough space to move or copy the files."
 
 struct RelocationBatchArg
     entries List(RelocationPath)
@@ -1742,6 +1759,9 @@ union_closed SaveUrlResult extends async.LaunchResultBase
     complete FileMetadata
         "Metadata of the file where the URL is saved to."
 
+    example default
+        complete = default
+
 union SaveUrlError
     path WriteError
     download_failed
@@ -1784,7 +1804,7 @@ route save_url/check_job_status(async.PollArg, SaveUrlJobStatus, async.PollError
 # Patched /get_metadata that can return properties
 #
 
-route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError)
+route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError) deprecated by get_metadata
     "Returns the metadata for a file or folder. This is an alpha endpoint
     compatible with the properties API.
 
@@ -1796,6 +1816,7 @@ route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError)
         allow_app_folder_app = true
 
 struct AlphaGetMetadataArg extends GetMetadataArg
+
     include_property_templates List(file_properties.TemplateId)?
         "If set to a valid list of template IDs,
         :field:`FileMetadata.property_groups` is set for files with custom
@@ -1817,7 +1838,7 @@ union_closed AlphaGetMetadataError extends GetMetadataError
 # Patched /upload that accepts properties
 #
 
-route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithProperties)
+route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithProperties) deprecated by alpha/upload
     "Create a new file with the contents provided in the request. Note that this
     endpoint is part of the properties API alpha and is slightly different from
     :route:`upload`.
@@ -1833,13 +1854,9 @@ route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithPrope
         allow_app_folder_app = true
 
 struct CommitInfoWithProperties extends CommitInfo
-    property_groups List(file_properties.PropertyGroup)?
-        "List of custom properties to add to file."
-
     example default
         path = "/Homework/math/Matrices.txt"
         autorename = true
-        property_groups = [default]
 
 union UploadErrorWithProperties extends UploadError
     properties_error file_properties.InvalidPropertyGroupError
