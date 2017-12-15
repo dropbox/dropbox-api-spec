@@ -44,24 +44,25 @@ struct RootInfo
         user UserRootInfo
 
     root_namespace_id NamespaceId
-        "The namespace id for user's root namespace. It will be the namespace id
-        of the shared team root if the user is member of a CDM team. Otherwise it
-        will be same as :field:`RootInfo.home_namespace_id`."
+        "The namespace ID for user's root namespace. It will be the namespace ID
+        of the shared team root if the user is member of a team with a separate team root.
+        Otherwise it will be same as :field:`RootInfo.home_namespace_id`."
 
     home_namespace_id NamespaceId
-        "The namespace id for user's home namespace."
+        "The namespace ID for user's home namespace."
 
     example default
         user = default
 
 struct TeamRootInfo extends RootInfo
-    "Root info when user is member of a CDM team."
+    "Root info when user is member of a team with a separate root namespace ID."
 
     home_path String
         "The path for user's home directory under the shared team root."
 
 struct UserRootInfo extends RootInfo
-    "Root info when user is not member of a CDM team."
+    "Root info when user is not member of a team or
+    the user is a member of a team and the team does not have a separate root namespace."
 
     example default
         home_namespace_id = "3235641"

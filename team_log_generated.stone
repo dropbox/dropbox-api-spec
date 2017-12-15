@@ -12,6 +12,8 @@ import files
 import team_policies
 
 alias FilePath = String
+alias NamespaceId = String
+alias EmailAddress = String(max_length=255)
 alias AppId = String
 alias IpAddress = String
 alias RequestId = String
@@ -20,6 +22,26 @@ alias RequestId = String
 ########################################
 # Union types that are used by events.
 ########################################
+
+union AccessMethodLogInfo
+    "Indicates the method in which the action was performed."
+
+    end_user SessionLogInfo
+        "End user session details."
+    sign_in_as WebSessionLogInfo
+        "Sign in as session details."
+    content_manager WebSessionLogInfo
+        "Content manager session details."
+    admin_console WebSessionLogInfo
+        "Admin console session details."
+    api ApiSessionLogInfo
+        "Api session details."
+
+    example default
+        end_user = default
+
+    example default2
+        end_user = default2
 
 union AccountCaptureAvailability
     unavailable
@@ -31,11 +53,47 @@ union AccountCapturePolicy
     all_users
 
 union AdminRole
-    user
-    limited_admin
-    support_admin
-    user_management_admin
     team_admin
+    user_management_admin
+    support_admin
+    limited_admin
+    member_only
+
+struct Certificate 
+    "Certificate details."
+
+    subject String
+        "Certificate subject."
+    issuer String
+        "Certificate issuer."
+    issue_date String
+        "Certificate issue date."
+    expiration_date String
+        "Certificate expiration date."
+    serial_number String
+        "Certificate serial number."
+    sha1_fingerprint String
+        "Certificate sha1 fingerprint."
+    common_name String?
+        "Certificate common name."
+
+    example default
+        subject = "abc"
+        issuer = "abc"
+        issue_date = "abc"
+        expiration_date = "abc"
+        serial_number = "abc"
+        sha1_fingerprint = "abc"
+        common_name = "abc"
+
+    example default2
+        subject = "xyz"
+        issuer = "xyz"
+        issue_date = "xyz"
+        expiration_date = "xyz"
+        serial_number = "xyz"
+        sha1_fingerprint = "xyz"
+        common_name = "xyz"
 
 union Confidentiality
     confidential
@@ -50,6 +108,54 @@ union DeviceApprovalsPolicy
     unlimited
     limited
 
+struct DeviceLogInfo 
+    "Device's logged information."
+
+    device_id String?
+        "Device unique id. Might be missing due to historical data gap."
+    display_name String?
+        "Device display name. Might be missing due to historical data gap."
+    is_emm_managed Boolean?
+        "True if this device is emm managed, false otherwise. Might be missing due to historical data gap."
+    platform String?
+        "Device platform name. Might be missing due to historical data gap."
+    mac_address String?
+        "Device mac address. Might be missing due to historical data gap."
+    os_version String?
+        "Device OS version. Might be missing due to historical data gap."
+    device_type String?
+        "Device type. Might be missing due to historical data gap."
+    ip_address IpAddress?
+        "IP address. Might be missing due to historical data gap."
+    last_activity String?
+        "Last activity. Might be missing due to historical data gap."
+    app_version String?
+        "Linking app version. Might be missing due to historical data gap."
+
+    example default
+        device_id = "abc"
+        display_name = "abc"
+        is_emm_managed = true
+        platform = "abc"
+        mac_address = "abc"
+        os_version = "abc"
+        device_type = "abc"
+        ip_address = "10.1.1.100"
+        last_activity = "abc"
+        app_version = "abc"
+
+    example default2
+        device_id = "xyz"
+        display_name = "xyz"
+        is_emm_managed = false
+        platform = "xyz"
+        mac_address = "xyz"
+        os_version = "xyz"
+        device_type = "xyz"
+        ip_address = "10.1.1.100"
+        last_activity = "xyz"
+        app_version = "xyz"
+
 union DeviceType
     desktop
     mobile
@@ -63,6 +169,22 @@ union ExtendedVersionHistoryPolicy
     explicitly_unlimited
     implicitly_limited
 
+struct FailureDetailsLogInfo 
+    "Provides details about a failure"
+
+    user_friendly_message String?
+        "A user friendly explanation of the error. Might be missing due to historical data gap."
+    technical_error_message String?
+        "A technical explanation of the error. This is relevant for some errors."
+
+    example default
+        user_friendly_message = "abc"
+        technical_error_message = "abc"
+
+    example default2
+        user_friendly_message = "xyz"
+        technical_error_message = "xyz"
+
 union FileCommentNotificationPolicy
     "Enable or disable file comments notifications"
     disabled
@@ -73,10 +195,66 @@ union FileCommentsPolicy
     disabled
     enabled
 
+struct FileRequestDetails 
+    "File request details"
+
+    asset_index UInt64
+        "Asset position in the Assets list."
+    deadline FileRequestDeadline?
+        "File request deadline. Might be missing due to historical data gap."
+
+    example default
+        asset_index = 3
+        deadline = default
+
+    example default2
+        asset_index = 4
+        deadline = default2
+
+struct FileRequestDeadline 
+    "File request deadline"
+
+    deadline common.DropboxTimestamp?
+        "The deadline for this file request. Might be missing due to historical data gap."
+    allow_late_uploads String?
+        "If set, allow uploads after the deadline has passed. Might be missing due to historical data gap."
+
+    example default
+        deadline = "2017-01-25T15:51:30Z"
+        allow_late_uploads = "one_day"
+
+    example default2
+        deadline = "2017-01-25T15:51:30Z"
+        allow_late_uploads = "one_day"
+
 union FileRequestsPolicy
     "File requests policy"
     disabled
     enabled
+
+struct GeoLocationLogInfo 
+    "Geographic location details."
+
+    city String?
+        "City name."
+    region String?
+        "Region name."
+    country String?
+        "Country code."
+    ip_address IpAddress
+        "IP address."
+
+    example default
+        city = "San Francisco"
+        region = "California"
+        country = "US"
+        ip_address = "10.1.1.100"
+
+    example default2
+        city = "San Francisco"
+        region = "California"
+        country = "US"
+        ip_address = "10.1.1.100"
 
 union GoogleSsoPolicy
     "Google SSO policy"
@@ -86,6 +264,30 @@ union GoogleSsoPolicy
 union GroupJoinPolicy
     open
     request_to_join
+
+union IdentifierType
+    email
+    facebook_profile_name
+
+struct JoinTeamDetails 
+    "Additional information relevant when a new member joins the team."
+
+    linked_apps List(AppLogInfo)
+        "Linked applications."
+    linked_devices List(DeviceLogInfo)
+        "Linked devices."
+    linked_shared_folders List(FolderLogInfo)
+        "Linked shared folders."
+
+    example default
+        linked_apps = [default]
+        linked_devices = [default]
+        linked_shared_folders = [default]
+
+    example default2
+        linked_apps = [default2]
+        linked_devices = [default2]
+        linked_shared_folders = [default2]
 
 union LinkAudience
     public
@@ -144,6 +346,22 @@ union PlacementRestriction
     europe_only
     none
 
+struct RelocateAssetReferencesLogInfo 
+    "Provides the indices of the source asset and the destination asset for a relocate action."
+
+    src_asset_index UInt64
+        "Source asset position in the Assets list."
+    dest_asset_index UInt64
+        "Destination asset position in the Assets list."
+
+    example default
+        src_asset_index = 3
+        dest_asset_index = 3
+
+    example default2
+        src_asset_index = 4
+        dest_asset_index = 4
+
 union SharedContentDownloadsPolicy
     "Shared content downloads policy"
     disabled
@@ -167,6 +385,18 @@ union SharedFolderMemberPolicy
 union SharedFolderMembershipManagementPolicy
     owner
     editors
+
+union SharedLinkAccessLevel
+    "Shared link access level."
+    none
+    reader
+    writer
+
+union SharedLinkVisibility
+    "Defines who has access to a shared link."
+    password
+    public
+    team_only
 
 union SharingFolderJoinPolicy
     "Policy for controlling if team members can join shared folders owned by non team members."
@@ -193,13 +423,25 @@ union SpaceLimitsStatus
     near_quota
     over_quota
 
-union TeamFolderStatus
-    archive
-    unarchive
-
 union TeamMembershipType
     free
     full
+
+struct TeamName 
+    "Team name details"
+
+    team_display_name String
+        "Team's display name."
+    team_legal_name String
+        "Team's legal name."
+
+    example default
+        team_display_name = "abc"
+        team_legal_name = "abc"
+
+    example default2
+        team_display_name = "xyz"
+        team_legal_name = "xyz"
 
 union TfaConfiguration
     "Two factor authentication configuration. Note: the enabled option is deprecated."
@@ -222,6 +464,54 @@ union TwoAccountPolicy
     "Policy for pairing personal account to work account"
     disabled
     enabled
+
+struct UserNameLogInfo 
+    "User's name logged information"
+
+    given_name String
+        "Given name."
+    surname String
+        "Surname."
+    locale String?
+        "Locale. Might be missing due to historical data gap."
+
+    example default
+        given_name = "abc"
+        surname = "abc"
+        locale = "abc"
+
+    example default2
+        given_name = "xyz"
+        surname = "xyz"
+        locale = "xyz"
+
+union WebSessionsFixedLengthPolicy
+    "Web sessions fixed length policy."
+
+    defined DurationLogInfo
+        "Defined fixed session length."
+    undefined 
+        "Undefined fixed session length."
+
+    example default
+        defined = default
+
+    example default2
+        defined = default2
+
+union WebSessionsIdleLengthPolicy
+    "Web sessions idle length policy."
+
+    defined DurationLogInfo
+        "Defined idle session length."
+    undefined 
+        "Undefined idle session length."
+
+    example default
+        defined = default
+
+    example default2
+        defined = default2
 
 ##################
 # Built-in types
@@ -292,7 +582,7 @@ struct UserLogInfo
         "User unique ID. Might be missing due to historical data gap."
     display_name common.DisplayNameLegacy?
         "User display name. Might be missing due to historical data gap."
-    email common.EmailAddress?
+    email EmailAddress?
         "User email address. Might be missing due to historical data gap."
 
     example default
@@ -486,7 +776,7 @@ struct NonTeamMemberLogInfo extends UserLogInfo
 struct NamespaceRelativePathLogInfo 
     "Namespace relative path details."
 
-    ns_id common.NamespaceId?
+    ns_id NamespaceId?
         "Namespace ID. Might be missing due to historical data gap."
     relative_path FilePath?
         "A path relative to the specified namespace ID. Might be missing due to historical data gap."
@@ -522,7 +812,7 @@ struct ResellerLogInfo
 
     reseller_name String
         "Reseller name."
-    reseller_email common.EmailAddress
+    reseller_email EmailAddress
         "Reseller email."
 
     example default
@@ -565,225 +855,25 @@ struct DurationLogInfo
         unit = milliseconds
         amount = 4
 
+struct ExternalUserLogInfo 
+    "A user without a Dropbox account."
+
+    user_identifier String
+        "An external user identifier."
+    identifier_type IdentifierType
+        "Identifier type."
+
+    example default
+        user_identifier = "david@example.com"
+        identifier_type = email
+
+    example default2
+        user_identifier = "david@example.com"
+        identifier_type = email
+
 struct MissingDetails 
     "An indication that an event was returned with missing details"
 
-
-struct DeviceLogInfo 
-    "Device's logged information."
-
-    device_id String?
-        "Device unique id. Might be missing due to historical data gap."
-    display_name String?
-        "Device display name. Might be missing due to historical data gap."
-    is_emm_managed Boolean?
-        "True if this device is emm managed, false otherwise. Might be missing due to historical data gap."
-    platform String?
-        "Device platform name. Might be missing due to historical data gap."
-    mac_address String?
-        "Device mac address. Might be missing due to historical data gap."
-    os_version String?
-        "Device OS version. Might be missing due to historical data gap."
-    device_type String?
-        "Device type. Might be missing due to historical data gap."
-    ip_address IpAddress?
-        "IP address. Might be missing due to historical data gap."
-    last_activity String?
-        "Last activity. Might be missing due to historical data gap."
-    app_version String?
-        "Linking app version. Might be missing due to historical data gap."
-
-    example default
-        device_id = "abc"
-        display_name = "abc"
-        is_emm_managed = true
-        platform = "abc"
-        mac_address = "abc"
-        os_version = "abc"
-        device_type = "abc"
-        ip_address = "10.1.1.100"
-        last_activity = "abc"
-        app_version = "abc"
-
-    example default2
-        device_id = "xyz"
-        display_name = "xyz"
-        is_emm_managed = false
-        platform = "xyz"
-        mac_address = "xyz"
-        os_version = "xyz"
-        device_type = "xyz"
-        ip_address = "10.1.1.100"
-        last_activity = "xyz"
-        app_version = "xyz"
-
-struct RelocateAssetReferencesLogInfo 
-    "Provides the indices of the source asset and the destination asset for a relocate action."
-
-    src_asset_index UInt64
-        "Source asset position in the Assets list."
-    dest_asset_index UInt64
-        "Destination asset position in the Assets list."
-
-    example default
-        src_asset_index = 3
-        dest_asset_index = 3
-
-    example default2
-        src_asset_index = 4
-        dest_asset_index = 4
-
-struct FileRequestDetails 
-    "File request details"
-
-    request_title String?
-        "File request title."
-    asset_index UInt64
-        "Asset position in the Assets list."
-    deadline common.DropboxTimestamp?
-        "File request deadline. Might be missing due to historical data gap."
-
-    example default
-        request_title = "abc"
-        asset_index = 3
-        deadline = "2017-01-25T15:51:30Z"
-
-    example default2
-        request_title = "xyz"
-        asset_index = 4
-        deadline = "2017-01-25T15:51:30Z"
-
-struct FailureDetailsLogInfo 
-    "Provides details about a failure"
-
-    user_friendly_message String?
-        "A user friendly explanation of the error. Might be missing due to historical data gap."
-    technical_error_message String?
-        "A technical explanation of the error. This is relevant for some errors."
-
-    example default
-        user_friendly_message = "abc"
-        technical_error_message = "abc"
-
-    example default2
-        user_friendly_message = "xyz"
-        technical_error_message = "xyz"
-
-struct UserNameLogInfo 
-    "User's name logged information"
-
-    given_name String
-        "Given name."
-    surname String
-        "Surname."
-    locale String?
-        "Locale. Might be missing due to historical data gap."
-
-    example default
-        given_name = "abc"
-        surname = "abc"
-        locale = "abc"
-
-    example default2
-        given_name = "xyz"
-        surname = "xyz"
-        locale = "xyz"
-
-struct JoinTeamDetails 
-    "Additional information relevant when a new member joins the team."
-
-    linked_apps List(AppLogInfo)
-        "Linked applications."
-    linked_devices List(DeviceLogInfo)
-        "Linked devices."
-    linked_shared_folders List(FolderLogInfo)
-        "Linked shared folders."
-
-    example default
-        linked_apps = [default]
-        linked_devices = [default]
-        linked_shared_folders = [default]
-
-    example default2
-        linked_apps = [default2]
-        linked_devices = [default2]
-        linked_shared_folders = [default2]
-
-struct Certificate 
-    "Certificate details."
-
-    subject String
-        "Certificate subject."
-    issuer String
-        "Certificate issuer."
-    issue_date String
-        "Certificate issue date."
-    expiration_date String
-        "Certificate expiration date."
-    serial_number String
-        "Certificate serial number."
-    sha1_fingerprint String
-        "Certificate sha1 fingerprint."
-    common_name String?
-        "Certificate common name."
-
-    example default
-        subject = "abc"
-        issuer = "abc"
-        issue_date = "abc"
-        expiration_date = "abc"
-        serial_number = "abc"
-        sha1_fingerprint = "abc"
-        common_name = "abc"
-
-    example default2
-        subject = "xyz"
-        issuer = "xyz"
-        issue_date = "xyz"
-        expiration_date = "xyz"
-        serial_number = "xyz"
-        sha1_fingerprint = "xyz"
-        common_name = "xyz"
-
-struct TeamName 
-    "Team name details"
-
-    team_display_name String
-        "Team's display name."
-    team_legal_name String
-        "Team's legal name."
-
-    example default
-        team_display_name = "abc"
-        team_legal_name = "abc"
-
-    example default2
-        team_display_name = "xyz"
-        team_legal_name = "xyz"
-
-struct GeoLocationLogInfo 
-    "Geographic location details."
-
-    city String?
-        "City name."
-    region String?
-        "Region name."
-    country String?
-        "Country code."
-    ip_address IpAddress
-        "IP address."
-
-    example default
-        city = "San Francisco"
-        region = "California"
-        country = "US"
-        ip_address = "10.1.1.100"
-
-    example default2
-        city = "San Francisco"
-        region = "California"
-        country = "US"
-        ip_address = "10.1.1.100"
 
 union ActorLogInfo
     "The entity who performed the action."
@@ -798,6 +888,8 @@ union ActorLogInfo
         "Action done by reseller."
     dropbox 
         "Action done by Dropbox."
+    anonymous 
+        "Anonymous actor."
 
     example default
         user = default
@@ -830,6 +922,8 @@ union ContextLogInfo
         "Action was done on behalf of a team member."
     non_team_member NonTeamMemberLogInfo
         "Action was done on behalf of a non team member."
+    anonymous 
+        "Anonymous context."
     team 
         "Action was done on behalf of the team."
 
@@ -843,7 +937,7 @@ union ParticipantLogInfo
     "A user or group"
 
     user UserLogInfo
-        "User details."
+        "A user with a Dropbox account."
     group GroupLogInfo
         "Group details."
 
@@ -853,81 +947,17 @@ union ParticipantLogInfo
     example default2
         user = default2
 
-union WebSessionsFixedLengthPolicy
-    "Web sessions fixed length policy."
-
-    defined DurationLogInfo
-        "Defined fixed session length."
-    undefined 
-        "Undefined fixed session length."
-
-    example default
-        defined = default
-
-    example default2
-        defined = default2
-
-union WebSessionsIdleLengthPolicy
-    "Web sessions idle length policy."
-
-    defined DurationLogInfo
-        "Defined idle session length."
-    undefined 
-        "Undefined idle session length."
-
-    example default
-        defined = default
-
-    example default2
-        defined = default2
-
-union AccessMethodLogInfo
-    "Indicates the method in which the action was performed."
-
-    end_user SessionLogInfo
-        "End user session details."
-    sign_in_as WebSessionLogInfo
-        "Sign in as session details."
-    content_manager WebSessionLogInfo
-        "Content manager session details."
-    admin_console WebSessionLogInfo
-        "Admin console session details."
-    api ApiSessionLogInfo
-        "Api session details."
-
-    example default
-        end_user = default
-
-    example default2
-        end_user = default2
-
 union EventCategory
     "Category of events in event audit log."
 
-    account_capture
-        "Events that have to do with account capture and invite enforcement on team-owned domains."
-    administration
-        "Events that relate to team and team member account administration or team administration. Note that these actions are not necessarily performed by team admins. They might also be performed by Dropbox Support or System or by team members on their own accounts."
     apps
         "Events that apply to management of linked apps."
-    authentication
-        "Events that apply to user authentication in some way."
     comments
         "Events that have to do with comments on files and Paper documents."
-    content_access
-        "Events that apply to changes how people can access content on Dropbox as well as actions that represent actually accessing content."
     devices
         "Events that apply to linked devices on mobile, desktop and Web platforms."
-    device_approvals
-        "Events that concern device approvals and device management."
     domains
         "Events that involve domain management feature: domain verification, invite enforcement and account capture."
-    emm
-        "Events that involve enterprise mobility management and the Dropbox EMM app."
-    errors
-        "Events that mark some type of unexpected outcome."
-    files
-        "Events that mark a user's interaction with files and folders on Dropbox."
     file_operations
         "Events that have to do with filesystem operations on files and folders: copy, move, delete, etc."
     file_requests
@@ -944,18 +974,8 @@ union EventCategory
         "Events that involve using, changing or resetting passwords."
     reports
         "Events that concern generation of admin reports, including team activity and device usage."
-    sessions
-        "Events that mark the beginning or end of sessions as well as those that apply to an ongoing session."
-    shared_files
-        "Events that specifically apply to shared files."
-    shared_folders
-        "Events that specifically apply to shared folders."
-    shared_links
-        "Events that specifically apply to link sharing."
     sharing
         "Events that apply to all types of sharing and collaboration."
-    sharing_policies
-        "Events that concern policies that affect sharing - both at the team level and at the folder level."
     sso
         "Events that involve using or configuring single sign-on as well as administrative policies concerning single sign-on."
     team_folders
@@ -973,84 +993,6 @@ union EventCategory
 #############################
 # Types for specific events
 #############################
-
-struct MemberChangeMembershipTypeDetails
-    "Changed the membership type (limited vs full) for team member."
-
-    prev_value TeamMembershipType
-        "Previous membership type."
-    new_value TeamMembershipType
-        "New membership type."
-
-    example default
-        prev_value = full
-        new_value = full
-
-struct MemberPermanentlyDeleteAccountContentsDetails
-    "Permanently deleted contents of a removed team member account."
-
-struct MemberSpaceLimitsChangeStatusDetails
-    "Changed the status with respect to whether the team member is under or over storage quota specified by policy."
-
-    previous_value SpaceLimitsStatus
-        "Previous storage quota status."
-    new_value SpaceLimitsStatus
-        "New storage quota status."
-
-    example default
-        previous_value = within_quota
-        new_value = within_quota
-
-struct MemberTransferAccountContentsDetails
-    "Transferred contents of a removed team member account to another member."
-
-    src_participant_index UInt64
-        "Source participant position in the Participants list."
-    dest_participant_index UInt64
-        "Destination participant position in the Participants list."
-
-    example default
-        src_participant_index = 3
-        dest_participant_index = 3
-
-struct PaperAdminExportStartDetails
-    "Exported all Paper documents in the team."
-
-struct PaperEnabledUsersGroupAdditionDetails
-    "Users added to Paper enabled users list."
-
-struct PaperEnabledUsersGroupRemovalDetails
-    "Users removed from Paper enabled users list."
-
-struct PaperExternalViewAllowDetails
-    "Paper external sharing policy changed: anyone."
-
-struct PaperExternalViewDefaultTeamDetails
-    "Paper external sharing policy changed: default team."
-
-struct PaperExternalViewForbidDetails
-    "Paper external sharing policy changed: team-only."
-
-struct SfExternalInviteWarnDetails
-    "Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE)."
-
-struct TeamMergeFromDetails
-    "Merged another team into this team."
-
-    team_name String
-        "The name of the team that was merged into this team."
-
-    example default
-        team_name = "abc"
-
-struct TeamMergeToDetails
-    "Merged this team into another team."
-
-    team_name String
-        "The name of the team that this team was merged into."
-
-    example default
-        team_name = "abc"
 
 struct AppLinkTeamDetails
     "Linked an app for team."
@@ -1673,15 +1615,6 @@ struct SsoErrorDetails
     example default
         error_details = default
 
-struct MemberAddNameDetails
-    "Set team member name when joining team."
-
-    value UserNameLogInfo
-        "User's name."
-
-    example default
-        value = default
-
 struct MemberChangeAdminRoleDetails
     "Change the admin role belonging to team member."
 
@@ -1691,20 +1624,32 @@ struct MemberChangeAdminRoleDetails
         "Previous admin role. This field is relevant when the admin role is changed or when the admin role is removed."
 
     example default
-        new_value = user
-        previous_value = user
+        new_value = team_admin
+        previous_value = team_admin
 
 struct MemberChangeEmailDetails
     "Changed team member email address."
 
-    new_value common.EmailAddress
+    new_value EmailAddress
         "New email."
-    previous_value common.EmailAddress?
+    previous_value EmailAddress?
         "Previous email. Might be missing due to historical data gap."
 
     example default
         new_value = "john_smith@acmecorp.com"
         previous_value = "john_smith@acmecorp.com"
+
+struct MemberChangeMembershipTypeDetails
+    "Changed the membership type (limited vs full) for team member."
+
+    prev_value TeamMembershipType
+        "Previous membership type."
+    new_value TeamMembershipType
+        "New membership type."
+
+    example default
+        prev_value = full
+        new_value = full
 
 struct MemberChangeNameDetails
     "Changed team member name."
@@ -1712,7 +1657,7 @@ struct MemberChangeNameDetails
     new_value UserNameLogInfo
         "New user's name."
     previous_value UserNameLogInfo?
-        "Previous user's name. Might be missing due to historical data gap."
+        "Previous user's name."
 
     example default
         new_value = default
@@ -1733,8 +1678,41 @@ struct MemberChangeStatusDetails
         new_value = not_joined
         team_join_details = default
 
+struct MemberPermanentlyDeleteAccountContentsDetails
+    "Permanently deleted contents of a removed team member account."
+
+struct MemberSpaceLimitsChangeStatusDetails
+    "Changed the status with respect to whether the team member is under or over storage quota specified by policy."
+
+    previous_value SpaceLimitsStatus
+        "Previous storage quota status."
+    new_value SpaceLimitsStatus
+        "New storage quota status."
+
+    example default
+        previous_value = within_quota
+        new_value = within_quota
+
 struct MemberSuggestDetails
     "Suggested a new team member to be added to the team."
+
+    suggested_members List(EmailAddress)
+        "suggested users emails."
+
+    example default
+        suggested_members = ["john_smith@acmecorp.com"]
+
+struct MemberTransferAccountContentsDetails
+    "Transferred contents of a removed team member account to another member."
+
+    src_participant_index UInt64
+        "Source participant position in the Participants list."
+    dest_participant_index UInt64
+        "Destination participant position in the Participants list."
+
+    example default
+        src_participant_index = 3
+        dest_participant_index = 3
 
 struct PaperContentAddMemberDetails
     "Added users to the membership of a Paper doc or folder."
@@ -2036,6 +2014,33 @@ struct PaperDocViewDetails
     example default
         event_uuid = "abc"
 
+struct PaperExternalViewAllowDetails
+    "Paper external sharing policy changed: anyone."
+
+    event_uuid String
+        "Event unique identifier."
+
+    example default
+        event_uuid = "abc"
+
+struct PaperExternalViewDefaultTeamDetails
+    "Paper external sharing policy changed: default team."
+
+    event_uuid String
+        "Event unique identifier."
+
+    example default
+        event_uuid = "abc"
+
+struct PaperExternalViewForbidDetails
+    "Paper external sharing policy changed: team-only."
+
+    event_uuid String
+        "Event unique identifier."
+
+    example default
+        event_uuid = "abc"
+
 struct PaperFolderChangeSubscriptionDetails
     "Followed or unfollowed a Paper folder."
 
@@ -2092,6 +2097,9 @@ struct EmmCreateExceptionsReportDetails
 
 struct EmmCreateUsageReportDetails
     "EMM mobile app usage report created."
+
+struct PaperAdminExportStartDetails
+    "Exported all Paper documents in the team."
 
 struct SmartSyncCreateAdminPrivilegeReportDetails
     "Smart Sync non-admin devices report created."
@@ -2168,6 +2176,24 @@ struct SfAllowNonMembersToViewSharedLinksDetails
         original_folder_name = "abc"
         shared_folder_type = "abc"
 
+struct SfExternalInviteWarnDetails
+    "Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE)."
+
+    target_asset_index UInt64
+        "Target asset position in the Assets list."
+    original_folder_name String
+        "Original shared folder name."
+    new_sharing_permission String?
+        "New sharing permission. Might be missing due to historical data gap."
+    previous_sharing_permission String?
+        "Previous sharing permission. Might be missing due to historical data gap."
+
+    example default
+        target_asset_index = 3
+        original_folder_name = "abc"
+        new_sharing_permission = "abc"
+        previous_sharing_permission = "abc"
+
 struct SfInviteGroupDetails
     "Invited a group to a shared folder."
 
@@ -2176,36 +2202,6 @@ struct SfInviteGroupDetails
 
     example default
         target_asset_index = 3
-
-struct SfNestDetails
-    "Changed parent of shared folder."
-
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-    prev_parent_ns_id common.NamespaceId?
-        "Previous parent namespace ID. Might be missing due to historical data gap."
-    new_parent_ns_id common.NamespaceId?
-        "New parent namespace ID. Might be missing due to historical data gap."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        prev_parent_ns_id = "1234"
-        new_parent_ns_id = "1234"
-
-struct SfTeamDeclineDetails
-    "Declined a team member's invitation to a shared folder."
-
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
 
 struct SfTeamGrantAccessDetails
     "Granted access to a shared folder."
@@ -2320,14 +2316,14 @@ struct SharedContentAddLinkExpiryDetails
         "Shared folder type. Might be missing due to historical data gap."
     expiration_start_date String
         "Expiration starting date."
-    expiration_days Int64
+    expiration_days UInt64
         "The number of days from the starting expiration date after which the link will expire."
 
     example default
         target_asset_index = 3
         original_folder_name = "abc"
         shared_folder_type = "abc"
-        expiration_start_date = "abc"
+        expiration_start_date = "2016-11-23T10:30:00Z"
         expiration_days = 3
 
 struct SharedContentAddLinkPasswordDetails
@@ -2434,14 +2430,14 @@ struct SharedContentChangeLinkExpiryDetails
         "Shared folder type. Might be missing due to historical data gap."
     expiration_start_date String
         "Expiration starting date."
-    expiration_days Int64
+    expiration_days UInt64
         "The number of days from the starting expiration date after which the link will expire."
 
     example default
         target_asset_index = 3
         original_folder_name = "abc"
         shared_folder_type = "abc"
-        expiration_start_date = "abc"
+        expiration_start_date = "2016-11-23T10:30:00Z"
         expiration_days = 3
 
 struct SharedContentChangeLinkPasswordDetails
@@ -2666,18 +2662,12 @@ struct SharedContentViewDetails
 struct SharedFolderChangeConfidentialityDetails
     "Set or unset the confidential flag on a shared folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
     new_value Confidentiality
         "New confidentiality value."
     previous_value Confidentiality?
         "Previous confidentiality value. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
         new_value = confidential
         previous_value = confidential
 
@@ -2747,14 +2737,14 @@ struct SharedFolderChangeMemberPolicyDetails
 struct SharedFolderCreateDetails
     "Created a shared folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    parent_ns_id common.NamespaceId?
-        "Parent namespace ID. Might be missing due to historical data gap."
+    target_ns_id NamespaceId?
+        "Target namespace ID. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        parent_ns_id = "1234"
+        target_ns_id = "1234"
+
+struct SharedFolderDeclineInvitationDetails
+    "Declined a team member's invitation to a shared folder."
 
 struct SharedFolderMountDetails
     "Added a shared folder to own Dropbox."
@@ -2768,17 +2758,29 @@ struct SharedFolderMountDetails
         target_asset_index = 3
         original_folder_name = "abc"
 
+struct SharedFolderNestDetails
+    "Changed the parent of a shared folder."
+
+    previous_parent_ns_id NamespaceId?
+        "Previous parent namespace ID. Might be missing due to historical data gap."
+    new_parent_ns_id NamespaceId?
+        "New parent namespace ID. Might be missing due to historical data gap."
+
+    example default
+        previous_parent_ns_id = "1234"
+        new_parent_ns_id = "1234"
+
 struct SharedFolderTransferOwnershipDetails
     "Transferred the ownership of a shared folder to another member."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
+    previous_owner_email EmailAddress?
+        "The email address of the previous shared folder owner."
+    new_owner_email EmailAddress
+        "The email address of the new shared folder owner."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
+        previous_owner_email = "john_smith@acmecorp.com"
+        new_owner_email = "john_smith@acmecorp.com"
 
 struct SharedFolderUnmountDetails
     "Deleted a shared folder from Dropbox."
@@ -2792,92 +2794,110 @@ struct SharedFolderUnmountDetails
         target_asset_index = 3
         original_folder_name = "abc"
 
+struct SharedLinkAddExpiryDetails
+    "Added a shared link expiration date."
+
+    new_value common.DropboxTimestamp
+        "New shared link expiration date."
+
+    example default
+        new_value = "2017-01-25T15:51:30Z"
+
+struct SharedLinkChangeExpiryDetails
+    "Changed the shared link expiration date."
+
+    new_value common.DropboxTimestamp?
+        "New shared link expiration date. Might be missing due to historical data gap."
+    previous_value common.DropboxTimestamp?
+        "Previous shared link expiration date. Might be missing due to historical data gap."
+
+    example default
+        new_value = "2017-01-25T15:51:30Z"
+        previous_value = "2017-01-25T15:51:30Z"
+
+struct SharedLinkChangeVisibilityDetails
+    "Changed the visibility of a shared link."
+
+    new_value SharedLinkVisibility
+        "New shared link visibility."
+    previous_value SharedLinkVisibility?
+        "Previous shared link visibility. Might be missing due to historical data gap."
+
+    example default
+        new_value = public
+        previous_value = public
+
+struct SharedLinkCopyDetails
+    "Added a file/folder to their Dropbox from a shared link."
+
+    shared_link_owner UserLogInfo?
+        "Shared link owner details. Might be missing due to historical data gap."
+
+    example default
+        shared_link_owner = default
+
+struct SharedLinkCreateDetails
+    "Created a new shared link."
+
+    shared_link_access_level SharedLinkAccessLevel?
+        "Defines who can access the shared link. Might be missing due to historical data gap."
+
+    example default
+        shared_link_access_level = none
+
+struct SharedLinkDisableDetails
+    "Removed a shared link."
+
+    shared_link_owner UserLogInfo?
+        "Shared link owner details. Might be missing due to historical data gap."
+
+    example default
+        shared_link_owner = default
+
+struct SharedLinkDownloadDetails
+    "Downloaded a file/folder from a shared link."
+
+    shared_link_owner UserLogInfo?
+        "Shared link owner details. Might be missing due to historical data gap."
+
+    example default
+        shared_link_owner = default
+
+struct SharedLinkRemoveExpiryDetails
+    "Removed a shared link expiration date."
+
+    previous_value common.DropboxTimestamp?
+        "Previous shared link expiration date. Might be missing due to historical data gap."
+
+    example default
+        previous_value = "2017-01-25T15:51:30Z"
+
+struct SharedLinkShareDetails
+    "Added new members as the audience of a shared link."
+
+    shared_link_owner UserLogInfo?
+        "Shared link owner details. Might be missing due to historical data gap."
+    external_users List(ExternalUserLogInfo)?
+        "Users without a Dropbox account that were added as shared link audience."
+
+    example default
+        shared_link_owner = default
+        external_users = [default]
+
+struct SharedLinkViewDetails
+    "Opened a shared link."
+
+    shared_link_owner UserLogInfo?
+        "Shared link owner details. Might be missing due to historical data gap."
+
+    example default
+        shared_link_owner = default
+
 struct SharedNoteOpenedDetails
     "Shared Paper document was opened."
 
-struct ShmodelAppCreateDetails
-    "Created a link to a file using an app."
-
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    token_key String?
-        "Shared link token key."
-
-    example default
-        sharing_permission = "abc"
-        token_key = "abc"
-
-struct ShmodelCreateDetails
-    "Created a new link."
-
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    token_key String?
-        "Shared link token key."
-
-    example default
-        sharing_permission = "abc"
-        token_key = "abc"
-
-struct ShmodelDisableDetails
-    "Removed a link."
-
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    token_key String?
-        "Shared link token key."
-
-    example default
-        sharing_permission = "abc"
-        token_key = "abc"
-
-struct ShmodelFbShareDetails
-    "Shared a link with Facebook users."
-
-    sharing_non_member_recipients List(NonTeamMemberLogInfo)
-        "Sharing non member recipients."
-
-    example default
-        sharing_non_member_recipients = [default]
-
 struct ShmodelGroupShareDetails
     "Shared a link with a group."
-
-struct ShmodelRemoveExpirationDetails
-    "Removed the expiration date from a link."
-
-struct ShmodelSetExpirationDetails
-    "Added an expiration date to a link."
-
-    expiration_start_date String
-        "Expiration starting date."
-    expiration_days Int64
-        "The number of days from the starting expiration date after which the link will expire."
-
-    example default
-        expiration_start_date = "abc"
-        expiration_days = 3
-
-struct ShmodelTeamCopyDetails
-    "Added a team member's file/folder to their Dropbox from a link."
-
-struct ShmodelTeamDownloadDetails
-    "Downloaded a team member's file/folder from a link."
-
-struct ShmodelTeamShareDetails
-    "Shared a link with team members."
-
-struct ShmodelTeamViewDetails
-    "Opened a team member's link."
-
-struct ShmodelVisibilityPasswordDetails
-    "Password-protected a link."
-
-struct ShmodelVisibilityPublicDetails
-    "Made a file/folder visible to anyone with the link."
-
-struct ShmodelVisibilityTeamOnlyDetails
-    "Made a file/folder visible only to team members with the link."
 
 struct SsoAddCertDetails
     "Added the X.509 certificate for SSO."
@@ -2978,14 +2998,14 @@ struct SsoRemoveLogoutUrlDetails
 struct TeamFolderChangeStatusDetails
     "Changed the archival status of a team folder."
 
-    new_value TeamFolderStatus
+    new_value team.TeamFolderStatus
         "New team folder status."
-    previous_value TeamFolderStatus?
+    previous_value team.TeamFolderStatus?
         "Previous team folder status. Might be missing due to historical data gap."
 
     example default
-        new_value = archive
-        previous_value = archive
+        new_value = active
+        previous_value = active
 
 struct TeamFolderCreateDetails
     "Created a new team folder in active status."
@@ -3293,6 +3313,12 @@ struct PaperChangePolicyDetails
         new_value = unspecified
         previous_value = unspecified
 
+struct PaperEnabledUsersGroupAdditionDetails
+    "Users added to Paper enabled users list."
+
+struct PaperEnabledUsersGroupRemovalDetails
+    "Users removed from Paper enabled users list."
+
 struct PermanentDeleteChangePolicyDetails
     "Enabled or disabled the ability of team members to permanently delete content."
 
@@ -3344,7 +3370,7 @@ struct SharingChangeMemberPolicyDetails
 struct SmartSyncChangePolicyDetails
     "Changed the default Smart Sync policy for team members."
 
-    new_value team_policies.SmartSyncPolicy
+    new_value team_policies.SmartSyncPolicy?
         "New smart sync policy."
     previous_value team_policies.SmartSyncPolicy?
         "Previous smart sync policy."
@@ -3437,6 +3463,24 @@ struct WebSessionsChangeIdleLengthPolicyDetails
         new_value = default
         previous_value = default
 
+struct TeamMergeFromDetails
+    "Merged another team into this team."
+
+    team_name String
+        "The name of the team that was merged into this team."
+
+    example default
+        team_name = "abc"
+
+struct TeamMergeToDetails
+    "Merged this team into another team."
+
+    team_name String
+        "The name of the team that this team was merged into."
+
+    example default
+        team_name = "abc"
+
 struct TeamProfileAddLogoDetails
     "Added a team logo to be displayed on shared link headers."
 
@@ -3510,546 +3554,272 @@ struct TfaResetDetails
 union EventDetails
     "Additional fields depending on the event type."
 
-    member_change_membership_type_details MemberChangeMembershipTypeDetails
-        "Changed the membership type (limited vs full) for team member."
-    member_permanently_delete_account_contents_details MemberPermanentlyDeleteAccountContentsDetails
-        "Permanently deleted contents of a removed team member account."
-    member_space_limits_change_status_details MemberSpaceLimitsChangeStatusDetails
-        "Changed the status with respect to whether the team member is under or over storage quota specified by policy."
-    member_transfer_account_contents_details MemberTransferAccountContentsDetails
-        "Transferred contents of a removed team member account to another member."
-    paper_admin_export_start_details PaperAdminExportStartDetails
-        "Exported all Paper documents in the team."
-    paper_enabled_users_group_addition_details PaperEnabledUsersGroupAdditionDetails
-        "Users added to Paper enabled users list."
-    paper_enabled_users_group_removal_details PaperEnabledUsersGroupRemovalDetails
-        "Users removed from Paper enabled users list."
-    paper_external_view_allow_details PaperExternalViewAllowDetails
-        "Paper external sharing policy changed: anyone."
-    paper_external_view_default_team_details PaperExternalViewDefaultTeamDetails
-        "Paper external sharing policy changed: default team."
-    paper_external_view_forbid_details PaperExternalViewForbidDetails
-        "Paper external sharing policy changed: team-only."
-    sf_external_invite_warn_details SfExternalInviteWarnDetails
-        "Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE)."
-    team_merge_from_details TeamMergeFromDetails
-        "Merged another team into this team."
-    team_merge_to_details TeamMergeToDetails
-        "Merged this team into another team."
     app_link_team_details AppLinkTeamDetails
-        "Linked an app for team."
     app_link_user_details AppLinkUserDetails
-        "Linked an app for team member."
     app_unlink_team_details AppUnlinkTeamDetails
-        "Unlinked an app for team."
     app_unlink_user_details AppUnlinkUserDetails
-        "Unlinked an app for team member."
     file_add_comment_details FileAddCommentDetails
-        "Added a file comment."
     file_change_comment_subscription_details FileChangeCommentSubscriptionDetails
-        "Subscribed to or unsubscribed from comment notifications for file."
     file_delete_comment_details FileDeleteCommentDetails
-        "Deleted a file comment."
     file_like_comment_details FileLikeCommentDetails
-        "Liked a file comment."
     file_resolve_comment_details FileResolveCommentDetails
-        "Resolved a file comment."
     file_unlike_comment_details FileUnlikeCommentDetails
-        "Unliked a file comment."
     file_unresolve_comment_details FileUnresolveCommentDetails
-        "Unresolved a file comment."
     device_change_ip_desktop_details DeviceChangeIpDesktopDetails
-        "IP address associated with active desktop session changed."
     device_change_ip_mobile_details DeviceChangeIpMobileDetails
-        "IP address associated with active mobile session changed."
     device_change_ip_web_details DeviceChangeIpWebDetails
-        "IP address associated with active Web session changed."
     device_delete_on_unlink_fail_details DeviceDeleteOnUnlinkFailDetails
-        "Failed to delete all files from an unlinked device."
     device_delete_on_unlink_success_details DeviceDeleteOnUnlinkSuccessDetails
-        "Deleted all files from an unlinked device."
     device_link_fail_details DeviceLinkFailDetails
-        "Failed to link a device."
     device_link_success_details DeviceLinkSuccessDetails
-        "Linked a device."
     device_management_disabled_details DeviceManagementDisabledDetails
-        "Disable Device Management."
     device_management_enabled_details DeviceManagementEnabledDetails
-        "Enable Device Management."
     device_unlink_details DeviceUnlinkDetails
-        "Disconnected a device."
     emm_refresh_auth_token_details EmmRefreshAuthTokenDetails
-        "Refreshed the auth token used for setting up enterprise mobility management."
     account_capture_change_availability_details AccountCaptureChangeAvailabilityDetails
-        "Granted or revoked the option to enable account capture on domains belonging to the team."
     account_capture_migrate_account_details AccountCaptureMigrateAccountDetails
-        "Account captured user migrated their account to the team."
     account_capture_relinquish_account_details AccountCaptureRelinquishAccountDetails
-        "Account captured user relinquished their account by changing the email address associated with it."
     disabled_domain_invites_details DisabledDomainInvitesDetails
-        "Disabled domain invites."
     domain_invites_approve_request_to_join_team_details DomainInvitesApproveRequestToJoinTeamDetails
-        "Approved a member's request to join the team."
     domain_invites_decline_request_to_join_team_details DomainInvitesDeclineRequestToJoinTeamDetails
-        "Declined a user's request to join the team."
     domain_invites_email_existing_users_details DomainInvitesEmailExistingUsersDetails
-        "Sent domain invites to existing domain accounts."
     domain_invites_request_to_join_team_details DomainInvitesRequestToJoinTeamDetails
-        "Asked to join the team."
     domain_invites_set_invite_new_user_pref_to_no_details DomainInvitesSetInviteNewUserPrefToNoDetails
-        "Turned off \u201cAutomatically invite new users\u201d."
     domain_invites_set_invite_new_user_pref_to_yes_details DomainInvitesSetInviteNewUserPrefToYesDetails
-        "Turned on \u201cAutomatically invite new users\u201d."
     domain_verification_add_domain_fail_details DomainVerificationAddDomainFailDetails
-        "Failed to verify a domain belonging to the team."
     domain_verification_add_domain_success_details DomainVerificationAddDomainSuccessDetails
-        "Verified a domain belonging to the team."
     domain_verification_remove_domain_details DomainVerificationRemoveDomainDetails
-        "Removed a domain from the list of verified domains belonging to the team."
     enabled_domain_invites_details EnabledDomainInvitesDetails
-        "Enabled domain invites."
     create_folder_details CreateFolderDetails
-        "Created folders."
     file_add_details FileAddDetails
-        "Added files and/or folders."
     file_copy_details FileCopyDetails
-        "Copied files and/or folders."
     file_delete_details FileDeleteDetails
-        "Deleted files and/or folders."
     file_download_details FileDownloadDetails
-        "Downloaded files and/or folders."
     file_edit_details FileEditDetails
-        "Edited files."
     file_get_copy_reference_details FileGetCopyReferenceDetails
-        "Create a copy reference to a file or folder."
     file_move_details FileMoveDetails
-        "Moved files and/or folders."
     file_permanently_delete_details FilePermanentlyDeleteDetails
-        "Permanently deleted files and/or folders."
     file_preview_details FilePreviewDetails
-        "Previewed files and/or folders."
     file_rename_details FileRenameDetails
-        "Renamed files and/or folders."
     file_restore_details FileRestoreDetails
-        "Restored deleted files and/or folders."
     file_revert_details FileRevertDetails
-        "Reverted files to a previous version."
     file_rollback_changes_details FileRollbackChangesDetails
-        "Rolled back file change location changes."
     file_save_copy_reference_details FileSaveCopyReferenceDetails
-        "Save a file or folder using a copy reference."
     file_request_add_deadline_details FileRequestAddDeadlineDetails
-        "Added a deadline to a file request."
     file_request_change_details FileRequestChangeDetails
-        "Change a file request."
     file_request_change_folder_details FileRequestChangeFolderDetails
-        "Changed the file request folder."
     file_request_close_details FileRequestCloseDetails
-        "Closed a file request."
     file_request_create_details FileRequestCreateDetails
-        "Created a file request."
     file_request_receive_file_details FileRequestReceiveFileDetails
-        "Received files for a file request."
     file_request_remove_deadline_details FileRequestRemoveDeadlineDetails
-        "Removed the file request deadline."
     file_request_send_details FileRequestSendDetails
-        "Sent file request to users via email."
     group_add_external_id_details GroupAddExternalIdDetails
-        "Added an external ID for group."
     group_add_member_details GroupAddMemberDetails
-        "Added team members to a group."
     group_change_external_id_details GroupChangeExternalIdDetails
-        "Changed the external ID for group."
     group_change_management_type_details GroupChangeManagementTypeDetails
-        "Changed group management type."
     group_change_member_role_details GroupChangeMemberRoleDetails
-        "Changed the manager permissions belonging to a group member."
     group_create_details GroupCreateDetails
-        "Created a group."
     group_delete_details GroupDeleteDetails
-        "Deleted a group."
     group_moved_details GroupMovedDetails
-        "Moved a group."
     group_remove_external_id_details GroupRemoveExternalIdDetails
-        "Removed the external ID for group."
     group_remove_member_details GroupRemoveMemberDetails
-        "Removed team members from a group."
     group_rename_details GroupRenameDetails
-        "Renamed a group."
     emm_error_details EmmErrorDetails
-        "Failed to sign in via EMM."
     login_fail_details LoginFailDetails
-        "Failed to sign in."
     login_success_details LoginSuccessDetails
-        "Signed in."
     logout_details LogoutDetails
-        "Signed out."
     reseller_support_session_end_details ResellerSupportSessionEndDetails
-        "Ended reseller support session."
     reseller_support_session_start_details ResellerSupportSessionStartDetails
-        "Started reseller support session."
     sign_in_as_session_end_details SignInAsSessionEndDetails
-        "Ended admin sign-in-as session."
     sign_in_as_session_start_details SignInAsSessionStartDetails
-        "Started admin sign-in-as session."
     sso_error_details SsoErrorDetails
-        "Failed to sign in via SSO."
-    member_add_name_details MemberAddNameDetails
-        "Set team member name when joining team."
     member_change_admin_role_details MemberChangeAdminRoleDetails
-        "Change the admin role belonging to team member."
     member_change_email_details MemberChangeEmailDetails
-        "Changed team member email address."
+    member_change_membership_type_details MemberChangeMembershipTypeDetails
     member_change_name_details MemberChangeNameDetails
-        "Changed team member name."
     member_change_status_details MemberChangeStatusDetails
-        "Changed the membership status of a team member."
+    member_permanently_delete_account_contents_details MemberPermanentlyDeleteAccountContentsDetails
+    member_space_limits_change_status_details MemberSpaceLimitsChangeStatusDetails
     member_suggest_details MemberSuggestDetails
-        "Suggested a new team member to be added to the team."
+    member_transfer_account_contents_details MemberTransferAccountContentsDetails
     paper_content_add_member_details PaperContentAddMemberDetails
-        "Added users to the membership of a Paper doc or folder."
     paper_content_add_to_folder_details PaperContentAddToFolderDetails
-        "Added Paper doc or folder to a folder."
     paper_content_archive_details PaperContentArchiveDetails
-        "Archived Paper doc or folder."
     paper_content_create_details PaperContentCreateDetails
-        "Created a Paper doc or folder."
     paper_content_permanently_delete_details PaperContentPermanentlyDeleteDetails
-        "Permanently deleted a Paper doc or folder."
     paper_content_remove_from_folder_details PaperContentRemoveFromFolderDetails
-        "Removed Paper doc or folder from a folder."
     paper_content_remove_member_details PaperContentRemoveMemberDetails
-        "Removed a user from the membership of a Paper doc or folder."
     paper_content_rename_details PaperContentRenameDetails
-        "Renamed Paper doc or folder."
     paper_content_restore_details PaperContentRestoreDetails
-        "Restored an archived Paper doc or folder."
     paper_doc_add_comment_details PaperDocAddCommentDetails
-        "Added a Paper doc comment."
     paper_doc_change_member_role_details PaperDocChangeMemberRoleDetails
-        "Changed the access type of a Paper doc member."
     paper_doc_change_sharing_policy_details PaperDocChangeSharingPolicyDetails
-        "Changed the sharing policy for Paper doc."
     paper_doc_change_subscription_details PaperDocChangeSubscriptionDetails
-        "Followed or unfollowed a Paper doc."
     paper_doc_deleted_details PaperDocDeletedDetails
-        "Paper doc archived."
     paper_doc_delete_comment_details PaperDocDeleteCommentDetails
-        "Deleted a Paper doc comment."
     paper_doc_download_details PaperDocDownloadDetails
-        "Downloaded a Paper doc in a particular output format."
     paper_doc_edit_details PaperDocEditDetails
-        "Edited a Paper doc."
     paper_doc_edit_comment_details PaperDocEditCommentDetails
-        "Edited a Paper doc comment."
     paper_doc_followed_details PaperDocFollowedDetails
-        "Followed a Paper doc."
     paper_doc_mention_details PaperDocMentionDetails
-        "Mentioned a member in a Paper doc."
     paper_doc_request_access_details PaperDocRequestAccessDetails
-        "Requested to be a member on a Paper doc."
     paper_doc_resolve_comment_details PaperDocResolveCommentDetails
-        "Paper doc comment resolved."
     paper_doc_revert_details PaperDocRevertDetails
-        "Restored a Paper doc to previous revision."
     paper_doc_slack_share_details PaperDocSlackShareDetails
-        "Paper doc link shared via slack."
     paper_doc_team_invite_details PaperDocTeamInviteDetails
-        "Paper doc shared with team member."
     paper_doc_trashed_details PaperDocTrashedDetails
-        "Paper doc trashed."
     paper_doc_unresolve_comment_details PaperDocUnresolveCommentDetails
-        "Unresolved a Paper doc comment."
     paper_doc_untrashed_details PaperDocUntrashedDetails
-        "Paper doc untrashed."
     paper_doc_view_details PaperDocViewDetails
-        "Viewed Paper doc."
+    paper_external_view_allow_details PaperExternalViewAllowDetails
+    paper_external_view_default_team_details PaperExternalViewDefaultTeamDetails
+    paper_external_view_forbid_details PaperExternalViewForbidDetails
     paper_folder_change_subscription_details PaperFolderChangeSubscriptionDetails
-        "Followed or unfollowed a Paper folder."
     paper_folder_deleted_details PaperFolderDeletedDetails
-        "Paper folder archived."
     paper_folder_followed_details PaperFolderFollowedDetails
-        "Followed a Paper folder."
     paper_folder_team_invite_details PaperFolderTeamInviteDetails
-        "Paper folder shared with team member."
     password_change_details PasswordChangeDetails
-        "Changed password."
     password_reset_details PasswordResetDetails
-        "Reset password."
     password_reset_all_details PasswordResetAllDetails
-        "Reset all team member passwords."
     emm_create_exceptions_report_details EmmCreateExceptionsReportDetails
-        "EMM excluded users report created."
     emm_create_usage_report_details EmmCreateUsageReportDetails
-        "EMM mobile app usage report created."
+    paper_admin_export_start_details PaperAdminExportStartDetails
     smart_sync_create_admin_privilege_report_details SmartSyncCreateAdminPrivilegeReportDetails
-        "Smart Sync non-admin devices report created."
     team_activity_create_report_details TeamActivityCreateReportDetails
-        "Created a team activity report."
     collection_share_details CollectionShareDetails
-        "Shared an album."
     note_acl_invite_only_details NoteAclInviteOnlyDetails
-        "Changed a Paper document to be invite-only."
     note_acl_link_details NoteAclLinkDetails
-        "Changed a Paper document to be link accessible."
     note_acl_team_link_details NoteAclTeamLinkDetails
-        "Changed a Paper document to be link accessible for the team."
     note_shared_details NoteSharedDetails
-        "Shared a Paper doc."
     note_share_receive_details NoteShareReceiveDetails
-        "Shared Paper document received."
     open_note_shared_details OpenNoteSharedDetails
-        "Opened a shared Paper doc."
     sf_add_group_details SfAddGroupDetails
-        "Added the team to a shared folder."
     sf_allow_non_members_to_view_shared_links_details SfAllowNonMembersToViewSharedLinksDetails
-        "Allowed non collaborators to view links to files in a shared folder."
+    sf_external_invite_warn_details SfExternalInviteWarnDetails
     sf_invite_group_details SfInviteGroupDetails
-        "Invited a group to a shared folder."
-    sf_nest_details SfNestDetails
-        "Changed parent of shared folder."
-    sf_team_decline_details SfTeamDeclineDetails
-        "Declined a team member's invitation to a shared folder."
     sf_team_grant_access_details SfTeamGrantAccessDetails
-        "Granted access to a shared folder."
     sf_team_invite_details SfTeamInviteDetails
-        "Invited team members to a shared folder."
     sf_team_invite_change_role_details SfTeamInviteChangeRoleDetails
-        "Changed a team member's role in a shared folder."
     sf_team_join_details SfTeamJoinDetails
-        "Joined a team member's shared folder."
     sf_team_join_from_oob_link_details SfTeamJoinFromOobLinkDetails
-        "Joined a team member's shared folder from a link."
     sf_team_uninvite_details SfTeamUninviteDetails
-        "Unshared a folder with a team member."
     shared_content_add_invitees_details SharedContentAddInviteesDetails
-        "Sent an email invitation to the membership of a shared file or folder."
     shared_content_add_link_expiry_details SharedContentAddLinkExpiryDetails
-        "Added an expiry to the link for the shared file or folder."
     shared_content_add_link_password_details SharedContentAddLinkPasswordDetails
-        "Added a password to the link for the shared file or folder."
     shared_content_add_member_details SharedContentAddMemberDetails
-        "Added users and/or groups to the membership of a shared file or folder."
     shared_content_change_downloads_policy_details SharedContentChangeDownloadsPolicyDetails
-        "Changed whether members can download the shared file or folder."
     shared_content_change_invitee_role_details SharedContentChangeInviteeRoleDetails
-        "Changed the access type of an invitee to a shared file or folder before the invitation was claimed."
     shared_content_change_link_audience_details SharedContentChangeLinkAudienceDetails
-        "Changed the audience of the link for a shared file or folder."
     shared_content_change_link_expiry_details SharedContentChangeLinkExpiryDetails
-        "Changed the expiry of the link for the shared file or folder."
     shared_content_change_link_password_details SharedContentChangeLinkPasswordDetails
-        "Changed the password on the link for the shared file or folder."
     shared_content_change_member_role_details SharedContentChangeMemberRoleDetails
-        "Changed the access type of a shared file or folder member."
     shared_content_change_viewer_info_policy_details SharedContentChangeViewerInfoPolicyDetails
-        "Changed whether members can see who viewed the shared file or folder."
     shared_content_claim_invitation_details SharedContentClaimInvitationDetails
-        "Claimed membership to a team member's shared folder."
     shared_content_copy_details SharedContentCopyDetails
-        "Copied the shared file or folder to own Dropbox."
     shared_content_download_details SharedContentDownloadDetails
-        "Downloaded the shared file or folder."
     shared_content_relinquish_membership_details SharedContentRelinquishMembershipDetails
-        "Left the membership of a shared file or folder."
     shared_content_remove_invitee_details SharedContentRemoveInviteeDetails
-        "Removed an invitee from the membership of a shared file or folder before it was claimed."
     shared_content_remove_link_expiry_details SharedContentRemoveLinkExpiryDetails
-        "Removed the expiry of the link for the shared file or folder."
     shared_content_remove_link_password_details SharedContentRemoveLinkPasswordDetails
-        "Removed the password on the link for the shared file or folder."
     shared_content_remove_member_details SharedContentRemoveMemberDetails
-        "Removed a user or a group from the membership of a shared file or folder."
     shared_content_request_access_details SharedContentRequestAccessDetails
-        "Requested to be on the membership of a shared file or folder."
     shared_content_unshare_details SharedContentUnshareDetails
-        "Unshared a shared file or folder by clearing its membership and turning off its link."
     shared_content_view_details SharedContentViewDetails
-        "Previewed the shared file or folder."
     shared_folder_change_confidentiality_details SharedFolderChangeConfidentialityDetails
-        "Set or unset the confidential flag on a shared folder."
     shared_folder_change_link_policy_details SharedFolderChangeLinkPolicyDetails
-        "Changed who can access the shared folder via a link."
     shared_folder_change_member_management_policy_details SharedFolderChangeMemberManagementPolicyDetails
-        "Changed who can manage the membership of a shared folder."
     shared_folder_change_member_policy_details SharedFolderChangeMemberPolicyDetails
-        "Changed who can become a member of the shared folder."
     shared_folder_create_details SharedFolderCreateDetails
-        "Created a shared folder."
+    shared_folder_decline_invitation_details SharedFolderDeclineInvitationDetails
     shared_folder_mount_details SharedFolderMountDetails
-        "Added a shared folder to own Dropbox."
+    shared_folder_nest_details SharedFolderNestDetails
     shared_folder_transfer_ownership_details SharedFolderTransferOwnershipDetails
-        "Transferred the ownership of a shared folder to another member."
     shared_folder_unmount_details SharedFolderUnmountDetails
-        "Deleted a shared folder from Dropbox."
+    shared_link_add_expiry_details SharedLinkAddExpiryDetails
+    shared_link_change_expiry_details SharedLinkChangeExpiryDetails
+    shared_link_change_visibility_details SharedLinkChangeVisibilityDetails
+    shared_link_copy_details SharedLinkCopyDetails
+    shared_link_create_details SharedLinkCreateDetails
+    shared_link_disable_details SharedLinkDisableDetails
+    shared_link_download_details SharedLinkDownloadDetails
+    shared_link_remove_expiry_details SharedLinkRemoveExpiryDetails
+    shared_link_share_details SharedLinkShareDetails
+    shared_link_view_details SharedLinkViewDetails
     shared_note_opened_details SharedNoteOpenedDetails
-        "Shared Paper document was opened."
-    shmodel_app_create_details ShmodelAppCreateDetails
-        "Created a link to a file using an app."
-    shmodel_create_details ShmodelCreateDetails
-        "Created a new link."
-    shmodel_disable_details ShmodelDisableDetails
-        "Removed a link."
-    shmodel_fb_share_details ShmodelFbShareDetails
-        "Shared a link with Facebook users."
     shmodel_group_share_details ShmodelGroupShareDetails
-        "Shared a link with a group."
-    shmodel_remove_expiration_details ShmodelRemoveExpirationDetails
-        "Removed the expiration date from a link."
-    shmodel_set_expiration_details ShmodelSetExpirationDetails
-        "Added an expiration date to a link."
-    shmodel_team_copy_details ShmodelTeamCopyDetails
-        "Added a team member's file/folder to their Dropbox from a link."
-    shmodel_team_download_details ShmodelTeamDownloadDetails
-        "Downloaded a team member's file/folder from a link."
-    shmodel_team_share_details ShmodelTeamShareDetails
-        "Shared a link with team members."
-    shmodel_team_view_details ShmodelTeamViewDetails
-        "Opened a team member's link."
-    shmodel_visibility_password_details ShmodelVisibilityPasswordDetails
-        "Password-protected a link."
-    shmodel_visibility_public_details ShmodelVisibilityPublicDetails
-        "Made a file/folder visible to anyone with the link."
-    shmodel_visibility_team_only_details ShmodelVisibilityTeamOnlyDetails
-        "Made a file/folder visible only to team members with the link."
     sso_add_cert_details SsoAddCertDetails
-        "Added the X.509 certificate for SSO."
     sso_add_login_url_details SsoAddLoginUrlDetails
-        "Added sign-in URL for SSO."
     sso_add_logout_url_details SsoAddLogoutUrlDetails
-        "Added sign-out URL for SSO."
     sso_change_cert_details SsoChangeCertDetails
-        "Changed the X.509 certificate for SSO."
     sso_change_login_url_details SsoChangeLoginUrlDetails
-        "Changed the sign-in URL for SSO."
     sso_change_logout_url_details SsoChangeLogoutUrlDetails
-        "Changed the sign-out URL for SSO."
     sso_change_saml_identity_mode_details SsoChangeSamlIdentityModeDetails
-        "Changed the SAML identity mode for SSO."
     sso_remove_cert_details SsoRemoveCertDetails
-        "Removed the X.509 certificate for SSO."
     sso_remove_login_url_details SsoRemoveLoginUrlDetails
-        "Removed the sign-in URL for SSO."
     sso_remove_logout_url_details SsoRemoveLogoutUrlDetails
-        "Removed single sign-on logout URL."
     team_folder_change_status_details TeamFolderChangeStatusDetails
-        "Changed the archival status of a team folder."
     team_folder_create_details TeamFolderCreateDetails
-        "Created a new team folder in active status."
     team_folder_downgrade_details TeamFolderDowngradeDetails
-        "Downgraded a team folder to a regular shared folder."
     team_folder_permanently_delete_details TeamFolderPermanentlyDeleteDetails
-        "Permanently deleted an archived team folder."
     team_folder_rename_details TeamFolderRenameDetails
-        "Renamed an active or archived team folder."
     account_capture_change_policy_details AccountCaptureChangePolicyDetails
-        "Changed the account capture policy on a domain belonging to the team."
     allow_download_disabled_details AllowDownloadDisabledDetails
-        "Disabled allow downloads."
     allow_download_enabled_details AllowDownloadEnabledDetails
-        "Enabled allow downloads."
     data_placement_restriction_change_policy_details DataPlacementRestrictionChangePolicyDetails
-        "Set a restriction policy regarding the location of data centers where team data resides."
     data_placement_restriction_satisfy_policy_details DataPlacementRestrictionSatisfyPolicyDetails
-        "Satisfied a previously set restriction policy regarding the location of data centers where team data resides (i.e. all data have been migrated according to the restriction placed)."
     device_approvals_change_desktop_policy_details DeviceApprovalsChangeDesktopPolicyDetails
-        "Set or removed a limit on the number of computers each team member can link to their work Dropbox account."
     device_approvals_change_mobile_policy_details DeviceApprovalsChangeMobilePolicyDetails
-        "Set or removed a limit on the number of mobiles devices each team member can link to their work Dropbox account."
     device_approvals_change_overage_action_details DeviceApprovalsChangeOverageActionDetails
-        "Changed the action taken when a team member is already over the limits (e.g when they join the team, an admin lowers limits, etc.)."
     device_approvals_change_unlink_action_details DeviceApprovalsChangeUnlinkActionDetails
-        "Changed the action taken with respect to approval limits when a team member unlinks an approved device."
     emm_add_exception_details EmmAddExceptionDetails
-        "Added an exception for one or more team members to optionally use the regular Dropbox app when EMM is enabled."
     emm_change_policy_details EmmChangePolicyDetails
-        "Enabled or disabled enterprise mobility management for team members."
     emm_remove_exception_details EmmRemoveExceptionDetails
-        "Removed an exception for one or more team members to optionally use the regular Dropbox app when EMM is enabled."
     extended_version_history_change_policy_details ExtendedVersionHistoryChangePolicyDetails
-        "Accepted or opted out of extended version history."
     file_comments_change_policy_details FileCommentsChangePolicyDetails
-        "Enabled or disabled commenting on team files."
     file_requests_change_policy_details FileRequestsChangePolicyDetails
-        "Enabled or disabled file requests."
     file_requests_emails_enabled_details FileRequestsEmailsEnabledDetails
-        "Enabled file request emails for everyone."
     file_requests_emails_restricted_to_team_only_details FileRequestsEmailsRestrictedToTeamOnlyDetails
-        "Allowed file request emails for the team."
     google_sso_change_policy_details GoogleSsoChangePolicyDetails
-        "Enabled or disabled Google single sign-on for the team."
     group_user_management_change_policy_details GroupUserManagementChangePolicyDetails
-        "Changed who can create groups."
     member_requests_change_policy_details MemberRequestsChangePolicyDetails
-        "Changed whether users can find the team when not invited."
     member_space_limits_add_exception_details MemberSpaceLimitsAddExceptionDetails
-        "Added an exception for one or more team members to bypass space limits imposed by policy."
     member_space_limits_change_policy_details MemberSpaceLimitsChangePolicyDetails
-        "Changed the team default limit level."
     member_space_limits_remove_exception_details MemberSpaceLimitsRemoveExceptionDetails
-        "Removed an exception for one or more team members to bypass space limits imposed by policy."
     member_suggestions_change_policy_details MemberSuggestionsChangePolicyDetails
-        "Enabled or disabled the option for team members to suggest new members to add to the team."
     microsoft_office_addin_change_policy_details MicrosoftOfficeAddinChangePolicyDetails
-        "Enabled or disabled the Microsoft Office add-in, which lets team members save files to Dropbox directly from Microsoft Office."
     network_control_change_policy_details NetworkControlChangePolicyDetails
-        "Enabled or disabled network control."
     paper_change_deployment_policy_details PaperChangeDeploymentPolicyDetails
-        "Changed whether Dropbox Paper, when enabled, is deployed to all teams or to specific members of the team."
     paper_change_member_link_policy_details PaperChangeMemberLinkPolicyDetails
-        "Changed whether non team members can view Paper documents using a link."
     paper_change_member_policy_details PaperChangeMemberPolicyDetails
-        "Changed whether team members can share Paper documents externally (i.e. outside the team), and if so, whether they should be accessible only by team members or anyone by default."
     paper_change_policy_details PaperChangePolicyDetails
-        "Enabled or disabled Dropbox Paper for the team."
+    paper_enabled_users_group_addition_details PaperEnabledUsersGroupAdditionDetails
+    paper_enabled_users_group_removal_details PaperEnabledUsersGroupRemovalDetails
     permanent_delete_change_policy_details PermanentDeleteChangePolicyDetails
-        "Enabled or disabled the ability of team members to permanently delete content."
     sharing_change_folder_join_policy_details SharingChangeFolderJoinPolicyDetails
-        "Changed whether team members can join shared folders owned externally (i.e. outside the team)."
     sharing_change_link_policy_details SharingChangeLinkPolicyDetails
-        "Changed whether team members can share links externally (i.e. outside the team), and if so, whether links should be accessible only by team members or anyone by default."
     sharing_change_member_policy_details SharingChangeMemberPolicyDetails
-        "Changed whether team members can share files and folders externally (i.e. outside the team)."
     smart_sync_change_policy_details SmartSyncChangePolicyDetails
-        "Changed the default Smart Sync policy for team members."
     smart_sync_not_opt_out_details SmartSyncNotOptOutDetails
-        "Opted team into Smart Sync."
     smart_sync_opt_out_details SmartSyncOptOutDetails
-        "Opted team out of Smart Sync."
     sso_change_policy_details SsoChangePolicyDetails
-        "Change the single sign-on policy for the team."
     tfa_change_policy_details TfaChangePolicyDetails
-        "Change two-step verification policy for the team."
     two_account_change_policy_details TwoAccountChangePolicyDetails
-        "Enabled or disabled the option for team members to link a personal Dropbox account in addition to their work account to the same computer."
     web_sessions_change_fixed_length_policy_details WebSessionsChangeFixedLengthPolicyDetails
-        "Changed how long team members can stay signed in to Dropbox on the web."
     web_sessions_change_idle_length_policy_details WebSessionsChangeIdleLengthPolicyDetails
-        "Changed how long team members can be idle while signed in to Dropbox on the web."
+    team_merge_from_details TeamMergeFromDetails
+    team_merge_to_details TeamMergeToDetails
     team_profile_add_logo_details TeamProfileAddLogoDetails
-        "Added a team logo to be displayed on shared link headers."
     team_profile_change_default_language_details TeamProfileChangeDefaultLanguageDetails
-        "Changed the default language for the team."
     team_profile_change_logo_details TeamProfileChangeLogoDetails
-        "Changed the team logo to be displayed on shared link headers."
     team_profile_change_name_details TeamProfileChangeNameDetails
-        "Changed the team name."
     team_profile_remove_logo_details TeamProfileRemoveLogoDetails
-        "Removed the team logo to be displayed on shared link headers."
     tfa_add_backup_phone_details TfaAddBackupPhoneDetails
-        "Added a backup phone for two-step verification."
     tfa_add_security_key_details TfaAddSecurityKeyDetails
-        "Added a security key for two-step verification."
     tfa_change_backup_phone_details TfaChangeBackupPhoneDetails
-        "Changed the backup phone for two-step verification."
     tfa_change_status_details TfaChangeStatusDetails
-        "Enabled, disabled or changed the configuration for two-step verification."
     tfa_remove_backup_phone_details TfaRemoveBackupPhoneDetails
-        "Removed the backup phone for two-step verification."
     tfa_remove_security_key_details TfaRemoveSecurityKeyDetails
-        "Removed a security key for two-step verification."
     tfa_reset_details TfaResetDetails
-        "Reset two-step verification for team member."
     missing_details MissingDetails
         "Hints that this event was returned with missing details due to an internal error."
 
@@ -4061,552 +3831,2141 @@ union EventDetails
 # Event Type
 ##############
 
+struct AppLinkTeamType
+    description String
+
+    example default
+        description = "(apps) Linked an app for team."
+
+struct AppLinkUserType
+    description String
+
+    example default
+        description = "(apps) Linked an app for team member."
+
+struct AppUnlinkTeamType
+    description String
+
+    example default
+        description = "(apps) Unlinked an app for team."
+
+struct AppUnlinkUserType
+    description String
+
+    example default
+        description = "(apps) Unlinked an app for team member."
+
+struct FileAddCommentType
+    description String
+
+    example default
+        description = "(comments) Added a file comment."
+
+struct FileChangeCommentSubscriptionType
+    description String
+
+    example default
+        description = "(comments) Subscribed to or unsubscribed from comment notifications for file."
+
+struct FileDeleteCommentType
+    description String
+
+    example default
+        description = "(comments) Deleted a file comment."
+
+struct FileLikeCommentType
+    description String
+
+    example default
+        description = "(comments) Liked a file comment. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct FileResolveCommentType
+    description String
+
+    example default
+        description = "(comments) Resolved a file comment."
+
+struct FileUnlikeCommentType
+    description String
+
+    example default
+        description = "(comments) Unliked a file comment. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct FileUnresolveCommentType
+    description String
+
+    example default
+        description = "(comments) Unresolved a file comment."
+
+struct DeviceChangeIpDesktopType
+    description String
+
+    example default
+        description = "(devices) IP address associated with active desktop session changed."
+
+struct DeviceChangeIpMobileType
+    description String
+
+    example default
+        description = "(devices) IP address associated with active mobile session changed."
+
+struct DeviceChangeIpWebType
+    description String
+
+    example default
+        description = "(devices) IP address associated with active Web session changed."
+
+struct DeviceDeleteOnUnlinkFailType
+    description String
+
+    example default
+        description = "(devices) Failed to delete all files from an unlinked device."
+
+struct DeviceDeleteOnUnlinkSuccessType
+    description String
+
+    example default
+        description = "(devices) Deleted all files from an unlinked device."
+
+struct DeviceLinkFailType
+    description String
+
+    example default
+        description = "(devices) Failed to link a device."
+
+struct DeviceLinkSuccessType
+    description String
+
+    example default
+        description = "(devices) Linked a device."
+
+struct DeviceManagementDisabledType
+    description String
+
+    example default
+        description = "(devices) Disable Device Management. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct DeviceManagementEnabledType
+    description String
+
+    example default
+        description = "(devices) Enable Device Management. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct DeviceUnlinkType
+    description String
+
+    example default
+        description = "(devices) Disconnected a device."
+
+struct EmmRefreshAuthTokenType
+    description String
+
+    example default
+        description = "(devices) Refreshed the auth token used for setting up enterprise mobility management."
+
+struct AccountCaptureChangeAvailabilityType
+    description String
+
+    example default
+        description = "(domains) Granted or revoked the option to enable account capture on domains belonging to the team."
+
+struct AccountCaptureMigrateAccountType
+    description String
+
+    example default
+        description = "(domains) Account captured user migrated their account to the team."
+
+struct AccountCaptureRelinquishAccountType
+    description String
+
+    example default
+        description = "(domains) Account captured user relinquished their account by changing the email address associated with it."
+
+struct DisabledDomainInvitesType
+    description String
+
+    example default
+        description = "(domains) Disabled domain invites. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct DomainInvitesApproveRequestToJoinTeamType
+    description String
+
+    example default
+        description = "(domains) Approved a member's request to join the team."
+
+struct DomainInvitesDeclineRequestToJoinTeamType
+    description String
+
+    example default
+        description = "(domains) Declined a user's request to join the team."
+
+struct DomainInvitesEmailExistingUsersType
+    description String
+
+    example default
+        description = "(domains) Sent domain invites to existing domain accounts."
+
+struct DomainInvitesRequestToJoinTeamType
+    description String
+
+    example default
+        description = "(domains) Asked to join the team."
+
+struct DomainInvitesSetInviteNewUserPrefToNoType
+    description String
+
+    example default
+        description = "(domains) Turned off \u201cAutomatically invite new users\u201d. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct DomainInvitesSetInviteNewUserPrefToYesType
+    description String
+
+    example default
+        description = "(domains) Turned on \u201cAutomatically invite new users\u201d. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct DomainVerificationAddDomainFailType
+    description String
+
+    example default
+        description = "(domains) Failed to verify a domain belonging to the team."
+
+struct DomainVerificationAddDomainSuccessType
+    description String
+
+    example default
+        description = "(domains) Verified a domain belonging to the team."
+
+struct DomainVerificationRemoveDomainType
+    description String
+
+    example default
+        description = "(domains) Removed a domain from the list of verified domains belonging to the team."
+
+struct EnabledDomainInvitesType
+    description String
+
+    example default
+        description = "(domains) Enabled domain invites. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct CreateFolderType
+    description String
+
+    example default
+        description = "(file_operations) Created folders. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct FileAddType
+    description String
+
+    example default
+        description = "(file_operations) Added files and/or folders."
+
+struct FileCopyType
+    description String
+
+    example default
+        description = "(file_operations) Copied files and/or folders."
+
+struct FileDeleteType
+    description String
+
+    example default
+        description = "(file_operations) Deleted files and/or folders."
+
+struct FileDownloadType
+    description String
+
+    example default
+        description = "(file_operations) Downloaded files and/or folders."
+
+struct FileEditType
+    description String
+
+    example default
+        description = "(file_operations) Edited files."
+
+struct FileGetCopyReferenceType
+    description String
+
+    example default
+        description = "(file_operations) Create a copy reference to a file or folder."
+
+struct FileMoveType
+    description String
+
+    example default
+        description = "(file_operations) Moved files and/or folders."
+
+struct FilePermanentlyDeleteType
+    description String
+
+    example default
+        description = "(file_operations) Permanently deleted files and/or folders."
+
+struct FilePreviewType
+    description String
+
+    example default
+        description = "(file_operations) Previewed files and/or folders."
+
+struct FileRenameType
+    description String
+
+    example default
+        description = "(file_operations) Renamed files and/or folders."
+
+struct FileRestoreType
+    description String
+
+    example default
+        description = "(file_operations) Restored deleted files and/or folders."
+
+struct FileRevertType
+    description String
+
+    example default
+        description = "(file_operations) Reverted files to a previous version."
+
+struct FileRollbackChangesType
+    description String
+
+    example default
+        description = "(file_operations) Rolled back file change location changes."
+
+struct FileSaveCopyReferenceType
+    description String
+
+    example default
+        description = "(file_operations) Save a file or folder using a copy reference."
+
+struct FileRequestAddDeadlineType
+    description String
+
+    example default
+        description = "(file_requests) Added a deadline to a file request. This event is replaced by file_request_change and will not be logged going forward."
+
+struct FileRequestChangeType
+    description String
+
+    example default
+        description = "(file_requests) Change a file request."
+
+struct FileRequestChangeFolderType
+    description String
+
+    example default
+        description = "(file_requests) Changed the file request folder. This event is replaced by file_request_change and will not be logged going forward."
+
+struct FileRequestCloseType
+    description String
+
+    example default
+        description = "(file_requests) Closed a file request."
+
+struct FileRequestCreateType
+    description String
+
+    example default
+        description = "(file_requests) Created a file request."
+
+struct FileRequestReceiveFileType
+    description String
+
+    example default
+        description = "(file_requests) Received files for a file request."
+
+struct FileRequestRemoveDeadlineType
+    description String
+
+    example default
+        description = "(file_requests) Removed the file request deadline. This event is replaced by file_request_change and will not be logged going forward."
+
+struct FileRequestSendType
+    description String
+
+    example default
+        description = "(file_requests) Sent file request to users via email. This event is replaced by file_request_change and will not be logged going forward."
+
+struct GroupAddExternalIdType
+    description String
+
+    example default
+        description = "(groups) Added an external ID for group."
+
+struct GroupAddMemberType
+    description String
+
+    example default
+        description = "(groups) Added team members to a group."
+
+struct GroupChangeExternalIdType
+    description String
+
+    example default
+        description = "(groups) Changed the external ID for group."
+
+struct GroupChangeManagementTypeType
+    description String
+
+    example default
+        description = "(groups) Changed group management type."
+
+struct GroupChangeMemberRoleType
+    description String
+
+    example default
+        description = "(groups) Changed the manager permissions belonging to a group member."
+
+struct GroupCreateType
+    description String
+
+    example default
+        description = "(groups) Created a group."
+
+struct GroupDeleteType
+    description String
+
+    example default
+        description = "(groups) Deleted a group."
+
+struct GroupMovedType
+    description String
+
+    example default
+        description = "(groups) Moved a group. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct GroupRemoveExternalIdType
+    description String
+
+    example default
+        description = "(groups) Removed the external ID for group."
+
+struct GroupRemoveMemberType
+    description String
+
+    example default
+        description = "(groups) Removed team members from a group."
+
+struct GroupRenameType
+    description String
+
+    example default
+        description = "(groups) Renamed a group."
+
+struct EmmErrorType
+    description String
+
+    example default
+        description = "(logins) Failed to sign in via EMM. This event is replaced by login_fail and will not be logged going forward."
+
+struct LoginFailType
+    description String
+
+    example default
+        description = "(logins) Failed to sign in."
+
+struct LoginSuccessType
+    description String
+
+    example default
+        description = "(logins) Signed in."
+
+struct LogoutType
+    description String
+
+    example default
+        description = "(logins) Signed out."
+
+struct ResellerSupportSessionEndType
+    description String
+
+    example default
+        description = "(logins) Ended reseller support session."
+
+struct ResellerSupportSessionStartType
+    description String
+
+    example default
+        description = "(logins) Started reseller support session."
+
+struct SignInAsSessionEndType
+    description String
+
+    example default
+        description = "(logins) Ended admin sign-in-as session."
+
+struct SignInAsSessionStartType
+    description String
+
+    example default
+        description = "(logins) Started admin sign-in-as session."
+
+struct SsoErrorType
+    description String
+
+    example default
+        description = "(logins) Failed to sign in via SSO. This event is replaced by login_fail and will not be logged going forward."
+
+struct MemberChangeAdminRoleType
+    description String
+
+    example default
+        description = "(members) Change the admin role belonging to team member."
+
+struct MemberChangeEmailType
+    description String
+
+    example default
+        description = "(members) Changed team member email address."
+
+struct MemberChangeMembershipTypeType
+    description String
+
+    example default
+        description = "(members) Changed the membership type (limited vs full) for team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct MemberChangeNameType
+    description String
+
+    example default
+        description = "(members) Changed team member name."
+
+struct MemberChangeStatusType
+    description String
+
+    example default
+        description = "(members) Changed the membership status of a team member."
+
+struct MemberPermanentlyDeleteAccountContentsType
+    description String
+
+    example default
+        description = "(members) Permanently deleted contents of a removed team member account."
+
+struct MemberSpaceLimitsChangeStatusType
+    description String
+
+    example default
+        description = "(members) Changed the status with respect to whether the team member is under or over storage quota specified by policy."
+
+struct MemberSuggestType
+    description String
+
+    example default
+        description = "(members) Suggested a new team member to be added to the team."
+
+struct MemberTransferAccountContentsType
+    description String
+
+    example default
+        description = "(members) Transferred contents of a removed team member account to another member."
+
+struct PaperContentAddMemberType
+    description String
+
+    example default
+        description = "(paper) Added users to the membership of a Paper doc or folder."
+
+struct PaperContentAddToFolderType
+    description String
+
+    example default
+        description = "(paper) Added Paper doc or folder to a folder."
+
+struct PaperContentArchiveType
+    description String
+
+    example default
+        description = "(paper) Archived Paper doc or folder."
+
+struct PaperContentCreateType
+    description String
+
+    example default
+        description = "(paper) Created a Paper doc or folder."
+
+struct PaperContentPermanentlyDeleteType
+    description String
+
+    example default
+        description = "(paper) Permanently deleted a Paper doc or folder."
+
+struct PaperContentRemoveFromFolderType
+    description String
+
+    example default
+        description = "(paper) Removed Paper doc or folder from a folder."
+
+struct PaperContentRemoveMemberType
+    description String
+
+    example default
+        description = "(paper) Removed a user from the membership of a Paper doc or folder."
+
+struct PaperContentRenameType
+    description String
+
+    example default
+        description = "(paper) Renamed Paper doc or folder."
+
+struct PaperContentRestoreType
+    description String
+
+    example default
+        description = "(paper) Restored an archived Paper doc or folder."
+
+struct PaperDocAddCommentType
+    description String
+
+    example default
+        description = "(paper) Added a Paper doc comment."
+
+struct PaperDocChangeMemberRoleType
+    description String
+
+    example default
+        description = "(paper) Changed the access type of a Paper doc member."
+
+struct PaperDocChangeSharingPolicyType
+    description String
+
+    example default
+        description = "(paper) Changed the sharing policy for Paper doc."
+
+struct PaperDocChangeSubscriptionType
+    description String
+
+    example default
+        description = "(paper) Followed or unfollowed a Paper doc."
+
+struct PaperDocDeletedType
+    description String
+
+    example default
+        description = "(paper) Paper doc archived. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct PaperDocDeleteCommentType
+    description String
+
+    example default
+        description = "(paper) Deleted a Paper doc comment."
+
+struct PaperDocDownloadType
+    description String
+
+    example default
+        description = "(paper) Downloaded a Paper doc in a particular output format."
+
+struct PaperDocEditType
+    description String
+
+    example default
+        description = "(paper) Edited a Paper doc."
+
+struct PaperDocEditCommentType
+    description String
+
+    example default
+        description = "(paper) Edited a Paper doc comment."
+
+struct PaperDocFollowedType
+    description String
+
+    example default
+        description = "(paper) Followed a Paper doc. This event is replaced by paper_doc_change_subscription and will not be logged going forward."
+
+struct PaperDocMentionType
+    description String
+
+    example default
+        description = "(paper) Mentioned a member in a Paper doc."
+
+struct PaperDocRequestAccessType
+    description String
+
+    example default
+        description = "(paper) Requested to be a member on a Paper doc."
+
+struct PaperDocResolveCommentType
+    description String
+
+    example default
+        description = "(paper) Paper doc comment resolved."
+
+struct PaperDocRevertType
+    description String
+
+    example default
+        description = "(paper) Restored a Paper doc to previous revision."
+
+struct PaperDocSlackShareType
+    description String
+
+    example default
+        description = "(paper) Paper doc link shared via slack."
+
+struct PaperDocTeamInviteType
+    description String
+
+    example default
+        description = "(paper) Paper doc shared with team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct PaperDocTrashedType
+    description String
+
+    example default
+        description = "(paper) Paper doc trashed."
+
+struct PaperDocUnresolveCommentType
+    description String
+
+    example default
+        description = "(paper) Unresolved a Paper doc comment."
+
+struct PaperDocUntrashedType
+    description String
+
+    example default
+        description = "(paper) Paper doc untrashed."
+
+struct PaperDocViewType
+    description String
+
+    example default
+        description = "(paper) Viewed Paper doc."
+
+struct PaperExternalViewAllowType
+    description String
+
+    example default
+        description = "(paper) Paper external sharing policy changed: anyone. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct PaperExternalViewDefaultTeamType
+    description String
+
+    example default
+        description = "(paper) Paper external sharing policy changed: default team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct PaperExternalViewForbidType
+    description String
+
+    example default
+        description = "(paper) Paper external sharing policy changed: team-only. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct PaperFolderChangeSubscriptionType
+    description String
+
+    example default
+        description = "(paper) Followed or unfollowed a Paper folder."
+
+struct PaperFolderDeletedType
+    description String
+
+    example default
+        description = "(paper) Paper folder archived. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct PaperFolderFollowedType
+    description String
+
+    example default
+        description = "(paper) Followed a Paper folder. This event is replaced by paper_folder_change_subscription and will not be logged going forward."
+
+struct PaperFolderTeamInviteType
+    description String
+
+    example default
+        description = "(paper) Paper folder shared with team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct PasswordChangeType
+    description String
+
+    example default
+        description = "(passwords) Changed password."
+
+struct PasswordResetType
+    description String
+
+    example default
+        description = "(passwords) Reset password."
+
+struct PasswordResetAllType
+    description String
+
+    example default
+        description = "(passwords) Reset all team member passwords."
+
+struct EmmCreateExceptionsReportType
+    description String
+
+    example default
+        description = "(reports) EMM excluded users report created."
+
+struct EmmCreateUsageReportType
+    description String
+
+    example default
+        description = "(reports) EMM mobile app usage report created."
+
+struct PaperAdminExportStartType
+    description String
+
+    example default
+        description = "(reports) Exported all Paper documents in the team."
+
+struct SmartSyncCreateAdminPrivilegeReportType
+    description String
+
+    example default
+        description = "(reports) Smart Sync non-admin devices report created."
+
+struct TeamActivityCreateReportType
+    description String
+
+    example default
+        description = "(reports) Created a team activity report."
+
+struct CollectionShareType
+    description String
+
+    example default
+        description = "(sharing) Shared an album."
+
+struct NoteAclInviteOnlyType
+    description String
+
+    example default
+        description = "(sharing) Changed a Paper document to be invite-only. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct NoteAclLinkType
+    description String
+
+    example default
+        description = "(sharing) Changed a Paper document to be link accessible. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct NoteAclTeamLinkType
+    description String
+
+    example default
+        description = "(sharing) Changed a Paper document to be link accessible for the team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct NoteSharedType
+    description String
+
+    example default
+        description = "(sharing) Shared a Paper doc. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct NoteShareReceiveType
+    description String
+
+    example default
+        description = "(sharing) Shared Paper document received. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct OpenNoteSharedType
+    description String
+
+    example default
+        description = "(sharing) Opened a shared Paper doc. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfAddGroupType
+    description String
+
+    example default
+        description = "(sharing) Added the team to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfAllowNonMembersToViewSharedLinksType
+    description String
+
+    example default
+        description = "(sharing) Allowed non collaborators to view links to files in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfExternalInviteWarnType
+    description String
+
+    example default
+        description = "(sharing) Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE). This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfInviteGroupType
+    description String
+
+    example default
+        description = "(sharing) Invited a group to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfTeamGrantAccessType
+    description String
+
+    example default
+        description = "(sharing) Granted access to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfTeamInviteType
+    description String
+
+    example default
+        description = "(sharing) Invited team members to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfTeamInviteChangeRoleType
+    description String
+
+    example default
+        description = "(sharing) Changed a team member's role in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfTeamJoinType
+    description String
+
+    example default
+        description = "(sharing) Joined a team member's shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfTeamJoinFromOobLinkType
+    description String
+
+    example default
+        description = "(sharing) Joined a team member's shared folder from a link. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfTeamUninviteType
+    description String
+
+    example default
+        description = "(sharing) Unshared a folder with a team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SharedContentAddInviteesType
+    description String
+
+    example default
+        description = "(sharing) Sent an email invitation to the membership of a shared file or folder."
+
+struct SharedContentAddLinkExpiryType
+    description String
+
+    example default
+        description = "(sharing) Added an expiry to the link for the shared file or folder."
+
+struct SharedContentAddLinkPasswordType
+    description String
+
+    example default
+        description = "(sharing) Added a password to the link for the shared file or folder."
+
+struct SharedContentAddMemberType
+    description String
+
+    example default
+        description = "(sharing) Added users and/or groups to the membership of a shared file or folder."
+
+struct SharedContentChangeDownloadsPolicyType
+    description String
+
+    example default
+        description = "(sharing) Changed whether members can download the shared file or folder."
+
+struct SharedContentChangeInviteeRoleType
+    description String
+
+    example default
+        description = "(sharing) Changed the access type of an invitee to a shared file or folder before the invitation was claimed."
+
+struct SharedContentChangeLinkAudienceType
+    description String
+
+    example default
+        description = "(sharing) Changed the audience of the link for a shared file or folder."
+
+struct SharedContentChangeLinkExpiryType
+    description String
+
+    example default
+        description = "(sharing) Changed the expiry of the link for the shared file or folder."
+
+struct SharedContentChangeLinkPasswordType
+    description String
+
+    example default
+        description = "(sharing) Changed the password on the link for the shared file or folder."
+
+struct SharedContentChangeMemberRoleType
+    description String
+
+    example default
+        description = "(sharing) Changed the access type of a shared file or folder member."
+
+struct SharedContentChangeViewerInfoPolicyType
+    description String
+
+    example default
+        description = "(sharing) Changed whether members can see who viewed the shared file or folder."
+
+struct SharedContentClaimInvitationType
+    description String
+
+    example default
+        description = "(sharing) Claimed membership to a team member's shared folder."
+
+struct SharedContentCopyType
+    description String
+
+    example default
+        description = "(sharing) Copied the shared file or folder to own Dropbox."
+
+struct SharedContentDownloadType
+    description String
+
+    example default
+        description = "(sharing) Downloaded the shared file or folder."
+
+struct SharedContentRelinquishMembershipType
+    description String
+
+    example default
+        description = "(sharing) Left the membership of a shared file or folder."
+
+struct SharedContentRemoveInviteeType
+    description String
+
+    example default
+        description = "(sharing) Removed an invitee from the membership of a shared file or folder before it was claimed."
+
+struct SharedContentRemoveLinkExpiryType
+    description String
+
+    example default
+        description = "(sharing) Removed the expiry of the link for the shared file or folder."
+
+struct SharedContentRemoveLinkPasswordType
+    description String
+
+    example default
+        description = "(sharing) Removed the password on the link for the shared file or folder."
+
+struct SharedContentRemoveMemberType
+    description String
+
+    example default
+        description = "(sharing) Removed a user or a group from the membership of a shared file or folder."
+
+struct SharedContentRequestAccessType
+    description String
+
+    example default
+        description = "(sharing) Requested to be on the membership of a shared file or folder."
+
+struct SharedContentUnshareType
+    description String
+
+    example default
+        description = "(sharing) Unshared a shared file or folder by clearing its membership and turning off its link."
+
+struct SharedContentViewType
+    description String
+
+    example default
+        description = "(sharing) Previewed the shared file or folder."
+
+struct SharedFolderChangeConfidentialityType
+    description String
+
+    example default
+        description = "(sharing) Set or unset the confidential flag on a shared folder."
+
+struct SharedFolderChangeLinkPolicyType
+    description String
+
+    example default
+        description = "(sharing) Changed who can access the shared folder via a link."
+
+struct SharedFolderChangeMemberManagementPolicyType
+    description String
+
+    example default
+        description = "(sharing) Changed who can manage the membership of a shared folder."
+
+struct SharedFolderChangeMemberPolicyType
+    description String
+
+    example default
+        description = "(sharing) Changed who can become a member of the shared folder."
+
+struct SharedFolderCreateType
+    description String
+
+    example default
+        description = "(sharing) Created a shared folder."
+
+struct SharedFolderDeclineInvitationType
+    description String
+
+    example default
+        description = "(sharing) Declined a team member's invitation to a shared folder."
+
+struct SharedFolderMountType
+    description String
+
+    example default
+        description = "(sharing) Added a shared folder to own Dropbox."
+
+struct SharedFolderNestType
+    description String
+
+    example default
+        description = "(sharing) Changed the parent of a shared folder."
+
+struct SharedFolderTransferOwnershipType
+    description String
+
+    example default
+        description = "(sharing) Transferred the ownership of a shared folder to another member."
+
+struct SharedFolderUnmountType
+    description String
+
+    example default
+        description = "(sharing) Deleted a shared folder from Dropbox."
+
+struct SharedLinkAddExpiryType
+    description String
+
+    example default
+        description = "(sharing) Added a shared link expiration date."
+
+struct SharedLinkChangeExpiryType
+    description String
+
+    example default
+        description = "(sharing) Changed the shared link expiration date."
+
+struct SharedLinkChangeVisibilityType
+    description String
+
+    example default
+        description = "(sharing) Changed the visibility of a shared link."
+
+struct SharedLinkCopyType
+    description String
+
+    example default
+        description = "(sharing) Added a file/folder to their Dropbox from a shared link."
+
+struct SharedLinkCreateType
+    description String
+
+    example default
+        description = "(sharing) Created a new shared link."
+
+struct SharedLinkDisableType
+    description String
+
+    example default
+        description = "(sharing) Removed a shared link."
+
+struct SharedLinkDownloadType
+    description String
+
+    example default
+        description = "(sharing) Downloaded a file/folder from a shared link."
+
+struct SharedLinkRemoveExpiryType
+    description String
+
+    example default
+        description = "(sharing) Removed a shared link expiration date."
+
+struct SharedLinkShareType
+    description String
+
+    example default
+        description = "(sharing) Added new members as the audience of a shared link."
+
+struct SharedLinkViewType
+    description String
+
+    example default
+        description = "(sharing) Opened a shared link."
+
+struct SharedNoteOpenedType
+    description String
+
+    example default
+        description = "(sharing) Shared Paper document was opened. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct ShmodelGroupShareType
+    description String
+
+    example default
+        description = "(sharing) Shared a link with a group. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SsoAddCertType
+    description String
+
+    example default
+        description = "(sso) Added the X.509 certificate for SSO."
+
+struct SsoAddLoginUrlType
+    description String
+
+    example default
+        description = "(sso) Added sign-in URL for SSO."
+
+struct SsoAddLogoutUrlType
+    description String
+
+    example default
+        description = "(sso) Added sign-out URL for SSO."
+
+struct SsoChangeCertType
+    description String
+
+    example default
+        description = "(sso) Changed the X.509 certificate for SSO."
+
+struct SsoChangeLoginUrlType
+    description String
+
+    example default
+        description = "(sso) Changed the sign-in URL for SSO."
+
+struct SsoChangeLogoutUrlType
+    description String
+
+    example default
+        description = "(sso) Changed the sign-out URL for SSO."
+
+struct SsoChangeSamlIdentityModeType
+    description String
+
+    example default
+        description = "(sso) Changed the SAML identity mode for SSO."
+
+struct SsoRemoveCertType
+    description String
+
+    example default
+        description = "(sso) Removed the X.509 certificate for SSO."
+
+struct SsoRemoveLoginUrlType
+    description String
+
+    example default
+        description = "(sso) Removed the sign-in URL for SSO."
+
+struct SsoRemoveLogoutUrlType
+    description String
+
+    example default
+        description = "(sso) Removed single sign-on logout URL."
+
+struct TeamFolderChangeStatusType
+    description String
+
+    example default
+        description = "(team_folders) Changed the archival status of a team folder."
+
+struct TeamFolderCreateType
+    description String
+
+    example default
+        description = "(team_folders) Created a new team folder in active status."
+
+struct TeamFolderDowngradeType
+    description String
+
+    example default
+        description = "(team_folders) Downgraded a team folder to a regular shared folder."
+
+struct TeamFolderPermanentlyDeleteType
+    description String
+
+    example default
+        description = "(team_folders) Permanently deleted an archived team folder."
+
+struct TeamFolderRenameType
+    description String
+
+    example default
+        description = "(team_folders) Renamed an active or archived team folder."
+
+struct AccountCaptureChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed the account capture policy on a domain belonging to the team."
+
+struct AllowDownloadDisabledType
+    description String
+
+    example default
+        description = "(team_policies) Disabled allow downloads. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct AllowDownloadEnabledType
+    description String
+
+    example default
+        description = "(team_policies) Enabled allow downloads. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct DataPlacementRestrictionChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Set a restriction policy regarding the location of data centers where team data resides."
+
+struct DataPlacementRestrictionSatisfyPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Satisfied a previously set restriction policy regarding the location of data centers where team data resides (i.e. all data have been migrated according to the restriction placed)."
+
+struct DeviceApprovalsChangeDesktopPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Set or removed a limit on the number of computers each team member can link to their work Dropbox account."
+
+struct DeviceApprovalsChangeMobilePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Set or removed a limit on the number of mobiles devices each team member can link to their work Dropbox account."
+
+struct DeviceApprovalsChangeOverageActionType
+    description String
+
+    example default
+        description = "(team_policies) Changed the action taken when a team member is already over the limits (e.g when they join the team, an admin lowers limits, etc.)."
+
+struct DeviceApprovalsChangeUnlinkActionType
+    description String
+
+    example default
+        description = "(team_policies) Changed the action taken with respect to approval limits when a team member unlinks an approved device."
+
+struct EmmAddExceptionType
+    description String
+
+    example default
+        description = "(team_policies) Added an exception for one or more team members to optionally use the regular Dropbox app when EMM is enabled."
+
+struct EmmChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled enterprise mobility management for team members."
+
+struct EmmRemoveExceptionType
+    description String
+
+    example default
+        description = "(team_policies) Removed an exception for one or more team members to optionally use the regular Dropbox app when EMM is enabled."
+
+struct ExtendedVersionHistoryChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Accepted or opted out of extended version history."
+
+struct FileCommentsChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled commenting on team files."
+
+struct FileRequestsChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled file requests."
+
+struct FileRequestsEmailsEnabledType
+    description String
+
+    example default
+        description = "(team_policies) Enabled file request emails for everyone. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct FileRequestsEmailsRestrictedToTeamOnlyType
+    description String
+
+    example default
+        description = "(team_policies) Allowed file request emails for the team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct GoogleSsoChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled Google single sign-on for the team."
+
+struct GroupUserManagementChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed who can create groups."
+
+struct MemberRequestsChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed whether users can find the team when not invited."
+
+struct MemberSpaceLimitsAddExceptionType
+    description String
+
+    example default
+        description = "(team_policies) Added an exception for one or more team members to bypass space limits imposed by policy."
+
+struct MemberSpaceLimitsChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed the team default limit level."
+
+struct MemberSpaceLimitsRemoveExceptionType
+    description String
+
+    example default
+        description = "(team_policies) Removed an exception for one or more team members to bypass space limits imposed by policy."
+
+struct MemberSuggestionsChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled the option for team members to suggest new members to add to the team."
+
+struct MicrosoftOfficeAddinChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled the Microsoft Office add-in, which lets team members save files to Dropbox directly from Microsoft Office."
+
+struct NetworkControlChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled network control."
+
+struct PaperChangeDeploymentPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed whether Dropbox Paper, when enabled, is deployed to all teams or to specific members of the team."
+
+struct PaperChangeMemberLinkPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed whether non team members can view Paper documents using a link. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct PaperChangeMemberPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed whether team members can share Paper documents externally (i.e. outside the team), and if so, whether they should be accessible only by team members or anyone by default."
+
+struct PaperChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled Dropbox Paper for the team."
+
+struct PaperEnabledUsersGroupAdditionType
+    description String
+
+    example default
+        description = "(team_policies) Users added to Paper enabled users list."
+
+struct PaperEnabledUsersGroupRemovalType
+    description String
+
+    example default
+        description = "(team_policies) Users removed from Paper enabled users list."
+
+struct PermanentDeleteChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled the ability of team members to permanently delete content."
+
+struct SharingChangeFolderJoinPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed whether team members can join shared folders owned externally (i.e. outside the team)."
+
+struct SharingChangeLinkPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed whether team members can share links externally (i.e. outside the team), and if so, whether links should be accessible only by team members or anyone by default."
+
+struct SharingChangeMemberPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed whether team members can share files and folders externally (i.e. outside the team)."
+
+struct SmartSyncChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed the default Smart Sync policy for team members."
+
+struct SmartSyncNotOptOutType
+    description String
+
+    example default
+        description = "(team_policies) Opted team into Smart Sync."
+
+struct SmartSyncOptOutType
+    description String
+
+    example default
+        description = "(team_policies) Opted team out of Smart Sync."
+
+struct SsoChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Change the single sign-on policy for the team."
+
+struct TfaChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Change two-step verification policy for the team."
+
+struct TwoAccountChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled or disabled the option for team members to link a personal Dropbox account in addition to their work account to the same computer."
+
+struct WebSessionsChangeFixedLengthPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed how long team members can stay signed in to Dropbox on the web."
+
+struct WebSessionsChangeIdleLengthPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed how long team members can be idle while signed in to Dropbox on the web."
+
+struct TeamMergeFromType
+    description String
+
+    example default
+        description = "(team_profile) Merged another team into this team."
+
+struct TeamMergeToType
+    description String
+
+    example default
+        description = "(team_profile) Merged this team into another team."
+
+struct TeamProfileAddLogoType
+    description String
+
+    example default
+        description = "(team_profile) Added a team logo to be displayed on shared link headers."
+
+struct TeamProfileChangeDefaultLanguageType
+    description String
+
+    example default
+        description = "(team_profile) Changed the default language for the team."
+
+struct TeamProfileChangeLogoType
+    description String
+
+    example default
+        description = "(team_profile) Changed the team logo to be displayed on shared link headers."
+
+struct TeamProfileChangeNameType
+    description String
+
+    example default
+        description = "(team_profile) Changed the team name."
+
+struct TeamProfileRemoveLogoType
+    description String
+
+    example default
+        description = "(team_profile) Removed the team logo to be displayed on shared link headers."
+
+struct TfaAddBackupPhoneType
+    description String
+
+    example default
+        description = "(tfa) Added a backup phone for two-step verification."
+
+struct TfaAddSecurityKeyType
+    description String
+
+    example default
+        description = "(tfa) Added a security key for two-step verification."
+
+struct TfaChangeBackupPhoneType
+    description String
+
+    example default
+        description = "(tfa) Changed the backup phone for two-step verification."
+
+struct TfaChangeStatusType
+    description String
+
+    example default
+        description = "(tfa) Enabled, disabled or changed the configuration for two-step verification."
+
+struct TfaRemoveBackupPhoneType
+    description String
+
+    example default
+        description = "(tfa) Removed the backup phone for two-step verification."
+
+struct TfaRemoveSecurityKeyType
+    description String
+
+    example default
+        description = "(tfa) Removed a security key for two-step verification."
+
+struct TfaResetType
+    description String
+
+    example default
+        description = "(tfa) Reset two-step verification for team member."
+
+
 union EventType
     "The type of the event."
 
-    member_change_membership_type
-        "Changed the membership type (limited vs full) for team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    member_permanently_delete_account_contents
-        "Permanently deleted contents of a removed team member account."
-    member_space_limits_change_status
-        "Changed the status with respect to whether the team member is under or over storage quota specified by policy."
-    member_transfer_account_contents
-        "Transferred contents of a removed team member account to another member."
-    paper_admin_export_start
-        "Exported all Paper documents in the team."
-    paper_enabled_users_group_addition
-        "Users added to Paper enabled users list."
-    paper_enabled_users_group_removal
-        "Users removed from Paper enabled users list."
-    paper_external_view_allow
-        "Paper external sharing policy changed: anyone. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    paper_external_view_default_team
-        "Paper external sharing policy changed: default team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    paper_external_view_forbid
-        "Paper external sharing policy changed: team-only. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_external_invite_warn
-        "Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE). This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    team_merge_from
-        "Merged another team into this team."
-    team_merge_to
-        "Merged this team into another team."
-    app_link_team
-        "Linked an app for team."
-    app_link_user
-        "Linked an app for team member."
-    app_unlink_team
-        "Unlinked an app for team."
-    app_unlink_user
-        "Unlinked an app for team member."
-    file_add_comment
-        "Added a file comment."
-    file_change_comment_subscription
-        "Subscribed to or unsubscribed from comment notifications for file."
-    file_delete_comment
-        "Deleted a file comment."
-    file_like_comment
-        "Liked a file comment. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    file_resolve_comment
-        "Resolved a file comment."
-    file_unlike_comment
-        "Unliked a file comment. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    file_unresolve_comment
-        "Unresolved a file comment."
-    device_change_ip_desktop
-        "IP address associated with active desktop session changed."
-    device_change_ip_mobile
-        "IP address associated with active mobile session changed."
-    device_change_ip_web
-        "IP address associated with active Web session changed."
-    device_delete_on_unlink_fail
-        "Failed to delete all files from an unlinked device."
-    device_delete_on_unlink_success
-        "Deleted all files from an unlinked device."
-    device_link_fail
-        "Failed to link a device."
-    device_link_success
-        "Linked a device."
-    device_management_disabled
-        "Disable Device Management. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    device_management_enabled
-        "Enable Device Management. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    device_unlink
-        "Disconnected a device."
-    emm_refresh_auth_token
-        "Refreshed the auth token used for setting up enterprise mobility management."
-    account_capture_change_availability
-        "Granted or revoked the option to enable account capture on domains belonging to the team."
-    account_capture_migrate_account
-        "Account captured user migrated their account to the team."
-    account_capture_relinquish_account
-        "Account captured user relinquished their account by changing the email address associated with it."
-    disabled_domain_invites
-        "Disabled domain invites. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    domain_invites_approve_request_to_join_team
-        "Approved a member's request to join the team."
-    domain_invites_decline_request_to_join_team
-        "Declined a user's request to join the team."
-    domain_invites_email_existing_users
-        "Sent domain invites to existing domain accounts."
-    domain_invites_request_to_join_team
-        "Asked to join the team."
-    domain_invites_set_invite_new_user_pref_to_no
-        "Turned off \u201cAutomatically invite new users\u201d. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    domain_invites_set_invite_new_user_pref_to_yes
-        "Turned on \u201cAutomatically invite new users\u201d. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    domain_verification_add_domain_fail
-        "Failed to verify a domain belonging to the team."
-    domain_verification_add_domain_success
-        "Verified a domain belonging to the team."
-    domain_verification_remove_domain
-        "Removed a domain from the list of verified domains belonging to the team."
-    enabled_domain_invites
-        "Enabled domain invites. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    create_folder
-        "Created folders. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    file_add
-        "Added files and/or folders."
-    file_copy
-        "Copied files and/or folders."
-    file_delete
-        "Deleted files and/or folders."
-    file_download
-        "Downloaded files and/or folders."
-    file_edit
-        "Edited files."
-    file_get_copy_reference
-        "Create a copy reference to a file or folder."
-    file_move
-        "Moved files and/or folders."
-    file_permanently_delete
-        "Permanently deleted files and/or folders."
-    file_preview
-        "Previewed files and/or folders."
-    file_rename
-        "Renamed files and/or folders."
-    file_restore
-        "Restored deleted files and/or folders."
-    file_revert
-        "Reverted files to a previous version."
-    file_rollback_changes
-        "Rolled back file change location changes."
-    file_save_copy_reference
-        "Save a file or folder using a copy reference."
-    file_request_add_deadline
-        "Added a deadline to a file request. This event is replaced by file_request_change and will not be logged going forward."
-    file_request_change
-        "Change a file request."
-    file_request_change_folder
-        "Changed the file request folder. This event is replaced by file_request_change and will not be logged going forward."
-    file_request_close
-        "Closed a file request."
-    file_request_create
-        "Created a file request."
-    file_request_receive_file
-        "Received files for a file request."
-    file_request_remove_deadline
-        "Removed the file request deadline. This event is replaced by file_request_change and will not be logged going forward."
-    file_request_send
-        "Sent file request to users via email. This event is replaced by file_request_change and will not be logged going forward."
-    group_add_external_id
-        "Added an external ID for group."
-    group_add_member
-        "Added team members to a group."
-    group_change_external_id
-        "Changed the external ID for group."
-    group_change_management_type
-        "Changed group management type."
-    group_change_member_role
-        "Changed the manager permissions belonging to a group member."
-    group_create
-        "Created a group."
-    group_delete
-        "Deleted a group."
-    group_moved
-        "Moved a group. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    group_remove_external_id
-        "Removed the external ID for group."
-    group_remove_member
-        "Removed team members from a group."
-    group_rename
-        "Renamed a group."
-    emm_error
-        "Failed to sign in via EMM. This event is replaced by login_fail and will not be logged going forward."
-    login_fail
-        "Failed to sign in."
-    login_success
-        "Signed in."
-    logout
-        "Signed out."
-    reseller_support_session_end
-        "Ended reseller support session."
-    reseller_support_session_start
-        "Started reseller support session."
-    sign_in_as_session_end
-        "Ended admin sign-in-as session."
-    sign_in_as_session_start
-        "Started admin sign-in-as session."
-    sso_error
-        "Failed to sign in via SSO. This event is replaced by login_fail and will not be logged going forward."
-    member_add_name
-        "Set team member name when joining team."
-    member_change_admin_role
-        "Change the admin role belonging to team member."
-    member_change_email
-        "Changed team member email address."
-    member_change_name
-        "Changed team member name."
-    member_change_status
-        "Changed the membership status of a team member."
-    member_suggest
-        "Suggested a new team member to be added to the team."
-    paper_content_add_member
-        "Added users to the membership of a Paper doc or folder."
-    paper_content_add_to_folder
-        "Added Paper doc or folder to a folder."
-    paper_content_archive
-        "Archived Paper doc or folder."
-    paper_content_create
-        "Created a Paper doc or folder."
-    paper_content_permanently_delete
-        "Permanently deleted a Paper doc or folder."
-    paper_content_remove_from_folder
-        "Removed Paper doc or folder from a folder."
-    paper_content_remove_member
-        "Removed a user from the membership of a Paper doc or folder."
-    paper_content_rename
-        "Renamed Paper doc or folder."
-    paper_content_restore
-        "Restored an archived Paper doc or folder."
-    paper_doc_add_comment
-        "Added a Paper doc comment."
-    paper_doc_change_member_role
-        "Changed the access type of a Paper doc member."
-    paper_doc_change_sharing_policy
-        "Changed the sharing policy for Paper doc."
-    paper_doc_change_subscription
-        "Followed or unfollowed a Paper doc."
-    paper_doc_deleted
-        "Paper doc archived. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    paper_doc_delete_comment
-        "Deleted a Paper doc comment."
-    paper_doc_download
-        "Downloaded a Paper doc in a particular output format."
-    paper_doc_edit
-        "Edited a Paper doc."
-    paper_doc_edit_comment
-        "Edited a Paper doc comment."
-    paper_doc_followed
-        "Followed a Paper doc. This event is replaced by paper_doc_change_subscription and will not be logged going forward."
-    paper_doc_mention
-        "Mentioned a member in a Paper doc."
-    paper_doc_request_access
-        "Requested to be a member on a Paper doc."
-    paper_doc_resolve_comment
-        "Paper doc comment resolved."
-    paper_doc_revert
-        "Restored a Paper doc to previous revision."
-    paper_doc_slack_share
-        "Paper doc link shared via slack."
-    paper_doc_team_invite
-        "Paper doc shared with team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    paper_doc_trashed
-        "Paper doc trashed."
-    paper_doc_unresolve_comment
-        "Unresolved a Paper doc comment."
-    paper_doc_untrashed
-        "Paper doc untrashed."
-    paper_doc_view
-        "Viewed Paper doc."
-    paper_folder_change_subscription
-        "Followed or unfollowed a Paper folder."
-    paper_folder_deleted
-        "Paper folder archived. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    paper_folder_followed
-        "Followed a Paper folder. This event is replaced by paper_folder_change_subscription and will not be logged going forward."
-    paper_folder_team_invite
-        "Paper folder shared with team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    password_change
-        "Changed password."
-    password_reset
-        "Reset password."
-    password_reset_all
-        "Reset all team member passwords."
-    emm_create_exceptions_report
-        "EMM excluded users report created."
-    emm_create_usage_report
-        "EMM mobile app usage report created."
-    smart_sync_create_admin_privilege_report
-        "Smart Sync non-admin devices report created."
-    team_activity_create_report
-        "Created a team activity report."
-    collection_share
-        "Shared an album."
-    note_acl_invite_only
-        "Changed a Paper document to be invite-only. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    note_acl_link
-        "Changed a Paper document to be link accessible. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    note_acl_team_link
-        "Changed a Paper document to be link accessible for the team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    note_shared
-        "Shared a Paper doc. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    note_share_receive
-        "Shared Paper document received. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    open_note_shared
-        "Opened a shared Paper doc. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_add_group
-        "Added the team to a shared folder."
-    sf_allow_non_members_to_view_shared_links
-        "Allowed non collaborators to view links to files in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_invite_group
-        "Invited a group to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_nest
-        "Changed parent of shared folder."
-    sf_team_decline
-        "Declined a team member's invitation to a shared folder."
-    sf_team_grant_access
-        "Granted access to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_team_invite
-        "Invited team members to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_team_invite_change_role
-        "Changed a team member's role in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_team_join
-        "Joined a team member's shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_team_join_from_oob_link
-        "Joined a team member's shared folder from a link. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    sf_team_uninvite
-        "Unshared a folder with a team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    shared_content_add_invitees
-        "Sent an email invitation to the membership of a shared file or folder."
-    shared_content_add_link_expiry
-        "Added an expiry to the link for the shared file or folder."
-    shared_content_add_link_password
-        "Added a password to the link for the shared file or folder."
-    shared_content_add_member
-        "Added users and/or groups to the membership of a shared file or folder."
-    shared_content_change_downloads_policy
-        "Changed whether members can download the shared file or folder."
-    shared_content_change_invitee_role
-        "Changed the access type of an invitee to a shared file or folder before the invitation was claimed."
-    shared_content_change_link_audience
-        "Changed the audience of the link for a shared file or folder."
-    shared_content_change_link_expiry
-        "Changed the expiry of the link for the shared file or folder."
-    shared_content_change_link_password
-        "Changed the password on the link for the shared file or folder."
-    shared_content_change_member_role
-        "Changed the access type of a shared file or folder member."
-    shared_content_change_viewer_info_policy
-        "Changed whether members can see who viewed the shared file or folder."
-    shared_content_claim_invitation
-        "Claimed membership to a team member's shared folder."
-    shared_content_copy
-        "Copied the shared file or folder to own Dropbox."
-    shared_content_download
-        "Downloaded the shared file or folder."
-    shared_content_relinquish_membership
-        "Left the membership of a shared file or folder."
-    shared_content_remove_invitee
-        "Removed an invitee from the membership of a shared file or folder before it was claimed."
-    shared_content_remove_link_expiry
-        "Removed the expiry of the link for the shared file or folder."
-    shared_content_remove_link_password
-        "Removed the password on the link for the shared file or folder."
-    shared_content_remove_member
-        "Removed a user or a group from the membership of a shared file or folder."
-    shared_content_request_access
-        "Requested to be on the membership of a shared file or folder."
-    shared_content_unshare
-        "Unshared a shared file or folder by clearing its membership and turning off its link."
-    shared_content_view
-        "Previewed the shared file or folder."
-    shared_folder_change_confidentiality
-        "Set or unset the confidential flag on a shared folder."
-    shared_folder_change_link_policy
-        "Changed who can access the shared folder via a link."
-    shared_folder_change_member_management_policy
-        "Changed who can manage the membership of a shared folder."
-    shared_folder_change_member_policy
-        "Changed who can become a member of the shared folder."
-    shared_folder_create
-        "Created a shared folder."
-    shared_folder_mount
-        "Added a shared folder to own Dropbox."
-    shared_folder_transfer_ownership
-        "Transferred the ownership of a shared folder to another member."
-    shared_folder_unmount
-        "Deleted a shared folder from Dropbox."
-    shared_note_opened
-        "Shared Paper document was opened. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    shmodel_app_create
-        "Created a link to a file using an app."
-    shmodel_create
-        "Created a new link."
-    shmodel_disable
-        "Removed a link."
-    shmodel_fb_share
-        "Shared a link with Facebook users."
-    shmodel_group_share
-        "Shared a link with a group. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    shmodel_remove_expiration
-        "Removed the expiration date from a link."
-    shmodel_set_expiration
-        "Added an expiration date to a link."
-    shmodel_team_copy
-        "Added a team member's file/folder to their Dropbox from a link."
-    shmodel_team_download
-        "Downloaded a team member's file/folder from a link."
-    shmodel_team_share
-        "Shared a link with team members."
-    shmodel_team_view
-        "Opened a team member's link."
-    shmodel_visibility_password
-        "Password-protected a link."
-    shmodel_visibility_public
-        "Made a file/folder visible to anyone with the link."
-    shmodel_visibility_team_only
-        "Made a file/folder visible only to team members with the link."
-    sso_add_cert
-        "Added the X.509 certificate for SSO."
-    sso_add_login_url
-        "Added sign-in URL for SSO."
-    sso_add_logout_url
-        "Added sign-out URL for SSO."
-    sso_change_cert
-        "Changed the X.509 certificate for SSO."
-    sso_change_login_url
-        "Changed the sign-in URL for SSO."
-    sso_change_logout_url
-        "Changed the sign-out URL for SSO."
-    sso_change_saml_identity_mode
-        "Changed the SAML identity mode for SSO."
-    sso_remove_cert
-        "Removed the X.509 certificate for SSO."
-    sso_remove_login_url
-        "Removed the sign-in URL for SSO."
-    sso_remove_logout_url
-        "Removed single sign-on logout URL."
-    team_folder_change_status
-        "Changed the archival status of a team folder."
-    team_folder_create
-        "Created a new team folder in active status."
-    team_folder_downgrade
-        "Downgraded a team folder to a regular shared folder."
-    team_folder_permanently_delete
-        "Permanently deleted an archived team folder."
-    team_folder_rename
-        "Renamed an active or archived team folder."
-    account_capture_change_policy
-        "Changed the account capture policy on a domain belonging to the team."
-    allow_download_disabled
-        "Disabled allow downloads. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    allow_download_enabled
-        "Enabled allow downloads. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    data_placement_restriction_change_policy
-        "Set a restriction policy regarding the location of data centers where team data resides."
-    data_placement_restriction_satisfy_policy
-        "Satisfied a previously set restriction policy regarding the location of data centers where team data resides (i.e. all data have been migrated according to the restriction placed)."
-    device_approvals_change_desktop_policy
-        "Set or removed a limit on the number of computers each team member can link to their work Dropbox account."
-    device_approvals_change_mobile_policy
-        "Set or removed a limit on the number of mobiles devices each team member can link to their work Dropbox account."
-    device_approvals_change_overage_action
-        "Changed the action taken when a team member is already over the limits (e.g when they join the team, an admin lowers limits, etc.)."
-    device_approvals_change_unlink_action
-        "Changed the action taken with respect to approval limits when a team member unlinks an approved device."
-    emm_add_exception
-        "Added an exception for one or more team members to optionally use the regular Dropbox app when EMM is enabled."
-    emm_change_policy
-        "Enabled or disabled enterprise mobility management for team members."
-    emm_remove_exception
-        "Removed an exception for one or more team members to optionally use the regular Dropbox app when EMM is enabled."
-    extended_version_history_change_policy
-        "Accepted or opted out of extended version history."
-    file_comments_change_policy
-        "Enabled or disabled commenting on team files."
-    file_requests_change_policy
-        "Enabled or disabled file requests."
-    file_requests_emails_enabled
-        "Enabled file request emails for everyone. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    file_requests_emails_restricted_to_team_only
-        "Allowed file request emails for the team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    google_sso_change_policy
-        "Enabled or disabled Google single sign-on for the team."
-    group_user_management_change_policy
-        "Changed who can create groups."
-    member_requests_change_policy
-        "Changed whether users can find the team when not invited."
-    member_space_limits_add_exception
-        "Added an exception for one or more team members to bypass space limits imposed by policy."
-    member_space_limits_change_policy
-        "Changed the team default limit level."
-    member_space_limits_remove_exception
-        "Removed an exception for one or more team members to bypass space limits imposed by policy."
-    member_suggestions_change_policy
-        "Enabled or disabled the option for team members to suggest new members to add to the team."
-    microsoft_office_addin_change_policy
-        "Enabled or disabled the Microsoft Office add-in, which lets team members save files to Dropbox directly from Microsoft Office."
-    network_control_change_policy
-        "Enabled or disabled network control."
-    paper_change_deployment_policy
-        "Changed whether Dropbox Paper, when enabled, is deployed to all teams or to specific members of the team."
-    paper_change_member_link_policy
-        "Changed whether non team members can view Paper documents using a link. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
-    paper_change_member_policy
-        "Changed whether team members can share Paper documents externally (i.e. outside the team), and if so, whether they should be accessible only by team members or anyone by default."
-    paper_change_policy
-        "Enabled or disabled Dropbox Paper for the team."
-    permanent_delete_change_policy
-        "Enabled or disabled the ability of team members to permanently delete content."
-    sharing_change_folder_join_policy
-        "Changed whether team members can join shared folders owned externally (i.e. outside the team)."
-    sharing_change_link_policy
-        "Changed whether team members can share links externally (i.e. outside the team), and if so, whether links should be accessible only by team members or anyone by default."
-    sharing_change_member_policy
-        "Changed whether team members can share files and folders externally (i.e. outside the team)."
-    smart_sync_change_policy
-        "Changed the default Smart Sync policy for team members."
-    smart_sync_not_opt_out
-        "Opted team into Smart Sync."
-    smart_sync_opt_out
-        "Opted team out of Smart Sync."
-    sso_change_policy
-        "Change the single sign-on policy for the team."
-    tfa_change_policy
-        "Change two-step verification policy for the team."
-    two_account_change_policy
-        "Enabled or disabled the option for team members to link a personal Dropbox account in addition to their work account to the same computer."
-    web_sessions_change_fixed_length_policy
-        "Changed how long team members can stay signed in to Dropbox on the web."
-    web_sessions_change_idle_length_policy
-        "Changed how long team members can be idle while signed in to Dropbox on the web."
-    team_profile_add_logo
-        "Added a team logo to be displayed on shared link headers."
-    team_profile_change_default_language
-        "Changed the default language for the team."
-    team_profile_change_logo
-        "Changed the team logo to be displayed on shared link headers."
-    team_profile_change_name
-        "Changed the team name."
-    team_profile_remove_logo
-        "Removed the team logo to be displayed on shared link headers."
-    tfa_add_backup_phone
-        "Added a backup phone for two-step verification."
-    tfa_add_security_key
-        "Added a security key for two-step verification."
-    tfa_change_backup_phone
-        "Changed the backup phone for two-step verification."
-    tfa_change_status
-        "Enabled, disabled or changed the configuration for two-step verification."
-    tfa_remove_backup_phone
-        "Removed the backup phone for two-step verification."
-    tfa_remove_security_key
-        "Removed a security key for two-step verification."
-    tfa_reset
-        "Reset two-step verification for team member."
+    app_link_team AppLinkTeamType
+        "(apps) Linked an app for team."
+    app_link_user AppLinkUserType
+        "(apps) Linked an app for team member."
+    app_unlink_team AppUnlinkTeamType
+        "(apps) Unlinked an app for team."
+    app_unlink_user AppUnlinkUserType
+        "(apps) Unlinked an app for team member."
+    file_add_comment FileAddCommentType
+        "(comments) Added a file comment."
+    file_change_comment_subscription FileChangeCommentSubscriptionType
+        "(comments) Subscribed to or unsubscribed from comment notifications for file."
+    file_delete_comment FileDeleteCommentType
+        "(comments) Deleted a file comment."
+    file_like_comment FileLikeCommentType
+        "(comments) Liked a file comment. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    file_resolve_comment FileResolveCommentType
+        "(comments) Resolved a file comment."
+    file_unlike_comment FileUnlikeCommentType
+        "(comments) Unliked a file comment. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    file_unresolve_comment FileUnresolveCommentType
+        "(comments) Unresolved a file comment."
+    device_change_ip_desktop DeviceChangeIpDesktopType
+        "(devices) IP address associated with active desktop session changed."
+    device_change_ip_mobile DeviceChangeIpMobileType
+        "(devices) IP address associated with active mobile session changed."
+    device_change_ip_web DeviceChangeIpWebType
+        "(devices) IP address associated with active Web session changed."
+    device_delete_on_unlink_fail DeviceDeleteOnUnlinkFailType
+        "(devices) Failed to delete all files from an unlinked device."
+    device_delete_on_unlink_success DeviceDeleteOnUnlinkSuccessType
+        "(devices) Deleted all files from an unlinked device."
+    device_link_fail DeviceLinkFailType
+        "(devices) Failed to link a device."
+    device_link_success DeviceLinkSuccessType
+        "(devices) Linked a device."
+    device_management_disabled DeviceManagementDisabledType
+        "(devices) Disable Device Management. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    device_management_enabled DeviceManagementEnabledType
+        "(devices) Enable Device Management. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    device_unlink DeviceUnlinkType
+        "(devices) Disconnected a device."
+    emm_refresh_auth_token EmmRefreshAuthTokenType
+        "(devices) Refreshed the auth token used for setting up enterprise mobility management."
+    account_capture_change_availability AccountCaptureChangeAvailabilityType
+        "(domains) Granted or revoked the option to enable account capture on domains belonging to the team."
+    account_capture_migrate_account AccountCaptureMigrateAccountType
+        "(domains) Account captured user migrated their account to the team."
+    account_capture_relinquish_account AccountCaptureRelinquishAccountType
+        "(domains) Account captured user relinquished their account by changing the email address associated with it."
+    disabled_domain_invites DisabledDomainInvitesType
+        "(domains) Disabled domain invites. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    domain_invites_approve_request_to_join_team DomainInvitesApproveRequestToJoinTeamType
+        "(domains) Approved a member's request to join the team."
+    domain_invites_decline_request_to_join_team DomainInvitesDeclineRequestToJoinTeamType
+        "(domains) Declined a user's request to join the team."
+    domain_invites_email_existing_users DomainInvitesEmailExistingUsersType
+        "(domains) Sent domain invites to existing domain accounts."
+    domain_invites_request_to_join_team DomainInvitesRequestToJoinTeamType
+        "(domains) Asked to join the team."
+    domain_invites_set_invite_new_user_pref_to_no DomainInvitesSetInviteNewUserPrefToNoType
+        "(domains) Turned off \u201cAutomatically invite new users\u201d. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    domain_invites_set_invite_new_user_pref_to_yes DomainInvitesSetInviteNewUserPrefToYesType
+        "(domains) Turned on \u201cAutomatically invite new users\u201d. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    domain_verification_add_domain_fail DomainVerificationAddDomainFailType
+        "(domains) Failed to verify a domain belonging to the team."
+    domain_verification_add_domain_success DomainVerificationAddDomainSuccessType
+        "(domains) Verified a domain belonging to the team."
+    domain_verification_remove_domain DomainVerificationRemoveDomainType
+        "(domains) Removed a domain from the list of verified domains belonging to the team."
+    enabled_domain_invites EnabledDomainInvitesType
+        "(domains) Enabled domain invites. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    create_folder CreateFolderType
+        "(file_operations) Created folders. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    file_add FileAddType
+        "(file_operations) Added files and/or folders."
+    file_copy FileCopyType
+        "(file_operations) Copied files and/or folders."
+    file_delete FileDeleteType
+        "(file_operations) Deleted files and/or folders."
+    file_download FileDownloadType
+        "(file_operations) Downloaded files and/or folders."
+    file_edit FileEditType
+        "(file_operations) Edited files."
+    file_get_copy_reference FileGetCopyReferenceType
+        "(file_operations) Create a copy reference to a file or folder."
+    file_move FileMoveType
+        "(file_operations) Moved files and/or folders."
+    file_permanently_delete FilePermanentlyDeleteType
+        "(file_operations) Permanently deleted files and/or folders."
+    file_preview FilePreviewType
+        "(file_operations) Previewed files and/or folders."
+    file_rename FileRenameType
+        "(file_operations) Renamed files and/or folders."
+    file_restore FileRestoreType
+        "(file_operations) Restored deleted files and/or folders."
+    file_revert FileRevertType
+        "(file_operations) Reverted files to a previous version."
+    file_rollback_changes FileRollbackChangesType
+        "(file_operations) Rolled back file change location changes."
+    file_save_copy_reference FileSaveCopyReferenceType
+        "(file_operations) Save a file or folder using a copy reference."
+    file_request_add_deadline FileRequestAddDeadlineType
+        "(file_requests) Added a deadline to a file request. This event is replaced by file_request_change and will not be logged going forward."
+    file_request_change FileRequestChangeType
+        "(file_requests) Change a file request."
+    file_request_change_folder FileRequestChangeFolderType
+        "(file_requests) Changed the file request folder. This event is replaced by file_request_change and will not be logged going forward."
+    file_request_close FileRequestCloseType
+        "(file_requests) Closed a file request."
+    file_request_create FileRequestCreateType
+        "(file_requests) Created a file request."
+    file_request_receive_file FileRequestReceiveFileType
+        "(file_requests) Received files for a file request."
+    file_request_remove_deadline FileRequestRemoveDeadlineType
+        "(file_requests) Removed the file request deadline. This event is replaced by file_request_change and will not be logged going forward."
+    file_request_send FileRequestSendType
+        "(file_requests) Sent file request to users via email. This event is replaced by file_request_change and will not be logged going forward."
+    group_add_external_id GroupAddExternalIdType
+        "(groups) Added an external ID for group."
+    group_add_member GroupAddMemberType
+        "(groups) Added team members to a group."
+    group_change_external_id GroupChangeExternalIdType
+        "(groups) Changed the external ID for group."
+    group_change_management_type GroupChangeManagementTypeType
+        "(groups) Changed group management type."
+    group_change_member_role GroupChangeMemberRoleType
+        "(groups) Changed the manager permissions belonging to a group member."
+    group_create GroupCreateType
+        "(groups) Created a group."
+    group_delete GroupDeleteType
+        "(groups) Deleted a group."
+    group_moved GroupMovedType
+        "(groups) Moved a group. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    group_remove_external_id GroupRemoveExternalIdType
+        "(groups) Removed the external ID for group."
+    group_remove_member GroupRemoveMemberType
+        "(groups) Removed team members from a group."
+    group_rename GroupRenameType
+        "(groups) Renamed a group."
+    emm_error EmmErrorType
+        "(logins) Failed to sign in via EMM. This event is replaced by login_fail and will not be logged going forward."
+    login_fail LoginFailType
+        "(logins) Failed to sign in."
+    login_success LoginSuccessType
+        "(logins) Signed in."
+    logout LogoutType
+        "(logins) Signed out."
+    reseller_support_session_end ResellerSupportSessionEndType
+        "(logins) Ended reseller support session."
+    reseller_support_session_start ResellerSupportSessionStartType
+        "(logins) Started reseller support session."
+    sign_in_as_session_end SignInAsSessionEndType
+        "(logins) Ended admin sign-in-as session."
+    sign_in_as_session_start SignInAsSessionStartType
+        "(logins) Started admin sign-in-as session."
+    sso_error SsoErrorType
+        "(logins) Failed to sign in via SSO. This event is replaced by login_fail and will not be logged going forward."
+    member_change_admin_role MemberChangeAdminRoleType
+        "(members) Change the admin role belonging to team member."
+    member_change_email MemberChangeEmailType
+        "(members) Changed team member email address."
+    member_change_membership_type MemberChangeMembershipTypeType
+        "(members) Changed the membership type (limited vs full) for team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    member_change_name MemberChangeNameType
+        "(members) Changed team member name."
+    member_change_status MemberChangeStatusType
+        "(members) Changed the membership status of a team member."
+    member_permanently_delete_account_contents MemberPermanentlyDeleteAccountContentsType
+        "(members) Permanently deleted contents of a removed team member account."
+    member_space_limits_change_status MemberSpaceLimitsChangeStatusType
+        "(members) Changed the status with respect to whether the team member is under or over storage quota specified by policy."
+    member_suggest MemberSuggestType
+        "(members) Suggested a new team member to be added to the team."
+    member_transfer_account_contents MemberTransferAccountContentsType
+        "(members) Transferred contents of a removed team member account to another member."
+    paper_content_add_member PaperContentAddMemberType
+        "(paper) Added users to the membership of a Paper doc or folder."
+    paper_content_add_to_folder PaperContentAddToFolderType
+        "(paper) Added Paper doc or folder to a folder."
+    paper_content_archive PaperContentArchiveType
+        "(paper) Archived Paper doc or folder."
+    paper_content_create PaperContentCreateType
+        "(paper) Created a Paper doc or folder."
+    paper_content_permanently_delete PaperContentPermanentlyDeleteType
+        "(paper) Permanently deleted a Paper doc or folder."
+    paper_content_remove_from_folder PaperContentRemoveFromFolderType
+        "(paper) Removed Paper doc or folder from a folder."
+    paper_content_remove_member PaperContentRemoveMemberType
+        "(paper) Removed a user from the membership of a Paper doc or folder."
+    paper_content_rename PaperContentRenameType
+        "(paper) Renamed Paper doc or folder."
+    paper_content_restore PaperContentRestoreType
+        "(paper) Restored an archived Paper doc or folder."
+    paper_doc_add_comment PaperDocAddCommentType
+        "(paper) Added a Paper doc comment."
+    paper_doc_change_member_role PaperDocChangeMemberRoleType
+        "(paper) Changed the access type of a Paper doc member."
+    paper_doc_change_sharing_policy PaperDocChangeSharingPolicyType
+        "(paper) Changed the sharing policy for Paper doc."
+    paper_doc_change_subscription PaperDocChangeSubscriptionType
+        "(paper) Followed or unfollowed a Paper doc."
+    paper_doc_deleted PaperDocDeletedType
+        "(paper) Paper doc archived. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    paper_doc_delete_comment PaperDocDeleteCommentType
+        "(paper) Deleted a Paper doc comment."
+    paper_doc_download PaperDocDownloadType
+        "(paper) Downloaded a Paper doc in a particular output format."
+    paper_doc_edit PaperDocEditType
+        "(paper) Edited a Paper doc."
+    paper_doc_edit_comment PaperDocEditCommentType
+        "(paper) Edited a Paper doc comment."
+    paper_doc_followed PaperDocFollowedType
+        "(paper) Followed a Paper doc. This event is replaced by paper_doc_change_subscription and will not be logged going forward."
+    paper_doc_mention PaperDocMentionType
+        "(paper) Mentioned a member in a Paper doc."
+    paper_doc_request_access PaperDocRequestAccessType
+        "(paper) Requested to be a member on a Paper doc."
+    paper_doc_resolve_comment PaperDocResolveCommentType
+        "(paper) Paper doc comment resolved."
+    paper_doc_revert PaperDocRevertType
+        "(paper) Restored a Paper doc to previous revision."
+    paper_doc_slack_share PaperDocSlackShareType
+        "(paper) Paper doc link shared via slack."
+    paper_doc_team_invite PaperDocTeamInviteType
+        "(paper) Paper doc shared with team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    paper_doc_trashed PaperDocTrashedType
+        "(paper) Paper doc trashed."
+    paper_doc_unresolve_comment PaperDocUnresolveCommentType
+        "(paper) Unresolved a Paper doc comment."
+    paper_doc_untrashed PaperDocUntrashedType
+        "(paper) Paper doc untrashed."
+    paper_doc_view PaperDocViewType
+        "(paper) Viewed Paper doc."
+    paper_external_view_allow PaperExternalViewAllowType
+        "(paper) Paper external sharing policy changed: anyone. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    paper_external_view_default_team PaperExternalViewDefaultTeamType
+        "(paper) Paper external sharing policy changed: default team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    paper_external_view_forbid PaperExternalViewForbidType
+        "(paper) Paper external sharing policy changed: team-only. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    paper_folder_change_subscription PaperFolderChangeSubscriptionType
+        "(paper) Followed or unfollowed a Paper folder."
+    paper_folder_deleted PaperFolderDeletedType
+        "(paper) Paper folder archived. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    paper_folder_followed PaperFolderFollowedType
+        "(paper) Followed a Paper folder. This event is replaced by paper_folder_change_subscription and will not be logged going forward."
+    paper_folder_team_invite PaperFolderTeamInviteType
+        "(paper) Paper folder shared with team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    password_change PasswordChangeType
+        "(passwords) Changed password."
+    password_reset PasswordResetType
+        "(passwords) Reset password."
+    password_reset_all PasswordResetAllType
+        "(passwords) Reset all team member passwords."
+    emm_create_exceptions_report EmmCreateExceptionsReportType
+        "(reports) EMM excluded users report created."
+    emm_create_usage_report EmmCreateUsageReportType
+        "(reports) EMM mobile app usage report created."
+    paper_admin_export_start PaperAdminExportStartType
+        "(reports) Exported all Paper documents in the team."
+    smart_sync_create_admin_privilege_report SmartSyncCreateAdminPrivilegeReportType
+        "(reports) Smart Sync non-admin devices report created."
+    team_activity_create_report TeamActivityCreateReportType
+        "(reports) Created a team activity report."
+    collection_share CollectionShareType
+        "(sharing) Shared an album."
+    note_acl_invite_only NoteAclInviteOnlyType
+        "(sharing) Changed a Paper document to be invite-only. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    note_acl_link NoteAclLinkType
+        "(sharing) Changed a Paper document to be link accessible. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    note_acl_team_link NoteAclTeamLinkType
+        "(sharing) Changed a Paper document to be link accessible for the team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    note_shared NoteSharedType
+        "(sharing) Shared a Paper doc. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    note_share_receive NoteShareReceiveType
+        "(sharing) Shared Paper document received. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    open_note_shared OpenNoteSharedType
+        "(sharing) Opened a shared Paper doc. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_add_group SfAddGroupType
+        "(sharing) Added the team to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_allow_non_members_to_view_shared_links SfAllowNonMembersToViewSharedLinksType
+        "(sharing) Allowed non collaborators to view links to files in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_external_invite_warn SfExternalInviteWarnType
+        "(sharing) Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE). This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_invite_group SfInviteGroupType
+        "(sharing) Invited a group to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_team_grant_access SfTeamGrantAccessType
+        "(sharing) Granted access to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_team_invite SfTeamInviteType
+        "(sharing) Invited team members to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_team_invite_change_role SfTeamInviteChangeRoleType
+        "(sharing) Changed a team member's role in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_team_join SfTeamJoinType
+        "(sharing) Joined a team member's shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_team_join_from_oob_link SfTeamJoinFromOobLinkType
+        "(sharing) Joined a team member's shared folder from a link. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_team_uninvite SfTeamUninviteType
+        "(sharing) Unshared a folder with a team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    shared_content_add_invitees SharedContentAddInviteesType
+        "(sharing) Sent an email invitation to the membership of a shared file or folder."
+    shared_content_add_link_expiry SharedContentAddLinkExpiryType
+        "(sharing) Added an expiry to the link for the shared file or folder."
+    shared_content_add_link_password SharedContentAddLinkPasswordType
+        "(sharing) Added a password to the link for the shared file or folder."
+    shared_content_add_member SharedContentAddMemberType
+        "(sharing) Added users and/or groups to the membership of a shared file or folder."
+    shared_content_change_downloads_policy SharedContentChangeDownloadsPolicyType
+        "(sharing) Changed whether members can download the shared file or folder."
+    shared_content_change_invitee_role SharedContentChangeInviteeRoleType
+        "(sharing) Changed the access type of an invitee to a shared file or folder before the invitation was claimed."
+    shared_content_change_link_audience SharedContentChangeLinkAudienceType
+        "(sharing) Changed the audience of the link for a shared file or folder."
+    shared_content_change_link_expiry SharedContentChangeLinkExpiryType
+        "(sharing) Changed the expiry of the link for the shared file or folder."
+    shared_content_change_link_password SharedContentChangeLinkPasswordType
+        "(sharing) Changed the password on the link for the shared file or folder."
+    shared_content_change_member_role SharedContentChangeMemberRoleType
+        "(sharing) Changed the access type of a shared file or folder member."
+    shared_content_change_viewer_info_policy SharedContentChangeViewerInfoPolicyType
+        "(sharing) Changed whether members can see who viewed the shared file or folder."
+    shared_content_claim_invitation SharedContentClaimInvitationType
+        "(sharing) Claimed membership to a team member's shared folder."
+    shared_content_copy SharedContentCopyType
+        "(sharing) Copied the shared file or folder to own Dropbox."
+    shared_content_download SharedContentDownloadType
+        "(sharing) Downloaded the shared file or folder."
+    shared_content_relinquish_membership SharedContentRelinquishMembershipType
+        "(sharing) Left the membership of a shared file or folder."
+    shared_content_remove_invitee SharedContentRemoveInviteeType
+        "(sharing) Removed an invitee from the membership of a shared file or folder before it was claimed."
+    shared_content_remove_link_expiry SharedContentRemoveLinkExpiryType
+        "(sharing) Removed the expiry of the link for the shared file or folder."
+    shared_content_remove_link_password SharedContentRemoveLinkPasswordType
+        "(sharing) Removed the password on the link for the shared file or folder."
+    shared_content_remove_member SharedContentRemoveMemberType
+        "(sharing) Removed a user or a group from the membership of a shared file or folder."
+    shared_content_request_access SharedContentRequestAccessType
+        "(sharing) Requested to be on the membership of a shared file or folder."
+    shared_content_unshare SharedContentUnshareType
+        "(sharing) Unshared a shared file or folder by clearing its membership and turning off its link."
+    shared_content_view SharedContentViewType
+        "(sharing) Previewed the shared file or folder."
+    shared_folder_change_confidentiality SharedFolderChangeConfidentialityType
+        "(sharing) Set or unset the confidential flag on a shared folder."
+    shared_folder_change_link_policy SharedFolderChangeLinkPolicyType
+        "(sharing) Changed who can access the shared folder via a link."
+    shared_folder_change_member_management_policy SharedFolderChangeMemberManagementPolicyType
+        "(sharing) Changed who can manage the membership of a shared folder."
+    shared_folder_change_member_policy SharedFolderChangeMemberPolicyType
+        "(sharing) Changed who can become a member of the shared folder."
+    shared_folder_create SharedFolderCreateType
+        "(sharing) Created a shared folder."
+    shared_folder_decline_invitation SharedFolderDeclineInvitationType
+        "(sharing) Declined a team member's invitation to a shared folder."
+    shared_folder_mount SharedFolderMountType
+        "(sharing) Added a shared folder to own Dropbox."
+    shared_folder_nest SharedFolderNestType
+        "(sharing) Changed the parent of a shared folder."
+    shared_folder_transfer_ownership SharedFolderTransferOwnershipType
+        "(sharing) Transferred the ownership of a shared folder to another member."
+    shared_folder_unmount SharedFolderUnmountType
+        "(sharing) Deleted a shared folder from Dropbox."
+    shared_link_add_expiry SharedLinkAddExpiryType
+        "(sharing) Added a shared link expiration date."
+    shared_link_change_expiry SharedLinkChangeExpiryType
+        "(sharing) Changed the shared link expiration date."
+    shared_link_change_visibility SharedLinkChangeVisibilityType
+        "(sharing) Changed the visibility of a shared link."
+    shared_link_copy SharedLinkCopyType
+        "(sharing) Added a file/folder to their Dropbox from a shared link."
+    shared_link_create SharedLinkCreateType
+        "(sharing) Created a new shared link."
+    shared_link_disable SharedLinkDisableType
+        "(sharing) Removed a shared link."
+    shared_link_download SharedLinkDownloadType
+        "(sharing) Downloaded a file/folder from a shared link."
+    shared_link_remove_expiry SharedLinkRemoveExpiryType
+        "(sharing) Removed a shared link expiration date."
+    shared_link_share SharedLinkShareType
+        "(sharing) Added new members as the audience of a shared link."
+    shared_link_view SharedLinkViewType
+        "(sharing) Opened a shared link."
+    shared_note_opened SharedNoteOpenedType
+        "(sharing) Shared Paper document was opened. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    shmodel_group_share ShmodelGroupShareType
+        "(sharing) Shared a link with a group. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sso_add_cert SsoAddCertType
+        "(sso) Added the X.509 certificate for SSO."
+    sso_add_login_url SsoAddLoginUrlType
+        "(sso) Added sign-in URL for SSO."
+    sso_add_logout_url SsoAddLogoutUrlType
+        "(sso) Added sign-out URL for SSO."
+    sso_change_cert SsoChangeCertType
+        "(sso) Changed the X.509 certificate for SSO."
+    sso_change_login_url SsoChangeLoginUrlType
+        "(sso) Changed the sign-in URL for SSO."
+    sso_change_logout_url SsoChangeLogoutUrlType
+        "(sso) Changed the sign-out URL for SSO."
+    sso_change_saml_identity_mode SsoChangeSamlIdentityModeType
+        "(sso) Changed the SAML identity mode for SSO."
+    sso_remove_cert SsoRemoveCertType
+        "(sso) Removed the X.509 certificate for SSO."
+    sso_remove_login_url SsoRemoveLoginUrlType
+        "(sso) Removed the sign-in URL for SSO."
+    sso_remove_logout_url SsoRemoveLogoutUrlType
+        "(sso) Removed single sign-on logout URL."
+    team_folder_change_status TeamFolderChangeStatusType
+        "(team_folders) Changed the archival status of a team folder."
+    team_folder_create TeamFolderCreateType
+        "(team_folders) Created a new team folder in active status."
+    team_folder_downgrade TeamFolderDowngradeType
+        "(team_folders) Downgraded a team folder to a regular shared folder."
+    team_folder_permanently_delete TeamFolderPermanentlyDeleteType
+        "(team_folders) Permanently deleted an archived team folder."
+    team_folder_rename TeamFolderRenameType
+        "(team_folders) Renamed an active or archived team folder."
+    account_capture_change_policy AccountCaptureChangePolicyType
+        "(team_policies) Changed the account capture policy on a domain belonging to the team."
+    allow_download_disabled AllowDownloadDisabledType
+        "(team_policies) Disabled allow downloads. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    allow_download_enabled AllowDownloadEnabledType
+        "(team_policies) Enabled allow downloads. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    data_placement_restriction_change_policy DataPlacementRestrictionChangePolicyType
+        "(team_policies) Set a restriction policy regarding the location of data centers where team data resides."
+    data_placement_restriction_satisfy_policy DataPlacementRestrictionSatisfyPolicyType
+        "(team_policies) Satisfied a previously set restriction policy regarding the location of data centers where team data resides (i.e. all data have been migrated according to the restriction placed)."
+    device_approvals_change_desktop_policy DeviceApprovalsChangeDesktopPolicyType
+        "(team_policies) Set or removed a limit on the number of computers each team member can link to their work Dropbox account."
+    device_approvals_change_mobile_policy DeviceApprovalsChangeMobilePolicyType
+        "(team_policies) Set or removed a limit on the number of mobiles devices each team member can link to their work Dropbox account."
+    device_approvals_change_overage_action DeviceApprovalsChangeOverageActionType
+        "(team_policies) Changed the action taken when a team member is already over the limits (e.g when they join the team, an admin lowers limits, etc.)."
+    device_approvals_change_unlink_action DeviceApprovalsChangeUnlinkActionType
+        "(team_policies) Changed the action taken with respect to approval limits when a team member unlinks an approved device."
+    emm_add_exception EmmAddExceptionType
+        "(team_policies) Added an exception for one or more team members to optionally use the regular Dropbox app when EMM is enabled."
+    emm_change_policy EmmChangePolicyType
+        "(team_policies) Enabled or disabled enterprise mobility management for team members."
+    emm_remove_exception EmmRemoveExceptionType
+        "(team_policies) Removed an exception for one or more team members to optionally use the regular Dropbox app when EMM is enabled."
+    extended_version_history_change_policy ExtendedVersionHistoryChangePolicyType
+        "(team_policies) Accepted or opted out of extended version history."
+    file_comments_change_policy FileCommentsChangePolicyType
+        "(team_policies) Enabled or disabled commenting on team files."
+    file_requests_change_policy FileRequestsChangePolicyType
+        "(team_policies) Enabled or disabled file requests."
+    file_requests_emails_enabled FileRequestsEmailsEnabledType
+        "(team_policies) Enabled file request emails for everyone. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    file_requests_emails_restricted_to_team_only FileRequestsEmailsRestrictedToTeamOnlyType
+        "(team_policies) Allowed file request emails for the team. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    google_sso_change_policy GoogleSsoChangePolicyType
+        "(team_policies) Enabled or disabled Google single sign-on for the team."
+    group_user_management_change_policy GroupUserManagementChangePolicyType
+        "(team_policies) Changed who can create groups."
+    member_requests_change_policy MemberRequestsChangePolicyType
+        "(team_policies) Changed whether users can find the team when not invited."
+    member_space_limits_add_exception MemberSpaceLimitsAddExceptionType
+        "(team_policies) Added an exception for one or more team members to bypass space limits imposed by policy."
+    member_space_limits_change_policy MemberSpaceLimitsChangePolicyType
+        "(team_policies) Changed the team default limit level."
+    member_space_limits_remove_exception MemberSpaceLimitsRemoveExceptionType
+        "(team_policies) Removed an exception for one or more team members to bypass space limits imposed by policy."
+    member_suggestions_change_policy MemberSuggestionsChangePolicyType
+        "(team_policies) Enabled or disabled the option for team members to suggest new members to add to the team."
+    microsoft_office_addin_change_policy MicrosoftOfficeAddinChangePolicyType
+        "(team_policies) Enabled or disabled the Microsoft Office add-in, which lets team members save files to Dropbox directly from Microsoft Office."
+    network_control_change_policy NetworkControlChangePolicyType
+        "(team_policies) Enabled or disabled network control."
+    paper_change_deployment_policy PaperChangeDeploymentPolicyType
+        "(team_policies) Changed whether Dropbox Paper, when enabled, is deployed to all teams or to specific members of the team."
+    paper_change_member_link_policy PaperChangeMemberLinkPolicyType
+        "(team_policies) Changed whether non team members can view Paper documents using a link. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    paper_change_member_policy PaperChangeMemberPolicyType
+        "(team_policies) Changed whether team members can share Paper documents externally (i.e. outside the team), and if so, whether they should be accessible only by team members or anyone by default."
+    paper_change_policy PaperChangePolicyType
+        "(team_policies) Enabled or disabled Dropbox Paper for the team."
+    paper_enabled_users_group_addition PaperEnabledUsersGroupAdditionType
+        "(team_policies) Users added to Paper enabled users list."
+    paper_enabled_users_group_removal PaperEnabledUsersGroupRemovalType
+        "(team_policies) Users removed from Paper enabled users list."
+    permanent_delete_change_policy PermanentDeleteChangePolicyType
+        "(team_policies) Enabled or disabled the ability of team members to permanently delete content."
+    sharing_change_folder_join_policy SharingChangeFolderJoinPolicyType
+        "(team_policies) Changed whether team members can join shared folders owned externally (i.e. outside the team)."
+    sharing_change_link_policy SharingChangeLinkPolicyType
+        "(team_policies) Changed whether team members can share links externally (i.e. outside the team), and if so, whether links should be accessible only by team members or anyone by default."
+    sharing_change_member_policy SharingChangeMemberPolicyType
+        "(team_policies) Changed whether team members can share files and folders externally (i.e. outside the team)."
+    smart_sync_change_policy SmartSyncChangePolicyType
+        "(team_policies) Changed the default Smart Sync policy for team members."
+    smart_sync_not_opt_out SmartSyncNotOptOutType
+        "(team_policies) Opted team into Smart Sync."
+    smart_sync_opt_out SmartSyncOptOutType
+        "(team_policies) Opted team out of Smart Sync."
+    sso_change_policy SsoChangePolicyType
+        "(team_policies) Change the single sign-on policy for the team."
+    tfa_change_policy TfaChangePolicyType
+        "(team_policies) Change two-step verification policy for the team."
+    two_account_change_policy TwoAccountChangePolicyType
+        "(team_policies) Enabled or disabled the option for team members to link a personal Dropbox account in addition to their work account to the same computer."
+    web_sessions_change_fixed_length_policy WebSessionsChangeFixedLengthPolicyType
+        "(team_policies) Changed how long team members can stay signed in to Dropbox on the web."
+    web_sessions_change_idle_length_policy WebSessionsChangeIdleLengthPolicyType
+        "(team_policies) Changed how long team members can be idle while signed in to Dropbox on the web."
+    team_merge_from TeamMergeFromType
+        "(team_profile) Merged another team into this team."
+    team_merge_to TeamMergeToType
+        "(team_profile) Merged this team into another team."
+    team_profile_add_logo TeamProfileAddLogoType
+        "(team_profile) Added a team logo to be displayed on shared link headers."
+    team_profile_change_default_language TeamProfileChangeDefaultLanguageType
+        "(team_profile) Changed the default language for the team."
+    team_profile_change_logo TeamProfileChangeLogoType
+        "(team_profile) Changed the team logo to be displayed on shared link headers."
+    team_profile_change_name TeamProfileChangeNameType
+        "(team_profile) Changed the team name."
+    team_profile_remove_logo TeamProfileRemoveLogoType
+        "(team_profile) Removed the team logo to be displayed on shared link headers."
+    tfa_add_backup_phone TfaAddBackupPhoneType
+        "(tfa) Added a backup phone for two-step verification."
+    tfa_add_security_key TfaAddSecurityKeyType
+        "(tfa) Added a security key for two-step verification."
+    tfa_change_backup_phone TfaChangeBackupPhoneType
+        "(tfa) Changed the backup phone for two-step verification."
+    tfa_change_status TfaChangeStatusType
+        "(tfa) Enabled, disabled or changed the configuration for two-step verification."
+    tfa_remove_backup_phone TfaRemoveBackupPhoneType
+        "(tfa) Removed the backup phone for two-step verification."
+    tfa_remove_security_key TfaRemoveSecurityKeyType
+        "(tfa) Removed a security key for two-step verification."
+    tfa_reset TfaResetType
+        "(tfa) Reset two-step verification for team member."
 
     example default
-        shared_content_download = null
+        shared_content_download = default
 
 
 struct TeamEvent
@@ -4635,7 +5994,7 @@ struct TeamEvent
 
     example default
         details = default
-        event_type = shared_content_download
+        event_type = default
         timestamp = "2017-01-25T15:51:30Z"
         event_category = tfa
         actor = default

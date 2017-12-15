@@ -221,7 +221,7 @@ route get_space_usage(Void, SpaceUsage, Void)
     "Get the space usage information for the current user's account."
 
     attrs
-        owner = "api-platform"
+        owner = "identity"
         allow_app_folder_app = true
 
 struct SpaceUsage

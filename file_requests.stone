@@ -11,19 +11,23 @@ import files
 # Common file requests objects
 #
 
+union GracePeriod
+    one_day
+    two_days
+    seven_days
+    thirty_days
+    always
+
+    example default
+        seven_days = null
+
 struct FileRequestDeadline
 
     deadline common.DropboxTimestamp
         "The deadline for this file request."
     allow_late_uploads GracePeriod?
         "If set, allow uploads after the deadline has passed. These
-        uploads will be marked overdue."
-        union
-            one_day
-            two_days
-            seven_days
-            thirty_days
-            always
+            uploads will be marked overdue."
 
     example deadline
         deadline = "2020-10-12T17:00:00Z"
