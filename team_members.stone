@@ -506,6 +506,8 @@ union MembersRemoveError extends MembersDeactivateError
     email_address_too_long_to_be_disabled
         # Added value in order to handle task T82902.
         "The email address of the user is too long to be disabled."
+    cannot_keep_invited_user_account
+        "Cannot keep account of an invited user."
 
 route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveError)
     "Removes a member from a team.

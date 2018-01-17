@@ -3,6 +3,8 @@ namespace users
 
 import common
 
+import team_common
+
 import team_policies
 
 import users_common
@@ -259,10 +261,17 @@ struct TeamSpaceAllocation
         "The total space currently used by the user's team (bytes)."
     allocated UInt64
         "The total space allocated to the user's team (bytes)."
+    user_within_team_space_allocated UInt64
+        "The total space allocated to the user within its team allocated space (0 means that
+        no restriction is imposed on the user's quota within its team)."
+    user_within_team_space_limit_type team_common.MemberSpaceLimitType
+        "The type of the space limit imposed on the team member (off, alert_only, stop_sync)."
 
     example default
         used = 27182818284
         allocated = 100000000000
+        user_within_team_space_allocated = 2000000000
+        user_within_team_space_limit_type = stop_sync
 
 #
 # Route: get_account_batch

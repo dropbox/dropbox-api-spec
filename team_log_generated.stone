@@ -10,11 +10,13 @@ import users_common
 import file_requests
 import files
 import team_policies
+import sharing
 
 alias FilePath = String
 alias NamespaceId = String
 alias EmailAddress = String(max_length=255)
 alias AppId = String
+alias DeviceSessionId = String
 alias IpAddress = String
 alias RequestId = String
 
@@ -51,6 +53,73 @@ union AccountCapturePolicy
     disabled
     invited_users
     all_users
+
+union ActionDetails
+    "Additional information indicating the action taken that caused status change."
+
+    team_join_details JoinTeamDetails
+        "Additional information relevant when a new member joins the team."
+    remove_action MemberRemoveActionType
+        "Define how the user was removed from the team."
+
+    example default
+        team_join_details = default
+
+    example default2
+        team_join_details = default2
+
+union MemberRemoveActionType
+    delete
+    offboard
+    leave
+
+struct JoinTeamDetails 
+    "Additional information relevant when a new member joins the team."
+
+    linked_apps List(AppLogInfo)
+        "Linked applications."
+    linked_devices List(LinkedDeviceLogInfo)
+        "Linked devices."
+    linked_shared_folders List(FolderLogInfo)
+        "Linked shared folders."
+
+    example default
+        linked_apps = [default]
+        linked_devices = [default]
+        linked_shared_folders = [default]
+
+    example default2
+        linked_apps = [default2]
+        linked_devices = [default2]
+        linked_shared_folders = [default2]
+
+struct LinkedDeviceLogInfo 
+    "Linked Device's logged information."
+
+    device_type String
+        "Device type."
+    display_name String?
+        "Device display name."
+    ip_address IpAddress?
+        "The IP address of the last activity from this device."
+    last_activity String?
+        "Last activity."
+    platform String?
+        "Device platform name."
+
+    example default
+        device_type = "abc"
+        display_name = "abc"
+        ip_address = "45.56.78.100"
+        last_activity = "abc"
+        platform = "abc"
+
+    example default2
+        device_type = "xyz"
+        display_name = "xyz"
+        ip_address = "45.56.78.100"
+        last_activity = "xyz"
+        platform = "xyz"
 
 union AdminRole
     team_admin
@@ -95,10 +164,6 @@ struct Certificate
         sha1_fingerprint = "xyz"
         common_name = "xyz"
 
-union Confidentiality
-    confidential
-    non_confidential
-
 union ContentPermanentDeletePolicy
     "Policy for pemanent content deletion"
     disabled
@@ -108,54 +173,6 @@ union DeviceApprovalsPolicy
     unlimited
     limited
 
-struct DeviceLogInfo 
-    "Device's logged information."
-
-    device_id String?
-        "Device unique id. Might be missing due to historical data gap."
-    display_name String?
-        "Device display name. Might be missing due to historical data gap."
-    is_emm_managed Boolean?
-        "True if this device is emm managed, false otherwise. Might be missing due to historical data gap."
-    platform String?
-        "Device platform name. Might be missing due to historical data gap."
-    mac_address String?
-        "Device mac address. Might be missing due to historical data gap."
-    os_version String?
-        "Device OS version. Might be missing due to historical data gap."
-    device_type String?
-        "Device type. Might be missing due to historical data gap."
-    ip_address IpAddress?
-        "IP address. Might be missing due to historical data gap."
-    last_activity String?
-        "Last activity. Might be missing due to historical data gap."
-    app_version String?
-        "Linking app version. Might be missing due to historical data gap."
-
-    example default
-        device_id = "abc"
-        display_name = "abc"
-        is_emm_managed = true
-        platform = "abc"
-        mac_address = "abc"
-        os_version = "abc"
-        device_type = "abc"
-        ip_address = "10.1.1.100"
-        last_activity = "abc"
-        app_version = "abc"
-
-    example default2
-        device_id = "xyz"
-        display_name = "xyz"
-        is_emm_managed = false
-        platform = "xyz"
-        mac_address = "xyz"
-        os_version = "xyz"
-        device_type = "xyz"
-        ip_address = "10.1.1.100"
-        last_activity = "xyz"
-        app_version = "xyz"
-
 union DeviceType
     desktop
     mobile
@@ -163,6 +180,11 @@ union DeviceType
 union DeviceUnlinkPolicy
     remove
     keep
+
+union DownloadPolicyType
+    "Shared content downloads policy"
+    allow
+    disallow
 
 union ExtendedVersionHistoryPolicy
     explicitly_limited
@@ -248,13 +270,13 @@ struct GeoLocationLogInfo
         city = "San Francisco"
         region = "California"
         country = "US"
-        ip_address = "10.1.1.100"
+        ip_address = "45.56.78.100"
 
     example default2
         city = "San Francisco"
         region = "California"
         country = "US"
-        ip_address = "10.1.1.100"
+        ip_address = "45.56.78.100"
 
 union GoogleSsoPolicy
     "Google SSO policy"
@@ -268,31 +290,6 @@ union GroupJoinPolicy
 union IdentifierType
     email
     facebook_profile_name
-
-struct JoinTeamDetails 
-    "Additional information relevant when a new member joins the team."
-
-    linked_apps List(AppLogInfo)
-        "Linked applications."
-    linked_devices List(DeviceLogInfo)
-        "Linked devices."
-    linked_shared_folders List(FolderLogInfo)
-        "Linked shared folders."
-
-    example default
-        linked_apps = [default]
-        linked_devices = [default]
-        linked_shared_folders = [default]
-
-    example default2
-        linked_apps = [default2]
-        linked_devices = [default2]
-        linked_shared_folders = [default2]
-
-union LinkAudience
-    public
-    team
-    members
 
 union LoginMethod
     password
@@ -362,29 +359,10 @@ struct RelocateAssetReferencesLogInfo
         src_asset_index = 4
         dest_asset_index = 4
 
-union SharedContentDownloadsPolicy
-    "Shared content downloads policy"
-    disabled
-    enabled
-
-union SharedContentViewerInfoPolicy
-    "Shared content viewer info policy"
-    disabled
-    enabled
-
-union SharedFolderLinkPolicy
-    members_only
-    members_and_team
-    anyone
-
-union SharedFolderMemberPolicy
-    "Policy for controlling who can become a member of a shared folder"
-    team_only
-    anyone
-
-union SharedFolderMembershipManagementPolicy
-    owner
-    editors
+union SharedFolderMembersInheritancePolicy
+    "Specifies if a shared folder inherits its members from the parent folder."
+    inherit_members
+    dont_inherit_members
 
 union SharedLinkAccessLevel
     "Shared link access level."
@@ -417,6 +395,12 @@ union SharingMemberPolicy
 union SmartSyncOptOutPolicy
     default
     opted_out
+
+union SpaceCapsType
+    "Space limit alert policy"
+    hard
+    off
+    soft
 
 union SpaceLimitsStatus
     within_quota
@@ -555,6 +539,177 @@ struct DesktopSessionLogInfo extends SessionLogInfo
 
     example default2
         session_id = "dbwsid:abcd5678901234567890123456789012345abcd"
+
+struct DeviceSessionLogInfo 
+    "Device's session logged information."
+    union
+        desktop_device_session DesktopDeviceSessionLogInfo
+        mobile_device_session MobileDeviceSessionLogInfo
+        web_device_session WebDeviceSessionLogInfo
+        legacy_device_session LegacyDeviceSessionLogInfo
+
+    session_id DeviceSessionId?
+        "Session unique id. Might be missing due to historical data gap."
+    ip_address IpAddress?
+        "The IP address of the last activity from this session. Might be missing due to historical data gap."
+    created common.DropboxTimestamp?
+        "The time this session was created. Might be missing due to historical data gap."
+    updated common.DropboxTimestamp?
+        "The time of the last activity from this session. Might be missing due to historical data gap."
+
+    example default
+        desktop_device_session = default
+
+    example default2
+        desktop_device_session = default2
+
+struct DesktopDeviceSessionLogInfo extends DeviceSessionLogInfo
+    "Information about linked Dropbox desktop client sessions"
+
+    host_name String
+        "Name of the hosting desktop."
+    client_type team.DesktopPlatform
+        "The Dropbox desktop client type."
+    client_version String?
+        "The Dropbox client version."
+    platform String
+        "Information on the hosting platform."
+    is_delete_on_unlink_supported Boolean
+        "Whether itu2019s possible to delete all of the account files upon unlinking."
+
+    example default
+        session_id = "dbdsid:AAG3Pt-PSEAWSa1bba7a2s7yNNNvV4MmaPc"
+        ip_address = "45.56.78.100"
+        created = "2017-01-25T15:51:30Z"
+        updated = "2017-01-25T15:51:30Z"
+        host_name = "my_desktop"
+        client_type = other
+        client_version = "abc"
+        platform = "abc"
+        is_delete_on_unlink_supported = true
+
+    example default2
+        session_id = "dbdsid:AAHODzvVwdX-CsExaQp2loKnjKbcGPauUUE"
+        ip_address = "45.56.78.100"
+        created = "2017-01-25T15:51:30Z"
+        updated = "2017-01-25T15:51:30Z"
+        host_name = "my_desktop"
+        client_type = other
+        client_version = "xyz"
+        platform = "xyz"
+        is_delete_on_unlink_supported = false
+
+struct MobileDeviceSessionLogInfo extends DeviceSessionLogInfo
+    "Information about linked Dropbox mobile client sessions"
+
+    device_name String
+        "The device name."
+    client_type team.MobileClientPlatform
+        "The mobile application type."
+    client_version String
+        "The Dropbox client version."
+    os_version String?
+        "The hosting OS version."
+    last_carrier String
+        "last carrier used by the device."
+
+    example default
+        session_id = "dbdsid:AAG3Pt-PSEAWSa1bba7a2s7yNNNvV4MmaPc"
+        ip_address = "45.56.78.100"
+        created = "2017-01-25T15:51:30Z"
+        updated = "2017-01-25T15:51:30Z"
+        device_name = "abc"
+        client_type = iphone
+        client_version = "abc"
+        os_version = "abc"
+        last_carrier = "abc"
+
+    example default2
+        session_id = "dbdsid:AAHODzvVwdX-CsExaQp2loKnjKbcGPauUUE"
+        ip_address = "45.56.78.100"
+        created = "2017-01-25T15:51:30Z"
+        updated = "2017-01-25T15:51:30Z"
+        device_name = "xyz"
+        client_type = iphone
+        client_version = "xyz"
+        os_version = "xyz"
+        last_carrier = "xyz"
+
+struct WebDeviceSessionLogInfo extends DeviceSessionLogInfo
+    "Information on active web sessions"
+
+    user_agent String
+        "Information on the hosting device."
+    os String
+        "Information on the hosting operating system."
+    browser String
+        "Information on the browser used for this web session."
+
+    example default
+        session_id = "dbdsid:AAG3Pt-PSEAWSa1bba7a2s7yNNNvV4MmaPc"
+        ip_address = "45.56.78.100"
+        created = "2017-01-25T15:51:30Z"
+        updated = "2017-01-25T15:51:30Z"
+        user_agent = "abc"
+        os = "abc"
+        browser = "abc"
+
+    example default2
+        session_id = "dbdsid:AAHODzvVwdX-CsExaQp2loKnjKbcGPauUUE"
+        ip_address = "45.56.78.100"
+        created = "2017-01-25T15:51:30Z"
+        updated = "2017-01-25T15:51:30Z"
+        user_agent = "xyz"
+        os = "xyz"
+        browser = "xyz"
+
+struct LegacyDeviceSessionLogInfo extends DeviceSessionLogInfo
+    "Information on sessions, in legacy format"
+
+    display_name String?
+        "The device name. Might be missing due to historical data gap."
+    is_emm_managed Boolean?
+        "Is device managed by emm. Might be missing due to historical data gap."
+    platform String?
+        "Information on the hosting platform. Might be missing due to historical data gap."
+    mac_address IpAddress?
+        "The mac address of the last activity from this session. Might be missing due to historical data gap."
+    os_version String?
+        "The hosting OS version. Might be missing due to historical data gap."
+    device_type String?
+        "Information on the hosting device type. Might be missing due to historical data gap."
+    client_version String?
+        "The Dropbox client version. Might be missing due to historical data gap."
+    legacy_uniq_id String?
+        "Alternative unique device session id, instead of session id field. Might be missing due to historical data gap."
+
+    example default
+        session_id = "dbdsid:AAG3Pt-PSEAWSa1bba7a2s7yNNNvV4MmaPc"
+        ip_address = "45.56.78.100"
+        created = "2017-01-25T15:51:30Z"
+        updated = "2017-01-25T15:51:30Z"
+        display_name = "abc"
+        is_emm_managed = true
+        platform = "abc"
+        mac_address = "45.56.78.100"
+        os_version = "abc"
+        device_type = "abc"
+        client_version = "abc"
+        legacy_uniq_id = "abc"
+
+    example default2
+        session_id = "dbdsid:AAHODzvVwdX-CsExaQp2loKnjKbcGPauUUE"
+        ip_address = "45.56.78.100"
+        created = "2017-01-25T15:51:30Z"
+        updated = "2017-01-25T15:51:30Z"
+        display_name = "xyz"
+        is_emm_managed = false
+        platform = "xyz"
+        mac_address = "45.56.78.100"
+        os_version = "xyz"
+        device_type = "xyz"
+        client_version = "xyz"
+        legacy_uniq_id = "xyz"
 
 struct SessionLogInfo 
     "Session's logged information."
@@ -872,7 +1027,10 @@ struct ExternalUserLogInfo
         identifier_type = email
 
 struct MissingDetails 
-    "An indication that an event was returned with missing details"
+    "An indication that an error occurred while retrieving the event. Some attributes of the event may be omitted as a result."
+
+    source_event_fields String?
+        "All the data that could be retrieved and converted from the source event."
 
 
 union ActorLogInfo
@@ -1099,74 +1257,80 @@ struct FileUnresolveCommentDetails
 struct DeviceChangeIpDesktopDetails
     "IP address associated with active desktop session changed."
 
-    device_info DeviceLogInfo
-        "Device information."
+    device_session_info DeviceSessionLogInfo
+        "Device's session logged information."
 
     example default
-        device_info = default
+        device_session_info = default
 
 struct DeviceChangeIpMobileDetails
     "IP address associated with active mobile session changed."
 
-    device_info DeviceLogInfo
-        "Device information."
+    device_session_info DeviceSessionLogInfo
+        "Device's session logged information."
 
     example default
-        device_info = default
+        device_session_info = default
 
 struct DeviceChangeIpWebDetails
     "IP address associated with active Web session changed."
 
-    device_info DeviceLogInfo?
-        "Device information. Might be missing due to historical data gap."
+    device_session_info DeviceSessionLogInfo?
+        "Device's session logged information. Might be missing due to historical data gap."
     user_agent String
         "Web browser name."
 
     example default
-        device_info = default
+        device_session_info = default
         user_agent = "abc"
 
 struct DeviceDeleteOnUnlinkFailDetails
     "Failed to delete all files from an unlinked device."
 
-    device_info DeviceLogInfo
-        "Device information."
+    session_id DeviceSessionId?
+        "Session unique id. Might be missing due to historical data gap."
+    display_name String?
+        "The device name. Might be missing due to historical data gap."
     num_failures Int64
         "The number of times that remote file deletion failed."
 
     example default
-        device_info = default
+        session_id = "dbdsid:AAG3Pt-PSEAWSa1bba7a2s7yNNNvV4MmaPc"
+        display_name = "abc"
         num_failures = 3
 
 struct DeviceDeleteOnUnlinkSuccessDetails
     "Deleted all files from an unlinked device."
 
-    device_info DeviceLogInfo
-        "Device information."
+    session_id DeviceSessionId?
+        "Session unique id. Might be missing due to historical data gap."
+    display_name String?
+        "The device name. Might be missing due to historical data gap."
 
     example default
-        device_info = default
+        session_id = "dbdsid:AAG3Pt-PSEAWSa1bba7a2s7yNNNvV4MmaPc"
+        display_name = "abc"
 
 struct DeviceLinkFailDetails
     "Failed to link a device."
 
-    device_info DeviceLogInfo?
-        "Device information. Might be missing due to historical data gap."
+    ip_address IpAddress?
+        "IP address. Might be missing due to historical data gap."
     device_type DeviceType
         "A description of the device used while user approval blocked."
 
     example default
-        device_info = default
+        ip_address = "45.56.78.100"
         device_type = desktop
 
 struct DeviceLinkSuccessDetails
     "Linked a device."
 
-    device_info DeviceLogInfo
-        "Device information."
+    device_session_info DeviceSessionLogInfo
+        "Device's session logged information."
 
     example default
-        device_info = default
+        device_session_info = default
 
 struct DeviceManagementDisabledDetails
     "Disable Device Management."
@@ -1177,13 +1341,16 @@ struct DeviceManagementEnabledDetails
 struct DeviceUnlinkDetails
     "Disconnected a device."
 
-    device_info DeviceLogInfo
-        "Device information."
+    session_id DeviceSessionId?
+        "Session unique id. Might be missing due to historical data gap."
+    display_name String?
+        "The device name. Might be missing due to historical data gap."
     delete_data Boolean
         "True if the user requested to delete data after device unlink, false otherwise."
 
     example default
-        device_info = default
+        session_id = "dbdsid:AAG3Pt-PSEAWSa1bba7a2s7yNNNvV4MmaPc"
+        display_name = "abc"
         delete_data = true
 
 struct EmmRefreshAuthTokenDetails
@@ -1208,7 +1375,16 @@ struct AccountCaptureMigrateAccountDetails
         "Domain name."
 
     example default
-        domain_name = "abc"
+        domain_name = "mars.com"
+
+struct AccountCaptureNotificationEmailsSentDetails
+    "Proactive account capture email sent to all unmanaged members."
+
+    domain_name String
+        "Domain name."
+
+    example default
+        domain_name = "mars.com"
 
 struct AccountCaptureRelinquishAccountDetails
     "Account captured user relinquished their account by changing the email address associated with it."
@@ -1217,7 +1393,7 @@ struct AccountCaptureRelinquishAccountDetails
         "Domain name."
 
     example default
-        domain_name = "abc"
+        domain_name = "mars.com"
 
 struct DisabledDomainInvitesDetails
     "Disabled domain invites."
@@ -1258,7 +1434,7 @@ struct DomainVerificationAddDomainFailDetails
         "Domain name verification method. Might be missing due to historical data gap."
 
     example default
-        domain_name = "abc"
+        domain_name = "mars.com"
         verification_method = "abc"
 
 struct DomainVerificationAddDomainSuccessDetails
@@ -1270,7 +1446,7 @@ struct DomainVerificationAddDomainSuccessDetails
         "Domain name verification method. Might be missing due to historical data gap."
 
     example default
-        domain_names = ["abc"]
+        domain_names = ["mars.com"]
         verification_method = "abc"
 
 struct DomainVerificationRemoveDomainDetails
@@ -1280,7 +1456,7 @@ struct DomainVerificationRemoveDomainDetails
         "Domain names."
 
     example default
-        domain_names = ["abc"]
+        domain_names = ["mars.com"]
 
 struct EnabledDomainInvitesDetails
     "Enabled domain invites."
@@ -1354,18 +1530,6 @@ struct FileSaveCopyReferenceDetails
     example default
         relocate_action_details = [default]
 
-struct FileRequestAddDeadlineDetails
-    "Added a deadline to a file request."
-
-    file_request_id file_requests.FileRequestId?
-        "File request id. Might be missing due to historical data gap."
-    request_title String?
-        "File request title."
-
-    example default
-        file_request_id = "oaCAVmEyrqYnkZX9955Y"
-        request_title = "abc"
-
 struct FileRequestChangeDetails
     "Change a file request."
 
@@ -1380,18 +1544,6 @@ struct FileRequestChangeDetails
         file_request_id = "oaCAVmEyrqYnkZX9955Y"
         previous_details = default
         new_details = default
-
-struct FileRequestChangeFolderDetails
-    "Changed the file request folder."
-
-    file_request_id file_requests.FileRequestId?
-        "File request id. Might be missing due to historical data gap."
-    request_title String?
-        "File request title."
-
-    example default
-        file_request_id = "oaCAVmEyrqYnkZX9955Y"
-        request_title = "abc"
 
 struct FileRequestCloseDetails
     "Closed a file request."
@@ -1422,39 +1574,21 @@ struct FileRequestReceiveFileDetails
 
     file_request_id file_requests.FileRequestId?
         "File request id. Might be missing due to historical data gap."
-    request_title String?
-        "File request title."
+    file_request_details FileRequestDetails?
+        "File request details. Might be missing due to historical data gap."
     submitted_file_names List(String)
         "Submitted file names."
+    submitter_name common.DisplayNameLegacy?
+        "The name as provided by the submitter. Might be missing due to historical data gap."
+    submitter_email EmailAddress?
+        "The email as provided by the submitter. Might be missing due to historical data gap."
 
     example default
         file_request_id = "oaCAVmEyrqYnkZX9955Y"
-        request_title = "abc"
+        file_request_details = default
         submitted_file_names = ["abc"]
-
-struct FileRequestRemoveDeadlineDetails
-    "Removed the file request deadline."
-
-    file_request_id file_requests.FileRequestId?
-        "File request id. Might be missing due to historical data gap."
-    request_title String?
-        "File request title."
-
-    example default
-        file_request_id = "oaCAVmEyrqYnkZX9955Y"
-        request_title = "abc"
-
-struct FileRequestSendDetails
-    "Sent file request to users via email."
-
-    file_request_id file_requests.FileRequestId?
-        "File request id. Might be missing due to historical data gap."
-    request_title String?
-        "File request title."
-
-    example default
-        file_request_id = "oaCAVmEyrqYnkZX9955Y"
-        request_title = "abc"
+        submitter_name = "John Smith"
+        submitter_email = "john_smith@acmecorp.com"
 
 struct GroupAddExternalIdDetails
     "Added an external ID for group."
@@ -1615,6 +1749,15 @@ struct SsoErrorDetails
     example default
         error_details = default
 
+struct MemberAddNameDetails
+    "Specify team member name."
+
+    new_value UserNameLogInfo
+        "New user's name."
+
+    example default
+        new_value = default
+
 struct MemberChangeAdminRoleDetails
     "Change the admin role belonging to team member."
 
@@ -1657,7 +1800,7 @@ struct MemberChangeNameDetails
     new_value UserNameLogInfo
         "New user's name."
     previous_value UserNameLogInfo?
-        "Previous user's name."
+        "Previous user's name. Might be missing due to historical data gap."
 
     example default
         new_value = default
@@ -1670,16 +1813,38 @@ struct MemberChangeStatusDetails
         "Previous member status. Might be missing due to historical data gap."
     new_value MemberStatus
         "New member status."
-    team_join_details JoinTeamDetails?
-        "Additional information relevant when a new member joins the team."
+    action ActionDetails?
+        "Additional information indicating the action taken
+that caused status change."
 
     example default
         previous_value = not_joined
         new_value = not_joined
-        team_join_details = default
+        action = default
 
 struct MemberPermanentlyDeleteAccountContentsDetails
     "Permanently deleted contents of a removed team member account."
+
+struct MemberSpaceLimitsAddCustomQuotaDetails
+    "Set custom member space limit."
+
+    new_value UInt64
+        "New custom quota value in bytes."
+
+    example default
+        new_value = 53687091200
+
+struct MemberSpaceLimitsChangeCustomQuotaDetails
+    "Changed custom member space limit."
+
+    previous_value UInt64
+        "Previous custom quota value in bytes."
+    new_value UInt64
+        "New custom quota value in bytes."
+
+    example default
+        previous_value = 42949672960
+        new_value = 53687091200
 
 struct MemberSpaceLimitsChangeStatusDetails
     "Changed the status with respect to whether the team member is under or over storage quota specified by policy."
@@ -1693,6 +1858,9 @@ struct MemberSpaceLimitsChangeStatusDetails
         previous_value = within_quota
         new_value = within_quota
 
+struct MemberSpaceLimitsRemoveCustomQuotaDetails
+    "Removed custom member space limit."
+
 struct MemberSuggestDetails
     "Suggested a new team member to be added to the team."
 
@@ -1704,15 +1872,6 @@ struct MemberSuggestDetails
 
 struct MemberTransferAccountContentsDetails
     "Transferred contents of a removed team member account to another member."
-
-    src_participant_index UInt64
-        "Source participant position in the Participants list."
-    dest_participant_index UInt64
-        "Destination participant position in the Participants list."
-
-    example default
-        src_participant_index = 3
-        dest_participant_index = 3
 
 struct PaperContentAddMemberDetails
     "Added users to the membership of a Paper doc or folder."
@@ -2098,6 +2257,9 @@ struct EmmCreateExceptionsReportDetails
 struct EmmCreateUsageReportDetails
     "EMM mobile app usage report created."
 
+struct ExportMembersReportDetails
+    "Member data report created."
+
 struct PaperAdminExportStartDetails
     "Exported all Paper documents in the team."
 
@@ -2157,8 +2319,8 @@ struct SfAddGroupDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
-        sharing_permission = "abc"
+        original_folder_name = "My pictures"
+        sharing_permission = "viewer"
         team_name = "abc"
 
 struct SfAllowNonMembersToViewSharedLinksDetails
@@ -2173,7 +2335,7 @@ struct SfAllowNonMembersToViewSharedLinksDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
+        original_folder_name = "My pictures"
         shared_folder_type = "abc"
 
 struct SfExternalInviteWarnDetails
@@ -2190,9 +2352,54 @@ struct SfExternalInviteWarnDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
-        new_sharing_permission = "abc"
-        previous_sharing_permission = "abc"
+        original_folder_name = "My pictures"
+        new_sharing_permission = "editor"
+        previous_sharing_permission = "owner"
+
+struct SfFbInviteDetails
+    "Invited Facebook users to a shared folder."
+
+    target_asset_index UInt64
+        "Target asset position in the Assets list."
+    original_folder_name String
+        "Original shared folder name."
+    sharing_permission String?
+        "Sharing permission. Might be missing due to historical data gap."
+
+    example default
+        target_asset_index = 3
+        original_folder_name = "My pictures"
+        sharing_permission = "viewer"
+
+struct SfFbInviteChangeRoleDetails
+    "Changed a Facebook user's role in a shared folder."
+
+    target_asset_index UInt64
+        "Target asset position in the Assets list."
+    original_folder_name String
+        "Original shared folder name."
+    previous_sharing_permission String?
+        "Previous sharing permission. Might be missing due to historical data gap."
+    new_sharing_permission String?
+        "New sharing permission. Might be missing due to historical data gap."
+
+    example default
+        target_asset_index = 3
+        original_folder_name = "My pictures"
+        previous_sharing_permission = "owner"
+        new_sharing_permission = "editor"
+
+struct SfFbUninviteDetails
+    "Uninvited a Facebook user from a shared folder."
+
+    target_asset_index UInt64
+        "Target asset position in the Assets list."
+    original_folder_name String
+        "Original shared folder name."
+
+    example default
+        target_asset_index = 3
+        original_folder_name = "My pictures"
 
 struct SfInviteGroupDetails
     "Invited a group to a shared folder."
@@ -2213,7 +2420,7 @@ struct SfTeamGrantAccessDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
+        original_folder_name = "My pictures"
 
 struct SfTeamInviteDetails
     "Invited team members to a shared folder."
@@ -2227,8 +2434,8 @@ struct SfTeamInviteDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
-        sharing_permission = "abc"
+        original_folder_name = "My pictures"
+        sharing_permission = "viewer"
 
 struct SfTeamInviteChangeRoleDetails
     "Changed a team member's role in a shared folder."
@@ -2244,9 +2451,9 @@ struct SfTeamInviteChangeRoleDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
-        new_sharing_permission = "abc"
-        previous_sharing_permission = "abc"
+        original_folder_name = "My pictures"
+        new_sharing_permission = "editor"
+        previous_sharing_permission = "owner"
 
 struct SfTeamJoinDetails
     "Joined a team member's shared folder."
@@ -2258,7 +2465,7 @@ struct SfTeamJoinDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
+        original_folder_name = "My pictures"
 
 struct SfTeamJoinFromOobLinkDetails
     "Joined a team member's shared folder from a link."
@@ -2274,9 +2481,9 @@ struct SfTeamJoinFromOobLinkDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
+        original_folder_name = "My pictures"
         token_key = "abc"
-        sharing_permission = "abc"
+        sharing_permission = "viewer"
 
 struct SfTeamUninviteDetails
     "Unshared a folder with a team member."
@@ -2288,228 +2495,126 @@ struct SfTeamUninviteDetails
 
     example default
         target_asset_index = 3
-        original_folder_name = "abc"
+        original_folder_name = "My pictures"
 
 struct SharedContentAddInviteesDetails
     "Sent an email invitation to the membership of a shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+    invitees List(EmailAddress)
+        "A list of invitees."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        sharing_permission = "abc"
+        shared_content_access_level = viewer_no_comment
+        invitees = ["john_smith@acmecorp.com"]
 
 struct SharedContentAddLinkExpiryDetails
     "Added an expiry to the link for the shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-    expiration_start_date String
-        "Expiration starting date."
-    expiration_days UInt64
-        "The number of days from the starting expiration date after which the link will expire."
+    new_value common.DropboxTimestamp?
+        "New shared content link expiration date. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
-        expiration_start_date = "2016-11-23T10:30:00Z"
-        expiration_days = 3
+        new_value = "2017-01-25T15:51:30Z"
 
 struct SharedContentAddLinkPasswordDetails
     "Added a password to the link for the shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
-
 struct SharedContentAddMemberDetails
     "Added users and/or groups to the membership of a shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        sharing_permission = "abc"
-        shared_folder_type = "abc"
+        shared_content_access_level = viewer_no_comment
 
 struct SharedContentChangeDownloadsPolicyDetails
     "Changed whether members can download the shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-    new_value SharedContentDownloadsPolicy
-        "New downlaod policy."
-    previous_value SharedContentDownloadsPolicy?
-        "Previous downlaod policy. Might be missing due to historical data gap."
+    new_value DownloadPolicyType
+        "New downloads policy."
+    previous_value DownloadPolicyType?
+        "Previous downloads policy. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
-        new_value = disabled
-        previous_value = disabled
+        new_value = allow
+        previous_value = allow
 
 struct SharedContentChangeInviteeRoleDetails
     "Changed the access type of an invitee to a shared file or folder before the invitation was claimed."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-    new_sharing_permission String?
-        "New sharing permission. Might be missing due to historical data gap."
-    previous_sharing_permission String?
-        "Previous sharing permission. Might be missing due to historical data gap."
+    previous_access_level sharing.AccessLevel?
+        "Previous access level. Might be missing due to historical data gap."
+    new_access_level sharing.AccessLevel
+        "New access level."
+    invitee EmailAddress
+        "The invitee whose role was changed."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        new_sharing_permission = "abc"
-        previous_sharing_permission = "abc"
+        previous_access_level = viewer_no_comment
+        new_access_level = viewer_no_comment
+        invitee = "john_smith@acmecorp.com"
 
 struct SharedContentChangeLinkAudienceDetails
     "Changed the audience of the link for a shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-    new_value LinkAudience
+    new_value sharing.LinkAudience
         "New link audience value."
-    previous_value LinkAudience?
-        "Previous link audience value. Might be missing due to historical data gap."
+    previous_value sharing.LinkAudience?
+        "Previous link audience value."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
         new_value = public
         previous_value = public
 
 struct SharedContentChangeLinkExpiryDetails
     "Changed the expiry of the link for the shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-    expiration_start_date String
-        "Expiration starting date."
-    expiration_days UInt64
-        "The number of days from the starting expiration date after which the link will expire."
+    new_value common.DropboxTimestamp?
+        "New shared content link expiration date. Might be missing due to historical data gap."
+    previous_value common.DropboxTimestamp?
+        "Previous shared content link expiration date. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
-        expiration_start_date = "2016-11-23T10:30:00Z"
-        expiration_days = 3
+        new_value = "2017-01-25T15:51:30Z"
+        previous_value = "2017-01-25T15:51:30Z"
 
 struct SharedContentChangeLinkPasswordDetails
     "Changed the password on the link for the shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
-
 struct SharedContentChangeMemberRoleDetails
     "Changed the access type of a shared file or folder member."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    new_sharing_permission String?
-        "New sharing permission. Might be missing due to historical data gap."
-    previous_sharing_permission String?
-        "Previous sharing permission. Might be missing due to historical data gap."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
+    previous_access_level sharing.AccessLevel?
+        "Previous access level. Might be missing due to historical data gap."
+    new_access_level sharing.AccessLevel
+        "New access level."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        new_sharing_permission = "abc"
-        previous_sharing_permission = "abc"
-        shared_folder_type = "abc"
+        previous_access_level = viewer_no_comment
+        new_access_level = viewer_no_comment
 
 struct SharedContentChangeViewerInfoPolicyDetails
     "Changed whether members can see who viewed the shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-    new_value SharedContentViewerInfoPolicy
+    new_value sharing.ViewerInfoPolicy
         "New viewer info policy."
-    previous_value SharedContentViewerInfoPolicy?
+    previous_value sharing.ViewerInfoPolicy?
         "Previous view info policy. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
         new_value = disabled
         previous_value = disabled
 
 struct SharedContentClaimInvitationDetails
-    "Claimed membership to a team member's shared folder."
+    "Acquired membership on a shared file or folder by claiming an invitation."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
     shared_content_link String?
         "Shared content link."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
         shared_content_link = "abc"
 
 struct SharedContentCopyDetails
@@ -2517,222 +2622,141 @@ struct SharedContentCopyDetails
 
     shared_content_link String
         "Shared content link."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    relocate_action_details RelocateAssetReferencesLogInfo
-        "Specifies the source and destination indices in the assets list."
+    shared_content_owner UserLogInfo?
+        "The shared content owner."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+    destination_path FilePath
+        "The path where the member saved the content."
 
     example default
         shared_content_link = "abc"
-        sharing_permission = "abc"
-        target_asset_index = 3
-        relocate_action_details = default
+        shared_content_owner = default
+        shared_content_access_level = viewer_no_comment
+        destination_path = "/Contract Work/Product Design"
 
 struct SharedContentDownloadDetails
     "Downloaded the shared file or folder."
 
     shared_content_link String
         "Shared content link."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
+    shared_content_owner UserLogInfo?
+        "The shared content owner."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
 
     example default
         shared_content_link = "abc"
-        sharing_permission = "abc"
-        target_asset_index = 3
+        shared_content_owner = default
+        shared_content_access_level = viewer_no_comment
 
 struct SharedContentRelinquishMembershipDetails
     "Left the membership of a shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-
-struct SharedContentRemoveInviteeDetails
+struct SharedContentRemoveInviteesDetails
     "Removed an invitee from the membership of a shared file or folder before it was claimed."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
+    invitees List(EmailAddress)
+        "A list of invitees."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
+        invitees = ["john_smith@acmecorp.com"]
 
 struct SharedContentRemoveLinkExpiryDetails
     "Removed the expiry of the link for the shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
+    previous_value common.DropboxTimestamp?
+        "Previous shared content link expiration date. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
+        previous_value = "2017-01-25T15:51:30Z"
 
 struct SharedContentRemoveLinkPasswordDetails
     "Removed the password on the link for the shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
-
 struct SharedContentRemoveMemberDetails
     "Removed a user or a group from the membership of a shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
+    shared_content_access_level sharing.AccessLevel?
+        "Shared content access level."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        sharing_permission = "abc"
-        shared_folder_type = "abc"
+        shared_content_access_level = viewer_no_comment
 
 struct SharedContentRequestAccessDetails
     "Requested to be on the membership of a shared file or folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
     shared_content_link String?
         "Shared content link."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
         shared_content_link = "abc"
 
 struct SharedContentUnshareDetails
     "Unshared a shared file or folder by clearing its membership and turning off its link."
-
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String?
-        "Original shared folder name."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
 
 struct SharedContentViewDetails
     "Previewed the shared file or folder."
 
     shared_content_link String
         "Shared content link."
-    sharing_permission String?
-        "Sharing permission. Might be missing due to historical data gap."
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
+    shared_content_owner UserLogInfo?
+        "The shared content owner."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
 
     example default
         shared_content_link = "abc"
-        sharing_permission = "abc"
-        target_asset_index = 3
-
-struct SharedFolderChangeConfidentialityDetails
-    "Set or unset the confidential flag on a shared folder."
-
-    new_value Confidentiality
-        "New confidentiality value."
-    previous_value Confidentiality?
-        "Previous confidentiality value. Might be missing due to historical data gap."
-
-    example default
-        new_value = confidential
-        previous_value = confidential
+        shared_content_owner = default
+        shared_content_access_level = viewer_no_comment
 
 struct SharedFolderChangeLinkPolicyDetails
     "Changed who can access the shared folder via a link."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-    new_value SharedFolderLinkPolicy
+    new_value sharing.SharedLinkPolicy
         "New shared folder link policy."
-    previous_value SharedFolderLinkPolicy?
+    previous_value sharing.SharedLinkPolicy?
         "Previous shared folder link policy. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
-        new_value = members_only
-        previous_value = members_only
+        new_value = members
+        previous_value = members
 
-struct SharedFolderChangeMemberManagementPolicyDetails
-    "Changed who can manage the membership of a shared folder."
+struct SharedFolderChangeMembersInheritancePolicyDetails
+    "Specify if the shared folder inherits its members from the parent folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-    new_value SharedFolderMembershipManagementPolicy
-        "New membership management policy."
-    previous_value SharedFolderMembershipManagementPolicy?
-        "Previous membership management policy. Might be missing due to historical data gap."
+    new_value SharedFolderMembersInheritancePolicy
+        "New member inheritance policy."
+    previous_value SharedFolderMembersInheritancePolicy?
+        "Previous member inheritance policy. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
+        new_value = inherit_members
+        previous_value = inherit_members
+
+struct SharedFolderChangeMembersManagementPolicyDetails
+    "Changed who can add or remove members of a shared folder."
+
+    new_value sharing.AclUpdatePolicy
+        "New members management policy."
+    previous_value sharing.AclUpdatePolicy?
+        "Previous members management policy. Might be missing due to historical data gap."
+
+    example default
         new_value = owner
         previous_value = owner
 
-struct SharedFolderChangeMemberPolicyDetails
+struct SharedFolderChangeMembersPolicyDetails
     "Changed who can become a member of the shared folder."
 
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-    shared_folder_type String?
-        "Shared folder type. Might be missing due to historical data gap."
-    new_value SharedFolderMemberPolicy
+    new_value sharing.MemberPolicy
         "New external invite policy."
-    previous_value SharedFolderMemberPolicy?
+    previous_value sharing.MemberPolicy?
         "Previous external invite policy. Might be missing due to historical data gap."
 
     example default
-        target_asset_index = 3
-        original_folder_name = "abc"
-        shared_folder_type = "abc"
-        new_value = team_only
-        previous_value = team_only
+        new_value = team
+        previous_value = team
 
 struct SharedFolderCreateDetails
     "Created a shared folder."
@@ -2748,15 +2772,6 @@ struct SharedFolderDeclineInvitationDetails
 
 struct SharedFolderMountDetails
     "Added a shared folder to own Dropbox."
-
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
 
 struct SharedFolderNestDetails
     "Changed the parent of a shared folder."
@@ -2784,15 +2799,6 @@ struct SharedFolderTransferOwnershipDetails
 
 struct SharedFolderUnmountDetails
     "Deleted a shared folder from Dropbox."
-
-    target_asset_index UInt64
-        "Target asset position in the Assets list."
-    original_folder_name String
-        "Original shared folder name."
-
-    example default
-        target_asset_index = 3
-        original_folder_name = "abc"
 
 struct SharedLinkAddExpiryDetails
     "Added a shared link expiration date."
@@ -3025,11 +3031,14 @@ struct TeamFolderPermanentlyDeleteDetails
 struct TeamFolderRenameDetails
     "Renamed an active or archived team folder."
 
-    relocate_action_details RelocateAssetReferencesLogInfo
-        "Specifies the source and destination indices in the assets list."
+    previous_folder_name String
+        "Previous folder name."
+    new_folder_name String
+        "New folder name."
 
     example default
-        relocate_action_details = default
+        previous_folder_name = "abc"
+        new_folder_name = "abc"
 
 struct AccountCaptureChangePolicyDetails
     "Changed the account capture policy on a domain belonging to the team."
@@ -3216,6 +3225,18 @@ struct MemberRequestsChangePolicyDetails
 
 struct MemberSpaceLimitsAddExceptionDetails
     "Added an exception for one or more team members to bypass space limits imposed by policy."
+
+struct MemberSpaceLimitsChangeCapsTypePolicyDetails
+    "Change the member space limit type for the team."
+
+    previous_value SpaceCapsType
+        "Previous space limit type."
+    new_value SpaceCapsType
+        "New space limit type."
+
+    example default
+        previous_value = hard
+        new_value = hard
 
 struct MemberSpaceLimitsChangePolicyDetails
     "Changed the team default limit level."
@@ -3578,6 +3599,7 @@ union EventDetails
     emm_refresh_auth_token_details EmmRefreshAuthTokenDetails
     account_capture_change_availability_details AccountCaptureChangeAvailabilityDetails
     account_capture_migrate_account_details AccountCaptureMigrateAccountDetails
+    account_capture_notification_emails_sent_details AccountCaptureNotificationEmailsSentDetails
     account_capture_relinquish_account_details AccountCaptureRelinquishAccountDetails
     disabled_domain_invites_details DisabledDomainInvitesDetails
     domain_invites_approve_request_to_join_team_details DomainInvitesApproveRequestToJoinTeamDetails
@@ -3605,14 +3627,10 @@ union EventDetails
     file_revert_details FileRevertDetails
     file_rollback_changes_details FileRollbackChangesDetails
     file_save_copy_reference_details FileSaveCopyReferenceDetails
-    file_request_add_deadline_details FileRequestAddDeadlineDetails
     file_request_change_details FileRequestChangeDetails
-    file_request_change_folder_details FileRequestChangeFolderDetails
     file_request_close_details FileRequestCloseDetails
     file_request_create_details FileRequestCreateDetails
     file_request_receive_file_details FileRequestReceiveFileDetails
-    file_request_remove_deadline_details FileRequestRemoveDeadlineDetails
-    file_request_send_details FileRequestSendDetails
     group_add_external_id_details GroupAddExternalIdDetails
     group_add_member_details GroupAddMemberDetails
     group_change_external_id_details GroupChangeExternalIdDetails
@@ -3633,13 +3651,17 @@ union EventDetails
     sign_in_as_session_end_details SignInAsSessionEndDetails
     sign_in_as_session_start_details SignInAsSessionStartDetails
     sso_error_details SsoErrorDetails
+    member_add_name_details MemberAddNameDetails
     member_change_admin_role_details MemberChangeAdminRoleDetails
     member_change_email_details MemberChangeEmailDetails
     member_change_membership_type_details MemberChangeMembershipTypeDetails
     member_change_name_details MemberChangeNameDetails
     member_change_status_details MemberChangeStatusDetails
     member_permanently_delete_account_contents_details MemberPermanentlyDeleteAccountContentsDetails
+    member_space_limits_add_custom_quota_details MemberSpaceLimitsAddCustomQuotaDetails
+    member_space_limits_change_custom_quota_details MemberSpaceLimitsChangeCustomQuotaDetails
     member_space_limits_change_status_details MemberSpaceLimitsChangeStatusDetails
+    member_space_limits_remove_custom_quota_details MemberSpaceLimitsRemoveCustomQuotaDetails
     member_suggest_details MemberSuggestDetails
     member_transfer_account_contents_details MemberTransferAccountContentsDetails
     paper_content_add_member_details PaperContentAddMemberDetails
@@ -3683,6 +3705,7 @@ union EventDetails
     password_reset_all_details PasswordResetAllDetails
     emm_create_exceptions_report_details EmmCreateExceptionsReportDetails
     emm_create_usage_report_details EmmCreateUsageReportDetails
+    export_members_report_details ExportMembersReportDetails
     paper_admin_export_start_details PaperAdminExportStartDetails
     smart_sync_create_admin_privilege_report_details SmartSyncCreateAdminPrivilegeReportDetails
     team_activity_create_report_details TeamActivityCreateReportDetails
@@ -3696,6 +3719,9 @@ union EventDetails
     sf_add_group_details SfAddGroupDetails
     sf_allow_non_members_to_view_shared_links_details SfAllowNonMembersToViewSharedLinksDetails
     sf_external_invite_warn_details SfExternalInviteWarnDetails
+    sf_fb_invite_details SfFbInviteDetails
+    sf_fb_invite_change_role_details SfFbInviteChangeRoleDetails
+    sf_fb_uninvite_details SfFbUninviteDetails
     sf_invite_group_details SfInviteGroupDetails
     sf_team_grant_access_details SfTeamGrantAccessDetails
     sf_team_invite_details SfTeamInviteDetails
@@ -3718,17 +3744,17 @@ union EventDetails
     shared_content_copy_details SharedContentCopyDetails
     shared_content_download_details SharedContentDownloadDetails
     shared_content_relinquish_membership_details SharedContentRelinquishMembershipDetails
-    shared_content_remove_invitee_details SharedContentRemoveInviteeDetails
+    shared_content_remove_invitees_details SharedContentRemoveInviteesDetails
     shared_content_remove_link_expiry_details SharedContentRemoveLinkExpiryDetails
     shared_content_remove_link_password_details SharedContentRemoveLinkPasswordDetails
     shared_content_remove_member_details SharedContentRemoveMemberDetails
     shared_content_request_access_details SharedContentRequestAccessDetails
     shared_content_unshare_details SharedContentUnshareDetails
     shared_content_view_details SharedContentViewDetails
-    shared_folder_change_confidentiality_details SharedFolderChangeConfidentialityDetails
     shared_folder_change_link_policy_details SharedFolderChangeLinkPolicyDetails
-    shared_folder_change_member_management_policy_details SharedFolderChangeMemberManagementPolicyDetails
-    shared_folder_change_member_policy_details SharedFolderChangeMemberPolicyDetails
+    shared_folder_change_members_inheritance_policy_details SharedFolderChangeMembersInheritancePolicyDetails
+    shared_folder_change_members_management_policy_details SharedFolderChangeMembersManagementPolicyDetails
+    shared_folder_change_members_policy_details SharedFolderChangeMembersPolicyDetails
     shared_folder_create_details SharedFolderCreateDetails
     shared_folder_decline_invitation_details SharedFolderDeclineInvitationDetails
     shared_folder_mount_details SharedFolderMountDetails
@@ -3783,6 +3809,7 @@ union EventDetails
     group_user_management_change_policy_details GroupUserManagementChangePolicyDetails
     member_requests_change_policy_details MemberRequestsChangePolicyDetails
     member_space_limits_add_exception_details MemberSpaceLimitsAddExceptionDetails
+    member_space_limits_change_caps_type_policy_details MemberSpaceLimitsChangeCapsTypePolicyDetails
     member_space_limits_change_policy_details MemberSpaceLimitsChangePolicyDetails
     member_space_limits_remove_exception_details MemberSpaceLimitsRemoveExceptionDetails
     member_suggestions_change_policy_details MemberSuggestionsChangePolicyDetails
@@ -3975,6 +4002,12 @@ struct AccountCaptureMigrateAccountType
     example default
         description = "(domains) Account captured user migrated their account to the team."
 
+struct AccountCaptureNotificationEmailsSentType
+    description String
+
+    example default
+        description = "(domains) Proactive account capture email sent to all unmanaged members."
+
 struct AccountCaptureRelinquishAccountType
     description String
 
@@ -4137,23 +4170,11 @@ struct FileSaveCopyReferenceType
     example default
         description = "(file_operations) Save a file or folder using a copy reference."
 
-struct FileRequestAddDeadlineType
-    description String
-
-    example default
-        description = "(file_requests) Added a deadline to a file request. This event is replaced by file_request_change and will not be logged going forward."
-
 struct FileRequestChangeType
     description String
 
     example default
         description = "(file_requests) Change a file request."
-
-struct FileRequestChangeFolderType
-    description String
-
-    example default
-        description = "(file_requests) Changed the file request folder. This event is replaced by file_request_change and will not be logged going forward."
 
 struct FileRequestCloseType
     description String
@@ -4172,18 +4193,6 @@ struct FileRequestReceiveFileType
 
     example default
         description = "(file_requests) Received files for a file request."
-
-struct FileRequestRemoveDeadlineType
-    description String
-
-    example default
-        description = "(file_requests) Removed the file request deadline. This event is replaced by file_request_change and will not be logged going forward."
-
-struct FileRequestSendType
-    description String
-
-    example default
-        description = "(file_requests) Sent file request to users via email. This event is replaced by file_request_change and will not be logged going forward."
 
 struct GroupAddExternalIdType
     description String
@@ -4305,6 +4314,12 @@ struct SsoErrorType
     example default
         description = "(logins) Failed to sign in via SSO. This event is replaced by login_fail and will not be logged going forward."
 
+struct MemberAddNameType
+    description String
+
+    example default
+        description = "(members) Specify team member name."
+
 struct MemberChangeAdminRoleType
     description String
 
@@ -4341,11 +4356,29 @@ struct MemberPermanentlyDeleteAccountContentsType
     example default
         description = "(members) Permanently deleted contents of a removed team member account."
 
+struct MemberSpaceLimitsAddCustomQuotaType
+    description String
+
+    example default
+        description = "(members) Set custom member space limit."
+
+struct MemberSpaceLimitsChangeCustomQuotaType
+    description String
+
+    example default
+        description = "(members) Changed custom member space limit."
+
 struct MemberSpaceLimitsChangeStatusType
     description String
 
     example default
         description = "(members) Changed the status with respect to whether the team member is under or over storage quota specified by policy."
+
+struct MemberSpaceLimitsRemoveCustomQuotaType
+    description String
+
+    example default
+        description = "(members) Removed custom member space limit."
 
 struct MemberSuggestType
     description String
@@ -4605,6 +4638,12 @@ struct EmmCreateUsageReportType
     example default
         description = "(reports) EMM mobile app usage report created."
 
+struct ExportMembersReportType
+    description String
+
+    example default
+        description = "(reports) Member data report created."
+
 struct PaperAdminExportStartType
     description String
 
@@ -4683,6 +4722,24 @@ struct SfExternalInviteWarnType
     example default
         description = "(sharing) Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE). This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
 
+struct SfFbInviteType
+    description String
+
+    example default
+        description = "(sharing) Invited Facebook users to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfFbInviteChangeRoleType
+    description String
+
+    example default
+        description = "(sharing) Changed a Facebook user's role in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
+struct SfFbUninviteType
+    description String
+
+    example default
+        description = "(sharing) Uninvited a Facebook user from a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+
 struct SfInviteGroupType
     description String
 
@@ -4699,7 +4756,7 @@ struct SfTeamInviteType
     description String
 
     example default
-        description = "(sharing) Invited team members to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+        description = "(sharing) Invited team members to a shared folder. This event is replaced by shared_content_add_invitees and will not be logged going forward."
 
 struct SfTeamInviteChangeRoleType
     description String
@@ -4723,7 +4780,7 @@ struct SfTeamUninviteType
     description String
 
     example default
-        description = "(sharing) Unshared a folder with a team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+        description = "(sharing) Unshared a folder with a team member. This event is replaced by shared_content_remove_invitees and will not be logged going forward."
 
 struct SharedContentAddInviteesType
     description String
@@ -4795,7 +4852,7 @@ struct SharedContentClaimInvitationType
     description String
 
     example default
-        description = "(sharing) Claimed membership to a team member's shared folder."
+        description = "(sharing) Acquired membership on a shared file or folder by claiming an invitation."
 
 struct SharedContentCopyType
     description String
@@ -4815,7 +4872,7 @@ struct SharedContentRelinquishMembershipType
     example default
         description = "(sharing) Left the membership of a shared file or folder."
 
-struct SharedContentRemoveInviteeType
+struct SharedContentRemoveInviteesType
     description String
 
     example default
@@ -4857,25 +4914,25 @@ struct SharedContentViewType
     example default
         description = "(sharing) Previewed the shared file or folder."
 
-struct SharedFolderChangeConfidentialityType
-    description String
-
-    example default
-        description = "(sharing) Set or unset the confidential flag on a shared folder."
-
 struct SharedFolderChangeLinkPolicyType
     description String
 
     example default
         description = "(sharing) Changed who can access the shared folder via a link."
 
-struct SharedFolderChangeMemberManagementPolicyType
+struct SharedFolderChangeMembersInheritancePolicyType
     description String
 
     example default
-        description = "(sharing) Changed who can manage the membership of a shared folder."
+        description = "(sharing) Specify if the shared folder inherits its members from the parent folder."
 
-struct SharedFolderChangeMemberPolicyType
+struct SharedFolderChangeMembersManagementPolicyType
+    description String
+
+    example default
+        description = "(sharing) Changed who can add or remove members of a shared folder."
+
+struct SharedFolderChangeMembersPolicyType
     description String
 
     example default
@@ -5205,6 +5262,12 @@ struct MemberSpaceLimitsAddExceptionType
     example default
         description = "(team_policies) Added an exception for one or more team members to bypass space limits imposed by policy."
 
+struct MemberSpaceLimitsChangeCapsTypePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Change the member space limit type for the team."
+
 struct MemberSpaceLimitsChangePolicyType
     description String
 
@@ -5479,6 +5542,8 @@ union EventType
         "(domains) Granted or revoked the option to enable account capture on domains belonging to the team."
     account_capture_migrate_account AccountCaptureMigrateAccountType
         "(domains) Account captured user migrated their account to the team."
+    account_capture_notification_emails_sent AccountCaptureNotificationEmailsSentType
+        "(domains) Proactive account capture email sent to all unmanaged members."
     account_capture_relinquish_account AccountCaptureRelinquishAccountType
         "(domains) Account captured user relinquished their account by changing the email address associated with it."
     disabled_domain_invites DisabledDomainInvitesType
@@ -5533,22 +5598,14 @@ union EventType
         "(file_operations) Rolled back file change location changes."
     file_save_copy_reference FileSaveCopyReferenceType
         "(file_operations) Save a file or folder using a copy reference."
-    file_request_add_deadline FileRequestAddDeadlineType
-        "(file_requests) Added a deadline to a file request. This event is replaced by file_request_change and will not be logged going forward."
     file_request_change FileRequestChangeType
         "(file_requests) Change a file request."
-    file_request_change_folder FileRequestChangeFolderType
-        "(file_requests) Changed the file request folder. This event is replaced by file_request_change and will not be logged going forward."
     file_request_close FileRequestCloseType
         "(file_requests) Closed a file request."
     file_request_create FileRequestCreateType
         "(file_requests) Created a file request."
     file_request_receive_file FileRequestReceiveFileType
         "(file_requests) Received files for a file request."
-    file_request_remove_deadline FileRequestRemoveDeadlineType
-        "(file_requests) Removed the file request deadline. This event is replaced by file_request_change and will not be logged going forward."
-    file_request_send FileRequestSendType
-        "(file_requests) Sent file request to users via email. This event is replaced by file_request_change and will not be logged going forward."
     group_add_external_id GroupAddExternalIdType
         "(groups) Added an external ID for group."
     group_add_member GroupAddMemberType
@@ -5589,6 +5646,8 @@ union EventType
         "(logins) Started admin sign-in-as session."
     sso_error SsoErrorType
         "(logins) Failed to sign in via SSO. This event is replaced by login_fail and will not be logged going forward."
+    member_add_name MemberAddNameType
+        "(members) Specify team member name."
     member_change_admin_role MemberChangeAdminRoleType
         "(members) Change the admin role belonging to team member."
     member_change_email MemberChangeEmailType
@@ -5601,8 +5660,14 @@ union EventType
         "(members) Changed the membership status of a team member."
     member_permanently_delete_account_contents MemberPermanentlyDeleteAccountContentsType
         "(members) Permanently deleted contents of a removed team member account."
+    member_space_limits_add_custom_quota MemberSpaceLimitsAddCustomQuotaType
+        "(members) Set custom member space limit."
+    member_space_limits_change_custom_quota MemberSpaceLimitsChangeCustomQuotaType
+        "(members) Changed custom member space limit."
     member_space_limits_change_status MemberSpaceLimitsChangeStatusType
         "(members) Changed the status with respect to whether the team member is under or over storage quota specified by policy."
+    member_space_limits_remove_custom_quota MemberSpaceLimitsRemoveCustomQuotaType
+        "(members) Removed custom member space limit."
     member_suggest MemberSuggestType
         "(members) Suggested a new team member to be added to the team."
     member_transfer_account_contents MemberTransferAccountContentsType
@@ -5689,6 +5754,8 @@ union EventType
         "(reports) EMM excluded users report created."
     emm_create_usage_report EmmCreateUsageReportType
         "(reports) EMM mobile app usage report created."
+    export_members_report ExportMembersReportType
+        "(reports) Member data report created."
     paper_admin_export_start PaperAdminExportStartType
         "(reports) Exported all Paper documents in the team."
     smart_sync_create_admin_privilege_report SmartSyncCreateAdminPrivilegeReportType
@@ -5715,12 +5782,18 @@ union EventType
         "(sharing) Allowed non collaborators to view links to files in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
     sf_external_invite_warn SfExternalInviteWarnType
         "(sharing) Admin settings: team members see a warning before sharing folders outside the team (DEPRECATED FEATURE). This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_fb_invite SfFbInviteType
+        "(sharing) Invited Facebook users to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_fb_invite_change_role SfFbInviteChangeRoleType
+        "(sharing) Changed a Facebook user's role in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+    sf_fb_uninvite SfFbUninviteType
+        "(sharing) Uninvited a Facebook user from a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
     sf_invite_group SfInviteGroupType
         "(sharing) Invited a group to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
     sf_team_grant_access SfTeamGrantAccessType
         "(sharing) Granted access to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
     sf_team_invite SfTeamInviteType
-        "(sharing) Invited team members to a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+        "(sharing) Invited team members to a shared folder. This event is replaced by shared_content_add_invitees and will not be logged going forward."
     sf_team_invite_change_role SfTeamInviteChangeRoleType
         "(sharing) Changed a team member's role in a shared folder. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
     sf_team_join SfTeamJoinType
@@ -5728,7 +5801,7 @@ union EventType
     sf_team_join_from_oob_link SfTeamJoinFromOobLinkType
         "(sharing) Joined a team member's shared folder from a link. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
     sf_team_uninvite SfTeamUninviteType
-        "(sharing) Unshared a folder with a team member. This event is deprecated and will not be logged going forward as the associated product functionality no longer exists."
+        "(sharing) Unshared a folder with a team member. This event is replaced by shared_content_remove_invitees and will not be logged going forward."
     shared_content_add_invitees SharedContentAddInviteesType
         "(sharing) Sent an email invitation to the membership of a shared file or folder."
     shared_content_add_link_expiry SharedContentAddLinkExpiryType
@@ -5752,14 +5825,14 @@ union EventType
     shared_content_change_viewer_info_policy SharedContentChangeViewerInfoPolicyType
         "(sharing) Changed whether members can see who viewed the shared file or folder."
     shared_content_claim_invitation SharedContentClaimInvitationType
-        "(sharing) Claimed membership to a team member's shared folder."
+        "(sharing) Acquired membership on a shared file or folder by claiming an invitation."
     shared_content_copy SharedContentCopyType
         "(sharing) Copied the shared file or folder to own Dropbox."
     shared_content_download SharedContentDownloadType
         "(sharing) Downloaded the shared file or folder."
     shared_content_relinquish_membership SharedContentRelinquishMembershipType
         "(sharing) Left the membership of a shared file or folder."
-    shared_content_remove_invitee SharedContentRemoveInviteeType
+    shared_content_remove_invitees SharedContentRemoveInviteesType
         "(sharing) Removed an invitee from the membership of a shared file or folder before it was claimed."
     shared_content_remove_link_expiry SharedContentRemoveLinkExpiryType
         "(sharing) Removed the expiry of the link for the shared file or folder."
@@ -5773,13 +5846,13 @@ union EventType
         "(sharing) Unshared a shared file or folder by clearing its membership and turning off its link."
     shared_content_view SharedContentViewType
         "(sharing) Previewed the shared file or folder."
-    shared_folder_change_confidentiality SharedFolderChangeConfidentialityType
-        "(sharing) Set or unset the confidential flag on a shared folder."
     shared_folder_change_link_policy SharedFolderChangeLinkPolicyType
         "(sharing) Changed who can access the shared folder via a link."
-    shared_folder_change_member_management_policy SharedFolderChangeMemberManagementPolicyType
-        "(sharing) Changed who can manage the membership of a shared folder."
-    shared_folder_change_member_policy SharedFolderChangeMemberPolicyType
+    shared_folder_change_members_inheritance_policy SharedFolderChangeMembersInheritancePolicyType
+        "(sharing) Specify if the shared folder inherits its members from the parent folder."
+    shared_folder_change_members_management_policy SharedFolderChangeMembersManagementPolicyType
+        "(sharing) Changed who can add or remove members of a shared folder."
+    shared_folder_change_members_policy SharedFolderChangeMembersPolicyType
         "(sharing) Changed who can become a member of the shared folder."
     shared_folder_create SharedFolderCreateType
         "(sharing) Created a shared folder."
@@ -5889,6 +5962,8 @@ union EventType
         "(team_policies) Changed whether users can find the team when not invited."
     member_space_limits_add_exception MemberSpaceLimitsAddExceptionType
         "(team_policies) Added an exception for one or more team members to bypass space limits imposed by policy."
+    member_space_limits_change_caps_type_policy MemberSpaceLimitsChangeCapsTypePolicyType
+        "(team_policies) Change the member space limit type for the team."
     member_space_limits_change_policy MemberSpaceLimitsChangePolicyType
         "(team_policies) Changed the team default limit level."
     member_space_limits_remove_exception MemberSpaceLimitsRemoveExceptionType
@@ -5975,14 +6050,14 @@ struct TeamEvent
         "The Dropbox timestamp representing when the action was taken."
     event_category EventCategory
         "The category that this type of action belongs to."
-    actor ActorLogInfo
-        "The entity who actually performed the action."
+    actor ActorLogInfo?
+        "The entity who actually performed the action. Might be missing due to historical data gap."
     origin OriginLogInfo?
         "The origin from which the actor performed the action including information about host, ip address, location, session, etc. If the action was performed programmatically via the API the origin represents the API client."
-    involve_non_team_member Boolean
-        "True if the action involved a non team member either as the actor or as one of the affected users."
-    context ContextLogInfo
-        "The user or team on whose behalf the actor performed the action."
+    involve_non_team_member Boolean?
+        "True if the action involved a non team member either as the actor or as one of the affected users. Might be missing due to historical data gap."
+    context ContextLogInfo?
+        "The user or team on whose behalf the actor performed the action. Might be missing due to historical data gap."
     participants List(ParticipantLogInfo)?
         "Zero or more users and/or groups that are affected by the action. Note that this list doesn't include any actors or users in context."
     assets List(AssetLogInfo)?

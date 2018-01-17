@@ -54,3 +54,16 @@ struct TimeRange
         "Optional starting time (inclusive)."
     end_time common.DropboxTimestamp?
         "Optional ending time (exclusive)."
+
+
+union MemberSpaceLimitType
+    "The type of the space limit imposed on a team member."
+
+    off
+        "The team member does not have imposed space limit."
+    alert_only
+        "The team member has soft imposed space limit - the limit is used for display and
+        for notifications."
+    stop_sync
+        "The team member has hard imposed space limit - Dropbox file sync will stop after
+        the limit is reached."

@@ -27,7 +27,7 @@ struct NamespaceMetadata
     namespace_type NamespaceType
         "The type of this namespace."
     team_member_id team_common.TeamMemberId?
-        "If this is a team member folder, the ID of the team member.
+        "If this is a team member or app folder, the ID of the owning team member.
         Otherwise, this field is not present."
 
     example shared_folder
