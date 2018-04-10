@@ -9,6 +9,8 @@ import users_common
 
 alias Id = String(min_length=1)
 
+alias FileId = String(pattern="id:.+", min_length=4)
+
 alias ListFolderCursor = String(min_length=1)
 
 alias Path = String(pattern="/(.|[\\r\\n])*")
@@ -186,6 +188,10 @@ union_closed MediaInfo
     metadata MediaMetadata
         "The metadata for the photo/video."
 
+struct SymlinkInfo
+    target String
+        "The target this symlink points to."
+
 struct FileMetadata extends Metadata
 
     id Id
@@ -211,6 +217,9 @@ struct FileMetadata extends Metadata
 
     media_info MediaInfo?
         "Additional information if the file is a photo or video."
+
+    symlink_info SymlinkInfo?
+        "Set if this file is a symlink."
 
     sharing_info FileSharingInfo?
         "Set if this file is contained in a shared folder."
@@ -542,6 +551,7 @@ route download (DownloadArg, FileMetadata, DownloadError)
         style = "download"
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 #
 # Download zip
@@ -674,6 +684,7 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
         owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 struct UploadSessionAppendArg
     cursor UploadSessionCursor
@@ -699,7 +710,7 @@ route upload_session/append_v2 (UploadSessionAppendArg, Void, UploadSessionLooku
         owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
-
+        select_admin_mode = "team_admin"
 
 struct UploadSessionCursor
     session_id String
@@ -724,6 +735,7 @@ route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError
         owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 union_closed WriteMode
     "Your intent when writing a file to some path. This is used to determine
@@ -819,6 +831,7 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
         owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route upload (CommitInfo, FileMetadata, UploadError)
     "Create a new file with the contents provided in the request.
@@ -832,7 +845,7 @@ route upload (CommitInfo, FileMetadata, UploadError)
         owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
-        takes_path_root = true
+        select_admin_mode = "team_admin"
 
 #
 # Batch Upload
@@ -900,6 +913,7 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFin
         owner = "api-platform"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`upload_session/finish_batch`. If
@@ -908,6 +922,7 @@ route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJ
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 #
 # Search
@@ -1036,6 +1051,9 @@ union WriteError
         "Dropbox will not save the file or folder because of its name."
     team_folder
         "This endpoint cannot move or delete team folders."
+    too_many_write_operations
+        "There are too many write operations in user's Dropbox. Please retry
+        this request."
 
 union WriteConflictError
     file
@@ -1075,6 +1093,7 @@ route create_folder_v2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) deprecated by create_folder_v2
     "Create a folder at a given path."
@@ -1082,6 +1101,92 @@ route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) depreca
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
+
+struct CreateFolderBatchArg
+    paths List(WritePath)
+        "List of paths to be created in the user's Dropbox. Duplicate path
+        arguments in the batch are considered only once."
+    autorename Boolean = false
+        "If there's a conflict, have the Dropbox server try to autorename
+        the folder to avoid the conflict."
+    force_async Boolean = false
+        "Whether to force the create to happen asynchronously."
+
+    example default
+        paths = ["/Homework/math"]
+        autorename = false
+
+struct CreateFolderEntryResult
+    metadata FolderMetadata
+        "Metadata of the created folder."
+
+    example default
+        metadata = default
+
+union CreateFolderEntryError
+    path WriteError
+
+union_closed CreateFolderBatchResultEntry
+    success CreateFolderEntryResult
+    failure CreateFolderEntryError
+
+    example default
+        success = default
+
+union CreateFolderBatchError
+    too_many_files
+        "The operation would involve too many files or folders."
+
+struct CreateFolderBatchResult extends FileOpsResult
+    entries List(CreateFolderBatchResultEntry)
+
+    example default
+        entries = [default]
+
+union CreateFolderBatchJobStatus extends async.PollResultBase
+    complete CreateFolderBatchResult
+        "The batch create folder has finished."
+    failed CreateFolderBatchError
+        "The batch create folder has failed."
+
+    example default
+        complete = default
+
+union CreateFolderBatchLaunch extends async.LaunchResultBase
+    "Result returned by :route:`create_folder_batch` that may either launch an
+    asynchronous job or complete synchronously."
+
+    complete CreateFolderBatchResult
+
+    example complete
+        complete = default
+
+    example async_job_id
+        async_job_id = "34g93hh34h04y384084"
+
+route create_folder_batch (CreateFolderBatchArg, CreateFolderBatchLaunch, Void)
+    "Create multiple folders at once.
+
+    This route is asynchronous for large batches, which returns a job ID immediately and runs
+    the create folder batch asynchronously. Otherwise, creates the folders and returns the result
+    synchronously for smaller inputs. You can force asynchronous behaviour by using the
+    :field:`CreateFolderBatchArg.force_async` flag.  Use :route:`create_folder_batch/check` to check
+    the job status."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_mode = "team_admin"
+
+route create_folder_batch/check (async.PollArg, CreateFolderBatchJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`create_folder_batch`. If
+    success, it returns list of result for each entry."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 #
 # Delete
@@ -1090,6 +1195,9 @@ route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) depreca
 struct DeleteArg
     path WritePathOrId
         "Path in the user's Dropbox to delete."
+    parent_rev Rev?
+        "Perform delete if given \"rev\" matches the existing file's latest \"rev\". This field
+        does not support deleting a folder."
 
     example delete
         path = "/Homework/math/Prime_Numbers.txt"
@@ -1102,7 +1210,6 @@ union DeleteError
         this request."
     too_many_files
         "There are too many files in one request. Please retry with fewer files."
-
 
 struct DeleteBatchArg
     entries List(DeleteArg)
@@ -1176,6 +1283,7 @@ route delete_v2 (DeleteArg, DeleteResult, DeleteError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route delete (DeleteArg, Metadata, DeleteError) deprecated by delete_v2
     "Delete the file or folder at a given path.
@@ -1189,6 +1297,7 @@ route delete (DeleteArg, Metadata, DeleteError) deprecated by delete_v2
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     "Delete multiple files/folders at once.
@@ -1200,6 +1309,7 @@ route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`delete_batch`. If
@@ -1208,12 +1318,17 @@ route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route permanently_delete (DeleteArg, Void, DeleteError)
     "Permanently delete the file or folder at a given path
     (see https://www.dropbox.com/en/help/40).
 
     Note: This endpoint is only available for Dropbox Business apps."
+
+    attrs
+        owner = "api-platform"
+        select_admin_mode = "team_admin"
 
 #
 # Args and error shared by copy and move
@@ -1345,6 +1460,7 @@ route copy_v2 (RelocationArg, RelocationResult, RelocationError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route copy (RelocationArg, Metadata, RelocationError) deprecated by copy_v2
     "Copy a file or folder to a different location in the user's Dropbox.
@@ -1354,7 +1470,7 @@ route copy (RelocationArg, Metadata, RelocationError) deprecated by copy_v2
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
-
+        select_admin_mode = "team_admin"
 
 route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     "Copy multiple files or folders to different locations at once in the
@@ -1372,6 +1488,7 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`copy_batch`. If
@@ -1380,6 +1497,7 @@ route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 #
 # Move
@@ -1393,6 +1511,7 @@ route move_v2 (RelocationArg, RelocationResult, RelocationError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route move (RelocationArg, Metadata, RelocationError) deprecated by move_v2
     "Move a file or folder to a different location in the user's Dropbox.
@@ -1402,6 +1521,7 @@ route move (RelocationArg, Metadata, RelocationError) deprecated by move_v2
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     "Move multiple files or folders to different locations at once in the
@@ -1416,6 +1536,7 @@ route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`move_batch`. If
@@ -1424,6 +1545,7 @@ route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 #
 # Thumbnail
@@ -1436,14 +1558,30 @@ union_closed ThumbnailSize
         "64 by 64 px."
     w128h128
         "128 by 128 px."
+    w256h256
+        "256 by 256 px."
+    w480h320
+        "480 by 320 px."
     w640h480
         "640 by 480 px."
+    w960h640
+        "960 by 640 px."
     w1024h768
-        "1024 by 768."
+        "1024 by 768 px."
+    w2048h1536
+        "2048 by 1536 px."
 
 union_closed ThumbnailFormat
     jpeg
     png
+
+union_closed ThumbnailMode
+    strict
+        "Scale down the image to fit within the given size."
+    bestfit
+        "Scale down the image to fit within the given size or its transpose."
+    fitone_bestfit
+        "Scale down the image to completely cover the given size or its transpose."
 
 struct ThumbnailArg
     path ReadPath
@@ -1454,6 +1592,8 @@ struct ThumbnailArg
          better for screenshots and digital arts."
     size ThumbnailSize = w64h64
         "The size for the thumbnail image."
+    mode ThumbnailMode = strict
+        "How to resize and crop the image to achieve the desired size."
 
     example default
         path = "/image.jpg"
@@ -1525,6 +1665,7 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
         style = "download"
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 route get_thumbnail_batch(GetThumbnailBatchArg, GetThumbnailBatchResult, GetThumbnailBatchError)
     "Get thumbnails for a list of images. We allow up to 25 thumbnails in a single batch.
@@ -1537,6 +1678,7 @@ route get_thumbnail_batch(GetThumbnailBatchArg, GetThumbnailBatchResult, GetThum
         host = "content"
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 #
 # Preview
@@ -1584,6 +1726,7 @@ route get_preview(PreviewArg, FileMetadata, PreviewError)
         style = "download"
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 #
 # List revisions
@@ -1597,7 +1740,6 @@ union ListRevisionsMode
     id
         "Returns revisions with the same file id as identified by the latest file entry at the given
         file path or id."
-
 
 struct ListRevisionsArg
     path PathOrId
@@ -1645,6 +1787,7 @@ route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 #
 # Restore
@@ -1674,6 +1817,7 @@ route restore(RestoreArg, FileMetadata, RestoreError)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 #
 # Temporary link
@@ -1853,6 +1997,7 @@ route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError) 
     Note: Metadata for the root folder is unsupported."
 
     attrs
+        owner = "api-platform"
         api_group="properties"
         is_preview=true
         allow_app_folder_app = true
@@ -1889,6 +2034,7 @@ route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithPrope
     upload session with :route:`upload_session/start`."
 
     attrs
+        owner = "api-platform"
         host="content"
         style="upload"
         api_group="properties"
@@ -1931,3 +2077,60 @@ route properties/template/get(file_properties.GetTemplateArg, file_properties.Ge
 route properties/template/list(Void, file_properties.ListTemplateResult, file_properties.TemplateError) deprecated
     attrs
         owner = "api-platform"
+
+#
+# Team selective sync additions
+#
+union SyncSettingArg
+    default
+        "On first sync to members' computers, the specified folder will follow its
+        parent folder's setting or otherwise follow default sync behavior."
+    not_synced
+        "On first sync to members' computers, the specified folder will be set
+        to not sync with selective sync."
+
+    example default
+        not_synced = null
+
+union SyncSetting
+    default
+        "On first sync to members' computers, the specified folder will follow
+        its parent folder's setting or otherwise follow default sync behavior."
+    not_synced
+        "On first sync to members' computers, the specified folder will be set
+        to not sync with selective sync."
+    not_synced_inactive
+        "The specified folder's not_synced setting is inactive due to its
+        location or other configuration changes. It will follow its parent
+        folder's setting."
+
+struct ContentSyncSettingArg
+    id FileId
+        "Id of the item this setting is applied to."
+
+    sync_setting SyncSettingArg
+        "Setting for this item."
+
+    example default
+        id = "id:a4ayc_80_OEAAAAAAAAAXw"
+        sync_setting = default
+
+struct ContentSyncSetting
+    id FileId
+        "Id of the item this setting is applied to."
+
+    sync_setting SyncSetting
+        "Setting for this item."
+
+    example default
+        id = "id:a4ayc_80_OEAAAAAAAAAXw"
+        sync_setting = default
+
+union SyncSettingsError
+    path LookupError
+
+    unsupported_combination
+        "Setting this combination of sync settings simultaneously is not supported."
+
+    unsupported_configuration
+        "The specified configuration is not supported."

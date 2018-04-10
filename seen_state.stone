@@ -1,0 +1,12 @@
+namespace seen_state
+
+union PlatformType
+    "Possible platforms on which a user may view content."
+    web
+        "The content was viewed on the web."
+    mobile
+        "The content was viewed on a mobile client."
+    desktop
+        "The content was viewed on a desktop client."
+    unknown
+        "The content was viewed on an unknown platform."

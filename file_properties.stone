@@ -28,8 +28,8 @@ namespace file_properties
     when the app is linked with the owner of the template (either a user or team).
 
 
-    User-owned templates are accessed via the user-auth template/*_for_user endpoints, while
-    team-owned templates are accessed via the team-auth template/*_for_team endpoints. Properties
+    User-owned templates are accessed via the user-auth file_properties/templates/*_for_user endpoints, while
+    team-owned templates are accessed via the team-auth file_properties/templates/*_for_team endpoints. Properties
     associated with either type of template can be accessed via the user-auth properties/* endpoints.
 
 
@@ -259,9 +259,11 @@ union RemovePropertiesError extends PropertiesError
 
 route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
     "Permanently removes the specified property group from the file. To remove specific property field key
-    value pairs, see :route:`properties/update`. To update a template, see
-    :route:`templates/update_for_user` or :route:`templates/update_for_team`. Templates can't
-    be removed once created."
+    value pairs, see :route:`properties/update`.
+    To update a template, see
+    :route:`templates/update_for_user` or :route:`templates/update_for_team`.
+    To remove a template, see
+    :route:`templates/remove_for_user` or :route:`templates/remove_for_team`."
 
     attrs
         api_group="properties"

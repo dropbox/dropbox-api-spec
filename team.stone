@@ -97,13 +97,11 @@ union_closed UserSelectorArg
     example email
         email = "dan@hotmail.com"
 
-
 union_closed UserSelectorError
     "Error that can be returned whenever a struct derived from :type:`UserSelectorArg` is used."
 
     user_not_found
         "No matching user found. The provided team_member_id, email, or external_id does not exist on this team."
-
 
 union_closed UsersSelectorArg
     "Argument for selecting a list of users, either by team_member_ids, external_ids or emails."
@@ -196,23 +194,25 @@ route token/get_authenticated_admin(Void, TokenGetAuthenticatedAdminResult, Toke
 #
 
 union Feature
-    "A set of features that Dropbox for Business account support."
+    "A set of features that a Dropbox Business account may support."
 
     upload_api_rate_limit
         "The number of upload API calls allowed per month."
     has_team_shared_dropbox
-        "Does this team have a have a company shared dropbox."
+        "Does this team have a shared team root."
     has_team_file_events
         "Does this team have file events."
-
+    has_team_selective_sync
+        "Does this team have team selective sync enabled."
 
 union FeatureValue
     "The values correspond to entries in :type:`Feature`. You may get different value according
-    to your Dropbox for Business plan."
+    to your Dropbox Business plan."
 
     upload_api_rate_limit UploadApiRateLimitValue
     has_team_shared_dropbox  HasTeamSharedDropboxValue
     has_team_file_events HasTeamFileEventsValue
+    has_team_selective_sync HasTeamSelectiveSyncValue
 
     example uploadRateLimited
         upload_api_rate_limit = limited
@@ -223,6 +223,8 @@ union FeatureValue
     example hasTeamFileEvents
         has_team_file_events = ex_no_file_events
 
+    example HasTeamSelectiveSync
+        has_team_selective_sync = default
 
 union UploadApiRateLimitValue
     "The value for :field:`Feature.upload_api_rate_limit`."
@@ -236,16 +238,14 @@ union UploadApiRateLimitValue
     example limited
         limit = 25000
 
-
 union HasTeamSharedDropboxValue
     "The value for :field:`Feature.has_team_shared_dropbox`."
 
     has_team_shared_dropbox Boolean
-        "Does this team have a team shared dropbox."
+        "Does this team have a shared team root."
 
     example default
         has_team_shared_dropbox = false
-
 
 union HasTeamFileEventsValue
     "The value for :field:`Feature.has_team_file_events`."
@@ -255,6 +255,15 @@ union HasTeamFileEventsValue
 
     example ex_no_file_events
         enabled = false
+
+union HasTeamSelectiveSyncValue
+    "The value for :field:`Feature.has_team_selective_sync`."
+
+    has_team_selective_sync Boolean
+        "Does this team have team selective sync enabled."
+
+    example default
+        has_team_selective_sync = true
 
 #
 # Route: feature/get_value_batch
@@ -267,7 +276,6 @@ struct FeaturesGetValuesBatchArg
 
     example listOfValues
         features = [upload_api_rate_limit, has_team_shared_dropbox]
-
 
 struct FeaturesGetValuesBatchResult
     values List(FeatureValue)

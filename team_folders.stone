@@ -2,6 +2,7 @@ namespace team
 
 import async
 import common
+import files
 
 # Common structs
 
@@ -40,13 +41,21 @@ struct TeamFolderMetadata
         "The status of the team folder."
 
     is_team_shared_dropbox Boolean
-        "True if this team folder is the team shared dropbox."
+        "True if this team folder is a shared team root."
+
+    sync_setting files.SyncSetting
+        "The sync setting applied to this team folder."
+
+    content_sync_settings List(files.ContentSyncSetting)
+        "Sync settings applied to contents of this team folder."
 
     example default
         name = "Marketing"
         team_folder_id = "123456789"
         status = active
         is_team_shared_dropbox = false
+        sync_setting = default
+        content_sync_settings = [default]
 
 union TeamFolderAccessError
     invalid_team_folder_id
@@ -64,7 +73,7 @@ union TeamFolderInvalidStatusError
 
 union TeamFolderTeamSharedDropboxError
     disallowed
-        "This action is not allowed for a team shared dropbox."
+        "This action is not allowed for a shared team root."
 
 union BaseTeamFolderError
     "Base error that all errors for existing team folders should extend."
@@ -89,8 +98,12 @@ struct TeamFolderCreateArg
     name String
         "Name for the new team folder."
 
+    sync_setting files.SyncSettingArg?
+        "The sync setting to apply to this team folder. Only permitted if the team has team selective sync enabled."
+
     example default
         name = "Marketing"
+        sync_setting = not_synced
 
 union TeamFolderCreateError
     invalid_folder_name
@@ -99,6 +112,8 @@ union TeamFolderCreateError
         "There is already a team folder with the provided name."
     folder_name_reserved
         "The provided name cannot be used because it is reserved."
+    sync_settings_error files.SyncSettingsError
+        "An error occurred setting the sync settings."
 
 #
 # Team folder rename
@@ -294,3 +309,31 @@ route team_folder/permanently_delete(TeamFolderIdArg, Void, TeamFolderPermanentl
 
 union TeamFolderPermanentlyDeleteError extends BaseTeamFolderError
     ""
+
+#
+# Team folder update_sync_settings
+#
+
+struct TeamFolderUpdateSyncSettingsArg extends TeamFolderIdArg
+    sync_setting files.SyncSettingArg?
+        "Sync setting to apply to the team folder itself. Only meaningful if the team folder is not a shared team root."
+
+    content_sync_settings List(files.ContentSyncSettingArg)?
+        "Sync settings to apply to contents of this team folder."
+
+    example default
+        team_folder_id = "123456789"
+        sync_setting = default
+        content_sync_settings = [default]
+
+union TeamFolderUpdateSyncSettingsError extends BaseTeamFolderError
+    sync_settings_error files.SyncSettingsError
+        "An error occurred setting the sync settings."
+
+route team_folder/update_sync_settings(TeamFolderUpdateSyncSettingsArg, TeamFolderMetadata, TeamFolderUpdateSyncSettingsError)
+    "Updates the sync settings on a team folder or its contents.  Use of this endpoint requires that the team has team selective sync enabled."
+
+    attrs
+        owner = "company-dropbox-team"
+        auth = "team"
+        is_preview=true

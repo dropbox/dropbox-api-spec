@@ -56,12 +56,15 @@ union GetTeamEventsError
 route get_events(GetTeamEventsArg, GetTeamEventsResult, GetTeamEventsError)
     "Retrieves team events.
 
+    Events have a lifespan of two years. Events older than two years will not be returned.
+
+    Many attributes note 'may be missing due to historical data gap'.
+
     Permission : Team Auditing."
 
     attrs
         auth = "team"
         owner = "audit-log-team"
-        is_preview = true
 
 struct GetTeamEventsContinueArg
     cursor String
@@ -88,4 +91,3 @@ route get_events/continue(GetTeamEventsContinueArg, GetTeamEventsResult, GetTeam
     attrs
         auth = "team"
         owner = "audit-log-team"
-        is_preview = true

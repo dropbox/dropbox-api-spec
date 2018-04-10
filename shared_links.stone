@@ -371,6 +371,7 @@ route create_shared_link_with_settings(CreateSharedLinkWithSettingsArg, SharedLi
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 
 #
@@ -399,6 +400,7 @@ route revoke_shared_link(RevokeSharedLinkArg, Void, RevokeSharedLinkError)
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 #
 # NSLR endpoints
@@ -567,3 +569,4 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"

@@ -91,6 +91,9 @@ union FolderAction
     create_link
         "Create a shared link for folder."
 
+    set_access_inheritance
+        "Set whether the folder inherits permissions from its parent."
+
 struct FolderPermission
     "Whether the user is allowed to take the action on the shared folder."
 
@@ -216,7 +219,7 @@ struct MembershipInfo
         "The permissions that requesting user has on this member. The set of
         permissions corresponds to the MemberActions in the request."
     initials String?
-        "Suggested name initials for a member."
+        "Never set."
     is_inherited Boolean = false
         "True if the member has access from a parent folder."
 
@@ -232,6 +235,10 @@ struct UserInfo
 
     account_id users_common.AccountId
         "The account ID of the user."
+    email String
+        "Email address of user."
+    display_name String
+        "The display name of the user."
     same_team Boolean
         "If the user is in the same team as current user."
     team_member_id String?
@@ -242,6 +249,8 @@ struct UserInfo
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         same_team = true
         team_member_id = "dbmid:abcd1234"
+        email = "bob@example.com"
+        display_name = "Robert Smith"
 
 struct UserMembershipInfo extends MembershipInfo
     "The information about a user member of the shared content."
@@ -346,6 +355,15 @@ struct SharedFolderMetadataBase
         owner_display_names = ["Jane Doe"]
         owner_team = default
 
+union AccessInheritance
+    "Information about the inheritance policy of a shared folder."
+
+    inherit
+        "The shared folder inherits its members from the parent folder."
+
+    no_inherit
+        "The shared folder does not inherit its members from the parent folder."
+
 # NOTE: If you modify this struct, also modify InternalSharedFolderMetadata,
 # which is used by mobile
 struct SharedFolderMetadata extends SharedFolderMetadataBase
@@ -374,6 +392,9 @@ struct SharedFolderMetadata extends SharedFolderMetadataBase
     time_invited common.DropboxTimestamp
         "Timestamp indicating when the current user was invited to this shared folder."
 
+    access_inheritance AccessInheritance = inherit
+        "Whether the folder inherits its members from its parent."
+
     example default
         path_lower = "/dir"
         link_metadata = default
@@ -386,6 +407,7 @@ struct SharedFolderMetadata extends SharedFolderMetadataBase
         policy = default
         time_invited = "2016-01-20T00:00:00Z"
         preview_url = "https://www.dropbox.com/scl/fo/fir9vjelf"
+        access_inheritance = inherit
 
 union SharedFolderAccessError
     "There is an error accessing the shared folder."
@@ -396,7 +418,7 @@ union SharedFolderAccessError
         "The user is not a member of the shared folder
         thus cannot access it."
     email_unverified
-        "The current user's e-mail address is unverified."
+        "Never set."
     unmounted
         "The shared folder is unmounted."
 
@@ -442,7 +464,7 @@ route list_folders(ListFoldersArgs, ListFoldersResult, Void)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
 
 struct ListFoldersArgs
     limit UInt32(min_value=1, max_value=1000) = 1000
@@ -484,7 +506,7 @@ route list_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFolde
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
 
 struct ListFoldersContinueArg
     cursor String
@@ -505,7 +527,7 @@ route list_mountable_folders(ListFoldersArgs, ListFoldersResult, Void)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
 
 # --
 
@@ -517,7 +539,7 @@ route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult,
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
 
 # --
 
@@ -527,7 +549,7 @@ route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAcc
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
         api_group = "truelink-alpha"
         select_admin_mode = "whole_team"
 
@@ -551,7 +573,7 @@ route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFold
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
         select_admin_mode = "whole_team"
 
 struct ListFolderMembersCursorArg
@@ -604,7 +626,7 @@ route list_folder_members/continue(ListFolderMembersContinueArg, SharedFolderMem
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
         select_admin_mode = "whole_team"
 
 struct ListFolderMembersContinueArg
@@ -636,8 +658,9 @@ route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError )
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
         api_group = "truelink-alpha"
+        select_admin_mode = "team_admin"
 
 # As of 2017-05, there are three kinds of arg:
 # ShareFolderArg: The public stable version. We cannot make backwards-incompatible changes at all.
@@ -746,7 +769,8 @@ route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollErro
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
+        select_admin_mode = "team_admin"
 
 union_closed JobStatus extends async.PollResultBase
     complete
@@ -781,7 +805,8 @@ route check_job_status(async.PollArg, JobStatus, async.PollError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
+        select_admin_mode = "team_admin"
 
 # --
 
@@ -794,8 +819,9 @@ route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderErr
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
         api_group = "truelink-alpha"
+        select_admin_mode = "team_admin"
 
 struct UnshareFolderArg
     shared_folder_id common.SharedFolderId
@@ -828,7 +854,8 @@ route transfer_folder(TransferFolderArg, Void, TransferFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
+        select_admin_mode = "team_admin"
 
 struct TransferFolderArg
     shared_folder_id common.SharedFolderId
@@ -865,8 +892,9 @@ route update_folder_policy(UpdateFolderPolicyArg, SharedFolderMetadata, UpdateFo
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
         api_group = "truelink-alpha"
+        select_admin_mode = "team_admin"
 
 struct UpdateFolderPolicyArg
     "If any of the policies are unset, then they retain their current setting."
@@ -923,7 +951,8 @@ route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
+        select_admin_mode = "team_admin"
 
 struct AddFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -1040,7 +1069,8 @@ route remove_folder_member(RemoveFolderMemberArg, async.LaunchResultBase, Remove
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
+        select_admin_mode = "team_admin"
 
 struct RemoveFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -1089,7 +1119,8 @@ route check_remove_member_job_status(async.PollArg, RemoveMemberJobStatus, async
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
+        select_admin_mode = "team_admin"
 
 # --
 
@@ -1100,7 +1131,8 @@ route update_folder_member(UpdateFolderMemberArg, MemberAccessLevelResult, Updat
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
+        select_admin_mode = "team_admin"
 
 struct UpdateFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -1142,7 +1174,7 @@ route mount_folder(MountFolderArg, SharedFolderMetadata, MountFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
 
 # TODO(kelkabany): Consider exposing mount path as an argument. More error
 # cases will be possible.
@@ -1187,7 +1219,8 @@ route unmount_folder(UnmountFolderArg, Void, UnmountFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
+        select_admin_mode = "team_admin"
 
 struct UnmountFolderArg
     shared_folder_id common.SharedFolderId
@@ -1217,7 +1250,7 @@ route relinquish_folder_membership(RelinquishFolderMembershipArg, async.LaunchEm
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
 
 struct RelinquishFolderMembershipArg
     shared_folder_id common.SharedFolderId
@@ -1247,3 +1280,35 @@ union RelinquishFolderMembershipError
     no_explicit_access
         "The current user only has inherited access to the shared folder.  You can't relinquish
         inherited membership to folders."
+
+# --
+
+route set_access_inheritance (SetAccessInheritanceArg, ShareFolderLaunch, SetAccessInheritanceError)
+    "Change the inheritance policy of an existing Shared Folder. Only permitted for shared folders in a shared team root.
+
+    If a :field:`ShareFolderLaunch.async_job_id` is returned, you'll need to
+    call :route:`check_share_job_status` until the action completes to get the
+    metadata for the folder."
+
+    attrs
+        owner = "company-dropbox-team"
+
+struct SetAccessInheritanceArg
+    access_inheritance AccessInheritance = inherit
+        "The access inheritance settings for the folder."
+
+    shared_folder_id common.SharedFolderId
+        "The ID for the shared folder."
+
+    example default
+        access_inheritance = inherit
+        shared_folder_id = "84528192421"
+
+union SetAccessInheritanceError
+    access_error SharedFolderAccessError
+        "Unable to access shared folder."
+    no_permission
+        "The current user does not have permission to perform this action."
+
+    example default
+        no_permission = null

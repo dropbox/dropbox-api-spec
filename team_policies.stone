@@ -137,3 +137,21 @@ union_closed GroupCreation
         "Team admins and members can create groups."
     admins_only
         "Only team admins can create groups."
+
+union ShowcaseEnabledPolicy
+    disabled
+        "Showcase is disabled."
+    enabled
+        "Showcase is enabled."
+
+union ShowcaseDownloadPolicy
+    disabled
+        "Do not allow files to be downloaded from Showcases."
+    enabled
+        "Allow files to be downloaded from Showcases."
+
+union ShowcaseExternalSharingPolicy
+    disabled
+        "Do not allow showcases to be shared with people not on the team."
+    enabled
+        "Allow showcases to be shared with people not on the team."

@@ -102,6 +102,7 @@ route get_current_account (Void, FullAccount, Void)
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+        select_admin_mode = "whole_team"
 
 struct FullAccount extends Account
     "Detailed information about the current user's account."

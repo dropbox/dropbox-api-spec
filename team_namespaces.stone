@@ -65,7 +65,7 @@ route namespaces/list(TeamNamespacesListArg, TeamNamespacesListResult, Void)
     list."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
         auth = "team"
 
 struct TeamNamespacesListArg
@@ -85,7 +85,7 @@ route namespaces/list/continue(TeamNamespacesListContinueArg, TeamNamespacesList
     through all team-accessible namespaces. Duplicates may occur in the list."
 
     attrs
-        owner = "sharing-platform"
+        owner = "company-dropbox-team"
         auth = "team"
 
 struct TeamNamespacesListContinueArg

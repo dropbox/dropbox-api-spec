@@ -3,10 +3,9 @@ namespace sharing
 import common
 import files
 import users
+import seen_state
 
 alias PathOrId = String(pattern="((\/|id:).*|nspath:[0-9]+:.*)|ns:[0-9]+(/.*)?", min_length=1)
-
-alias FileId = String(pattern="id:.*", min_length=1)
 
 ###########################################
 # Generic route error related definitions #
@@ -99,7 +98,7 @@ struct SharedFileMetadata
     access_type AccessLevel?
         "The current user's access level for this shared file."
 
-    id FileId
+    id files.FileId
         "The ID of the file."
 
     expected_link_metadata ExpectedSharedContentLinkMetadata?
@@ -242,6 +241,7 @@ route add_file_member(AddFileMemberArgs, List(FileMemberActionResult), AddFileMe
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 struct AddFileMemberArgs
     "Arguments for :route:`add_file_member`."
@@ -312,6 +312,7 @@ route update_file_member(UpdateFileMemberArgs, MemberAccessLevelResult, FileMemb
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 # --
 
@@ -322,6 +323,7 @@ route get_file_metadata(GetFileMetadataArg, SharedFileMetadata, GetFileMetadataE
         owner = "sharing"
         api_group = "truelink-alpha"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 struct GetFileMetadataArg
     "Arguments of :route:`get_file_metadata`."
@@ -404,6 +406,7 @@ route list_file_members(ListFileMembersArg, SharedFileMembers, ListFileMembersEr
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 struct ListFileMembersArg
     "Arguments for :route:`list_file_members`."
@@ -454,12 +457,15 @@ struct UserFileMembershipInfo extends UserMembershipInfo
 
     time_last_seen common.DropboxTimestamp?
         "The UTC timestamp of when the user has last seen the content, if they have."
+    platform_type seen_state.PlatformType?
+        "The platform on which the user has last seen the content, or unknown."
 
     example default
         user = default
         access_type = owner
         permissions = []
         time_last_seen = "2016-01-20T00:00:00Z"
+        platform_type = unknown
 
 # --
 
@@ -567,6 +573,7 @@ route list_received_files(ListFilesArg, ListFilesResult, SharingUserError)
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 struct ListFilesArg
     "Arguments for :route:`list_received_files`."
@@ -629,6 +636,7 @@ route remove_file_member(RemoveFileMemberArg, FileMemberActionIndividualResult, 
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 route remove_file_member_2(RemoveFileMemberArg, FileMemberRemoveActionResult, RemoveFileMemberError)
     "Removes a specified member from the file."
@@ -636,6 +644,7 @@ route remove_file_member_2(RemoveFileMemberArg, FileMemberRemoveActionResult, Re
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 struct RemoveFileMemberArg
     "Arguments for :route:`remove_file_member_2`."
@@ -663,6 +672,7 @@ route relinquish_file_membership(RelinquishFileMembershipArg, Void, RelinquishFi
     attrs
         owner = "sharing"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 struct RelinquishFileMembershipArg
     file PathOrId
@@ -688,6 +698,7 @@ route unshare_file(UnshareFileArg, Void, UnshareFileError)
         owner = "sharing"
         api_group = "truelink-alpha"
         allow_app_folder_app = true
+        select_admin_mode = "team_admin"
 
 struct UnshareFileArg
     "Arguments for :route:`unshare_file`."
