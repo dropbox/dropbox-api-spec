@@ -209,6 +209,8 @@ struct MemberAddArg
         This may be useful for apps using single sign-on (SSO) flows for onboarding that
         want to handle announcements themselves."
     role AdminTier = member_only
+    is_directory_restricted Boolean?
+        "Whether a user is directory restricted."
 
     example default
         member_email = "tom.s@company.com"
@@ -337,6 +339,8 @@ struct MembersSetProfileArg
         "New surname for member."
     new_persistent_id String?
         "New persistent ID. This field only available to teams using persistent ID SAML configuration."
+    new_is_directory_restricted Boolean?
+        "New value for whether the user is a directory restricted user."
 
     example default
         user = default
@@ -360,6 +364,8 @@ union MembersSetProfileError extends MemberSelectorError
         "Persistent ID is only available to teams with persistent ID SAML configuration. Please contact Dropbox for more information."
     persistent_id_used_by_other_user
         "The persistent ID is already in use by another team member."
+    directory_restricted_off
+        "Directory Restrictions option is not available."
 
 
 route members/set_profile(MembersSetProfileArg, TeamMemberInfo, MembersSetProfileError)

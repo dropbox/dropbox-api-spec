@@ -349,6 +349,10 @@ struct RelocateAssetReferencesLogInfo
         src_asset_index = 4
         dest_asset_index = 4
 
+union SecondaryMailsPolicy
+    disabled
+    enabled
+
 union SharedFolderMembersInheritancePolicy
     "Specifies if a shared folder inherits its members from the parent folder."
     inherit_members
@@ -397,6 +401,21 @@ struct ShowcaseDocumentLogInfo
     example default2
         showcase_id = "fvti8SoWq5tdyM1YMXl5z"
         showcase_title = "Sample Showcase Proposal"
+
+union ShowcaseDownloadPolicy
+    "Policy for controlling if files can be downloaded from Showcases by team members"
+    disabled
+    enabled
+
+union ShowcaseEnabledPolicy
+    "Policy for controlling whether Showcase is enabled."
+    disabled
+    enabled
+
+union ShowcaseExternalSharingPolicy
+    "Policy for controlling if team members can share Showcases externally."
+    disabled
+    enabled
 
 union SmartSyncOptOutPolicy
     default
@@ -1835,7 +1854,7 @@ struct MemberChangeNameDetails
         previous_value = default
 
 struct MemberChangeStatusDetails
-    "Changed membership status of team member."
+    "Changed member status (invited, joined, suspended, etc.)."
 
     previous_value MemberStatus?
         "Previous member status. Might be missing due to historical data gap."
@@ -1900,6 +1919,18 @@ struct MemberSuggestDetails
 
 struct MemberTransferAccountContentsDetails
     "Transferred contents of deleted member account to another member."
+
+struct SecondaryMailsPolicyChangedDetails
+    "Secondary mails policy changed."
+
+    previous_value SecondaryMailsPolicy
+        "Previous secondary mails policy."
+    new_value SecondaryMailsPolicy
+        "New secondary mails policy."
+
+    example default
+        previous_value = disabled
+        new_value = disabled
 
 struct PaperContentAddMemberDetails
     "Added team member to Paper doc/folder."
@@ -2577,7 +2608,7 @@ struct SharedContentChangeDownloadsPolicyDetails
         previous_value = allow
 
 struct SharedContentChangeInviteeRoleDetails
-    "Changed access type of invitee to shared file/folder before invite accepted."
+    "Changed access type of invitee to shared file/folder before invite was accepted."
 
     previous_access_level sharing.AccessLevel?
         "Previous access level. Might be missing due to historical data gap."
@@ -2688,7 +2719,7 @@ struct SharedContentRelinquishMembershipDetails
     "Left shared file/folder."
 
 struct SharedContentRemoveInviteesDetails
-    "Removed invitee from shared file/folder before invite accepted."
+    "Removed invitee from shared file/folder before invite was accepted."
 
     invitees List(EmailAddress)
         "A list of invitees."
@@ -3125,6 +3156,15 @@ struct ShowcaseTrashedDetails
     example default
         event_uuid = "abc"
 
+struct ShowcaseTrashedDeprecatedDetails
+    "Deleted showcase (old version)."
+
+    event_uuid String
+        "Event unique identifier."
+
+    example default
+        event_uuid = "abc"
+
 struct ShowcaseUnresolveCommentDetails
     "Unresolved showcase comment."
 
@@ -3139,6 +3179,15 @@ struct ShowcaseUnresolveCommentDetails
 
 struct ShowcaseUntrashedDetails
     "Restored showcase."
+
+    event_uuid String
+        "Event unique identifier."
+
+    example default
+        event_uuid = "abc"
+
+struct ShowcaseUntrashedDeprecatedDetails
+    "Restored showcase (old version)."
 
     event_uuid String
         "Event unique identifier."
@@ -3388,6 +3437,12 @@ struct DeviceApprovalsChangeUnlinkActionDetails
     example default
         new_value = remove
         previous_value = remove
+
+struct DirectoryRestrictionsAddMembersDetails
+    "Added members to directory restrictions list."
+
+struct DirectoryRestrictionsRemoveMembersDetails
+    "Removed members from directory restrictions list."
 
 struct EmmAddExceptionDetails
     "Added members to EMM exception list."
@@ -3649,6 +3704,42 @@ struct SharingChangeMemberPolicyDetails
     example default
         new_value = allow
         previous_value = allow
+
+struct ShowcaseChangeDownloadPolicyDetails
+    "Enabled/disabled downloading files from Dropbox Showcase for team."
+
+    new_value ShowcaseDownloadPolicy
+        "New Dropbox Showcase download policy."
+    previous_value ShowcaseDownloadPolicy
+        "Previous Dropbox Showcase download policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
+struct ShowcaseChangeEnabledPolicyDetails
+    "Enabled/disabled Dropbox Showcase for team."
+
+    new_value ShowcaseEnabledPolicy
+        "New Dropbox Showcase policy."
+    previous_value ShowcaseEnabledPolicy
+        "Previous Dropbox Showcase policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
+struct ShowcaseChangeExternalSharingPolicyDetails
+    "Enabled/disabled sharing Dropbox Showcase externally for team."
+
+    new_value ShowcaseExternalSharingPolicy
+        "New Dropbox Showcase external sharing policy."
+    previous_value ShowcaseExternalSharingPolicy
+        "Previous Dropbox Showcase external sharing policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
 
 struct SmartSyncChangePolicyDetails
     "Changed default Smart Sync setting for team members."
@@ -3928,6 +4019,7 @@ union EventDetails
     member_space_limits_remove_custom_quota_details MemberSpaceLimitsRemoveCustomQuotaDetails
     member_suggest_details MemberSuggestDetails
     member_transfer_account_contents_details MemberTransferAccountContentsDetails
+    secondary_mails_policy_changed_details SecondaryMailsPolicyChangedDetails
     paper_content_add_member_details PaperContentAddMemberDetails
     paper_content_add_to_folder_details PaperContentAddToFolderDetails
     paper_content_archive_details PaperContentArchiveDetails
@@ -4056,8 +4148,10 @@ union EventDetails
     showcase_resolve_comment_details ShowcaseResolveCommentDetails
     showcase_restored_details ShowcaseRestoredDetails
     showcase_trashed_details ShowcaseTrashedDetails
+    showcase_trashed_deprecated_details ShowcaseTrashedDeprecatedDetails
     showcase_unresolve_comment_details ShowcaseUnresolveCommentDetails
     showcase_untrashed_details ShowcaseUntrashedDetails
+    showcase_untrashed_deprecated_details ShowcaseUntrashedDeprecatedDetails
     showcase_view_details ShowcaseViewDetails
     sso_add_cert_details SsoAddCertDetails
     sso_add_login_url_details SsoAddLoginUrlDetails
@@ -4084,6 +4178,8 @@ union EventDetails
     device_approvals_change_mobile_policy_details DeviceApprovalsChangeMobilePolicyDetails
     device_approvals_change_overage_action_details DeviceApprovalsChangeOverageActionDetails
     device_approvals_change_unlink_action_details DeviceApprovalsChangeUnlinkActionDetails
+    directory_restrictions_add_members_details DirectoryRestrictionsAddMembersDetails
+    directory_restrictions_remove_members_details DirectoryRestrictionsRemoveMembersDetails
     emm_add_exception_details EmmAddExceptionDetails
     emm_change_policy_details EmmChangePolicyDetails
     emm_remove_exception_details EmmRemoveExceptionDetails
@@ -4112,6 +4208,9 @@ union EventDetails
     sharing_change_folder_join_policy_details SharingChangeFolderJoinPolicyDetails
     sharing_change_link_policy_details SharingChangeLinkPolicyDetails
     sharing_change_member_policy_details SharingChangeMemberPolicyDetails
+    showcase_change_download_policy_details ShowcaseChangeDownloadPolicyDetails
+    showcase_change_enabled_policy_details ShowcaseChangeEnabledPolicyDetails
+    showcase_change_external_sharing_policy_details ShowcaseChangeExternalSharingPolicyDetails
     smart_sync_change_policy_details SmartSyncChangePolicyDetails
     smart_sync_not_opt_out_details SmartSyncNotOptOutDetails
     smart_sync_opt_out_details SmartSyncOptOutDetails
@@ -4323,7 +4422,7 @@ struct DomainInvitesEmailExistingUsersType
     description String
 
     example default
-        description = "(domains) Sent domain invites to existing domain accounts"
+        description = "(domains) Sent domain invites to existing domain accounts (deprecated, no longer logged)"
 
 struct DomainInvitesRequestToJoinTeamType
     description String
@@ -4647,7 +4746,7 @@ struct MemberChangeStatusType
     description String
 
     example default
-        description = "(members) Changed membership status of team member"
+        description = "(members) Changed member status (invited, joined, suspended, etc.)"
 
 struct MemberPermanentlyDeleteAccountContentsType
     description String
@@ -4690,6 +4789,12 @@ struct MemberTransferAccountContentsType
 
     example default
         description = "(members) Transferred contents of deleted member account to another member"
+
+struct SecondaryMailsPolicyChangedType
+    description String
+
+    example default
+        description = "(members) Secondary mails policy changed"
 
 struct PaperContentAddMemberType
     description String
@@ -5079,7 +5184,7 @@ struct SfTeamUninviteType
     description String
 
     example default
-        description = "(sharing) Unshared folder with team member (deprecated, replaced by 'Removed invitee from shared file/folder before invite accepted')"
+        description = "(sharing) Unshared folder with team member (deprecated, replaced by 'Removed invitee from shared file/folder before invite was accepted')"
 
 struct SharedContentAddInviteesType
     description String
@@ -5115,7 +5220,7 @@ struct SharedContentChangeInviteeRoleType
     description String
 
     example default
-        description = "(sharing) Changed access type of invitee to shared file/folder before invite accepted"
+        description = "(sharing) Changed access type of invitee to shared file/folder before invite was accepted"
 
 struct SharedContentChangeLinkAudienceType
     description String
@@ -5175,7 +5280,7 @@ struct SharedContentRemoveInviteesType
     description String
 
     example default
-        description = "(sharing) Removed invitee from shared file/folder before invite accepted"
+        description = "(sharing) Removed invitee from shared file/folder before invite was accepted"
 
 struct SharedContentRemoveLinkExpiryType
     description String
@@ -5459,6 +5564,12 @@ struct ShowcaseTrashedType
     example default
         description = "(showcase) Deleted showcase"
 
+struct ShowcaseTrashedDeprecatedType
+    description String
+
+    example default
+        description = "(showcase) Deleted showcase (old version) (deprecated, replaced by 'Deleted showcase')"
+
 struct ShowcaseUnresolveCommentType
     description String
 
@@ -5470,6 +5581,12 @@ struct ShowcaseUntrashedType
 
     example default
         description = "(showcase) Restored showcase"
+
+struct ShowcaseUntrashedDeprecatedType
+    description String
+
+    example default
+        description = "(showcase) Restored showcase (old version) (deprecated, replaced by 'Restored showcase')"
 
 struct ShowcaseViewType
     description String
@@ -5626,6 +5743,18 @@ struct DeviceApprovalsChangeUnlinkActionType
 
     example default
         description = "(team_policies) Changed device approvals setting when member unlinks approved device"
+
+struct DirectoryRestrictionsAddMembersType
+    description String
+
+    example default
+        description = "(team_policies) Added members to directory restrictions list"
+
+struct DirectoryRestrictionsRemoveMembersType
+    description String
+
+    example default
+        description = "(team_policies) Removed members from directory restrictions list"
 
 struct EmmAddExceptionType
     description String
@@ -5794,6 +5923,24 @@ struct SharingChangeMemberPolicyType
 
     example default
         description = "(team_policies) Changed whether members can share files/folders outside team"
+
+struct ShowcaseChangeDownloadPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled/disabled downloading files from Dropbox Showcase for team"
+
+struct ShowcaseChangeEnabledPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled/disabled Dropbox Showcase for team"
+
+struct ShowcaseChangeExternalSharingPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Enabled/disabled sharing Dropbox Showcase externally for team"
 
 struct SmartSyncChangePolicyType
     description String
@@ -5990,7 +6137,7 @@ union EventType
     domain_invites_decline_request_to_join_team DomainInvitesDeclineRequestToJoinTeamType
         "(domains) Declined user's request to join team"
     domain_invites_email_existing_users DomainInvitesEmailExistingUsersType
-        "(domains) Sent domain invites to existing domain accounts"
+        "(domains) Sent domain invites to existing domain accounts (deprecated, no longer logged)"
     domain_invites_request_to_join_team DomainInvitesRequestToJoinTeamType
         "(domains) Requested to join team"
     domain_invites_set_invite_new_user_pref_to_no DomainInvitesSetInviteNewUserPrefToNoType
@@ -6098,7 +6245,7 @@ union EventType
     member_change_name MemberChangeNameType
         "(members) Changed team member name"
     member_change_status MemberChangeStatusType
-        "(members) Changed membership status of team member"
+        "(members) Changed member status (invited, joined, suspended, etc.)"
     member_permanently_delete_account_contents MemberPermanentlyDeleteAccountContentsType
         "(members) Permanently deleted contents of deleted team member account"
     member_space_limits_add_custom_quota MemberSpaceLimitsAddCustomQuotaType
@@ -6113,6 +6260,8 @@ union EventType
         "(members) Suggested person to add to team"
     member_transfer_account_contents MemberTransferAccountContentsType
         "(members) Transferred contents of deleted member account to another member"
+    secondary_mails_policy_changed SecondaryMailsPolicyChangedType
+        "(members) Secondary mails policy changed"
     paper_content_add_member PaperContentAddMemberType
         "(paper) Added team member to Paper doc/folder"
     paper_content_add_to_folder PaperContentAddToFolderType
@@ -6242,7 +6391,7 @@ union EventType
     sf_team_join_from_oob_link SfTeamJoinFromOobLinkType
         "(sharing) Joined team member's shared folder from link (deprecated, no longer logged)"
     sf_team_uninvite SfTeamUninviteType
-        "(sharing) Unshared folder with team member (deprecated, replaced by 'Removed invitee from shared file/folder before invite accepted')"
+        "(sharing) Unshared folder with team member (deprecated, replaced by 'Removed invitee from shared file/folder before invite was accepted')"
     shared_content_add_invitees SharedContentAddInviteesType
         "(sharing) Invited user to Dropbox and added them to shared file/folder"
     shared_content_add_link_expiry SharedContentAddLinkExpiryType
@@ -6254,7 +6403,7 @@ union EventType
     shared_content_change_downloads_policy SharedContentChangeDownloadsPolicyType
         "(sharing) Changed whether members can download shared file/folder"
     shared_content_change_invitee_role SharedContentChangeInviteeRoleType
-        "(sharing) Changed access type of invitee to shared file/folder before invite accepted"
+        "(sharing) Changed access type of invitee to shared file/folder before invite was accepted"
     shared_content_change_link_audience SharedContentChangeLinkAudienceType
         "(sharing) Changed link audience of shared file/folder"
     shared_content_change_link_expiry SharedContentChangeLinkExpiryType
@@ -6274,7 +6423,7 @@ union EventType
     shared_content_relinquish_membership SharedContentRelinquishMembershipType
         "(sharing) Left shared file/folder"
     shared_content_remove_invitees SharedContentRemoveInviteesType
-        "(sharing) Removed invitee from shared file/folder before invite accepted"
+        "(sharing) Removed invitee from shared file/folder before invite was accepted"
     shared_content_remove_link_expiry SharedContentRemoveLinkExpiryType
         "(sharing) Removed link expiration date of shared file/folder"
     shared_content_remove_link_password SharedContentRemoveLinkPasswordType
@@ -6369,10 +6518,14 @@ union EventType
         "(showcase) Unarchived showcase"
     showcase_trashed ShowcaseTrashedType
         "(showcase) Deleted showcase"
+    showcase_trashed_deprecated ShowcaseTrashedDeprecatedType
+        "(showcase) Deleted showcase (old version) (deprecated, replaced by 'Deleted showcase')"
     showcase_unresolve_comment ShowcaseUnresolveCommentType
         "(showcase) Unresolved showcase comment"
     showcase_untrashed ShowcaseUntrashedType
         "(showcase) Restored showcase"
+    showcase_untrashed_deprecated ShowcaseUntrashedDeprecatedType
+        "(showcase) Restored showcase (old version) (deprecated, replaced by 'Restored showcase')"
     showcase_view ShowcaseViewType
         "(showcase) Viewed showcase"
     sso_add_cert SsoAddCertType
@@ -6425,6 +6578,10 @@ union EventType
         "(team_policies) Changed device approvals setting when member is over limit"
     device_approvals_change_unlink_action DeviceApprovalsChangeUnlinkActionType
         "(team_policies) Changed device approvals setting when member unlinks approved device"
+    directory_restrictions_add_members DirectoryRestrictionsAddMembersType
+        "(team_policies) Added members to directory restrictions list"
+    directory_restrictions_remove_members DirectoryRestrictionsRemoveMembersType
+        "(team_policies) Removed members from directory restrictions list"
     emm_add_exception EmmAddExceptionType
         "(team_policies) Added members to EMM exception list"
     emm_change_policy EmmChangePolicyType
@@ -6481,6 +6638,12 @@ union EventType
         "(team_policies) Changed whether members can share links outside team, and if links are accessible only by team members or anyone by default"
     sharing_change_member_policy SharingChangeMemberPolicyType
         "(team_policies) Changed whether members can share files/folders outside team"
+    showcase_change_download_policy ShowcaseChangeDownloadPolicyType
+        "(team_policies) Enabled/disabled downloading files from Dropbox Showcase for team"
+    showcase_change_enabled_policy ShowcaseChangeEnabledPolicyType
+        "(team_policies) Enabled/disabled Dropbox Showcase for team"
+    showcase_change_external_sharing_policy ShowcaseChangeExternalSharingPolicyType
+        "(team_policies) Enabled/disabled sharing Dropbox Showcase externally for team"
     smart_sync_change_policy SmartSyncChangePolicyType
         "(team_policies) Changed default Smart Sync setting for team members"
     smart_sync_not_opt_out SmartSyncNotOptOutType

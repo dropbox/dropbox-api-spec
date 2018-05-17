@@ -60,6 +60,11 @@ route get_events(GetTeamEventsArg, GetTeamEventsResult, GetTeamEventsError)
 
     Many attributes note 'may be missing due to historical data gap'.
 
+    Note that the file_operations category and & analogous paper events are not available on all
+    Dropbox Business :link:`plans /business/plans-comparison`.
+    Use :link:`features/get_values /developers/documentation/http/teams#team-features-get_values`
+    to check for this feature.
+
     Permission : Team Auditing."
 
     attrs

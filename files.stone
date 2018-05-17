@@ -603,13 +603,14 @@ struct UploadWriteFailed
     reason WriteError
         "The reason why the file couldn't be saved."
     upload_session_id String
-        "The upload session ID; this may be used to retry the commit."
+        "The upload session ID; data has already been uploaded to the corresponding upload
+        session and this ID may be used to retry the commit with :route:`upload_session/finish`."
 
 union UploadError
     path UploadWriteFailed
         "Unable to save the uploaded contents to a file."
     properties_error file_properties.InvalidPropertyGroupError
-        "The supplied property group is invalid."
+        "The supplied property group is invalid. The file has uploaded without property groups."
 
 struct UploadSessionOffsetError
     correct_offset UInt64
@@ -629,12 +630,19 @@ union UploadSessionLookupError
         has alread been closed (i.e. committed)."
     not_closed
         "The session must be closed before calling upload_session/finish_batch."
+    too_large
+        "You can not append to the upload session because the size of a file should not reach the
+        max file size limit (i.e. 350GB)."
 
 union UploadSessionFinishError
     lookup_failed UploadSessionLookupError
         "The session arguments are incorrect; the value explains the reason."
     path WriteError
-        "Unable to save the uploaded contents to a file."
+        "Unable to save the uploaded contents to a file. Data has already been appended to the
+        upload
+        session. Please retry with empty data body and updated offset."
+    properties_error file_properties.InvalidPropertyGroupError
+        "The supplied property group is invalid. The file has uploaded without property groups."
     too_many_shared_folder_targets
         "The batch request commits files into too many different shared folders.
         Please limit your batch request to files contained in a single shared folder."
@@ -670,7 +678,8 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
     :route:`upload_session/finish` to save all the data to a file in
     Dropbox.
 
-    A single request should not upload more than 150 MB.
+    A single request should not upload more than 150 MB. The maximum size of
+    a file one can upload to an upload session is 350 GB.
 
     An upload session can be used for a maximum of 48 hours. Attempting
     to use an :field:`UploadSessionStartResult.session_id` with
@@ -702,7 +711,8 @@ route upload_session/append_v2 (UploadSessionAppendArg, Void, UploadSessionLooku
 
     When the parameter close is set, this call will close the session.
 
-    A single request should not upload more than 150 MB."
+    A single request should not upload more than 150 MB. The maximum size of
+    a file one can upload to an upload session is 350 GB."
 
     attrs
         host = "content"
@@ -727,7 +737,8 @@ struct UploadSessionCursor
 route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError) deprecated by upload_session/append_v2
     "Append more data to an upload session.
 
-    A single request should not upload more than 150 MB."
+    A single request should not upload more than 150 MB. The maximum size of
+    a file one can upload to an upload session is 350 GB. "
 
     attrs
         host = "content"
@@ -823,7 +834,8 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
     "Finish an upload session and save the uploaded data to the given file
     path.
 
-    A single request should not upload more than 150 MB."
+    A single request should not upload more than 150 MB. The maximum size of
+    a file one can upload to an upload session is 350 GB."
 
     attrs
         host = "content"
@@ -901,7 +913,8 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFin
 
     :field:`UploadSessionStartArg.close` or :field:`UploadSessionAppendArg.close`
     needs to be true for the last
-    :route:`upload_session/start` or :route:`upload_session/append_v2` call.
+    :route:`upload_session/start` or :route:`upload_session/append_v2` call. The maximum
+    size of a file one can upload to an upload session is 350 GB.
 
     This route will return a job_id immediately and do the async commit job in background.
     Use :route:`upload_session/finish_batch/check` to check the job status.
@@ -1385,7 +1398,7 @@ union RelocationError
         "The current user does not have enough space to move or copy the files."
 
 struct RelocationBatchArg
-    entries List(RelocationPath)
+    entries List(RelocationPath, min_items=1)
         "List of entries to be moved or copied. Each entry is :type:`RelocationPath`."
     allow_shared_folder Boolean = false
         "If true, :route:`copy_batch` will copy contents in shared folder,

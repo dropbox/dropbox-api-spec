@@ -74,6 +74,9 @@ struct MemberProfile
         "Persistent ID that a team can attach to the user.
         The persistent ID is unique ID to be used for SAML authentication."
 
+    is_directory_restricted Boolean?
+        "Whether the user is a directory restricted user."
+
     example default
         team_member_id = "dbmid:1234567"
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
