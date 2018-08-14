@@ -82,7 +82,7 @@ struct Cursor
         expiration = "2016-08-07T14:56:15Z"
 
 struct ListPaperDocsResponse
-    doc_ids List(String)
+    doc_ids List(PaperDocId)
         "The list of Paper doc IDs that can be used to access the given Paper docs or
         supplied to other API methods.
         The list is sorted in the order specified by the initial call to :route:`docs/list`."

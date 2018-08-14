@@ -238,7 +238,7 @@ struct FileMetadata extends Metadata
 
     content_hash Sha256HexHash?
         "A hash of the file content. This field can be used to verify data integrity. For more
-        information see our :link:`Content hash /developers/reference/content-hash` page."
+        information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
@@ -560,7 +560,7 @@ route download (DownloadArg, FileMetadata, DownloadError)
 union DownloadZipError
     path LookupError
     too_large
-        "The folder is too large to download."
+        "The folder or a file is too large to download."
     too_many_files
         "The folder has too many files to download."
 
@@ -584,8 +584,9 @@ struct DownloadZipResult
         metadata = default
 
 route download_zip (DownloadZipArg, DownloadZipResult, DownloadZipError)
-    "Download a folder from the user's Dropbox, as a zip file. The folder must be less than 1 GB
-    in size and have fewer than 10,000 total files. The input cannot be a single file."
+    "Download a folder from the user's Dropbox, as a zip file. The folder must be less than 20 GB
+    in size and have fewer than 10,000 total files. The input cannot be a single file. Any single
+    file must be less than 4GB in size."
 
     attrs
         host = "content"
@@ -655,7 +656,7 @@ union UploadSessionFinishError
 struct UploadSessionStartArg
     close Boolean = false
         "If true, the current session will be closed, at which point you won't
-        be able to call :route:`upload_session/append_v2` anymore with the
+        be able to call :route:`upload_session/append:2` anymore with the
         current session."
 
     example with_close
@@ -664,7 +665,7 @@ struct UploadSessionStartArg
 struct UploadSessionStartResult
     session_id String
         "A unique identifier for the upload session. Pass this to
-        :route:`upload_session/append_v2` and
+        :route:`upload_session/append:2` and
         :route:`upload_session/finish`."
 
     example default
@@ -674,7 +675,7 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
     "Upload sessions allow you to upload a single file in one or more
     requests, for example where the size of the file is greater than 150
     MB.  This call starts a new upload session with the given data. You
-    can then use :route:`upload_session/append_v2` to add more data and
+    can then use :route:`upload_session/append:2` to add more data and
     :route:`upload_session/finish` to save all the data to a file in
     Dropbox.
 
@@ -683,9 +684,13 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
 
     An upload session can be used for a maximum of 48 hours. Attempting
     to use an :field:`UploadSessionStartResult.session_id` with
-    :route:`upload_session/append_v2` or :route:`upload_session/finish` more
+    :route:`upload_session/append:2` or :route:`upload_session/finish` more
     than 48 hours after its creation will return a
-    :field:`UploadSessionLookupError.not_found`."
+    :field:`UploadSessionLookupError.not_found`.
+
+    Calls to this endpoint will count as data transport calls for any Dropbox
+    Business teams with a limit on the number of data transport calls allowed
+    per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
         host = "content"
@@ -700,19 +705,23 @@ struct UploadSessionAppendArg
         "Contains the upload session ID and the offset."
     close Boolean = false
         "If true, the current session will be closed, at which point
-        you won't be able to call :route:`upload_session/append_v2`
+        you won't be able to call :route:`upload_session/append:2`
         anymore with the current session."
 
     example default
         cursor = default
 
-route upload_session/append_v2 (UploadSessionAppendArg, Void, UploadSessionLookupError)
+route upload_session/append:2 (UploadSessionAppendArg, Void, UploadSessionLookupError)
     "Append more data to an upload session.
 
     When the parameter close is set, this call will close the session.
 
     A single request should not upload more than 150 MB. The maximum size of
-    a file one can upload to an upload session is 350 GB."
+    a file one can upload to an upload session is 350 GB.
+
+    Calls to this endpoint will count as data transport calls for any Dropbox
+    Business teams with a limit on the number of data transport calls allowed
+    per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
         host = "content"
@@ -734,11 +743,15 @@ struct UploadSessionCursor
         session_id = "1234faaf0678bcde"
         offset = 0
 
-route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError) deprecated by upload_session/append_v2
+route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError) deprecated by upload_session/append:2
     "Append more data to an upload session.
 
     A single request should not upload more than 150 MB. The maximum size of
-    a file one can upload to an upload session is 350 GB. "
+    a file one can upload to an upload session is 350 GB.
+
+    Calls to this endpoint will count as data transport calls for any Dropbox
+    Business teams with a limit on the number of data transport calls allowed
+    per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
         host = "content"
@@ -805,6 +818,12 @@ struct CommitInfo
         result in a user notification."
     property_groups List(file_properties.PropertyGroup)?
         "List of custom properties to add to file."
+    strict_conflict Boolean = false
+        "Be more strict about how each :type:`WriteMode` detects conflict.
+        For example, always return a conflict error when :field:`mode`
+        = :field:`WriteMode.update` and the given \"rev\" doesn't match
+        the existing file's \"rev\", even if the existing file has been
+        deleted."
 
     example default
         path = "/Homework/math/Matrices.txt"
@@ -835,7 +854,11 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
     path.
 
     A single request should not upload more than 150 MB. The maximum size of
-    a file one can upload to an upload session is 350 GB."
+    a file one can upload to an upload session is 350 GB.
+
+    Calls to this endpoint will count as data transport calls for any Dropbox
+    Business teams with a limit on the number of data transport calls allowed
+    per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
         host = "content"
@@ -849,7 +872,11 @@ route upload (CommitInfo, FileMetadata, UploadError)
     "Create a new file with the contents provided in the request.
 
     Do not use this to upload a file larger than 150 MB. Instead, create an
-    upload session with :route:`upload_session/start`."
+    upload session with :route:`upload_session/start`.
+
+    Calls to this endpoint will count as data transport calls for any Dropbox
+    Business teams with a limit on the number of data transport calls allowed
+    per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
         host = "content"
@@ -905,7 +932,7 @@ union UploadSessionFinishBatchLaunch extends async.LaunchResultBase
 
 route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFinishBatchLaunch, Void)
     "This route helps you commit many files at once into a user's Dropbox. Use
-    :route:`upload_session/start` and :route:`upload_session/append_v2` to
+    :route:`upload_session/start` and :route:`upload_session/append:2` to
     upload file contents. We recommend uploading many files in parallel to increase
     throughput. Once the file contents have been uploaded, rather than calling
     :route:`upload_session/finish`, use this route to finish all your upload sessions
@@ -913,14 +940,18 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFin
 
     :field:`UploadSessionStartArg.close` or :field:`UploadSessionAppendArg.close`
     needs to be true for the last
-    :route:`upload_session/start` or :route:`upload_session/append_v2` call. The maximum
+    :route:`upload_session/start` or :route:`upload_session/append:2` call. The maximum
     size of a file one can upload to an upload session is 350 GB.
 
     This route will return a job_id immediately and do the async commit job in background.
     Use :route:`upload_session/finish_batch/check` to check the job status.
 
     For the same account, this route should be executed serially. That means you should not start
-    the next job before current job finishes. We allow up to 1000 entries in a single request."
+    the next job before current job finishes. We allow up to 1000 entries in a single request.
+
+    Calls to this endpoint will count as data transport calls for any Dropbox
+    Business teams with a limit on the number of data transport calls allowed
+    per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
         owner = "api-platform"
@@ -1042,6 +1073,7 @@ alias MalformedPathError = String?  # TODO: Maybe a user_message-like thing?
 
 union LookupError
     malformed_path MalformedPathError
+        "The given path does not satisfy the required path format. Please refer to the :link:`Path formats documentation https://www.dropbox.com/developers/documentation/http/documentation#path-formats` for more information."
     not_found
         "There is nothing at the given path."
     not_file
@@ -1054,6 +1086,7 @@ union LookupError
 
 union WriteError
     malformed_path MalformedPathError
+        "The given path does not satisfy the required path format. Please refer to the :link:`Path formats documentation https://www.dropbox.com/developers/documentation/http/documentation#path-formats` for more information."
     conflict WriteConflictError
         "Couldn't write to the target path because there was something in the way."
     no_write_permission
@@ -1100,7 +1133,7 @@ struct CreateFolderResult extends FileOpsResult
 union_closed CreateFolderError
     path WriteError
 
-route create_folder_v2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
+route create_folder:2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
     "Create a folder at a given path."
 
     attrs
@@ -1108,7 +1141,7 @@ route create_folder_v2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
-route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) deprecated by create_folder_v2
+route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) deprecated by create_folder:2
     "Create a folder at a given path."
 
     attrs
@@ -1284,7 +1317,7 @@ union DeleteBatchLaunch extends async.LaunchResultBase
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
-route delete_v2 (DeleteArg, DeleteResult, DeleteError)
+route delete:2 (DeleteArg, DeleteResult, DeleteError)
     "Delete the file or folder at a given path.
 
     If the path is a folder, all its contents will be deleted too.
@@ -1298,7 +1331,7 @@ route delete_v2 (DeleteArg, DeleteResult, DeleteError)
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
-route delete (DeleteArg, Metadata, DeleteError) deprecated by delete_v2
+route delete (DeleteArg, Metadata, DeleteError) deprecated by delete:2
     "Delete the file or folder at a given path.
 
     If the path is a folder, all its contents will be deleted too.
@@ -1465,7 +1498,7 @@ union RelocationBatchError extends RelocationError
 # Copy
 #
 
-route copy_v2 (RelocationArg, RelocationResult, RelocationError)
+route copy:2 (RelocationArg, RelocationResult, RelocationError)
     "Copy a file or folder to a different location in the user's Dropbox.
 
     If the source path is a folder all its contents will be copied."
@@ -1475,7 +1508,7 @@ route copy_v2 (RelocationArg, RelocationResult, RelocationError)
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
-route copy (RelocationArg, Metadata, RelocationError) deprecated by copy_v2
+route copy (RelocationArg, Metadata, RelocationError) deprecated by copy:2
     "Copy a file or folder to a different location in the user's Dropbox.
 
     If the source path is a folder all its contents will be copied."
@@ -1490,9 +1523,9 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     user's Dropbox.
 
     If :field:`RelocationBatchArg.allow_shared_folder` is false, this
-    route is atomic. If on entry failes, the whole transaction will abort. If
-    :field:`RelocationBatchArg.allow_shared_folder` is true, not
-    atomicity is guaranteed, but you will be able to copy the contents of
+    route is atomic. If one entry fails, the whole transaction will abort. If
+    :field:`RelocationBatchArg.allow_shared_folder` is true,
+    atomicity is not guaranteed, but it allows you to copy the contents of
     shared folders to new locations.
 
     This route will return job ID immediately and do the async copy job in
@@ -1516,7 +1549,7 @@ route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
 # Move
 #
 
-route move_v2 (RelocationArg, RelocationResult, RelocationError)
+route move:2 (RelocationArg, RelocationResult, RelocationError)
     "Move a file or folder to a different location in the user's Dropbox.
 
     If the source path is a folder all its contents will be moved."
@@ -1526,7 +1559,7 @@ route move_v2 (RelocationArg, RelocationResult, RelocationError)
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
-route move (RelocationArg, Metadata, RelocationError) deprecated by move_v2
+route move (RelocationArg, Metadata, RelocationError) deprecated by move:2
     "Move a file or folder to a different location in the user's Dropbox.
 
     If the source path is a folder all its contents will be moved."
@@ -1647,6 +1680,7 @@ union GetThumbnailBatchResultEntry
 struct GetThumbnailBatchResultData
     metadata FileMetadata
     thumbnail String
+        "A string containing the base64-encoded thumbnail data for this file."
 
     example default
         metadata = default
@@ -1864,6 +1898,91 @@ route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTempora
     attrs
         owner = "api-platform"
         allow_app_folder_app = true
+
+#
+# Temporary upload link
+#
+
+struct GetTemporaryUploadLinkArg
+    commit_info CommitInfo
+        "Contains the path and other optional modifiers for the future upload commit.
+        Equivalent to the parameters provided to :route:`upload`."
+    duration Float64(min_value=60, max_value=14400) = 14400
+        "How long before this link expires, in seconds.
+         Attempting to start an upload with this link longer than this period
+         of time after link creation will result in an error."
+
+    example default
+        commit_info = default
+        duration = 3600
+
+struct GetTemporaryUploadLinkResult
+    link String
+        "The temporary link which can be used to stream a file to a Dropbox location."
+
+    example default
+        link = "https://dl.dropboxusercontent.com/apitul/1/bNi2uIYF51cVBND"
+
+route get_temporary_upload_link(GetTemporaryUploadLinkArg, GetTemporaryUploadLinkResult, Void)
+    "Get a one-time use temporary upload link to upload a file to a Dropbox location.
+
+
+    This endpoint acts as a delayed :route:`upload`. The returned temporary upload link may be used
+    to make a POST request with the data to be uploaded. The upload will then be perfomed with the
+    :type:`CommitInfo` previously provided to :route:`get_temporary_upload_link` but evaluated only
+    upon consumption. Hence, errors stemming from invalid :type:`CommitInfo` with respect to the
+    state of the user's Dropbox will only be communicated at consumption time. Additionally, these
+    errors are surfaced as generic HTTP 409 Conflict responses, potentially hiding issue details.
+    The maximum temporary upload link duration is 4 hours. Upon consumption or expiration,
+    a new link will have to be generated. Multiple links may exist for a specific upload path
+    at any given time.
+
+
+    The POST request on the temporary upload link must have its Content-Type
+    set to \"application/octet-stream\".
+
+
+    Example temporary upload link consumption request:
+
+
+    curl -X POST https://dl.dropboxusercontent.com/apitul/1/bNi2uIYF51cVBND
+
+    --header \"Content-Type: application/octet-stream\"
+
+    --data-binary @local_file.txt
+
+
+    A successful temporary upload link consumption request returns the content hash
+    of the uploaded data in JSON format.
+
+
+    Example succesful temporary upload link consumption response:
+
+    {\"content-hash\": \"599d71033d700ac892a0e48fa61b125d2f5994\"}
+
+
+    An unsuccessful temporary upload link consumption request returns any of the following status
+    codes:
+
+
+    HTTP 400 Bad Request: Content-Type is not one of
+    application/octet-stream and text/plain or request is invalid.
+
+    HTTP 409 Conflict: The temporary upload link does not exist or is currently unavailable,
+    the upload failed, or another error happened.
+
+    HTTP 410 Gone: The temporary upload link is expired or consumed.
+
+
+    Example unsuccessful temporary upload link consumption response:
+
+    Temporary upload link has been recently consumed.
+    "
+
+    attrs
+        owner = "partner-platform"
+        allow_app_folder_app = true
+        is_preview = true
 
 #
 # Copy reference

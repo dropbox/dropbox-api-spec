@@ -450,11 +450,13 @@ route members/send_welcome_email(UserSelectorArg, Void, MembersSendWelcomeError)
 # Route members/remove
 #
 
-struct MembersDeactivateArg
+struct MembersDeactivateBaseArg
     "Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
 
     user UserSelectorArg
-        "Identity of user to remove/suspend."
+        "Identity of user to remove/suspend/have their files moved."
+
+struct MembersDeactivateArg extends MembersDeactivateBaseArg
     wipe_data Boolean = true
         "If provided, controls if the user's data will be deleted on their linked devices."
 
@@ -463,7 +465,6 @@ struct MembersDeactivateArg
         wipe_data = false
 
 struct MembersRemoveArg extends MembersDeactivateArg
-
     transfer_dest_id UserSelectorArg?
         "If provided, files from the deleted member account will be
         transferred to this user."
@@ -471,6 +472,7 @@ struct MembersRemoveArg extends MembersDeactivateArg
         "If provided, errors during the transfer process will be sent via
         email to this user. If the transfer_dest_id argument was provided,
         then this argument must be provided as well."
+
     keep_account Boolean = false
         "Downgrade the member to a Basic account. The user will retain the email address associated with their Dropbox
          account and data in their account that is not restricted to team members. In order to keep the account the argument wipe_data should be set to False."
@@ -486,9 +488,7 @@ union MembersDeactivateError extends UserSelectorError
     user_not_in_team
         "The user is not a member of the team."
 
-union MembersRemoveError extends MembersDeactivateError
-    remove_last_admin
-        "The user is the last admin of the team, so it cannot be removed from it."
+union MembersTransferFilesError extends MembersDeactivateError
     removed_and_transfer_dest_should_differ
         "Expected removed user and transfer_dest user to be different."
     removed_and_transfer_admin_should_differ
@@ -497,14 +497,20 @@ union MembersRemoveError extends MembersDeactivateError
         "No matching user found for the argument transfer_dest_id."
     transfer_dest_user_not_in_team
         "The provided transfer_dest_id does not exist on this team."
-    transfer_admin_user_not_found
-        "No matching user found for the argument transfer_admin_id."
     transfer_admin_user_not_in_team
         "The provided transfer_admin_id does not exist on this team."
+    transfer_admin_user_not_found
+        "No matching user found for the argument transfer_admin_id."
     unspecified_transfer_admin_id
         "The transfer_admin_id argument must be provided when file transfer is requested."
     transfer_admin_is_not_admin
         "Specified transfer_admin user is not a team admin."
+    recipient_not_verified
+        "The recipient user's email is not verified."
+
+union MembersRemoveError extends MembersTransferFilesError
+    remove_last_admin
+        "The user is the last admin of the team, so it cannot be removed from it."
     cannot_keep_account_and_transfer
         "Cannot keep account and transfer the data to another user at the same time."
     cannot_keep_account_and_delete_data
@@ -637,3 +643,51 @@ route members/recover(MembersRecoverArg, Void, MembersRecoverError)
     attrs
         auth = "team"
         owner = "tools-and-insights"
+
+# manage_former_member_files
+
+union MembersTransferFormerMembersFilesError extends MembersTransferFilesError
+    user_data_is_being_transferred
+        "The user's data is being transferred. Please wait some time before retrying."
+    user_not_removed
+        "No matching removed user found for the argument user."
+    user_data_cannot_be_transferred
+        "User files aren't transferable anymore."
+    user_data_already_transferred
+        "User's data has already been transferred to another user."
+
+struct MembersDataTransferArg extends MembersDeactivateBaseArg
+    transfer_dest_id UserSelectorArg
+        "Files from the deleted member account will be transferred to this user."
+    transfer_admin_id UserSelectorArg
+        "Errors during the transfer process will be sent via
+        email to this user."
+
+    example default
+        user = default
+        transfer_dest_id = default
+        transfer_admin_id = default
+
+# Routes - moving removed user's files
+
+route members/move_former_member_files(MembersDataTransferArg, async.LaunchEmptyResult, MembersTransferFormerMembersFilesError)
+    "Moves removed member's files to a different member. This endpoint initiates an asynchronous job. To obtain the final result
+    of the job, the client should periodically poll :route:`members/move_former_member_files/job_status/check`.
+
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        owner = "teams-and-groups"
+
+# This is a duplicate of route members/remove/job_status/get
+
+route members/move_former_member_files/job_status/check(async.PollArg, async.PollEmptyResult, async.PollError)
+    "Once an async_job_id is returned from :route:`members/move_former_member_files` ,
+    use this to poll the status of the asynchronous request.
+
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        owner = "teams-and-groups"

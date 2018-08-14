@@ -329,6 +329,11 @@ union PaperMemberPolicy
     only_team
     team_and_explicitly_shared
 
+union PassPolicy
+    enabled
+    allow
+    disabled
+
 union PlacementRestriction
     europe_only
     none
@@ -3813,6 +3818,18 @@ struct TwoAccountChangePolicyDetails
         new_value = enabled
         previous_value = enabled
 
+struct ViewerInfoPolicyChangedDetails
+    "Changed team policy for viewer info."
+
+    previous_value PassPolicy
+        "Previous Viewer Info policy."
+    new_value PassPolicy
+        "New Viewer Info policy."
+
+    example default
+        previous_value = enabled
+        new_value = enabled
+
 struct WebSessionsChangeFixedLengthPolicyDetails
     "Changed how long members can stay signed in to Dropbox.com."
 
@@ -4217,6 +4234,7 @@ union EventDetails
     sso_change_policy_details SsoChangePolicyDetails
     tfa_change_policy_details TfaChangePolicyDetails
     two_account_change_policy_details TwoAccountChangePolicyDetails
+    viewer_info_policy_changed_details ViewerInfoPolicyChangedDetails
     web_sessions_change_fixed_length_policy_details WebSessionsChangeFixedLengthPolicyDetails
     web_sessions_change_idle_length_policy_details WebSessionsChangeIdleLengthPolicyDetails
     team_merge_from_details TeamMergeFromDetails
@@ -5978,6 +5996,12 @@ struct TwoAccountChangePolicyType
     example default
         description = "(team_policies) Enabled/disabled option for members to link personal Dropbox account and team account to same computer"
 
+struct ViewerInfoPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed team policy for viewer info"
+
 struct WebSessionsChangeFixedLengthPolicyType
     description String
 
@@ -6656,6 +6680,8 @@ union EventType
         "(team_policies) Changed two-step verification setting for team"
     two_account_change_policy TwoAccountChangePolicyType
         "(team_policies) Enabled/disabled option for members to link personal Dropbox account and team account to same computer"
+    viewer_info_policy_changed ViewerInfoPolicyChangedType
+        "(team_policies) Changed team policy for viewer info"
     web_sessions_change_fixed_length_policy WebSessionsChangeFixedLengthPolicyType
         "(team_policies) Changed how long members can stay signed in to Dropbox.com"
     web_sessions_change_idle_length_policy WebSessionsChangeIdleLengthPolicyType

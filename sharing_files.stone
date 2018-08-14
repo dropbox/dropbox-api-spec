@@ -61,6 +61,9 @@ union FileAction
     invite_viewer_no_comment
         "Add a member with view permissions but no comment permissions."
 
+    invite_editor
+        "Add a member with edit permissions."
+
     unshare
         "Stop sharing this file."
 
