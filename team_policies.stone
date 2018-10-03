@@ -155,3 +155,9 @@ union ShowcaseExternalSharingPolicy
         "Do not allow showcases to be shared with people not on the team."
     enabled
         "Allow showcases to be shared with people not on the team."
+
+union CameraUploadsPolicyState
+    disabled
+        "Background camera uploads are disabled."
+    enabled
+        "Background camera uploads are allowed."

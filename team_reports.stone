@@ -134,7 +134,7 @@ route reports/get_membership(DateRange, GetMembershipReport, DateRangeError)
     "Retrieves reporting data about a team's membership."
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 #
 # get_devices

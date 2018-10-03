@@ -154,7 +154,7 @@ route get_info(Void, TeamGetInfoResult, Void)
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 
 #

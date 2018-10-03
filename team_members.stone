@@ -107,7 +107,7 @@ route members/list(MembersListArg, MembersListResult, MembersListError)
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 
 #
@@ -133,7 +133,7 @@ route members/list/continue(MembersListContinueArg, MembersListResult, MembersLi
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 
 #
@@ -181,7 +181,7 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 
 ##########################
@@ -289,7 +289,7 @@ route members/add(MembersAddArg, MembersAddLaunch, Void)
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 #
 # Route members/add/job_status/get
@@ -314,7 +314,7 @@ route members/add/job_status/get(async.PollArg, MembersAddJobStatus, async.PollE
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 #
 # Route members/set_profile
@@ -422,7 +422,7 @@ route members/set_admin_permissions(MembersSetPermissionsArg, MembersSetPermissi
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 
 #
@@ -443,7 +443,7 @@ route members/send_welcome_email(UserSelectorArg, Void, MembersSendWelcomeError)
 
     attrs
         auth = "team"
-        owner = "onboarding-intent"
+        owner = "commit-platform"
 
 
 #
@@ -541,7 +541,7 @@ route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveErr
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 #
 # Route members/remove/job_status/get
@@ -555,7 +555,7 @@ route members/remove/job_status/get(async.PollArg, async.PollEmptyResult, async.
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 #
 # Route members/suspend
@@ -578,7 +578,7 @@ route members/suspend(MembersDeactivateArg, Void, MembersSuspendError)
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 #
 # Route members/unsuspend
@@ -609,7 +609,7 @@ route members/unsuspend(MembersUnsuspendArg, Void, MembersUnsuspendError)
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 #
 # Route members/recover
@@ -678,7 +678,7 @@ route members/move_former_member_files(MembersDataTransferArg, async.LaunchEmpty
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"
 
 # This is a duplicate of route members/remove/job_status/get
 
@@ -690,4 +690,4 @@ route members/move_former_member_files/job_status/check(async.PollArg, async.Pol
 
     attrs
         auth = "team"
-        owner = "teams-and-groups"
+        owner = "team-lifecycle"

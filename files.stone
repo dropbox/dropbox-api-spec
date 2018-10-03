@@ -1842,9 +1842,9 @@ route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
 
 struct RestoreArg
     path WritePath
-        "The path to the file you want to restore."
+        "The path to save the restored file."
     rev Rev
-        "The revision to restore for the file."
+        "The revision to restore."
 
     example default
         path = "/root/word.docx"
@@ -1856,10 +1856,10 @@ union RestoreError
     path_write WriteError
         "An error occurs when trying to restore the file to that path."
     invalid_revision
-        "The revision is invalid. It may point to a different file."
+        "The revision is invalid. It may not exist."
 
 route restore(RestoreArg, FileMetadata, RestoreError)
-    "Restore a file to a specific revision."
+    "Restore a specific revision of a file to the given path."
 
     attrs
         owner = "api-platform"
@@ -1892,8 +1892,8 @@ union GetTemporaryLinkError
 
 route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTemporaryLinkError)
     "Get a temporary link to stream content of a file. This link will expire in four hours and
-    afterwards you will get 410 Gone. Content-Type of the link is determined automatically by
-    the file's mime type."
+    afterwards you will get 410 Gone. So this URL should not be used to display content directly
+    in the browser.  Content-Type of the link is determined automatically by the file's mime type."
 
     attrs
         owner = "api-platform"

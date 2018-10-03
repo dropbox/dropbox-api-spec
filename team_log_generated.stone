@@ -19,6 +19,17 @@ alias AppId = String
 alias IpAddress = String
 alias RequestId = String
 
+###################
+# QuickActionType
+###################
+
+union QuickActionType
+    "Quick action type."
+
+    delete_shared_link
+
+    example default
+        delete_shared_link = null
 
 ########################################
 # Union types that are used by events.
@@ -390,6 +401,7 @@ union SharingMemberPolicy
     "External sharing policy"
     allow
     forbid
+    team_members_and_whitelist
 
 struct ShowcaseDocumentLogInfo 
     "Showcase document's logged information."
@@ -456,6 +468,11 @@ struct TeamName
     example default2
         team_display_name = "xyz"
         team_legal_name = "xyz"
+
+union TeamSelectiveSyncPolicy
+    "Policy for controlling whether team selective sync is enabled for team."
+    disabled
+    enabled
 
 union TfaConfiguration
     "Two factor authentication configuration. Note: the enabled option is deprecated."
@@ -1874,6 +1891,9 @@ that caused status change."
         new_value = not_joined
         action = default
 
+struct MemberDeleteManualContactsDetails
+    "Cleared saved contacts."
+
 struct MemberPermanentlyDeleteAccountContentsDetails
     "Permanently deleted contents of deleted team member account."
 
@@ -2155,6 +2175,21 @@ struct PaperDocMentionDetails
 
     example default
         event_uuid = "abc"
+
+struct PaperDocOwnershipChangedDetails
+    "Transferred ownership of Paper doc."
+
+    event_uuid String
+        "Event unique identifier."
+    old_owner_user_id users_common.AccountId?
+        "Previous owner."
+    new_owner_user_id users_common.AccountId
+        "New owner."
+
+    example default
+        event_uuid = "abc"
+        old_owner_user_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
+        new_owner_user_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
 
 struct PaperDocRequestAccessDetails
     "Requested access to Paper doc."
@@ -2850,10 +2885,16 @@ struct SharedFolderNestDetails
         "Previous parent namespace ID. Might be missing due to historical data gap."
     new_parent_ns_id NamespaceId?
         "New parent namespace ID. Might be missing due to historical data gap."
+    previous_ns_path FilePath?
+        "Previous namespace path. Might be missing due to historical data gap."
+    new_ns_path FilePath?
+        "New namespace path. Might be missing due to historical data gap."
 
     example default
         previous_parent_ns_id = "1234"
         new_parent_ns_id = "1234"
+        previous_ns_path = "/Contract Work/Product Design"
+        new_ns_path = "/Contract Work/Product Design"
 
 struct SharedFolderTransferOwnershipDetails
     "Transferred ownership of shared folder to another member."
@@ -3794,6 +3835,18 @@ struct SsoChangePolicyDetails
         new_value = disabled
         previous_value = disabled
 
+struct TeamSelectiveSyncPolicyChangedDetails
+    "Enabled/disabled Team Selective Sync for team."
+
+    new_value TeamSelectiveSyncPolicy
+        "New Team Selective Sync policy."
+    previous_value TeamSelectiveSyncPolicy
+        "Previous Team Selective Sync policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct TfaChangePolicyDetails
     "Changed two-step verification setting for team."
 
@@ -4029,6 +4082,7 @@ union EventDetails
     member_change_membership_type_details MemberChangeMembershipTypeDetails
     member_change_name_details MemberChangeNameDetails
     member_change_status_details MemberChangeStatusDetails
+    member_delete_manual_contacts_details MemberDeleteManualContactsDetails
     member_permanently_delete_account_contents_details MemberPermanentlyDeleteAccountContentsDetails
     member_space_limits_add_custom_quota_details MemberSpaceLimitsAddCustomQuotaDetails
     member_space_limits_change_custom_quota_details MemberSpaceLimitsChangeCustomQuotaDetails
@@ -4057,6 +4111,7 @@ union EventDetails
     paper_doc_edit_comment_details PaperDocEditCommentDetails
     paper_doc_followed_details PaperDocFollowedDetails
     paper_doc_mention_details PaperDocMentionDetails
+    paper_doc_ownership_changed_details PaperDocOwnershipChangedDetails
     paper_doc_request_access_details PaperDocRequestAccessDetails
     paper_doc_resolve_comment_details PaperDocResolveCommentDetails
     paper_doc_revert_details PaperDocRevertDetails
@@ -4232,6 +4287,7 @@ union EventDetails
     smart_sync_not_opt_out_details SmartSyncNotOptOutDetails
     smart_sync_opt_out_details SmartSyncOptOutDetails
     sso_change_policy_details SsoChangePolicyDetails
+    team_selective_sync_policy_changed_details TeamSelectiveSyncPolicyChangedDetails
     tfa_change_policy_details TfaChangePolicyDetails
     two_account_change_policy_details TwoAccountChangePolicyDetails
     viewer_info_policy_changed_details ViewerInfoPolicyChangedDetails
@@ -4766,6 +4822,12 @@ struct MemberChangeStatusType
     example default
         description = "(members) Changed member status (invited, joined, suspended, etc.)"
 
+struct MemberDeleteManualContactsType
+    description String
+
+    example default
+        description = "(members) Cleared saved contacts"
+
 struct MemberPermanentlyDeleteAccountContentsType
     description String
 
@@ -4933,6 +4995,12 @@ struct PaperDocMentionType
 
     example default
         description = "(paper) Mentioned team member in Paper doc"
+
+struct PaperDocOwnershipChangedType
+    description String
+
+    example default
+        description = "(paper) Transferred ownership of Paper doc"
 
 struct PaperDocRequestAccessType
     description String
@@ -5984,6 +6052,12 @@ struct SsoChangePolicyType
     example default
         description = "(team_policies) Changed single sign-on setting for team"
 
+struct TeamSelectiveSyncPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Enabled/disabled Team Selective Sync for team"
+
 struct TfaChangePolicyType
     description String
 
@@ -6270,6 +6344,8 @@ union EventType
         "(members) Changed team member name"
     member_change_status MemberChangeStatusType
         "(members) Changed member status (invited, joined, suspended, etc.)"
+    member_delete_manual_contacts MemberDeleteManualContactsType
+        "(members) Cleared saved contacts"
     member_permanently_delete_account_contents MemberPermanentlyDeleteAccountContentsType
         "(members) Permanently deleted contents of deleted team member account"
     member_space_limits_add_custom_quota MemberSpaceLimitsAddCustomQuotaType
@@ -6326,6 +6402,8 @@ union EventType
         "(paper) Followed Paper doc (deprecated, replaced by 'Followed/unfollowed Paper doc')"
     paper_doc_mention PaperDocMentionType
         "(paper) Mentioned team member in Paper doc"
+    paper_doc_ownership_changed PaperDocOwnershipChangedType
+        "(paper) Transferred ownership of Paper doc"
     paper_doc_request_access PaperDocRequestAccessType
         "(paper) Requested access to Paper doc"
     paper_doc_resolve_comment PaperDocResolveCommentType
@@ -6676,6 +6754,8 @@ union EventType
         "(team_policies) Opted team out of Smart Sync"
     sso_change_policy SsoChangePolicyType
         "(team_policies) Changed single sign-on setting for team"
+    team_selective_sync_policy_changed TeamSelectiveSyncPolicyChangedType
+        "(team_policies) Enabled/disabled Team Selective Sync for team"
     tfa_change_policy TfaChangePolicyType
         "(team_policies) Changed two-step verification setting for team"
     two_account_change_policy TwoAccountChangePolicyType
