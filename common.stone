@@ -28,7 +28,7 @@ alias DisplayName = String(pattern="[^\/:?*<>\"|]*", min_length=1)
 # being used through UI, it's still possible to use them right now through some endpoints. This alias should be used in
 # the places where those legacy account names are expected, one of the example being the team audit logging. In other
 # places we should use `DisplayName` instead to prevent more usage of these special characters.
-alias DisplayNameLegacy = String(min_length=1)
+alias DisplayNameLegacy = String
 
 alias NamespaceId = String(pattern="[-_0-9a-zA-Z:]+")
 

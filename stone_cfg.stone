@@ -36,4 +36,5 @@ struct Route
     is_web_alpha Boolean = false
         "Whether the endpoint is a Dropbox web-only alpha endpoint. All legacy web alpha endpoints
         will eventually be migrated."
-
+    generated Boolean = false
+        "Was this stone spec generated from another source?"

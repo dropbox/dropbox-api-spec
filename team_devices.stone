@@ -165,7 +165,7 @@ route devices/list_member_devices(ListMemberDevicesArg, ListMemberDevicesResult,
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
 
 #
 # Structs for devices/list_members_devices
@@ -221,7 +221,7 @@ route devices/list_members_devices(ListMembersDevicesArg, ListMembersDevicesResu
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
 
 #
 # Structs for devices/revoke_device_session
@@ -272,7 +272,7 @@ route devices/revoke_device_session(RevokeDeviceSessionArg, Void, RevokeDeviceSe
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
 
 #
 # structs for devices/revoke_device_session_batch
@@ -306,7 +306,7 @@ route devices/revoke_device_session_batch(RevokeDeviceSessionBatchArg, RevokeDev
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
 
 
 #
@@ -352,4 +352,4 @@ route devices/list_team_devices(ListTeamDevicesArg, ListTeamDevicesResult, ListT
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"

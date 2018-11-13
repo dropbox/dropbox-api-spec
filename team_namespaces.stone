@@ -57,7 +57,7 @@ struct TeamNamespacesListResult
         cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
         has_more = false
 
-route namespaces/list(TeamNamespacesListArg, TeamNamespacesListResult, Void)
+route namespaces/list(TeamNamespacesListArg, TeamNamespacesListResult, TeamNamespacesListError)
     "Returns a list of all team-accessible namespaces. This list includes team folders,
     shared folders containing team members, team members' home namespaces, and team members'
     app folders. Home namespaces and app folders are always owned by this team or members of the
@@ -65,7 +65,7 @@ route namespaces/list(TeamNamespacesListArg, TeamNamespacesListResult, Void)
     list."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         auth = "team"
 
 struct TeamNamespacesListArg
@@ -85,7 +85,7 @@ route namespaces/list/continue(TeamNamespacesListContinueArg, TeamNamespacesList
     through all team-accessible namespaces. Duplicates may occur in the list."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         auth = "team"
 
 struct TeamNamespacesListContinueArg
@@ -95,6 +95,14 @@ struct TeamNamespacesListContinueArg
     example default
         cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
 
-union TeamNamespacesListContinueError
+union TeamNamespacesListContinueError extends TeamNamespacesListError
     invalid_cursor
         "The cursor is invalid."
+
+
+#
+# Generic Error
+#
+union TeamNamespacesListError
+    invalid_arg
+        "Argument passed in is invalid."

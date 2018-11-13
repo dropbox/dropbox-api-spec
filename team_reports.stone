@@ -181,4 +181,4 @@ route reports/get_devices(DateRange, GetDevicesReport, DateRangeError)
     "Retrieves reporting data about a team's linked devices."
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"

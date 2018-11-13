@@ -29,8 +29,12 @@ struct RemovedStatus
     is_recoverable Boolean
         "True if the removed team member is recoverable."
 
+    is_disconnected Boolean
+        "True if the team member's account was converted to individual account."
+
     example default
         is_recoverable = false
+        is_disconnected = false
 
 union_closed TeamMembershipType
     full

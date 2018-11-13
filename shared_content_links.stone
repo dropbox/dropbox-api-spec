@@ -34,6 +34,10 @@ union LinkAudience
         "Link is accessible by anyone."
     team
         "Link is accessible only by team members."
+    no_one
+        "The link can be used by no one. The link merely points the user to the content, and does
+        not grant additional rights to the user. Members of the content who use this link can only
+        access the content with their pre-existing access rights."
     members
         "Link is accessible only by members of the content."
 

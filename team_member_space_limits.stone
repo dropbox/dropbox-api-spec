@@ -75,7 +75,7 @@ route member_space_limits/set_custom_quota(SetCustomQuotaArg, List(CustomQuotaRe
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
         is_preview=true
 
 
@@ -85,7 +85,7 @@ route member_space_limits/remove_custom_quota(CustomQuotaUsersArg, List(RemoveCu
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
         is_preview=true
 
 
@@ -95,7 +95,7 @@ route member_space_limits/get_custom_quota(CustomQuotaUsersArg, List(CustomQuota
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
         is_preview=true
 
 
@@ -194,7 +194,7 @@ route member_space_limits/excluded_users/add(ExcludedUsersUpdateArg, ExcludedUse
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
         is_preview=true
 
 
@@ -203,7 +203,7 @@ route member_space_limits/excluded_users/remove(ExcludedUsersUpdateArg, Excluded
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
         is_preview=true
 
 
@@ -212,7 +212,7 @@ route member_space_limits/excluded_users/list(ExcludedUsersListArg, ExcludedUser
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
         is_preview=true
 
 
@@ -221,5 +221,5 @@ route member_space_limits/excluded_users/list/continue(ExcludedUsersListContinue
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
         is_preview=true

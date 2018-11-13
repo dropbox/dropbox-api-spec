@@ -443,7 +443,7 @@ route members/send_welcome_email(UserSelectorArg, Void, MembersSendWelcomeError)
 
     attrs
         auth = "team"
-        owner = "commit-platform"
+        owner = "try-commit-platform"
 
 
 #
@@ -642,7 +642,7 @@ route members/recover(MembersRecoverArg, Void, MembersRecoverError)
 
     attrs
         auth = "team"
-        owner = "tools-and-insights"
+        owner = "super-admin-and-deployment"
 
 # manage_former_member_files
 

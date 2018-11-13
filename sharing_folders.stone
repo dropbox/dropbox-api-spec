@@ -465,7 +465,7 @@ route list_folders(ListFoldersArgs, ListFoldersResult, Void)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
 
 struct ListFoldersArgs
     limit UInt32(min_value=1, max_value=1000) = 1000
@@ -507,7 +507,7 @@ route list_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFolde
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
 
 struct ListFoldersContinueArg
     cursor String
@@ -528,7 +528,7 @@ route list_mountable_folders(ListFoldersArgs, ListFoldersResult, Void)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
 
 # --
 
@@ -540,7 +540,7 @@ route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult,
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
 
 # --
 
@@ -550,7 +550,7 @@ route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAcc
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         api_group = "truelink-alpha"
         select_admin_mode = "whole_team"
 
@@ -574,7 +574,7 @@ route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFold
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "whole_team"
 
 struct ListFolderMembersCursorArg
@@ -627,7 +627,7 @@ route list_folder_members/continue(ListFolderMembersContinueArg, SharedFolderMem
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "whole_team"
 
 struct ListFolderMembersContinueArg
@@ -659,7 +659,7 @@ route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError )
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
 
@@ -772,7 +772,7 @@ route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollErro
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "team_admin"
 
 union_closed JobStatus extends async.PollResultBase
@@ -808,7 +808,7 @@ route check_job_status(async.PollArg, JobStatus, async.PollError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "team_admin"
 
 # --
@@ -822,7 +822,7 @@ route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderErr
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
 
@@ -857,7 +857,7 @@ route transfer_folder(TransferFolderArg, Void, TransferFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "team_admin"
 
 struct TransferFolderArg
@@ -895,7 +895,7 @@ route update_folder_policy(UpdateFolderPolicyArg, SharedFolderMetadata, UpdateFo
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
 
@@ -954,7 +954,7 @@ route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "team_admin"
 
 struct AddFolderMemberArg
@@ -1072,7 +1072,7 @@ route remove_folder_member(RemoveFolderMemberArg, async.LaunchResultBase, Remove
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "team_admin"
 
 struct RemoveFolderMemberArg
@@ -1122,7 +1122,7 @@ route check_remove_member_job_status(async.PollArg, RemoveMemberJobStatus, async
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "team_admin"
 
 # --
@@ -1134,7 +1134,7 @@ route update_folder_member(UpdateFolderMemberArg, MemberAccessLevelResult, Updat
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "team_admin"
 
 struct UpdateFolderMemberArg
@@ -1177,7 +1177,7 @@ route mount_folder(MountFolderArg, SharedFolderMetadata, MountFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
 
 # TODO(kelkabany): Consider exposing mount path as an argument. More error
 # cases will be possible.
@@ -1222,7 +1222,7 @@ route unmount_folder(UnmountFolderArg, Void, UnmountFolderError)
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
         select_admin_mode = "team_admin"
 
 struct UnmountFolderArg
@@ -1253,7 +1253,7 @@ route relinquish_folder_membership(RelinquishFolderMembershipArg, async.LaunchEm
     Apps must have full Dropbox access to use this endpoint."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
 
 struct RelinquishFolderMembershipArg
     shared_folder_id common.SharedFolderId
@@ -1294,7 +1294,7 @@ route set_access_inheritance (SetAccessInheritanceArg, ShareFolderLaunch, SetAcc
     metadata for the folder."
 
     attrs
-        owner = "company-dropbox-team"
+        owner = "shared-spaces"
 
 struct SetAccessInheritanceArg
     access_inheritance AccessInheritance = inherit

@@ -128,6 +128,11 @@ union AdminRole
     limited_admin
     member_only
 
+union CameraUploadsPolicy
+    "Policy for controlling if team members can activate camera uploads"
+    disabled
+    enabled
+
 struct Certificate 
     "Certificate details."
 
@@ -333,6 +338,7 @@ union PaperDownloadFormat
     docx
     html
     markdown
+    pdf
 
 union PaperMemberPolicy
     "Policy for controlling if team members can share Paper documents externally."
@@ -401,7 +407,6 @@ union SharingMemberPolicy
     "External sharing policy"
     allow
     forbid
-    team_members_and_whitelist
 
 struct ShowcaseDocumentLogInfo 
     "Showcase document's logged information."
@@ -490,6 +495,27 @@ union TimeUnit
     weeks
     months
     years
+
+struct TrustedNonTeamMemberLogInfo extends UserLogInfo
+    "User that is not a member of the team but considered trusted."
+
+    trusted_non_team_member_type TrustedNonTeamMemberType
+        "Indicates the type of the trusted non team member user."
+
+    example default
+        account_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
+        display_name = "John Smith"
+        email = "john_smith@acmecorp.com"
+        trusted_non_team_member_type = multi_instance_admin
+
+    example default2
+        account_id = "dbid:AAGx4oiLtHdvRdNxUpvvJBXYgR4BS19c9kw"
+        display_name = "Jane Smith"
+        email = "jane_smith@acmecorp.com"
+        trusted_non_team_member_type = multi_instance_admin
+
+union TrustedNonTeamMemberType
+    multi_instance_admin
 
 union TwoAccountPolicy
     "Policy for pairing personal account to work account"
@@ -784,6 +810,7 @@ struct UserLogInfo
     "User's logged information."
     union
         team_member TeamMemberLogInfo
+        trusted_non_team_member TrustedNonTeamMemberLogInfo
         non_team_member NonTeamMemberLogInfo
 
     account_id users_common.AccountId?
@@ -1139,6 +1166,8 @@ union ContextLogInfo
         "Anonymous context."
     team 
         "Action was done on behalf of the team."
+    trusted_non_team_member TrustedNonTeamMemberLogInfo
+        "Action was done on behalf of a trusted non team member."
 
     example default
         team_member = default
@@ -1274,6 +1303,18 @@ struct FileDeleteCommentDetails
 
     example default
         comment_text = "abc"
+
+struct FileEditCommentDetails
+    "Edited file comment."
+
+    comment_text String?
+        "Comment text. Might be missing due to historical data gap."
+    previous_comment_text String
+        "Previous comment text."
+
+    example default
+        comment_text = "abc"
+        previous_comment_text = "abc"
 
 struct FileLikeCommentDetails
     "Liked file comment."
@@ -1892,7 +1933,7 @@ that caused status change."
         action = default
 
 struct MemberDeleteManualContactsDetails
-    "Cleared saved contacts."
+    "Cleared manually added contacts."
 
 struct MemberPermanentlyDeleteAccountContentsDetails
     "Permanently deleted contents of deleted team member account."
@@ -3415,6 +3456,18 @@ struct AllowDownloadDisabledDetails
 struct AllowDownloadEnabledDetails
     "Enabled downloads."
 
+struct CameraUploadsPolicyChangedDetails
+    "Changed camera uploads setting for team."
+
+    new_value CameraUploadsPolicy
+        "New camera uploads setting."
+    previous_value CameraUploadsPolicy
+        "Previous camera uploads setting."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct DataPlacementRestrictionChangePolicyDetails
     "Set restrictions on data center locations where team data resides."
 
@@ -4005,6 +4058,7 @@ union EventDetails
     file_add_comment_details FileAddCommentDetails
     file_change_comment_subscription_details FileChangeCommentSubscriptionDetails
     file_delete_comment_details FileDeleteCommentDetails
+    file_edit_comment_details FileEditCommentDetails
     file_like_comment_details FileLikeCommentDetails
     file_resolve_comment_details FileResolveCommentDetails
     file_unlike_comment_details FileUnlikeCommentDetails
@@ -4244,6 +4298,7 @@ union EventDetails
     account_capture_change_policy_details AccountCaptureChangePolicyDetails
     allow_download_disabled_details AllowDownloadDisabledDetails
     allow_download_enabled_details AllowDownloadEnabledDetails
+    camera_uploads_policy_changed_details CameraUploadsPolicyChangedDetails
     data_placement_restriction_change_policy_details DataPlacementRestrictionChangePolicyDetails
     data_placement_restriction_satisfy_policy_details DataPlacementRestrictionSatisfyPolicyDetails
     device_approvals_change_desktop_policy_details DeviceApprovalsChangeDesktopPolicyDetails
@@ -4359,6 +4414,12 @@ struct FileDeleteCommentType
 
     example default
         description = "(comments) Deleted file comment"
+
+struct FileEditCommentType
+    description String
+
+    example default
+        description = "(comments) Edited file comment"
 
 struct FileLikeCommentType
     description String
@@ -4826,7 +4887,7 @@ struct MemberDeleteManualContactsType
     description String
 
     example default
-        description = "(members) Cleared saved contacts"
+        description = "(members) Cleared manually added contacts"
 
 struct MemberPermanentlyDeleteAccountContentsType
     description String
@@ -5794,6 +5855,12 @@ struct AllowDownloadEnabledType
     example default
         description = "(team_policies) Enabled downloads (deprecated, no longer logged)"
 
+struct CameraUploadsPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed camera uploads setting for team"
+
 struct DataPlacementRestrictionChangePolicyType
     description String
 
@@ -6190,6 +6257,8 @@ union EventType
         "(comments) Subscribed to or unsubscribed from comment notifications for file"
     file_delete_comment FileDeleteCommentType
         "(comments) Deleted file comment"
+    file_edit_comment FileEditCommentType
+        "(comments) Edited file comment"
     file_like_comment FileLikeCommentType
         "(comments) Liked file comment (deprecated, no longer logged)"
     file_resolve_comment FileResolveCommentType
@@ -6345,7 +6414,7 @@ union EventType
     member_change_status MemberChangeStatusType
         "(members) Changed member status (invited, joined, suspended, etc.)"
     member_delete_manual_contacts MemberDeleteManualContactsType
-        "(members) Cleared saved contacts"
+        "(members) Cleared manually added contacts"
     member_permanently_delete_account_contents MemberPermanentlyDeleteAccountContentsType
         "(members) Permanently deleted contents of deleted team member account"
     member_space_limits_add_custom_quota MemberSpaceLimitsAddCustomQuotaType
@@ -6668,6 +6737,8 @@ union EventType
         "(team_policies) Disabled downloads (deprecated, no longer logged)"
     allow_download_enabled AllowDownloadEnabledType
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
+    camera_uploads_policy_changed CameraUploadsPolicyChangedType
+        "(team_policies) Changed camera uploads setting for team"
     data_placement_restriction_change_policy DataPlacementRestrictionChangePolicyType
         "(team_policies) Set restrictions on data center locations where team data resides"
     data_placement_restriction_satisfy_policy DataPlacementRestrictionSatisfyPolicyType
