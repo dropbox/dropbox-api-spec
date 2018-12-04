@@ -243,7 +243,6 @@ route add_file_member(AddFileMemberArgs, List(FileMemberActionResult), AddFileMe
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 struct AddFileMemberArgs
@@ -284,7 +283,6 @@ route change_file_member_access(ChangeFileMemberAccessArgs, FileMemberActionResu
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
 
 struct ChangeFileMemberAccessArgs
     "Arguments for :route:`change_file_member_access`."
@@ -314,7 +312,6 @@ route update_file_member(UpdateFileMemberArgs, MemberAccessLevelResult, FileMemb
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 # --
@@ -325,7 +322,6 @@ route get_file_metadata(GetFileMetadataArg, SharedFileMetadata, GetFileMetadataE
     attrs
         owner = "sharing"
         api_group = "truelink-alpha"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 struct GetFileMetadataArg
@@ -355,7 +351,6 @@ route get_file_metadata/batch(GetFileMetadataBatchArg, List(GetFileMetadataBatch
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
 
 struct GetFileMetadataBatchArg
     "Arguments of :route:`get_file_metadata/batch`."
@@ -408,7 +403,6 @@ route list_file_members(ListFileMembersArg, SharedFileMembers, ListFileMembersEr
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 struct ListFileMembersArg
@@ -483,7 +477,6 @@ route list_file_members/batch(ListFileMembersBatchArg, List(ListFileMembersBatch
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
 
 struct ListFileMembersBatchArg
     "Arguments for :route:`list_file_members/batch`."
@@ -545,7 +538,6 @@ route list_file_members/continue(ListFileMembersContinueArg, SharedFileMembers, 
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
 
 struct ListFileMembersContinueArg
     "Arguments for :route:`list_file_members/continue`."
@@ -575,7 +567,6 @@ route list_received_files(ListFilesArg, ListFilesResult, SharingUserError)
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 struct ListFilesArg
@@ -612,7 +603,6 @@ route list_received_files/continue (ListFilesContinueArg, ListFilesResult, ListF
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
 
 struct ListFilesContinueArg
     "Arguments for :route:`list_received_files/continue`."
@@ -638,7 +628,6 @@ route remove_file_member(RemoveFileMemberArg, FileMemberActionIndividualResult, 
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 route remove_file_member_2(RemoveFileMemberArg, FileMemberRemoveActionResult, RemoveFileMemberError)
@@ -646,7 +635,6 @@ route remove_file_member_2(RemoveFileMemberArg, FileMemberRemoveActionResult, Re
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 struct RemoveFileMemberArg
@@ -668,13 +656,10 @@ struct RemoveFileMemberArg
 route relinquish_file_membership(RelinquishFileMembershipArg, Void, RelinquishFileMembershipError)
     "The current user relinquishes their membership in the designated file.
     Note that the current user may still have inherited access to this file
-    through the parent folder.
-
-    Apps must have full Dropbox access to use this endpoint."
+    through the parent folder."
 
     attrs
         owner = "sharing"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 struct RelinquishFileMembershipArg
@@ -700,7 +685,6 @@ route unshare_file(UnshareFileArg, Void, UnshareFileError)
     attrs
         owner = "sharing"
         api_group = "truelink-alpha"
-        allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
 struct UnshareFileArg

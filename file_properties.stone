@@ -179,7 +179,6 @@ route properties/add(AddPropertiesArg, Void, AddPropertiesError)
 
     attrs
         api_group="properties"
-        allow_app_folder_app = true
         owner = "api-platform"
 
 struct OverwritePropertyGroupArg
@@ -201,7 +200,6 @@ route properties/overwrite(OverwritePropertyGroupArg, Void, InvalidPropertyGroup
 
     attrs
         api_group="properties"
-        allow_app_folder_app = true
         owner = "api-platform"
 
 struct PropertyGroupUpdate
@@ -240,7 +238,6 @@ route properties/update(UpdatePropertiesArg, Void, UpdatePropertiesError)
 
     attrs
         api_group="properties"
-        allow_app_folder_app = true
         owner = "api-platform"
 
 struct RemovePropertiesArg
@@ -267,7 +264,6 @@ route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
 
     attrs
         api_group="properties"
-        allow_app_folder_app = true
         owner = "api-platform"
 
 #
@@ -434,7 +430,6 @@ route templates/remove_for_user(RemoveTemplateArg, Void, TemplateError)
 
     attrs
         api_group="properties"
-        allow_app_folder_app = true
         owner = "api-platform"
 
 route templates/remove_for_team(RemoveTemplateArg, Void, TemplateError)
@@ -445,7 +440,6 @@ route templates/remove_for_team(RemoveTemplateArg, Void, TemplateError)
     attrs
         auth="team"
         api_group="properties"
-        allow_app_folder_app = true
         owner = "api-platform"
 
 union TemplateOwnerType

@@ -193,8 +193,8 @@ struct CreateFileRequestArgs
         sent. For apps with the app folder permission, this will be relative to
         the app folder."
     deadline FileRequestDeadline?
-        "The deadline for the file request. Deadlines can only be set by Pro
-        and Business accounts."
+        "The deadline for the file request. Deadlines can only be set by
+        Professional and Business accounts."
     open Boolean = true
         "Whether or not the file request should be open. If the file request is
         closed, it will not accept any file submissions, but it can be opened
@@ -237,7 +237,8 @@ struct UpdateFileRequestArgs
         sent. For apps with the app folder permission, this will be relative to
         the app folder."
     deadline UpdateFileRequestDeadline = no_update
-        "The new deadline for the file request."
+        "The new deadline for the file request. Deadlines can only be set by
+        Professional and Business accounts."
         union
             no_update
                 "Do not change the file request's deadline."

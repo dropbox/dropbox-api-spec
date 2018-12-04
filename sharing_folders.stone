@@ -460,9 +460,7 @@ struct ParentFolderAccessInfo
 # --
 
 route list_folders(ListFoldersArgs, ListFoldersResult, Void)
-    "Return the list of all shared folders the current user has access to.
-
-    Apps must have full Dropbox access to use this endpoint."
+    "Return the list of all shared folders the current user has access to."
 
     attrs
         owner = "shared-spaces"
@@ -502,9 +500,7 @@ struct ListFoldersResult
 route list_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFoldersContinueError)
     "Once a cursor has been retrieved from :route:`list_folders`, use this to paginate through all
     shared folders. The cursor must come from a previous call to :route:`list_folders` or
-    :route:`list_folders/continue`.
-
-    Apps must have full Dropbox access to use this endpoint."
+    :route:`list_folders/continue`."
 
     attrs
         owner = "shared-spaces"
@@ -523,9 +519,7 @@ union ListFoldersContinueError
 # --
 
 route list_mountable_folders(ListFoldersArgs, ListFoldersResult, Void)
-    "Return the list of all shared folders the current user can mount or unmount.
-
-    Apps must have full Dropbox access to use this endpoint."
+    "Return the list of all shared folders the current user can mount or unmount."
 
     attrs
         owner = "shared-spaces"
@@ -535,9 +529,7 @@ route list_mountable_folders(ListFoldersArgs, ListFoldersResult, Void)
 route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFoldersContinueError)
     "Once a cursor has been retrieved from :route:`list_mountable_folders`, use this to paginate through all
     mountable shared folders. The cursor must come from a previous call to :route:`list_mountable_folders` or
-    :route:`list_mountable_folders/continue`.
-
-    Apps must have full Dropbox access to use this endpoint."
+    :route:`list_mountable_folders/continue`."
 
     attrs
         owner = "shared-spaces"
@@ -545,9 +537,7 @@ route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult,
 # --
 
 route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAccessError)
-    "Returns shared folder metadata by its folder ID.
-
-    Apps must have full Dropbox access to use this endpoint."
+    "Returns shared folder metadata by its folder ID."
 
     attrs
         owner = "shared-spaces"
@@ -569,9 +559,7 @@ struct GetMetadataArgs
 # --
 
 route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFolderAccessError)
-    "Returns shared folder membership by its folder ID.
-
-    Apps must have full Dropbox access to use this endpoint."
+    "Returns shared folder membership by its folder ID."
 
     attrs
         owner = "shared-spaces"
@@ -622,9 +610,7 @@ struct SharedFolderMembers
 
 route list_folder_members/continue(ListFolderMembersContinueArg, SharedFolderMembers, ListFolderMembersContinueError)
     "Once a cursor has been retrieved from :route:`list_folder_members`, use this to paginate
-    through all shared folder members.
-
-    Apps must have full Dropbox access to use this endpoint."
+    through all shared folder members."
 
     attrs
         owner = "shared-spaces"
@@ -654,9 +640,7 @@ route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError )
 
     If a :field:`ShareFolderLaunch.async_job_id` is returned, you'll need to
     call :route:`check_share_job_status` until the action completes to get the
-    metadata for the folder.
-
-    Apps must have full Dropbox access to use this endpoint."
+    metadata for the folder."
 
     attrs
         owner = "shared-spaces"
@@ -767,9 +751,7 @@ union_closed ShareFolderLaunch extends async.LaunchResultBase
         complete = default
 
 route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollError)
-    "Returns the status of an asynchronous job for sharing a folder.
-
-    Apps must have full Dropbox access to use this endpoint."
+    "Returns the status of an asynchronous job for sharing a folder."
 
     attrs
         owner = "shared-spaces"
@@ -803,9 +785,7 @@ union JobError
         "Error occurred while performing :route:`relinquish_folder_membership` action."
 
 route check_job_status(async.PollArg, JobStatus, async.PollError)
-    "Returns the status of an asynchronous job.
-
-    Apps must have full Dropbox access to use this endpoint."
+    "Returns the status of an asynchronous job."
 
     attrs
         owner = "shared-spaces"
@@ -817,9 +797,7 @@ route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderErr
     "Allows a shared folder owner to unshare the folder.
 
     You'll need to call :route:`check_job_status` to determine if the action has
-    completed successfully.
-
-    Apps must have full Dropbox access to use this endpoint."
+    completed successfully."
 
     attrs
         owner = "shared-spaces"
@@ -852,9 +830,7 @@ union UnshareFolderError
 route transfer_folder(TransferFolderArg, Void, TransferFolderError)
     "Transfer ownership of a shared folder to a member of the shared folder.
 
-    User must have :field:`AccessLevel.owner` access to the shared folder to perform a transfer.
-
-    Apps must have full Dropbox access to use this endpoint."
+    User must have :field:`AccessLevel.owner` access to the shared folder to perform a transfer."
 
     attrs
         owner = "shared-spaces"
@@ -890,9 +866,7 @@ union TransferFolderError
 route update_folder_policy(UpdateFolderPolicyArg, SharedFolderMetadata, UpdateFolderPolicyError)
     "Update the sharing policies for a shared folder.
 
-    User must have :field:`AccessLevel.owner` access to the shared folder to update its policies.
-
-    Apps must have full Dropbox access to use this endpoint."
+    User must have :field:`AccessLevel.owner` access to the shared folder to update its policies."
 
     attrs
         owner = "shared-spaces"
@@ -949,9 +923,7 @@ route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
     folder to add another member.
 
     For the new member to get access to all the functionality for this folder,
-    you will need to call :route:`mount_folder` on their behalf.
-
-    Apps must have full Dropbox access to use this endpoint."
+    you will need to call :route:`mount_folder` on their behalf."
 
     attrs
         owner = "shared-spaces"
@@ -1067,9 +1039,7 @@ union AddMemberSelectorError
 
 route remove_folder_member(RemoveFolderMemberArg, async.LaunchResultBase, RemoveFolderMemberError)
     "Allows an owner or editor (if the ACL update policy allows) of a shared
-    folder to remove another member.
-
-    Apps must have full Dropbox access to use this endpoint."
+    folder to remove another member."
 
     attrs
         owner = "shared-spaces"
@@ -1117,9 +1087,7 @@ union_closed RemoveMemberJobStatus extends async.PollResultBase
         complete = default
 
 route check_remove_member_job_status(async.PollArg, RemoveMemberJobStatus, async.PollError)
-    "Returns the status of an asynchronous job for sharing a folder.
-
-    Apps must have full Dropbox access to use this endpoint."
+    "Returns the status of an asynchronous job for sharing a folder."
 
     attrs
         owner = "shared-spaces"
@@ -1129,9 +1097,7 @@ route check_remove_member_job_status(async.PollArg, RemoveMemberJobStatus, async
 
 route update_folder_member(UpdateFolderMemberArg, MemberAccessLevelResult, UpdateFolderMemberError)
     "Allows an owner or editor of a shared folder to update another member's
-    permissions.
-
-    Apps must have full Dropbox access to use this endpoint."
+    permissions."
 
     attrs
         owner = "shared-spaces"
@@ -1172,9 +1138,7 @@ route mount_folder(MountFolderArg, SharedFolderMetadata, MountFolderError)
     "The current user mounts the designated folder.
 
     Mount a shared folder for a user after they have been added as a member.
-    Once mounted, the shared folder will appear in their Dropbox.
-
-    Apps must have full Dropbox access to use this endpoint."
+    Once mounted, the shared folder will appear in their Dropbox."
 
     attrs
         owner = "shared-spaces"
@@ -1217,9 +1181,7 @@ union MountFolderError
 
 route unmount_folder(UnmountFolderArg, Void, UnmountFolderError)
     "The current user unmounts the designated folder. They can re-mount the
-    folder at a later time using :route:`mount_folder`.
-
-    Apps must have full Dropbox access to use this endpoint."
+    folder at a later time using :route:`mount_folder`."
 
     attrs
         owner = "shared-spaces"
@@ -1249,8 +1211,7 @@ route relinquish_folder_membership(RelinquishFolderMembershipArg, async.LaunchEm
     relinquish membership in their own folder.
 
     This will run synchronously if leave_a_copy is false, and asynchronously
-    if leave_a_copy is true.
-    Apps must have full Dropbox access to use this endpoint."
+    if leave_a_copy is true."
 
     attrs
         owner = "shared-spaces"

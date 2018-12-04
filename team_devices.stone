@@ -217,7 +217,9 @@ union ListMembersDevicesError
 # Route: devices/list_members_devices
 #
 route devices/list_members_devices(ListMembersDevicesArg, ListMembersDevicesResult, ListMembersDevicesError)
-    "List all device sessions of a team."
+    "List all device sessions of a team.
+
+    Permission : Team member file access."
 
     attrs
         auth = "team"
@@ -348,7 +350,9 @@ union ListTeamDevicesError
         :route:`devices/list_team_devices` again with an empty cursor to obtain a new cursor."
 
 route devices/list_team_devices(ListTeamDevicesArg, ListTeamDevicesResult, ListTeamDevicesError) deprecated by devices/list_members_devices
-    "List all device sessions of a team."
+    "List all device sessions of a team.
+
+    Permission : Team member file access."
 
     attrs
         auth = "team"

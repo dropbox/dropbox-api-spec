@@ -310,21 +310,26 @@ route features/get_values(FeaturesGetValuesBatchArg, FeaturesGetValuesBatchResul
 #
 
 route properties/template/add(file_properties.AddTemplateArg, file_properties.AddTemplateResult, file_properties.ModifyTemplateError) deprecated
+    "Permission : Team member file access."
+
     attrs
         auth = "team"
         owner = "api-platform"
 
 route properties/template/update(file_properties.UpdateTemplateArg, file_properties.UpdateTemplateResult, file_properties.ModifyTemplateError) deprecated
+    "Permission : Team member file access."
     attrs
         auth = "team"
         owner = "api-platform"
 
 route properties/template/get(file_properties.GetTemplateArg, file_properties.GetTemplateResult, file_properties.TemplateError) deprecated
+    "Permission : Team member file access."
     attrs
         auth = "team"
         owner = "api-platform"
 
 route properties/template/list(Void, file_properties.ListTemplateResult, file_properties.TemplateError) deprecated
+    "Permission : Team member file access."
     attrs
         auth = "team"
         owner = "api-platform"

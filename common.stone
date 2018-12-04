@@ -12,7 +12,7 @@ alias Date = Timestamp("%Y-%m-%d")
 
 # Note - "\\." is needed in order to translate to "\."
 
-alias EmailAddress = String(pattern="^['&A-Za-z0-9._%+-]+@[A-Za-z0-9-][A-Za-z0-9.-]*.[A-Za-z]{2,15}$", max_length=255)
+alias EmailAddress = String(pattern="^['&A-Za-z0-9._%+-]+@[A-Za-z0-9-][A-Za-z0-9.-]*\\.[A-Za-z]{2,15}$", max_length=255)
 
 # First name or Last name. NOTE: max_length should be synced with USER_NAME_MAX_LEN
 alias NamePart = String(pattern="[^\/:?*<>\"|]*", min_length=1, max_length=100)

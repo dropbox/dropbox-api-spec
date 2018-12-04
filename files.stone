@@ -899,7 +899,8 @@ struct UploadSessionFinishBatchArg
 
 struct UploadSessionFinishBatchResult
     entries List(UploadSessionFinishBatchResultEntry)
-        "Commit result for each file in the batch."
+        "Each entry in :field:`UploadSessionFinishBatchArg.entries` will appear at the same position
+        inside :field:`UploadSessionFinishBatchResult.entries`."
 
     example default
         entries = [default]
@@ -1186,6 +1187,8 @@ union CreateFolderBatchError
 
 struct CreateFolderBatchResult extends FileOpsResult
     entries List(CreateFolderBatchResultEntry)
+        "Each entry in :field:`CreateFolderBatchArg.paths` will appear at the same position
+        inside :field:`CreateFolderBatchResult.entries`."
 
     example default
         entries = [default]
@@ -1286,6 +1289,8 @@ struct DeleteResult extends FileOpsResult
 
 struct DeleteBatchResult extends FileOpsResult
     entries List(DeleteBatchResultEntry)
+        "Each entry in :field:`DeleteBatchArg.entries` will appear at the same position inside
+        :field:`DeleteBatchResult.entries`."
 
     example default
         entries = [default]
@@ -1380,6 +1385,8 @@ route permanently_delete (DeleteArg, Void, DeleteError)
 # Args and error shared by copy and move
 #
 
+# Arg, result and error for relocation and relocation batch.
+
 struct RelocationPath
     from_path WritePathOrId
         "Path in the user's Dropbox to be copied or moved."
@@ -1429,18 +1436,83 @@ union RelocationError
         the field :field:`RelocationArg.allow_ownership_transfer` to true."
     insufficient_quota
         "The current user does not have enough space to move or copy the files."
+    internal_error
+        "Something went wrong with the job on Dropbox's end. You'll need to
+        verify that the action you were taking succeeded, and if not, try
+        again. This should happen very rarely."
 
-struct RelocationBatchArg
+struct RelocationResult extends FileOpsResult
+    metadata Metadata
+        "Metadata of the relocated object."
+
+    example default
+        metadata = default
+
+struct RelocationBatchArgBase
     entries List(RelocationPath, min_items=1)
         "List of entries to be moved or copied. Each entry is :type:`RelocationPath`."
+    autorename Boolean = false
+        "If there's a conflict with any file, have the Dropbox server try to
+        autorename that file to avoid the conflict."
+
+    example default
+        entries = [default]
+
+union_closed RelocationBatchV2Launch extends async.LaunchResultBase
+    "Result returned by :route:`copy_batch:2` or :route:`move_batch:2` that may either launch an
+    asynchronous job or complete synchronously."
+
+    complete RelocationBatchV2Result
+
+    example complete
+        complete = default
+
+    example async_job_id
+        async_job_id = "34g93hh34h04y384084"
+
+union_closed RelocationBatchV2JobStatus extends async.PollResultBase
+    "Result returned by :route:`copy_batch:2` or :route:`move_batch:2` that may either launch an
+    asynchronous job or complete synchronously."
+    complete RelocationBatchV2Result
+        "The copy or move batch job has finished."
+
+    example default
+        complete = default
+
+struct RelocationBatchV2Result extends FileOpsResult
+    entries List(RelocationBatchResultEntry)
+        "Each entry in CopyBatchArg.entries or :field:`MoveBatchArg.entries` will
+        appear at the same position inside :field:`RelocationBatchV2Result.entries`."
+
+    example default
+        entries = [success]
+
+union RelocationBatchErrorEntry
+    relocation_error RelocationError
+        "User errors that retry won't help."
+    internal_error
+        "Something went wrong with the job on Dropbox's end. You'll need to
+        verify that the action you were taking succeeded, and if not, try
+        again. This should happen very rarely."
+    too_many_write_operations
+        "There are too many write operations in user's Dropbox. Please retry
+        this request."
+
+union RelocationBatchResultEntry
+    success Metadata
+    failure RelocationBatchErrorEntry
+
+    example success
+        success = default
+
+# Deprecated Arg, Result and error.
+
+struct RelocationBatchArg extends RelocationBatchArgBase
     allow_shared_folder Boolean = false
         "If true, :route:`copy_batch` will copy contents in shared folder,
         otherwise :field:`RelocationError.cant_copy_shared_folder` will be
         returned if :field:`RelocationPath.from_path` contains shared folder.
-         This field is always true for :route:`move_batch`."
-    autorename Boolean = false
-        "If there's a conflict with any file, have the Dropbox server try to
-        autorename that file to avoid the conflict."
+        This field is always true for :route:`move_batch`."
     allow_ownership_transfer Boolean = false
         "Allow moves by owner even if it would result in an ownership transfer
         for the content being moved. This does not apply to copies."
@@ -1483,20 +1555,16 @@ union RelocationBatchLaunch extends async.LaunchResultBase
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
-struct RelocationResult extends FileOpsResult
-    metadata Metadata
-        "Metadata of the relocated object."
-
-    example default
-        metadata = default
-
 union RelocationBatchError extends RelocationError
     too_many_write_operations
         "There are too many write operations in user's Dropbox. Please retry
         this request."
+
 #
 # Copy
 #
+
+alias CopyBatchArg = RelocationBatchArgBase
 
 route copy:2 (RelocationArg, RelocationResult, RelocationError)
     "Copy a file or folder to a different location in the user's Dropbox.
@@ -1518,7 +1586,35 @@ route copy (RelocationArg, Metadata, RelocationError) deprecated by copy:2
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
-route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
+route copy_batch:2 (CopyBatchArg, RelocationBatchV2Launch, Void)
+    "Copy multiple files or folders to different locations at once in the
+    user's Dropbox.
+
+    This route will replace :route:`copy_batch`. The main difference is this
+    route will return stutus for each entry, while :route:`copy_batch` raises
+    failure if any entry fails.
+
+    This route will either finish synchronously, or return a job ID and do the
+    async copy job in background. Please use :route:`copy_batch/check:2` to
+    check the job status."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_mode = "team_admin"
+
+route copy_batch/check:2 (async.PollArg, RelocationBatchV2JobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`copy_batch:2`. It returns
+    list of results for each entry."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_mode = "team_admin"
+
+# deprecated copy routes
+
+route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated by copy_batch:2
     "Copy multiple files or folders to different locations at once in the
     user's Dropbox.
 
@@ -1536,7 +1632,7 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
-route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
+route copy_batch/check (async.PollArg, RelocationBatchJobStatus, async.PollError) deprecated by copy_batch/check:2
     "Returns the status of an asynchronous job for :route:`copy_batch`. If
     success, it returns list of results for each entry."
 
@@ -1548,6 +1644,14 @@ route copy_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
 #
 # Move
 #
+
+struct MoveBatchArg extends RelocationBatchArgBase
+    allow_ownership_transfer Boolean = false
+        "Allow moves by owner even if it would result in an ownership transfer
+        for the content being moved. This does not apply to copies."
+
+    example default
+        entries = [default]
 
 route move:2 (RelocationArg, RelocationResult, RelocationError)
     "Move a file or folder to a different location in the user's Dropbox.
@@ -1568,6 +1672,34 @@ route move (RelocationArg, Metadata, RelocationError) deprecated by move:2
         owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+
+route move_batch:2(MoveBatchArg, RelocationBatchV2Launch, Void)
+    "Move multiple files or folders to different locations at once in the
+    user's Dropbox.
+
+    This route will replace :route:`move_batch:2`. The main difference is this
+    route will return stutus for each entry, while :route:`move_batch` raises
+    failure if any entry fails.
+
+    This route will either finish synchronously, or return a job ID and do the
+    async move job in background. Please use :route:`move_batch/check:2` to
+    check the job status."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_mode = "team_admin"
+
+route move_batch/check:2(async.PollArg, RelocationBatchV2JobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`move_batch:2`. It
+    returns list of results for each entry."
+
+    attrs
+        owner = "api-platform"
+        allow_app_folder_app = true
+        select_admin_mode = "team_admin"
+
+# deprecated move routes
 
 route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     "Move multiple files or folders to different locations at once in the
@@ -2090,8 +2222,13 @@ union SaveUrlError
         "The file where the URL is saved to no longer exists."
 
 route save_url(SaveUrlArg, SaveUrlResult, SaveUrlError)
-    "Save a specified URL into a file in user's Dropbox. If the given path already
-    exists, the file will be renamed to avoid the conflict (e.g. myfile (1).txt)."
+    "Save the data from a specified URL into a file in user's Dropbox.
+
+    Note that the transfer from the URL must complete within 5 minutes, or the
+    operation will time out and the job will fail.
+
+    If the given path already exists, the file will be renamed to avoid the
+    conflict (e.g. myfile (1).txt)."
 
     attrs
         owner = "api-platform"
