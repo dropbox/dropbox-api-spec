@@ -988,6 +988,8 @@ union AddFolderMemberError
         "Unable to access shared folder."
     email_unverified
         "The current user's e-mail address is unverified."
+    banned_member
+        "The current user has been banned."
     bad_member AddMemberSelectorError
         ":field:`AddFolderMemberArg.members` contains a bad invitation recipient."
     cant_share_outside_team

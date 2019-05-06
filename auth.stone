@@ -2,6 +2,10 @@ namespace auth
 
 import common
 
+struct TokenScopeError
+    required_scope String
+        "The required scope to access the route."
+
 union AuthError
     "Errors occurred during authentication."
 
@@ -15,6 +19,8 @@ union AuthError
         "The user has been suspended."
     expired_access_token
         "The access token has expired."
+    missing_scope TokenScopeError
+        "The access token does not have the required scope to access the route."
 
 route token/revoke(Void, Void, Void)
     "Disables the access token used to authenticate the call."

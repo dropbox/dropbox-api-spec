@@ -44,6 +44,7 @@ struct TeamMemberProfile extends MemberProfile
         membership_type = full
         joined_on = "2015-05-12T15:50:38Z"
         member_folder_id = "20"
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
 
 union_closed MemberSelectorError extends UserSelectorError
     user_not_in_team

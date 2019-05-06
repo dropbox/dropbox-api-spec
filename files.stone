@@ -525,6 +525,9 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
 
 union DownloadError
     path LookupError
+    # For example, attempting to download a Cloud Doc
+    unsupported_file
+        "This file type cannot be downloaded directly."
 
 struct DownloadArg
 
@@ -549,7 +552,7 @@ route download (DownloadArg, FileMetadata, DownloadError)
     attrs
         host = "content"
         style = "download"
-        owner = "api-platform"
+        owner = "storage-services-team"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -591,7 +594,7 @@ route download_zip (DownloadZipArg, DownloadZipResult, DownloadZipError)
     attrs
         host = "content"
         style = "download"
-        owner = "api-platform"
+        owner = "storage-services-team"
         allow_app_folder_app = true
 
 #
@@ -628,7 +631,7 @@ union UploadSessionLookupError
         receive the response, e.g. due to a network error."
     closed
         "You are attempting to append data to an upload session that
-        has alread been closed (i.e. committed)."
+        has already been closed (i.e. committed)."
     not_closed
         "The session must be closed before calling upload_session/finish_batch."
     too_large
@@ -695,7 +698,7 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
     attrs
         host = "content"
         style = "upload"
-        owner = "api-platform"
+        owner = "storage-services-team"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
@@ -726,7 +729,7 @@ route upload_session/append:2 (UploadSessionAppendArg, Void, UploadSessionLookup
     attrs
         host = "content"
         style = "upload"
-        owner = "api-platform"
+        owner = "storage-services-team"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
@@ -756,7 +759,7 @@ route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError
     attrs
         host = "content"
         style = "upload"
-        owner = "api-platform"
+        owner = "storage-services-team"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
@@ -863,7 +866,7 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
     attrs
         host = "content"
         style = "upload"
-        owner = "api-platform"
+        owner = "storage-services-team"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
@@ -881,7 +884,7 @@ route upload (CommitInfo, FileMetadata, UploadError)
     attrs
         host = "content"
         style = "upload"
-        owner = "api-platform"
+        owner = "storage-services-team"
         feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
@@ -1001,7 +1004,7 @@ struct SearchArg
         prefix matching (i.e. \"bat c\" matches \"bat cave\" but not \"batman
         car\")."
 
-    start UInt64 = 0
+    start UInt64(max_value=9999) = 0
         "The starting index within the search results (used for paging)."
 
     max_results UInt64(min_value=1, max_value=1000) = 100
@@ -1084,6 +1087,8 @@ union LookupError
     restricted_content
         "The file cannot be transferred because the content is restricted.  For example,
         sometimes there are legal restrictions due to copyright claims."
+    unsupported_content_type
+        "This operation is not supported for this content type."
 
 union WriteError
     malformed_path MalformedPathError
@@ -1440,6 +1445,8 @@ union RelocationError
         "Something went wrong with the job on Dropbox's end. You'll need to
         verify that the action you were taking succeeded, and if not, try
         again. This should happen very rarely."
+    cant_move_shared_folder
+        "Can't move the shared folder to the given destination."
 
 struct RelocationResult extends FileOpsResult
     metadata Metadata
@@ -1471,8 +1478,9 @@ union_closed RelocationBatchV2Launch extends async.LaunchResultBase
         async_job_id = "34g93hh34h04y384084"
 
 union_closed RelocationBatchV2JobStatus extends async.PollResultBase
-    "Result returned by :route:`copy_batch:2` or :route:`move_batch:2` that may either launch an
-    asynchronous job or complete synchronously."
+    "Result returned by :route:`copy_batch/check:2` or :route:`move_batch/check:2` that may either
+    be in progress or completed with result for each entry."
+
     complete RelocationBatchV2Result
         "The copy or move batch job has finished."
 
@@ -1590,8 +1598,8 @@ route copy_batch:2 (CopyBatchArg, RelocationBatchV2Launch, Void)
     "Copy multiple files or folders to different locations at once in the
     user's Dropbox.
 
-    This route will replace :route:`copy_batch`. The main difference is this
-    route will return stutus for each entry, while :route:`copy_batch` raises
+    This route will replace :route:`copy_batch:1`. The main difference is this
+    route will return status for each entry, while :route:`copy_batch:1` raises
     failure if any entry fails.
 
     This route will either finish synchronously, or return a job ID and do the
@@ -1625,7 +1633,7 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated by
     shared folders to new locations.
 
     This route will return job ID immediately and do the async copy job in
-    background. Please use :route:`copy_batch/check` to check the job status."
+    background. Please use :route:`copy_batch/check:1` to check the job status."
 
     attrs
         owner = "api-platform"
@@ -1633,7 +1641,7 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated by
         select_admin_mode = "team_admin"
 
 route copy_batch/check (async.PollArg, RelocationBatchJobStatus, async.PollError) deprecated by copy_batch/check:2
-    "Returns the status of an asynchronous job for :route:`copy_batch`. If
+    "Returns the status of an asynchronous job for :route:`copy_batch:1`. If
     success, it returns list of results for each entry."
 
     attrs
@@ -1677,8 +1685,8 @@ route move_batch:2(MoveBatchArg, RelocationBatchV2Launch, Void)
     "Move multiple files or folders to different locations at once in the
     user's Dropbox.
 
-    This route will replace :route:`move_batch:2`. The main difference is this
-    route will return stutus for each entry, while :route:`move_batch` raises
+    This route will replace :route:`move_batch:1`. The main difference is this
+    route will return status for each entry, while :route:`move_batch:1` raises
     failure if any entry fails.
 
     This route will either finish synchronously, or return a job ID and do the
@@ -1709,7 +1717,7 @@ route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     whole transaction will abort.
 
     This route will return job ID immediately and do the async moving job in
-    background. Please use :route:`move_batch/check` to check the job status."
+    background. Please use :route:`move_batch/check:1` to check the job status."
 
     attrs
         owner = "api-platform"
@@ -1717,7 +1725,7 @@ route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
         select_admin_mode = "team_admin"
 
 route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
-    "Returns the status of an asynchronous job for :route:`move_batch`. If
+    "Returns the status of an asynchronous job for :route:`move_batch:1`. If
     success, it returns list of results for each entry."
 
     attrs
@@ -2021,11 +2029,15 @@ struct GetTemporaryLinkResult
 
 union GetTemporaryLinkError
     path LookupError
+    email_not_verified
+        "The user's email address needs to be verified to use this functionality."
+    unsupported_file
+        "Cannot get temporary link to this file type."
 
 route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTemporaryLinkError)
     "Get a temporary link to stream content of a file. This link will expire in four hours and
-    afterwards you will get 410 Gone. So this URL should not be used to display content directly
-    in the browser.  Content-Type of the link is determined automatically by the file's mime type."
+    afterwards you will get 410 Gone. This URL should not be used to display content directly
+    in the browser. The Content-Type of the link is determined automatically by the file's mime type."
 
     attrs
         owner = "api-platform"
@@ -2112,9 +2124,8 @@ route get_temporary_upload_link(GetTemporaryUploadLinkArg, GetTemporaryUploadLin
     "
 
     attrs
-        owner = "partner-platform"
+        owner = "content-ecosystem"
         allow_app_folder_app = true
-        is_preview = true
 
 #
 # Copy reference
@@ -2198,6 +2209,7 @@ route copy_reference/save(SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCop
 struct SaveUrlArg
     path Path
         "The path in Dropbox where the URL will be saved to."
+
     url String
         "The URL to be saved."
 
@@ -2215,7 +2227,8 @@ union_closed SaveUrlResult extends async.LaunchResultBase
 union SaveUrlError
     path WriteError
     download_failed
-        "Failed downloading the given URL."
+        "Failed downloading the given URL. The url may be
+        password-protected / the password provided was incorrect."
     invalid_url
         "The given URL is invalid."
     not_found

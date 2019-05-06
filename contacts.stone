@@ -9,7 +9,7 @@ route delete_manual_contacts(Void, Void, Void)
 
     attrs
         cluster = "meta-peeps"
-        owner = "external-collab"
+        owner = "teams-and-groups"
 
 struct DeleteManualContactsArg
     email_addresses List(common.EmailAddress)
@@ -29,4 +29,4 @@ route delete_manual_contacts_batch(DeleteManualContactsArg, Void, DeleteManualCo
 
     attrs
         cluster = "meta-peeps"
-        owner = "external-collab"
+        owner = "teams-and-groups"

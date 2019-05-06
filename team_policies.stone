@@ -161,3 +161,15 @@ union CameraUploadsPolicyState
         "Background camera uploads are disabled."
     enabled
         "Background camera uploads are allowed."
+
+union PaperDefaultFolderPolicy
+    everyone_in_team
+        "Everyone in team will be the default option when creating a folder in Paper."
+    invite_only
+        "Invite only will be the default option when creating a folder in Paper."
+
+union PaperDesktopPolicy
+    disabled
+        "Do not allow team members to use Paper Desktop."
+    enabled
+        "Allow team members to use Paper Desktop."

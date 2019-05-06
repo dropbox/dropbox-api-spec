@@ -38,3 +38,5 @@ struct Route
         will eventually be migrated."
     generated Boolean = false
         "Was this stone spec generated from another source?"
+    scope String?
+        "Name of the scope required to call this route."

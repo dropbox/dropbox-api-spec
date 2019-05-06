@@ -125,13 +125,74 @@ union FileRequestError extends GeneralFileRequestsError
 # Getting file requests
 #
 
+route list:2(ListFileRequestsArg, ListFileRequestsV2Result, ListFileRequestsError)
+    "Returns a list of file requests owned by this user. For apps with the app
+    folder permission, this will only return file requests with destinations in
+    the app folder."
+
+    attrs
+        owner = "sharing"
+        allow_app_folder_app = true
+        is_preview = true
+
+struct ListFileRequestsArg
+    "Arguments for :route:`list:2`."
+
+    limit UInt64 = 1000
+        "The maximum number of file requests that should be returned per request."
+
+    example default
+        limit = 1000
+
+struct ListFileRequestsV2Result
+    "Result for :route:`list:2` and :route:`list/continue`."
+
+    file_requests List(FileRequest)
+        "The file requests owned by this user. Apps with the app folder
+        permission will only see file requests in their app folder."
+
+    cursor String
+        "Pass the cursor into :route:`list/continue` to obtain additional file requests."
+
+    has_more Boolean
+        "Is true if there are additional file requests that have not been returned
+        yet. An additional call to :route:list/continue` can retrieve them."
+
+    example default
+        file_requests = [default, with_deadline, with_no_deadline]
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+        has_more = true
+
+route list/continue(ListFileRequestsContinueArg, ListFileRequestsV2Result, ListFileRequestsContinueError)
+    "Once a cursor has been retrieved from :route:`list:2`, use this to paginate through all
+    file requests. The cursor must come from a previous call to :route:`list:2` or
+    :route:`list/continue`."
+    attrs
+        owner = "sharing"
+        allow_app_folder_app = true
+        is_preview = true
+
+struct ListFileRequestsContinueArg
+    cursor String
+        "The cursor returned by the previous API call specified in the endpoint description."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+union ListFileRequestsContinueError extends GeneralFileRequestsError
+    "There was an error retrieving the file requests."
+
+    invalid_cursor
+        "The cursor is invalid."
+
+
 route list(Void, ListFileRequestsResult, ListFileRequestsError)
     "Returns a list of file requests owned by this user. For apps with the app
     folder permission, this will only return file requests with destinations in
     the app folder."
 
     attrs
-        owner = "api-platform"
+        owner = "sharing"
         allow_app_folder_app = true
 
 struct ListFileRequestsResult
@@ -156,7 +217,7 @@ route get(GetFileRequestArgs, FileRequest, GetFileRequestError)
     "Returns the specified file request."
 
     attrs
-        owner = "api-platform"
+        owner = "sharing"
         allow_app_folder_app = true
 
 struct GetFileRequestArgs
@@ -180,7 +241,7 @@ route create(CreateFileRequestArgs, FileRequest, CreateFileRequestError)
     "Creates a file request for this user."
 
     attrs
-        owner = "api-platform"
+        owner = "sharing"
         allow_app_folder_app = true
 
 struct CreateFileRequestArgs
@@ -222,7 +283,7 @@ route update(UpdateFileRequestArgs, FileRequest, UpdateFileRequestError)
     "Update a file request."
 
     attrs
-        owner = "api-platform"
+        owner = "sharing"
         allow_app_folder_app = true
 
 struct UpdateFileRequestArgs
@@ -259,3 +320,86 @@ struct UpdateFileRequestArgs
 
 union UpdateFileRequestError extends FileRequestError
     "There is an error updating the file request."
+
+#
+# Count file requests
+#
+
+route count(Void, CountFileRequestsResult, CountFileRequestsError)
+    "Returns the total number of file requests owned by this user. Includes both open and
+    closed file requests."
+
+    attrs
+        owner = "sharing"
+        allow_app_folder_app = true
+
+
+struct CountFileRequestsResult
+    "Result for :route:`count`."
+
+    file_request_count UInt64
+        "The number file requests owner by this user."
+
+    example default
+        file_request_count = 15
+
+union CountFileRequestsError extends GeneralFileRequestsError
+    "There was an error counting the file requests."
+
+#
+# Deleting existing file requests
+#
+
+route delete(DeleteFileRequestArgs, DeleteFileRequestsResult, DeleteFileRequestError)
+    "Delete a batch of closed file requests."
+
+    attrs
+        owner = "sharing"
+        allow_app_folder_app = true
+
+struct DeleteFileRequestArgs
+    "Arguments for :route:`delete`."
+
+    ids List(FileRequestId)
+        "List IDs of the file requests to delete."
+
+    example default
+        ids = ["oaCAVmEyrqYnkZX9955Y", "BaZmehYoXMPtaRmfTbSG"]
+
+struct DeleteFileRequestsResult
+    "Result for :route:`delete`."
+
+    file_requests List(FileRequest)
+        "The file requests deleted by the request."
+
+    example default
+        file_requests = [default, with_deadline, with_no_deadline]
+
+union DeleteFileRequestError extends FileRequestError
+    "There was an error deleting these file requests."
+
+    file_request_open
+        "One or more file requests currently open."
+
+#
+# Deleting all closed file requests
+#
+
+route delete_all_closed(Void, DeleteAllClosedFileRequestsResult, DeleteAllClosedFileRequestsError)
+    "Delete all closed file requests owned by this user."
+
+    attrs
+        owner = "sharing"
+        allow_app_folder_app = true
+
+struct DeleteAllClosedFileRequestsResult
+    "Result for :route:`delete_all_closed`."
+
+    file_requests List(FileRequest)
+        "The file requests deleted for this user."
+
+    example default
+        file_requests = [default, with_deadline, with_no_deadline]
+
+union DeleteAllClosedFileRequestsError extends FileRequestError
+    "There was an error deleting all closed file requests."

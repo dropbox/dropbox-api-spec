@@ -60,7 +60,7 @@ struct Account
         name = default
         email = "franz@dropbox.com"
         email_verified = true
-        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416582218&size=128x128"
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
         disabled = false
 
 struct BasicAccount extends Account
@@ -79,7 +79,7 @@ struct BasicAccount extends Account
         name = default
         email = "franz@dropbox.com"
         email_verified = true
-        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416696524&size=128x128"
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
         is_teammate = false
         disabled = false
 
@@ -88,7 +88,7 @@ struct BasicAccount extends Account
         name = default
         email = "franz@dropbox.com"
         email_verified = true
-        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416696524&size=128x128"
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
         is_teammate = true
         team_member_id = "dbmid:AAHhy7WsR0x-u4ZCqiDl5Fz5zvuL3kmspwU"
         disabled = false
@@ -157,7 +157,7 @@ struct FullAccount extends Account
         team = null
         is_paired = false
         account_type = default
-        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbid%3AAAH4f99T0taONIb-OurWxbNQ6ywGRopQngc?vers=1453416673259&size=128x128"
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
         disabled = false
         root_info = default
 

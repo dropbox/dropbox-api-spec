@@ -74,12 +74,18 @@ struct MemberProfile
     joined_on common.DropboxTimestamp?
         "The date and time the user joined as a member of a specific team."
 
+    suspended_on common.DropboxTimestamp?
+        "The date and time the user was suspended from the team (contains value only when the member's status matches :field:`TeamMemberStatus.suspended`."
+
     persistent_id String?
         "Persistent ID that a team can attach to the user.
         The persistent ID is unique ID to be used for SAML authentication."
 
     is_directory_restricted Boolean?
         "Whether the user is a directory restricted user."
+
+    profile_photo_url String?
+        "URL for the photo representing the user, if one is set."
 
     example default
         team_member_id = "dbmid:1234567"
@@ -90,6 +96,7 @@ struct MemberProfile
         name = default
         membership_type = full
         joined_on = "2015-05-12T15:50:38Z"
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
 
 union_closed UserSelectorArg
     "Argument for selecting a single user, either by team_member_id, external_id or email."

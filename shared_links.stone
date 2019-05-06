@@ -351,12 +351,17 @@ struct CreateSharedLinkWithSettingsArg
         path = "/Prime_Numbers.txt"
         settings = default
 
+union SharedLinkAlreadyExistsMetadata
+    metadata SharedLinkMetadata
+        "Metadata of the shared link that already exists."
+
 union_closed CreateSharedLinkWithSettingsError
     path files.LookupError
     email_not_verified
         "User's email should be verified."
-    shared_link_already_exists
-        "The shared link already exists. You can call :route:`list_shared_links` to get the existing link."
+    shared_link_already_exists SharedLinkAlreadyExistsMetadata?
+        "The shared link already exists. You can call :route:`list_shared_links` to get the
+         existing link, or use the provided metadata if it is returned."
     settings_error SharedLinkSettingsError
         "There is an error with the given settings."
     access_denied
