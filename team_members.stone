@@ -473,7 +473,6 @@ struct MembersRemoveArg extends MembersDeactivateArg
         "If provided, errors during the transfer process will be sent via
         email to this user. If the transfer_dest_id argument was provided,
         then this argument must be provided as well."
-
     keep_account Boolean = false
         "Downgrade the member to a Basic account. The user will retain the email address associated with their Dropbox
          account and data in their account that is not restricted to team members. In order to keep the account the argument wipe_data should be set to False."

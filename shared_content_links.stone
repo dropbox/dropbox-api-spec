@@ -38,6 +38,9 @@ union LinkAudience
         "The link can be used by no one. The link merely points the user to the content, and does
         not grant additional rights to the user. Members of the content who use this link can only
         access the content with their pre-existing access rights."
+    password
+        "A link-specific password is required to access the
+        link. Login is not required."
     members
         "Link is accessible only by members of the content."
 

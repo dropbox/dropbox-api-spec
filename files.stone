@@ -94,6 +94,15 @@ struct FileSharingInfo extends SharingInfo
         parent_shared_folder_id = "84528192421"
         modified_by = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
 
+struct ExportInfo
+    "Export information for a file."
+
+    export_as String?
+        "Format to which the file can be exported to."
+
+    example default
+        export_as = "xlsx"
+
 struct FolderSharingInfo extends SharingInfo
     "Sharing info for a folder which is contained in a shared folder or is a
     shared folder mount point."
@@ -216,13 +225,20 @@ struct FileMetadata extends Metadata
         "The file size in bytes."
 
     media_info MediaInfo?
-        "Additional information if the file is a photo or video."
+        "Additional information if the file is a photo or video. This field will not be set on entries returned by :route:`list_folder`, :route:`list_folder/continue`, or :route:`get_thumbnail_batch`, starting December 2, 2019."
 
     symlink_info SymlinkInfo?
         "Set if this file is a symlink."
 
     sharing_info FileSharingInfo?
         "Set if this file is contained in a shared folder."
+
+    is_downloadable Boolean = true
+        "If true, file can be downloaded directly; else the file must be exported."
+
+    export_info ExportInfo?
+        "Information about format this file can be exported to. This filed must be set if :field:`is_downloadable`
+        is set to false."
 
     property_groups List(file_properties.PropertyGroup)?
         "Additional information if the file has custom properties with the
@@ -250,6 +266,7 @@ struct FileMetadata extends Metadata
         server_modified = "2015-05-12T15:50:38Z"
         rev = "a1c10ce0dd78"
         size = 7212
+        is_downloadable = true
         property_groups = [default]
         has_explicit_shared_members = false
         content_hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -402,7 +419,7 @@ struct ListFolderArg
         "If true, the list folder operation will be applied recursively to all subfolders
         and the response will contain contents of all subfolders."
     include_media_info Boolean = false
-        "If true, :field:`FileMetadata.media_info` is set for photo and video."
+        "If true, :field:`FileMetadata.media_info` is set for photo and video. This parameter will no longer have an effect starting December 2, 2019."
     include_deleted Boolean = false
         "If true, the results will include entries for files and folders that used to exist but were deleted."
     include_has_explicit_shared_members Boolean = false
@@ -422,6 +439,8 @@ struct ListFolderArg
         "If set to a valid list of template IDs, :field:`FileMetadata.property_groups`
         is set if there exists property data associated with the file and each of the
         listed templates."
+    include_non_downloadable_files Boolean = true
+        "If true, include files that are not downloadable, i.e. Google Docs."
 
     example default
         path = "/Homework/math"
@@ -527,7 +546,7 @@ union DownloadError
     path LookupError
     # For example, attempting to download a Cloud Doc
     unsupported_file
-        "This file type cannot be downloaded directly."
+        "This file type cannot be downloaded directly; use :route:`export` instead."
 
 struct DownloadArg
 
@@ -596,6 +615,70 @@ route download_zip (DownloadZipArg, DownloadZipResult, DownloadZipError)
         style = "download"
         owner = "storage-services-team"
         allow_app_folder_app = true
+
+#
+# Export
+#
+
+union ExportError
+    path LookupError
+    non_exportable
+        "This file type cannot be exported. Use :route:`download` instead."
+
+
+struct ExportArg
+
+    path ReadPath
+        "The path of the file to be exported."
+
+    example default
+        path = "/Homework/math/Prime_Numbers.gsheet"
+
+    example id
+        path = "id:a4ayc_80_OEAAAAAAAAAYa"
+
+
+struct ExportMetadata
+    name String
+        "The last component of the path (including extension).
+        This never contains a slash."
+
+    size UInt64
+        "The file size in bytes."
+
+    export_hash Sha256HexHash?
+        "A hash based on the exported file content. This field can be used to verify data integrity. Similar to content hash.
+        For more information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+
+    example default
+        name = "Prime_Numbers.xlsx"
+        size = 7189
+        export_hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+
+struct ExportResult
+    export_metadata ExportMetadata
+        "Metadata for the exported version of the file."
+    file_metadata FileMetadata
+        "Metadata for the original file."
+
+    example default
+        export_metadata = default
+        file_metadata = default
+
+
+route export (ExportArg, ExportResult, ExportError)
+    "Export a file from a user's Dropbox. This route only supports exporting files that cannot be downloaded directly
+     and whose :field:`ExportResult.file_metadata` has :field:`ExportInfo.export_as` populated."
+
+    attrs
+        is_preview = true
+        owner = "cloud-docs"
+        host = "content"
+        style = "download"
+        allow_app_folder_app = true
+        select_admin_mode = "whole_team"
+
 
 #
 # Upload Routes
@@ -1902,9 +1985,9 @@ route get_preview(PreviewArg, FileMetadata, PreviewError)
     "Get a preview for a file.
 
     Currently, PDF previews are generated for files with the following extensions:
-    .ai, .doc, .docm, .docx, .eps, .odp, .odt, .pps, .ppsm, .ppsx, .ppt, .pptm, .pptx, .rtf.
+    .ai, .doc, .docm, .docx, .eps, .gdoc, .gslides, .odp, .odt, .pps, .ppsm, .ppsx, .ppt, .pptm, .pptx, .rtf.
 
-    HTML previews are generated for files with the following extensions: .csv, .ods, .xls, .xlsm, .xlsx.
+    HTML previews are generated for files with the following extensions: .csv, .ods, .xls, .xlsm, .gsheet, .xlsx.
 
     Other formats will return an unsupported extension error."
 
@@ -2032,7 +2115,7 @@ union GetTemporaryLinkError
     email_not_verified
         "The user's email address needs to be verified to use this functionality."
     unsupported_file
-        "Cannot get temporary link to this file type."
+        "Cannot get temporary link to this file type; use :route:`export` instead."
 
 route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTemporaryLinkError)
     "Get a temporary link to stream content of a file. This link will expire in four hours and

@@ -4,6 +4,18 @@ import common
 
 alias NumberPerDay = List(UInt64?)
 
+union TeamReportFailureReason
+    temporary_error
+        "We couldn't create the report, but we think this was a fluke. Everything should work if you try it again."
+    many_reports_at_once
+        "Too many other reports are being created right now. Try creating this report again once the others finish."
+    too_much_data
+        "We couldn't create the report. Try creating the report again with less data."
+
+    example default
+        many_reports_at_once = null
+
+
 struct DateRange
     "Input arguments that can be provided for most reports."
     start_date common.Date?

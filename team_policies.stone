@@ -126,6 +126,12 @@ union TwoStepVerificationPolicy
     require_tfa_disable
         "Disabled require two factor authorization."
 
+union TwoStepVerificationState
+    required
+        "Enabled require two factor authorization."
+    optional
+        "Optional require two factor authorization."
+
 union SmartSyncPolicy
     local
         "The specified content will be synced as local files by default."

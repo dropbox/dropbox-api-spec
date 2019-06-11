@@ -71,10 +71,16 @@ union FileAction
         "Relinquish one's own membership to the file."
 
     share_link
-        "Use create_link instead."
+        "Use create_view_link and create_edit_link instead."
 
     create_link
-        "Create a shared link to the file."
+        "Use create_view_link and create_edit_link instead."
+
+    create_view_link
+        "Create a shared link to a file that only allows users to view the content."
+
+    create_edit_link
+        "Create a shared link to a file that allows users to edit the content."
 
     example default
         edit_contents = null

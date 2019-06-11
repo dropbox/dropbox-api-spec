@@ -73,19 +73,28 @@ struct LinkPermissions
         "The current visibility of the link after considering the shared links policies of the
         the team (in case the link's owner is part of a team) and the shared folder (in case the
         linked file is part of a shared folder). This field is shown only if the caller has access
-        to this info (the link's owner always has access to this data)."
-
+        to this info (the link's owner always has access to this data). For some links, an
+        effective_audience value is returned instead."
     requested_visibility RequestedVisibility?
         "The shared link's requested visibility. This can be overridden by the team and shared
         folder policies. The final visibility, after considering these policies, can be found in
         :field:`resolved_visibility`. This is shown only if the caller is the link's
-        owner."
-
+        owner and resolved_visibility is returned instead of effective_audience."
     can_revoke Boolean
         "Whether the caller can revoke the shared link."
     revoke_failure_reason SharedLinkAccessFailureReason?
         "The failure reason for revoking the link. This field will only be present if the
         :field:`can_revoke` is :val:`false`."
+    effective_audience LinkAudience?
+        "The type of audience who can benefit from the access level specified by the
+        `link_access_level` field."
+    link_access_level LinkAccessLevel?
+        "The access level that the link will grant to its users. A link can grant additional rights
+        to a user beyond their current access level. For example, if a user was invited as a viewer
+        to a file, and then opens a link with `link_access_level` set to `editor`, then they will
+        gain editor privileges. The `link_access_level` is a property of the link, and does not
+        depend on who is calling this API. In particular, `link_access_level` does not take into
+        account the API caller's current permissions to the content."
 
     example default
         resolved_visibility = public
@@ -200,7 +209,7 @@ union SharedLinkError
     shared_link_access_denied
         "The caller is not allowed to access this shared link."
     unsupported_link_type
-        "This type of link is not supported."
+        "This type of link is not supported; use :route:`files.export` instead."
 
 route get_shared_link_metadata(GetSharedLinkMetadataArg, SharedLinkMetadata, SharedLinkError)
     "Get the shared link's metadata."
@@ -280,16 +289,37 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
 struct SharedLinkSettings
     requested_visibility RequestedVisibility?
         "The requested access for this shared link."
-
     link_password String?
         "If :field:`requested_visibility` is :field:`RequestedVisibility.password` this is needed
         to specify the password to access the link."
-
     expires common.DropboxTimestamp?
         "Expiration time of the shared link. By default the link won't expire."
+    audience LinkAudience?
+        "The new audience who can benefit from the access level specified by the link's access level
+        specified in the `link_access_level` field of `LinkPermissions`. This is used in conjunction
+        with team policies and shared folder policies to determine the final effective audience type
+        in the `effective_audience` field of `LinkPermissions."
+    access RequestedLinkAccessLevel?
+        "Requested access level you want the audience to gain from this link."
 
     example default
         requested_visibility = public
+        audience = public
+        access = editor
+
+union LinkAccessLevel
+    viewer
+        "Users who use the link can view and comment on the content."
+    editor
+        "Users who use the link can edit, view and comment on the content."
+
+union RequestedLinkAccessLevel
+    viewer
+        "Users who use the link can view and comment on the content."
+    editor
+        "Users who use the link can edit, view and comment on the content."
+    max
+        "Request for the maximum access level you can set the link to."
 
 struct ModifySharedLinkSettingsArgs
     url String
