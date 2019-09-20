@@ -7,10 +7,6 @@ route delete_manual_contacts(Void, Void, Void)
     You'll still keep contacts who are on your team or who you imported.
     New contacts will be added when you share."
 
-    attrs
-        cluster = "meta-peeps"
-        owner = "teams-and-groups"
-
 struct DeleteManualContactsArg
     email_addresses List(common.EmailAddress)
         "List of manually added contacts to be deleted."
@@ -27,6 +23,3 @@ union DeleteManualContactsError
 route delete_manual_contacts_batch(DeleteManualContactsArg, Void, DeleteManualContactsError)
     "Removes manually added contacts from the given list."
 
-    attrs
-        cluster = "meta-peeps"
-        owner = "teams-and-groups"

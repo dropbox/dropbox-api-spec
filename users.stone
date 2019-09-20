@@ -17,7 +17,6 @@ route get_account (GetAccountArg, BasicAccount, GetAccountError)
     "Get information about a user's account."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
 
 struct GetAccountArg
@@ -100,7 +99,6 @@ route get_current_account (Void, FullAccount, Void)
     "Get information about the current user's account."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -224,7 +222,6 @@ route get_space_usage(Void, SpaceUsage, Void)
     "Get the space usage information for the current user's account."
 
     attrs
-        owner = "identity"
         allow_app_folder_app = true
 
 struct SpaceUsage
@@ -267,12 +264,15 @@ struct TeamSpaceAllocation
         no restriction is imposed on the user's quota within its team)."
     user_within_team_space_limit_type team_common.MemberSpaceLimitType
         "The type of the space limit imposed on the team member (off, alert_only, stop_sync)."
+    user_within_team_space_used_cached UInt64
+        "An accurate cached calculation of a team member's total space usage (bytes)."
 
     example default
         used = 27182818284
         allocated = 100000000000
         user_within_team_space_allocated = 2000000000
         user_within_team_space_limit_type = stop_sync
+        user_within_team_space_used_cached = 314159265
 
 #
 # Route: get_account_batch
@@ -283,7 +283,6 @@ route get_account_batch (GetAccountBatchArg, GetAccountBatchResult, GetAccountBa
     per request."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
 
 struct GetAccountBatchArg

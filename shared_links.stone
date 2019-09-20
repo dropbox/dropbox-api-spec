@@ -215,7 +215,6 @@ route get_shared_link_metadata(GetSharedLinkMetadataArg, SharedLinkMetadata, Sha
     "Get the shared link's metadata."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 #
@@ -279,7 +278,6 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
     direct_only to true."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 #
@@ -364,7 +362,6 @@ route modify_shared_link_settings(ModifySharedLinkSettingsArgs, SharedLinkMetada
     :field:`LinkPermissions.requested_visibility` will reflect the requested visibility."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 #
@@ -404,7 +401,6 @@ route create_shared_link_with_settings(CreateSharedLinkWithSettingsArg, SharedLi
     settings)."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -433,7 +429,6 @@ route revoke_shared_link(RevokeSharedLinkArg, Void, RevokeSharedLinkError)
     :field:`ListSharedLinksArg.path` argument."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -453,7 +448,6 @@ route get_shared_link_file(GetSharedLinkFileArg, SharedLinkMetadata, GetSharedLi
     attrs
         host="content"
         style="download"
-        owner = "sharing"
         allow_app_folder_app = true
 
 #
@@ -557,7 +551,6 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
     Note that the url field in the response is never the shortened URL."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 union_closed PendingUploadMode
@@ -601,7 +594,3 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
     longer be the case, so your app shouldn't rely on this behavior. Instead, if
     your app needs to revoke a shared link, use :route:`revoke_shared_link`."
 
-    attrs
-        owner = "sharing"
-        allow_app_folder_app = true
-        select_admin_mode = "team_admin"

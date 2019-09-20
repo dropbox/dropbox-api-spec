@@ -131,7 +131,6 @@ route list:2(ListFileRequestsArg, ListFileRequestsV2Result, ListFileRequestsErro
     the app folder."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
         is_preview = true
 
@@ -168,7 +167,6 @@ route list/continue(ListFileRequestsContinueArg, ListFileRequestsV2Result, ListF
     file requests. The cursor must come from a previous call to :route:`list:2` or
     :route:`list/continue`."
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
         is_preview = true
 
@@ -192,7 +190,6 @@ route list(Void, ListFileRequestsResult, ListFileRequestsError)
     the app folder."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 struct ListFileRequestsResult
@@ -217,7 +214,6 @@ route get(GetFileRequestArgs, FileRequest, GetFileRequestError)
     "Returns the specified file request."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 struct GetFileRequestArgs
@@ -241,7 +237,6 @@ route create(CreateFileRequestArgs, FileRequest, CreateFileRequestError)
     "Creates a file request for this user."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 struct CreateFileRequestArgs
@@ -283,7 +278,6 @@ route update(UpdateFileRequestArgs, FileRequest, UpdateFileRequestError)
     "Update a file request."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 struct UpdateFileRequestArgs
@@ -330,7 +324,6 @@ route count(Void, CountFileRequestsResult, CountFileRequestsError)
     closed file requests."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 
@@ -354,7 +347,6 @@ route delete(DeleteFileRequestArgs, DeleteFileRequestsResult, DeleteFileRequestE
     "Delete a batch of closed file requests."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 struct DeleteFileRequestArgs
@@ -389,7 +381,6 @@ route delete_all_closed(Void, DeleteAllClosedFileRequestsResult, DeleteAllClosed
     "Delete all closed file requests owned by this user."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 struct DeleteAllClosedFileRequestsResult

@@ -91,7 +91,6 @@ route team_folder/create(TeamFolderCreateArg, TeamFolderMetadata, TeamFolderCrea
     Permission : Team member file access."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 struct TeamFolderCreateArg
@@ -125,7 +124,6 @@ route team_folder/rename(TeamFolderRenameArg, TeamFolderMetadata, TeamFolderRena
     Permission : Team member file access."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 struct TeamFolderRenameArg extends TeamFolderIdArg
@@ -153,7 +151,6 @@ route team_folder/list(TeamFolderListArg, TeamFolderListResult, TeamFolderListEr
 
     Permission : Team member file access."
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 struct TeamFolderListArg
@@ -193,7 +190,6 @@ route team_folder/list/continue(TeamFolderListContinueArg, TeamFolderListResult,
     Permission : Team member file access."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 struct TeamFolderListContinueArg
@@ -217,7 +213,6 @@ route team_folder/get_info(TeamFolderIdListArg, List(TeamFolderGetInfoItem), Voi
     Permission : Team member file access."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 union_closed TeamFolderGetInfoItem
@@ -237,7 +232,6 @@ route team_folder/activate(TeamFolderIdArg, TeamFolderMetadata, TeamFolderActiva
     Permission : Team member file access."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 union TeamFolderActivateError extends BaseTeamFolderError
@@ -253,7 +247,6 @@ route team_folder/archive(TeamFolderArchiveArg, TeamFolderArchiveLaunch, TeamFol
     Permission : Team member file access."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 struct TeamFolderArchiveArg extends TeamFolderIdArg
@@ -282,7 +275,6 @@ route team_folder/archive/check(async.PollArg, TeamFolderArchiveJobStatus, async
     Permission : Team member file access."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 union_closed TeamFolderArchiveJobStatus extends async.PollResultBase
@@ -304,7 +296,6 @@ route team_folder/permanently_delete(TeamFolderIdArg, Void, TeamFolderPermanentl
     Permission : Team member file access."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
 
 union TeamFolderPermanentlyDeleteError extends BaseTeamFolderError
@@ -333,6 +324,3 @@ union TeamFolderUpdateSyncSettingsError extends BaseTeamFolderError
 route team_folder/update_sync_settings(TeamFolderUpdateSyncSettingsArg, TeamFolderMetadata, TeamFolderUpdateSyncSettingsError)
     "Updates the sync settings on a team folder or its contents.  Use of this endpoint requires that the team has team selective sync enabled."
 
-    attrs
-        owner = "shared-spaces"
-        auth = "team"

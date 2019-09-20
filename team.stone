@@ -5,6 +5,7 @@ import file_properties
 import team_common
 import team_policies
 import users_common
+import secondary_emails
 
 # Note that in the database, we also have members that are in state "deleted"
 # meaning that the User has been permanently removed from the team.
@@ -62,6 +63,9 @@ struct MemberProfile
     email_verified Boolean
         "Is true if the user's email is verified to be owned by the user."
 
+    secondary_emails List(secondary_emails.SecondaryEmail)?
+        "Secondary emails of a user."
+
     status TeamMemberStatus
         "The user's status as a member of a specific team."
 
@@ -71,11 +75,14 @@ struct MemberProfile
     membership_type TeamMembershipType
         "The user's membership type: full (normal team member) vs limited (does not use a license; no access to the team's shared quota)."
 
+    invited_on common.DropboxTimestamp?
+        "The date and time the user was invited to the team (contains value only when the member's status matches :field:`TeamMemberStatus.invited`)."
+
     joined_on common.DropboxTimestamp?
         "The date and time the user joined as a member of a specific team."
 
     suspended_on common.DropboxTimestamp?
-        "The date and time the user was suspended from the team (contains value only when the member's status matches :field:`TeamMemberStatus.suspended`."
+        "The date and time the user was suspended from the team (contains value only when the member's status matches :field:`TeamMemberStatus.suspended`)."
 
     persistent_id String?
         "Persistent ID that a team can attach to the user.
@@ -92,6 +99,7 @@ struct MemberProfile
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         email = "mary@lamb.com"
         email_verified = true
+        secondary_emails = [default, second_sec_email, third_sec_email]
         status = active
         name = default
         membership_type = full
@@ -165,7 +173,6 @@ route get_info(Void, TeamGetInfoResult, Void)
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 
 #
@@ -201,7 +208,6 @@ route token/get_authenticated_admin(Void, TokenGetAuthenticatedAdminResult, Toke
 
     attrs
         auth = "team"
-        owner = "api-platform"
 
 #
 # Common types
@@ -310,7 +316,6 @@ route features/get_values(FeaturesGetValuesBatchArg, FeaturesGetValuesBatchResul
 
     attrs
         auth = "team"
-        owner = "api-platform"
 
 #
 # Deprecated File Properties Routes
@@ -321,22 +326,16 @@ route properties/template/add(file_properties.AddTemplateArg, file_properties.Ad
 
     attrs
         auth = "team"
-        owner = "api-platform"
 
 route properties/template/update(file_properties.UpdateTemplateArg, file_properties.UpdateTemplateResult, file_properties.ModifyTemplateError) deprecated
     "Permission : Team member file access."
     attrs
         auth = "team"
-        owner = "api-platform"
 
 route properties/template/get(file_properties.GetTemplateArg, file_properties.GetTemplateResult, file_properties.TemplateError) deprecated
     "Permission : Team member file access."
     attrs
         auth = "team"
-        owner = "api-platform"
 
 route properties/template/list(Void, file_properties.ListTemplateResult, file_properties.TemplateError) deprecated
     "Permission : Team member file access."
-    attrs
-        auth = "team"
-        owner = "api-platform"

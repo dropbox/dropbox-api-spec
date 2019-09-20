@@ -248,7 +248,6 @@ route add_file_member(AddFileMemberArgs, List(FileMemberActionResult), AddFileMe
     "Adds specified members to a file."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
 
 struct AddFileMemberArgs
@@ -287,9 +286,6 @@ struct AddFileMemberArgs
 route change_file_member_access(ChangeFileMemberAccessArgs, FileMemberActionResult, FileMemberActionError) deprecated by update_file_member
     "Identical to update_file_member but with less information returned."
 
-    attrs
-        owner = "sharing"
-
 struct ChangeFileMemberAccessArgs
     "Arguments for :route:`change_file_member_access`."
 
@@ -317,7 +313,6 @@ route update_file_member(UpdateFileMemberArgs, MemberAccessLevelResult, FileMemb
     "Changes a member's access on a shared file."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
 
 # --
@@ -326,8 +321,6 @@ route get_file_metadata(GetFileMetadataArg, SharedFileMetadata, GetFileMetadataE
     "Returns shared file metadata."
 
     attrs
-        owner = "sharing"
-        api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
 
 struct GetFileMetadataArg
@@ -354,9 +347,6 @@ union GetFileMetadataError
 
 route get_file_metadata/batch(GetFileMetadataBatchArg, List(GetFileMetadataBatchResult), SharingUserError)
     "Returns shared file metadata."
-
-    attrs
-        owner = "sharing"
 
 struct GetFileMetadataBatchArg
     "Arguments of :route:`get_file_metadata/batch`."
@@ -408,7 +398,6 @@ route list_file_members(ListFileMembersArg, SharedFileMembers, ListFileMembersEr
     and uninherited members."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
 
 struct ListFileMembersArg
@@ -481,9 +470,6 @@ route list_file_members/batch(ListFileMembersBatchArg, List(ListFileMembersBatch
     Inherited users and groups are not included in the result, and permissions are not
     returned for this endpoint."
 
-    attrs
-        owner = "sharing"
-
 struct ListFileMembersBatchArg
     "Arguments for :route:`list_file_members/batch`."
 
@@ -542,9 +528,6 @@ route list_file_members/continue(ListFileMembersContinueArg, SharedFileMembers, 
     :route:`list_file_members/batch`, use this to paginate through all shared
     file members."
 
-    attrs
-        owner = "sharing"
-
 struct ListFileMembersContinueArg
     "Arguments for :route:`list_file_members/continue`."
 
@@ -572,7 +555,6 @@ route list_received_files(ListFilesArg, ListFilesResult, SharingUserError)
      not include unclaimed invitations."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
 
 struct ListFilesArg
@@ -607,9 +589,6 @@ struct ListFilesResult
 route list_received_files/continue (ListFilesContinueArg, ListFilesResult, ListFilesContinueError)
     "Get more results with a cursor from :route:`list_received_files`."
 
-    attrs
-        owner = "sharing"
-
 struct ListFilesContinueArg
     "Arguments for :route:`list_received_files/continue`."
 
@@ -633,14 +612,12 @@ route remove_file_member(RemoveFileMemberArg, FileMemberActionIndividualResult, 
     "Identical to remove_file_member_2 but with less information returned."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
 
 route remove_file_member_2(RemoveFileMemberArg, FileMemberRemoveActionResult, RemoveFileMemberError)
     "Removes a specified member from the file."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
 
 struct RemoveFileMemberArg
@@ -665,7 +642,6 @@ route relinquish_file_membership(RelinquishFileMembershipArg, Void, RelinquishFi
     through the parent folder."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
 
 struct RelinquishFileMembershipArg
@@ -689,8 +665,6 @@ route unshare_file(UnshareFileArg, Void, UnshareFileError)
     "Remove all members from this file. Does not remove inherited members."
 
     attrs
-        owner = "sharing"
-        api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
 
 struct UnshareFileArg

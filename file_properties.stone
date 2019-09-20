@@ -177,10 +177,6 @@ route properties/add(AddPropertiesArg, Void, AddPropertiesError)
     "Add property groups to a Dropbox file. See :route:`templates/add_for_user` or
     :route:`templates/add_for_team` to create new templates."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"
-
 struct OverwritePropertyGroupArg
     path PathOrId
         "A unique identifier for the file or folder."
@@ -197,10 +193,6 @@ route properties/overwrite(OverwritePropertyGroupArg, Void, InvalidPropertyGroup
     \"snapshot\" instead of via a \"delta\". In other words, this endpoint will delete all
     omitted fields from a property group, whereas :route:`properties/update` will only
     delete fields that are explicitly marked for deletion."
-
-    attrs
-        api_group="properties"
-        owner = "api-platform"
 
 struct PropertyGroupUpdate
     template_id TemplateId
@@ -236,10 +228,6 @@ route properties/update(UpdatePropertiesArg, Void, UpdatePropertiesError)
     will not delete any omitted fields from a property group, whereas :route:`properties/overwrite`
     will delete any fields that are omitted from a property group."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"
-
 struct RemovePropertiesArg
     path PathOrId
         "A unique identifier for the file or folder."
@@ -261,10 +249,6 @@ route properties/remove(RemovePropertiesArg, Void, RemovePropertiesError)
     :route:`templates/update_for_user` or :route:`templates/update_for_team`.
     To remove a template, see
     :route:`templates/remove_for_user` or :route:`templates/remove_for_team`."
-
-    attrs
-        api_group="properties"
-        owner = "api-platform"
 
 #
 # Property Group Template Routes
@@ -299,10 +283,6 @@ route templates/add_for_user(AddTemplateArg, AddTemplateResult, ModifyTemplateEr
     "Add a template associated with a user. See :route:`properties/add` to add properties to a file. This
     endpoint can't be called on a team member or admin's behalf."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"
-
 route templates/add_for_team(AddTemplateArg, AddTemplateResult, ModifyTemplateError)
     "Add a template associated with a team. See :route:`properties/add` to add properties to a file or folder.
 
@@ -310,8 +290,6 @@ route templates/add_for_team(AddTemplateArg, AddTemplateResult, ModifyTemplateEr
 
     attrs
         auth="team"
-        api_group="properties"
-        owner = "api-platform"
 
 struct GetTemplateArg
     template_id TemplateId
@@ -331,17 +309,11 @@ struct GetTemplateResult extends PropertyGroupTemplate
 route templates/get_for_user(GetTemplateArg, GetTemplateResult, TemplateError)
     "Get the schema for a specified template. This endpoint can't be called on a team member or admin's behalf."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"
-
 route templates/get_for_team(GetTemplateArg, GetTemplateResult, TemplateError)
     "Get the schema for a specified template."
 
     attrs
         auth="team"
-        api_group="properties"
-        owner = "api-platform"
 
 struct UpdateTemplateArg
     template_id TemplateId
@@ -376,18 +348,12 @@ route templates/update_for_user(UpdateTemplateArg, UpdateTemplateResult, ModifyT
     the template description and add optional properties to templates. This endpoint can't
     be called on a team member or admin's behalf."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"
-
 route templates/update_for_team(UpdateTemplateArg, UpdateTemplateResult, ModifyTemplateError)
     "Update a template associated with a team. This route can update the template name,
     the template description and add optional properties to templates."
 
     attrs
         auth="team"
-        api_group="properties"
-        owner = "api-platform"
 
 struct ListTemplateResult
     template_ids List(TemplateId)
@@ -402,18 +368,12 @@ route templates/list_for_user(Void, ListTemplateResult, TemplateError)
     each template use :route:`templates/get_for_user`. This endpoint can't be
     called on a team member or admin's behalf."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"
-
 route templates/list_for_team(Void, ListTemplateResult, TemplateError)
     "Get the template identifiers for a team. To get the schema of
     each template use :route:`templates/get_for_team`."
 
     attrs
         auth="team"
-        api_group="properties"
-        owner = "api-platform"
 
 struct RemoveTemplateArg
     template_id TemplateId
@@ -428,10 +388,6 @@ route templates/remove_for_user(RemoveTemplateArg, Void, TemplateError)
     All properties associated with the template will also be removed. This action
     cannot be undone."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"
-
 route templates/remove_for_team(RemoveTemplateArg, Void, TemplateError)
     "Permanently removes the specified template created from :route:`templates/add_for_user`.
     All properties associated with the template will also be removed. This action
@@ -439,8 +395,6 @@ route templates/remove_for_team(RemoveTemplateArg, Void, TemplateError)
 
     attrs
         auth="team"
-        api_group="properties"
-        owner = "api-platform"
 
 union TemplateOwnerType
     user
@@ -537,10 +491,6 @@ union PropertiesSearchError
 route properties/search(PropertiesSearchArg, PropertiesSearchResult, PropertiesSearchError)
     "Search across property templates for particular property field values."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"
-
 struct PropertiesSearchContinueArg
     cursor PropertiesSearchCursor
         "The cursor returned by your last call to :route:`properties/search` or
@@ -558,6 +508,3 @@ route properties/search/continue (PropertiesSearchContinueArg, PropertiesSearchR
     "Once a cursor has been retrieved from :route:`properties/search`, use this to paginate through all
     search results."
 
-    attrs
-        api_group="properties"
-        owner = "api-platform"

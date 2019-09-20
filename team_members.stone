@@ -1,5 +1,6 @@
 namespace team
 
+import account
 import async
 import users
 import common
@@ -38,6 +39,7 @@ struct TeamMemberProfile extends MemberProfile
         external_id = "244423"
         email = "tami@seagull.com"
         email_verified = false
+        secondary_emails = [third_sec_email, default]
         status = active
         name = default
         groups = ["g:e2db7665347abcd600000000001a2b3c"]
@@ -108,7 +110,6 @@ route members/list(MembersListArg, MembersListResult, MembersListError)
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 
 #
@@ -134,7 +135,6 @@ route members/list/continue(MembersListContinueArg, MembersListResult, MembersLi
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 
 #
@@ -182,7 +182,6 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 
 ##########################
@@ -290,7 +289,6 @@ route members/add(MembersAddArg, MembersAddLaunch, Void)
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 #
 # Route members/add/job_status/get
@@ -315,7 +313,6 @@ route members/add/job_status/get(async.PollArg, MembersAddJobStatus, async.PollE
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 #
 # Route members/set_profile
@@ -376,7 +373,63 @@ route members/set_profile(MembersSetProfileArg, TeamMemberInfo, MembersSetProfil
 
     attrs
         auth = "team"
-        owner = "identity"
+
+
+#
+# Route members/set_profile_photo
+#
+
+struct MembersSetProfilePhotoArg
+    user UserSelectorArg
+        "Identity of the user whose profile photo will be set."
+    photo account.PhotoSourceArg
+        "Image to set as the member's new profile photo."
+
+    example default
+        user = default
+        photo = default
+
+
+union MembersSetProfilePhotoError extends MemberSelectorError
+    set_profile_disallowed
+        "Modifying deleted users is not allowed."
+    photo_error account.SetProfilePhotoError
+
+
+route members/set_profile_photo(MembersSetProfilePhotoArg, TeamMemberInfo, MembersSetProfilePhotoError)
+    "Updates a team member's profile photo.
+
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+
+
+#
+# Route members/delete_profile_photo
+#
+
+struct MembersDeleteProfilePhotoArg
+    user UserSelectorArg
+        "Identity of the user whose profile photo will be deleted."
+
+    example default
+        user = default
+
+
+union MembersDeleteProfilePhotoError extends MemberSelectorError
+    set_profile_disallowed
+        "Modifying deleted users is not allowed."
+
+
+route members/delete_profile_photo(MembersDeleteProfilePhotoArg, TeamMemberInfo, MembersDeleteProfilePhotoError)
+    "Deletes a team member's profile photo.
+
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+
 
 #
 # Route members/set_admin_permissions
@@ -423,7 +476,6 @@ route members/set_admin_permissions(MembersSetPermissionsArg, MembersSetPermissi
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 
 #
@@ -444,7 +496,6 @@ route members/send_welcome_email(UserSelectorArg, Void, MembersSendWelcomeError)
 
     attrs
         auth = "team"
-        owner = "try-commit-platform"
 
 
 #
@@ -475,7 +526,11 @@ struct MembersRemoveArg extends MembersDeactivateArg
         then this argument must be provided as well."
     keep_account Boolean = false
         "Downgrade the member to a Basic account. The user will retain the email address associated with their Dropbox
-         account and data in their account that is not restricted to team members. In order to keep the account the argument wipe_data should be set to False."
+         account and data in their account that is not restricted to team members. In order to keep the account the argument :field:`wipe_data` should be set to :val:`false`."
+    retain_team_shares Boolean = false
+        "If provided, allows removed users to keep access to folders already explicitly shared with them (not via a group) when they are downgraded to a Basic account.
+        Users will not retain access to folders that do not allow external sharing. In order to keep the sharing relationships,
+        the arguments :field:`wipe_data` should be set to :val:`false` and :field:`keep_account` should be set to :val:`true`."
 
     example default
         user = default
@@ -483,6 +538,7 @@ struct MembersRemoveArg extends MembersDeactivateArg
         transfer_dest_id = default
         transfer_admin_id = default
         keep_account = false
+        retain_team_shares = false
 
 union MembersDeactivateError extends UserSelectorError
     user_not_in_team
@@ -514,12 +570,20 @@ union MembersRemoveError extends MembersTransferFilesError
     cannot_keep_account_and_transfer
         "Cannot keep account and transfer the data to another user at the same time."
     cannot_keep_account_and_delete_data
-        "Cannot keep account and delete the data at the same time. To keep the account the argument wipe_data should be set to False."
+        "Cannot keep account and delete the data at the same time. To keep the account the argument wipe_data should be set to :val:`false`."
     email_address_too_long_to_be_disabled
         # Added value in order to handle task T82902.
         "The email address of the user is too long to be disabled."
     cannot_keep_invited_user_account
         "Cannot keep account of an invited user."
+    cannot_retain_shares_when_data_wiped
+        "Cannot retain team shares when the user's data is marked for deletion on their linked devices. The argument wipe_data should be set to :val:`false`."
+    cannot_retain_shares_when_no_account_kept
+        "The user's account must be kept in order to retain team shares. The argument keep_account should be set to :val:`true`."
+    cannot_retain_shares_when_team_external_sharing_off
+        "Externally sharing files, folders, and links must be enabled in team settings in order to retain team shares for the user."
+    cannot_keep_account
+        "Only a team admin, can convert this account to a Basic account."
 
 route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveError)
     "Removes a member from a team.
@@ -541,7 +605,6 @@ route members/remove(MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveErr
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 #
 # Route members/remove/job_status/get
@@ -555,7 +618,6 @@ route members/remove/job_status/get(async.PollArg, async.PollEmptyResult, async.
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 #
 # Route members/suspend
@@ -578,7 +640,6 @@ route members/suspend(MembersDeactivateArg, Void, MembersSuspendError)
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 #
 # Route members/unsuspend
@@ -609,7 +670,6 @@ route members/unsuspend(MembersUnsuspendArg, Void, MembersUnsuspendError)
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 #
 # Route members/recover
@@ -642,7 +702,6 @@ route members/recover(MembersRecoverArg, Void, MembersRecoverError)
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
 
 # manage_former_member_files
 
@@ -678,7 +737,6 @@ route members/move_former_member_files(MembersDataTransferArg, async.LaunchEmpty
 
     attrs
         auth = "team"
-        owner = "team-lifecycle"
 
 # This is a duplicate of route members/remove/job_status/get
 
@@ -688,6 +746,3 @@ route members/move_former_member_files/job_status/check(async.PollArg, async.Pol
 
     Permission : Team member management."
 
-    attrs
-        auth = "team"
-        owner = "team-lifecycle"

@@ -70,6 +70,26 @@ struct Metadata
     example folder_metadata
         folder = default
 
+union MetadataV2
+    "Metadata for a file, folder or other resource types."
+
+    metadata Metadata
+    # new types can be added here in the future
+
+    example default
+        metadata = default
+
+struct HighlightSpan
+
+    highlight_str String
+        "String to be determined whether it should be highlighted or not."
+    is_highlighted Boolean
+        "The string should be highlighted or not."
+
+    example default
+        highlight_str = "test"
+        is_highlighted = false
+
 struct SharingInfo
     "Sharing info for a file or folder."
 
@@ -338,9 +358,7 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
     Note: Metadata for the root folder is unsupported."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
-        takes_path_root = true
         select_admin_mode = "whole_team"
 
 #
@@ -398,7 +416,6 @@ route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, Lis
     attrs
         host = "notify"
         auth = "noauth"
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -463,6 +480,7 @@ struct ListFolderResult
 
 union ListFolderError
     path LookupError
+    template_error file_properties.TemplateError
 
 route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
     "Starts returning the contents of a folder. If the result's :field:`ListFolderResult.has_more`
@@ -491,7 +509,6 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
     the previous request finishes."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -515,7 +532,6 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
     :route:`list_folder`."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -534,7 +550,6 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
     files that already exist in Dropbox."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -571,7 +586,6 @@ route download (DownloadArg, FileMetadata, DownloadError)
     attrs
         host = "content"
         style = "download"
-        owner = "storage-services-team"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -613,7 +627,6 @@ route download_zip (DownloadZipArg, DownloadZipResult, DownloadZipError)
     attrs
         host = "content"
         style = "download"
-        owner = "storage-services-team"
         allow_app_folder_app = true
 
 #
@@ -624,6 +637,8 @@ union ExportError
     path LookupError
     non_exportable
         "This file type cannot be exported. Use :route:`download` instead."
+    retry_error
+        "The exportable content is not yet available. Please retry later."
 
 
 struct ExportArg
@@ -673,7 +688,6 @@ route export (ExportArg, ExportResult, ExportError)
 
     attrs
         is_preview = true
-        owner = "cloud-docs"
         host = "content"
         style = "download"
         allow_app_folder_app = true
@@ -781,8 +795,6 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -812,8 +824,6 @@ route upload_session/append:2 (UploadSessionAppendArg, Void, UploadSessionLookup
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -842,8 +852,6 @@ route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -949,8 +957,6 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -967,8 +973,6 @@ route upload (CommitInfo, FileMetadata, UploadError)
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1041,8 +1045,6 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFin
     per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
-        owner = "api-platform"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1051,7 +1053,6 @@ route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJ
     success, it returns list of result for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1143,14 +1144,155 @@ struct SearchResult
 union SearchError
     path LookupError
 
-route search (SearchArg, SearchResult, SearchError)
+route search (SearchArg, SearchResult, SearchError) deprecated by search:2
     "Searches for files and folders.
 
     Note: Recent changes may not immediately be reflected in search results due to a short delay in indexing."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+
+#
+# Search:2
+#
+route search:2 (SearchV2Arg, SearchV2Result, SearchError)
+    "Searches for files and folders.
+
+    Note: :route:`search:2` along with :route:`search/continue:2` can only be used to
+    retrieve a maximum of 10,000 matches.
+
+    Recent changes may not immediately be reflected in search results due to a short delay in indexing."
+
+    attrs
+        allow_app_folder_app = true
+
+struct SearchV2Arg
+
+    query String
+        "The string to search for. May match across multiple fields based on the request arguments."
+
+    options SearchOptions?
+        "Options for more targeted search results."
+
+    include_highlights Boolean = false
+
+    example default
+        query = "cat"
+
+struct SearchOptions
+
+    path PathROrId?
+        "Scopes the search to a path in the user's Dropbox. Searches the entire Dropbox if not specified."
+
+    max_results UInt64(min_value=1, max_value=1000) = 100
+        "The maximum number of search results to return."
+
+    file_status FileStatus = active
+        "Restricts search to the given file status."
+
+    filename_only Boolean = false
+        "Restricts search to only match on filenames."
+
+    file_extensions List(String)?
+        "Restricts search to only the extensions specified. Only supported for active file search."
+
+    file_categories List(FileCategory)?
+        "Restricts search to only the file categories specified. Only supported for active file search."
+
+    example default
+        path = ""
+        max_results = 20
+
+# both -- maybe supported in the future
+union FileStatus
+    active
+    deleted
+
+    example default
+        active = null
+
+union FileCategory
+
+    image
+        "jpg, png, gif, and more."
+
+    document
+        "doc, docx, txt, and more."
+
+    pdf
+        "pdf."
+
+    spreadsheet
+        "xlsx, xls, csv, and more."
+
+    presentation
+        "ppt, pptx, key, and more."
+
+    audio
+        "mp3, wav, mid, and more."
+
+    video
+        "mov, wmv, mp4, and more."
+
+    folder
+        "dropbox folder."
+
+    paper
+        "dropbox paper doc."
+
+    others
+        "any file not in one of the categories above."
+
+route search/continue:2 (SearchV2ContinueArg, SearchV2Result, SearchError)
+    "Fetches the next page of search results returned from :route:`search:2`.
+
+    Note: :route:`search:2` along with :route:`search/continue:2` can only be used to
+    retrieve a maximum of 10,000 matches.
+
+    Recent changes may not immediately be reflected in search results due to a short delay in indexing."
+
+    attrs
+        allow_app_folder_app = true
+
+alias SearchV2Cursor = String(min_length=1)
+
+struct SearchV2ContinueArg
+    cursor SearchV2Cursor
+        "The cursor returned by your last call to :route:`search:2`. Used to fetch the next page of results."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+
+struct SearchV2Result
+
+    matches List(SearchMatchV2)
+        "A list (possibly empty) of matches for the query."
+
+    has_more Boolean
+        "Used for paging. If true, indicates there is another page of results
+        available that can be fetched by calling :route:`search/continue:2` with the cursor."
+
+    cursor SearchV2Cursor?
+        "Pass the cursor into :route:`search/continue:2` to fetch the next page of results."
+
+    example default
+        matches = [default]
+        has_more = false
+        cursor = null
+
+struct SearchMatchV2
+
+    metadata MetadataV2
+        "The metadata for the matched file or folder."
+
+    highlight_spans List(HighlightSpan)?
+        "The list of HighlightSpan determines which parts of the result should be highlighted."
+
+    example default
+        metadata = default
+        highlight_spans = null
+
 
 #
 # Errors shared by various operations
@@ -1226,7 +1368,6 @@ route create_folder:2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
     "Create a folder at a given path."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1234,7 +1375,6 @@ route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) depreca
     "Create a folder at a given path."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1312,7 +1452,6 @@ route create_folder_batch (CreateFolderBatchArg, CreateFolderBatchLaunch, Void)
     the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1321,7 +1460,6 @@ route create_folder_batch/check (async.PollArg, CreateFolderBatchJobStatus, asyn
     success, it returns list of result for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1420,7 +1558,6 @@ route delete:2 (DeleteArg, DeleteResult, DeleteError)
     deletion, and not a :type:`DeletedMetadata` object."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1434,7 +1571,6 @@ route delete (DeleteArg, Metadata, DeleteError) deprecated by delete:2
     deletion, and not a :type:`DeletedMetadata` object."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1446,7 +1582,6 @@ route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1455,7 +1590,6 @@ route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
     success, it returns list of result for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1466,8 +1600,8 @@ route permanently_delete (DeleteArg, Void, DeleteError)
     Note: This endpoint is only available for Dropbox Business apps."
 
     attrs
-        owner = "api-platform"
         select_admin_mode = "team_admin"
+        allow_app_folder_app = true
 
 #
 # Args and error shared by copy and move
@@ -1663,7 +1797,6 @@ route copy:2 (RelocationArg, RelocationResult, RelocationError)
     If the source path is a folder all its contents will be copied."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1673,7 +1806,6 @@ route copy (RelocationArg, Metadata, RelocationError) deprecated by copy:2
     If the source path is a folder all its contents will be copied."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1690,7 +1822,6 @@ route copy_batch:2 (CopyBatchArg, RelocationBatchV2Launch, Void)
     check the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1699,7 +1830,6 @@ route copy_batch/check:2 (async.PollArg, RelocationBatchV2JobStatus, async.PollE
     list of results for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1719,7 +1849,6 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated by
     background. Please use :route:`copy_batch/check:1` to check the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1728,7 +1857,6 @@ route copy_batch/check (async.PollArg, RelocationBatchJobStatus, async.PollError
     success, it returns list of results for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1750,7 +1878,6 @@ route move:2 (RelocationArg, RelocationResult, RelocationError)
     If the source path is a folder all its contents will be moved."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1760,7 +1887,6 @@ route move (RelocationArg, Metadata, RelocationError) deprecated by move:2
     If the source path is a folder all its contents will be moved."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1777,7 +1903,6 @@ route move_batch:2(MoveBatchArg, RelocationBatchV2Launch, Void)
     check the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1786,7 +1911,6 @@ route move_batch/check:2(async.PollArg, RelocationBatchV2JobStatus, async.PollEr
     returns list of results for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1803,7 +1927,6 @@ route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     background. Please use :route:`move_batch/check:1` to check the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1812,7 +1935,6 @@ route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
     success, it returns list of results for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -1933,7 +2055,6 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
     attrs
         host = "content"
         style = "download"
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -1946,7 +2067,6 @@ route get_thumbnail_batch(GetThumbnailBatchArg, GetThumbnailBatchResult, GetThum
 
     attrs
         host = "content"
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -1994,7 +2114,6 @@ route get_preview(PreviewArg, FileMetadata, PreviewError)
     attrs
         host = "content"
         style = "download"
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -2055,7 +2174,6 @@ route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
     revisions for a given file across moves or renames."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
 
@@ -2085,7 +2203,6 @@ route restore(RestoreArg, FileMetadata, RestoreError)
     "Restore a specific revision of a file to the given path."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
 
@@ -2123,7 +2240,6 @@ route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTempora
     in the browser. The Content-Type of the link is determined automatically by the file's mime type."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -2207,7 +2323,6 @@ route get_temporary_upload_link(GetTemporaryUploadLinkArg, GetTemporaryUploadLin
     "
 
     attrs
-        owner = "content-ecosystem"
         allow_app_folder_app = true
 
 #
@@ -2244,7 +2359,6 @@ route copy_reference/get(GetCopyReferenceArg, GetCopyReferenceResult, GetCopyRef
     :route:`copy_reference/save`."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
 
 struct SaveCopyReferenceArg
@@ -2282,7 +2396,6 @@ route copy_reference/save(SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCop
     "Save a copy reference returned by :route:`copy_reference/get` to the user's Dropbox."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -2310,8 +2423,9 @@ union_closed SaveUrlResult extends async.LaunchResultBase
 union SaveUrlError
     path WriteError
     download_failed
-        "Failed downloading the given URL. The url may be
-        password-protected / the password provided was incorrect."
+        "Failed downloading the given URL. The URL may be
+         password-protected and the password provided was incorrect,
+         or the link may be disabled."
     invalid_url
         "The given URL is invalid."
     not_found
@@ -2327,7 +2441,6 @@ route save_url(SaveUrlArg, SaveUrlResult, SaveUrlError)
     conflict (e.g. myfile (1).txt)."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -2343,7 +2456,6 @@ route save_url/check_job_status(async.PollArg, SaveUrlJobStatus, async.PollError
     "Check the status of a :route:`save_url` job."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
 
 #
@@ -2362,8 +2474,6 @@ route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError) 
     Note: Metadata for the root folder is unsupported."
 
     attrs
-        owner = "api-platform"
-        api_group="properties"
         is_preview=true
         allow_app_folder_app = true
 
@@ -2399,10 +2509,8 @@ route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithPrope
     upload session with :route:`upload_session/start`."
 
     attrs
-        owner = "api-platform"
         host="content"
         style="upload"
-        api_group="properties"
         is_preview=true
         allow_app_folder_app = true
 
@@ -2420,29 +2528,11 @@ union UploadErrorWithProperties extends UploadError
 #
 
 route properties/add(file_properties.AddPropertiesArg, Void, file_properties.AddPropertiesError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/overwrite(file_properties.OverwritePropertyGroupArg, Void, file_properties.InvalidPropertyGroupError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/update(file_properties.UpdatePropertiesArg, Void, file_properties.UpdatePropertiesError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/remove(file_properties.RemovePropertiesArg, Void, file_properties.RemovePropertiesError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/template/get(file_properties.GetTemplateArg, file_properties.GetTemplateResult, file_properties.TemplateError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/template/list(Void, file_properties.ListTemplateResult, file_properties.TemplateError) deprecated
-    attrs
-        owner = "api-platform"
-
 #
 # Team selective sync additions
 #
