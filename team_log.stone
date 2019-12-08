@@ -81,7 +81,7 @@ route get_events(GetTeamEventsArg, GetTeamEventsResult, GetTeamEventsError)
 
     attrs
         auth = "team"
-        owner = "audit-log-team"
+        scope = "events.read"
 
 struct GetTeamEventsContinueArg
     cursor String
@@ -114,6 +114,3 @@ route get_events/continue(GetTeamEventsContinueArg, GetTeamEventsResult, GetTeam
 
     Permission : Team Auditing."
 
-    attrs
-        auth = "team"
-        owner = "audit-log-team"

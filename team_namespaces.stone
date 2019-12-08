@@ -65,8 +65,8 @@ route namespaces/list(TeamNamespacesListArg, TeamNamespacesListResult, TeamNames
     list."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
+        scope = "team_data.member"
 
 struct TeamNamespacesListArg
 
@@ -85,8 +85,8 @@ route namespaces/list/continue(TeamNamespacesListContinueArg, TeamNamespacesList
     through all team-accessible namespaces. Duplicates may occur in the list."
 
     attrs
-        owner = "shared-spaces"
         auth = "team"
+        scope = "team_data.member"
 
 struct TeamNamespacesListContinueArg
     cursor String

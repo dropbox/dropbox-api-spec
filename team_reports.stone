@@ -19,7 +19,8 @@ union TeamReportFailureReason
 struct DateRange
     "Input arguments that can be provided for most reports."
     start_date common.Date?
-        "Optional starting date (inclusive)."
+        "Optional starting date (inclusive). If start_date is None or too long ago, this field will
+         be set to 6 months ago."
     end_date common.Date?
         "Optional ending date (exclusive)."
 
@@ -73,7 +74,7 @@ route reports/get_storage(DateRange, GetStorageReport, DateRangeError)
     "Retrieves reporting data about a team's storage usage."
     attrs
         auth = "team"
-        owner = "identity"
+        scope = "team_info.read"
 
 #
 # get_activity
@@ -118,7 +119,7 @@ route reports/get_activity(DateRange, GetActivityReport, DateRangeError)
     "Retrieves reporting data about a team's user activity."
     attrs
         auth = "team"
-        owner = "audit-log-team"
+        scope = "team_info.read"
 
 #
 # get_membership
@@ -146,7 +147,7 @@ route reports/get_membership(DateRange, GetMembershipReport, DateRangeError)
     "Retrieves reporting data about a team's membership."
     attrs
         auth = "team"
-        owner = "team-lifecycle"
+        scope = "team_info.read"
 
 #
 # get_devices
@@ -191,6 +192,3 @@ struct GetDevicesReport extends BaseDfbReport
 
 route reports/get_devices(DateRange, GetDevicesReport, DateRangeError)
     "Retrieves reporting data about a team's linked devices."
-    attrs
-        auth = "team"
-        owner = "super-admin-and-deployment"

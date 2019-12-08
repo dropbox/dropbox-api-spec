@@ -165,7 +165,7 @@ route devices/list_member_devices(ListMemberDevicesArg, ListMemberDevicesResult,
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
+        scope = "sessions.list"
 
 #
 # Structs for devices/list_members_devices
@@ -223,7 +223,7 @@ route devices/list_members_devices(ListMembersDevicesArg, ListMembersDevicesResu
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
+        scope = "sessions.list"
 
 #
 # Structs for devices/revoke_device_session
@@ -274,7 +274,7 @@ route devices/revoke_device_session(RevokeDeviceSessionArg, Void, RevokeDeviceSe
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
+        scope = "sessions.modify"
 
 #
 # structs for devices/revoke_device_session_batch
@@ -308,7 +308,7 @@ route devices/revoke_device_session_batch(RevokeDeviceSessionBatchArg, RevokeDev
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
+        scope = "sessions.modify"
 
 
 #
@@ -354,6 +354,3 @@ route devices/list_team_devices(ListTeamDevicesArg, ListTeamDevicesResult, ListT
 
     Permission : Team member file access."
 
-    attrs
-        auth = "team"
-        owner = "super-admin-and-deployment"

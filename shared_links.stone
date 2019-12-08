@@ -215,8 +215,8 @@ route get_shared_link_metadata(GetSharedLinkMetadataArg, SharedLinkMetadata, Sha
     "Get the shared link's metadata."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "sharing.read"
 
 #
 # List Shared links definitions and route
@@ -279,8 +279,8 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
     direct_only to true."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "sharing.read"
 
 #
 # Modify shared link settings definitions and route
@@ -300,7 +300,8 @@ struct SharedLinkSettings
         with team policies and shared folder policies to determine the final effective audience type
         in the `effective_audience` field of `LinkPermissions."
     access RequestedLinkAccessLevel?
-        "Requested access level you want the audience to gain from this link."
+        "Requested access level you want the audience to gain from this link. Note, modifying access
+        level for an existing link is not supported."
 
     example default
         requested_visibility = public
@@ -317,7 +318,8 @@ union RequestedLinkAccessLevel
     viewer
         "Users who use the link can view and comment on the content."
     editor
-        "Users who use the link can edit, view and comment on the content."
+        "Users who use the link can edit, view and comment on the content.
+        Note not all file types support edit links yet."
     max
         "Request for the maximum access level you can set the link to."
 
@@ -364,8 +366,8 @@ route modify_shared_link_settings(ModifySharedLinkSettingsArgs, SharedLinkMetada
     :field:`LinkPermissions.requested_visibility` will reflect the requested visibility."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "sharing.write"
 
 #
 # Create shared link with settings definitions and route
@@ -404,9 +406,9 @@ route create_shared_link_with_settings(CreateSharedLinkWithSettingsArg, SharedLi
     settings)."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 
 #
@@ -433,9 +435,9 @@ route revoke_shared_link(RevokeSharedLinkArg, Void, RevokeSharedLinkError)
     :field:`ListSharedLinksArg.path` argument."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 #
 # NSLR endpoints
@@ -453,8 +455,8 @@ route get_shared_link_file(GetSharedLinkFileArg, SharedLinkMetadata, GetSharedLi
     attrs
         host="content"
         style="download"
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "sharing.read"
 
 #
 # Depracated endpoints
@@ -557,7 +559,6 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
     Note that the url field in the response is never the shortened URL."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
 
 union_closed PendingUploadMode
@@ -601,7 +602,3 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
     longer be the case, so your app shouldn't rely on this behavior. Instead, if
     your app needs to revoke a shared link, use :route:`revoke_shared_link`."
 
-    attrs
-        owner = "sharing"
-        allow_app_folder_app = true
-        select_admin_mode = "team_admin"

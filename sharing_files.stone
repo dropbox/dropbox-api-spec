@@ -248,8 +248,8 @@ route add_file_member(AddFileMemberArgs, List(FileMemberActionResult), AddFileMe
     "Adds specified members to a file."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct AddFileMemberArgs
     "Arguments for :route:`add_file_member`."
@@ -287,9 +287,6 @@ struct AddFileMemberArgs
 route change_file_member_access(ChangeFileMemberAccessArgs, FileMemberActionResult, FileMemberActionError) deprecated by update_file_member
     "Identical to update_file_member but with less information returned."
 
-    attrs
-        owner = "sharing"
-
 struct ChangeFileMemberAccessArgs
     "Arguments for :route:`change_file_member_access`."
 
@@ -317,8 +314,8 @@ route update_file_member(UpdateFileMemberArgs, MemberAccessLevelResult, FileMemb
     "Changes a member's access on a shared file."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 # --
 
@@ -326,9 +323,8 @@ route get_file_metadata(GetFileMetadataArg, SharedFileMetadata, GetFileMetadataE
     "Returns shared file metadata."
 
     attrs
-        owner = "sharing"
-        api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
+        scope = "sharing.read"
 
 struct GetFileMetadataArg
     "Arguments of :route:`get_file_metadata`."
@@ -356,7 +352,7 @@ route get_file_metadata/batch(GetFileMetadataBatchArg, List(GetFileMetadataBatch
     "Returns shared file metadata."
 
     attrs
-        owner = "sharing"
+        scope = "sharing.read"
 
 struct GetFileMetadataBatchArg
     "Arguments of :route:`get_file_metadata/batch`."
@@ -408,8 +404,8 @@ route list_file_members(ListFileMembersArg, SharedFileMembers, ListFileMembersEr
     and uninherited members."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
+        scope = "sharing.read"
 
 struct ListFileMembersArg
     "Arguments for :route:`list_file_members`."
@@ -482,7 +478,7 @@ route list_file_members/batch(ListFileMembersBatchArg, List(ListFileMembersBatch
     returned for this endpoint."
 
     attrs
-        owner = "sharing"
+        scope = "sharing.read"
 
 struct ListFileMembersBatchArg
     "Arguments for :route:`list_file_members/batch`."
@@ -543,7 +539,7 @@ route list_file_members/continue(ListFileMembersContinueArg, SharedFileMembers, 
     file members."
 
     attrs
-        owner = "sharing"
+        scope = "sharing.read"
 
 struct ListFileMembersContinueArg
     "Arguments for :route:`list_file_members/continue`."
@@ -572,8 +568,8 @@ route list_received_files(ListFilesArg, ListFilesResult, SharingUserError)
      not include unclaimed invitations."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
+        scope = "sharing.read"
 
 struct ListFilesArg
     "Arguments for :route:`list_received_files`."
@@ -608,7 +604,7 @@ route list_received_files/continue (ListFilesContinueArg, ListFilesResult, ListF
     "Get more results with a cursor from :route:`list_received_files`."
 
     attrs
-        owner = "sharing"
+        scope = "sharing.read"
 
 struct ListFilesContinueArg
     "Arguments for :route:`list_received_files/continue`."
@@ -633,15 +629,15 @@ route remove_file_member(RemoveFileMemberArg, FileMemberActionIndividualResult, 
     "Identical to remove_file_member_2 but with less information returned."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 route remove_file_member_2(RemoveFileMemberArg, FileMemberRemoveActionResult, RemoveFileMemberError)
     "Removes a specified member from the file."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct RemoveFileMemberArg
     "Arguments for :route:`remove_file_member_2`."
@@ -665,8 +661,8 @@ route relinquish_file_membership(RelinquishFileMembershipArg, Void, RelinquishFi
     through the parent folder."
 
     attrs
-        owner = "sharing"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct RelinquishFileMembershipArg
     file PathOrId
@@ -689,9 +685,8 @@ route unshare_file(UnshareFileArg, Void, UnshareFileError)
     "Remove all members from this file. Does not remove inherited members."
 
     attrs
-        owner = "sharing"
-        api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct UnshareFileArg
     "Arguments for :route:`unshare_file`."

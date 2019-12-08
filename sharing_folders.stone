@@ -349,12 +349,16 @@ struct SharedFolderMetadataBase
     path_lower String?
         "The lower-cased full path of this shared folder. Absent for unmounted folders."
 
+    parent_folder_name String?
+        "Display name for the parent folder."
+
     example default
         access_type = owner
         is_inside_team_folder = false
         is_team_folder = false
         owner_display_names = ["Jane Doe"]
         owner_team = default
+        parent_folder_name = "Parent Shared Folder"
 
 union AccessInheritance
     "Information about the inheritance policy of a shared folder."
@@ -463,7 +467,7 @@ route list_folders(ListFoldersArgs, ListFoldersResult, Void)
     "Return the list of all shared folders the current user has access to."
 
     attrs
-        owner = "shared-spaces"
+        scope = "sharing.read"
 
 struct ListFoldersArgs
     limit UInt32(min_value=1, max_value=1000) = 1000
@@ -503,7 +507,7 @@ route list_folders/continue(ListFoldersContinueArg, ListFoldersResult, ListFolde
     :route:`list_folders/continue`."
 
     attrs
-        owner = "shared-spaces"
+        scope = "sharing.read"
 
 struct ListFoldersContinueArg
     cursor String
@@ -522,7 +526,7 @@ route list_mountable_folders(ListFoldersArgs, ListFoldersResult, Void)
     "Return the list of all shared folders the current user can mount or unmount."
 
     attrs
-        owner = "shared-spaces"
+        scope = "sharing.read"
 
 # --
 
@@ -532,7 +536,7 @@ route list_mountable_folders/continue(ListFoldersContinueArg, ListFoldersResult,
     :route:`list_mountable_folders/continue`."
 
     attrs
-        owner = "shared-spaces"
+        scope = "sharing.read"
 
 # --
 
@@ -540,9 +544,8 @@ route get_folder_metadata(GetMetadataArgs, SharedFolderMetadata, SharedFolderAcc
     "Returns shared folder metadata by its folder ID."
 
     attrs
-        owner = "shared-spaces"
-        api_group = "truelink-alpha"
         select_admin_mode = "whole_team"
+        scope = "sharing.read"
 
 struct GetMetadataArgs
     shared_folder_id common.SharedFolderId
@@ -562,8 +565,8 @@ route list_folder_members(ListFolderMembersArgs, SharedFolderMembers, SharedFold
     "Returns shared folder membership by its folder ID."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "whole_team"
+        scope = "sharing.read"
 
 struct ListFolderMembersCursorArg
     actions List(MemberAction)?
@@ -613,8 +616,8 @@ route list_folder_members/continue(ListFolderMembersContinueArg, SharedFolderMem
     through all shared folder members."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "whole_team"
+        scope = "sharing.read"
 
 struct ListFolderMembersContinueArg
     cursor String
@@ -643,9 +646,8 @@ route share_folder(ShareFolderArg, ShareFolderLaunch, ShareFolderError )
     metadata for the folder."
 
     attrs
-        owner = "shared-spaces"
-        api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 # As of 2017-05, there are three kinds of arg:
 # ShareFolderArg: The public stable version. We cannot make backwards-incompatible changes at all.
@@ -754,8 +756,8 @@ route check_share_job_status(async.PollArg, ShareFolderJobStatus, async.PollErro
     "Returns the status of an asynchronous job for sharing a folder."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 union_closed JobStatus extends async.PollResultBase
     complete
@@ -788,8 +790,8 @@ route check_job_status(async.PollArg, JobStatus, async.PollError)
     "Returns the status of an asynchronous job."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 # --
 
@@ -800,9 +802,8 @@ route unshare_folder(UnshareFolderArg, async.LaunchEmptyResult, UnshareFolderErr
     completed successfully."
 
     attrs
-        owner = "shared-spaces"
-        api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct UnshareFolderArg
     shared_folder_id common.SharedFolderId
@@ -833,8 +834,8 @@ route transfer_folder(TransferFolderArg, Void, TransferFolderError)
     User must have :field:`AccessLevel.owner` access to the shared folder to perform a transfer."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct TransferFolderArg
     shared_folder_id common.SharedFolderId
@@ -869,9 +870,8 @@ route update_folder_policy(UpdateFolderPolicyArg, SharedFolderMetadata, UpdateFo
     User must have :field:`AccessLevel.owner` access to the shared folder to update its policies."
 
     attrs
-        owner = "shared-spaces"
-        api_group = "truelink-alpha"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct UpdateFolderPolicyArg
     "If any of the policies are unset, then they retain their current setting."
@@ -926,8 +926,8 @@ route add_folder_member(AddFolderMemberArg, Void, AddFolderMemberError)
     you will need to call :route:`mount_folder` on their behalf."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct AddFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -1044,8 +1044,8 @@ route remove_folder_member(RemoveFolderMemberArg, async.LaunchResultBase, Remove
     folder to remove another member."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct RemoveFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -1092,8 +1092,8 @@ route check_remove_member_job_status(async.PollArg, RemoveMemberJobStatus, async
     "Returns the status of an asynchronous job for sharing a folder."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 # --
 
@@ -1102,8 +1102,8 @@ route update_folder_member(UpdateFolderMemberArg, MemberAccessLevelResult, Updat
     permissions."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct UpdateFolderMemberArg
     shared_folder_id common.SharedFolderId
@@ -1143,7 +1143,7 @@ route mount_folder(MountFolderArg, SharedFolderMetadata, MountFolderError)
     Once mounted, the shared folder will appear in their Dropbox."
 
     attrs
-        owner = "shared-spaces"
+        scope = "sharing.write"
 
 # TODO(kelkabany): Consider exposing mount path as an argument. More error
 # cases will be possible.
@@ -1186,8 +1186,8 @@ route unmount_folder(UnmountFolderArg, Void, UnmountFolderError)
     folder at a later time using :route:`mount_folder`."
 
     attrs
-        owner = "shared-spaces"
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
 
 struct UnmountFolderArg
     shared_folder_id common.SharedFolderId
@@ -1216,7 +1216,7 @@ route relinquish_folder_membership(RelinquishFolderMembershipArg, async.LaunchEm
     if leave_a_copy is true."
 
     attrs
-        owner = "shared-spaces"
+        scope = "sharing.write"
 
 struct RelinquishFolderMembershipArg
     shared_folder_id common.SharedFolderId
@@ -1257,7 +1257,7 @@ route set_access_inheritance (SetAccessInheritanceArg, ShareFolderLaunch, SetAcc
     metadata for the folder."
 
     attrs
-        owner = "shared-spaces"
+        scope = "sharing.write"
 
 struct SetAccessInheritanceArg
     access_inheritance AccessInheritance = inherit

@@ -112,6 +112,12 @@ union PaperEnabledPolicy
     unspecified
         "Unspecified policy."
 
+union PasswordControlMode
+    disabled
+        "Password is disabled."
+    enabled
+        "Password is enabled."
+
 union PasswordStrengthPolicy
     minimal_requirements
         "User passwords will adhere to the minimal password strength policy."
@@ -131,6 +137,8 @@ union TwoStepVerificationState
         "Enabled require two factor authorization."
     optional
         "Optional require two factor authorization."
+    disabled
+        "Disabled require two factor authorization."
 
 union SmartSyncPolicy
     local
@@ -167,6 +175,18 @@ union CameraUploadsPolicyState
         "Background camera uploads are disabled."
     enabled
         "Background camera uploads are allowed."
+
+union SmarterSmartSyncPolicyState
+    disabled
+        "Smarter Smart Sync feature is disabled."
+    enabled
+        "Smarter Smart Sync feature is enabled."
+
+union FileLockingPolicyState
+    disabled
+        "File locking feature is disabled."
+    enabled
+        "File locking feature is allowed."
 
 union PaperDefaultFolderPolicy
     everyone_in_team

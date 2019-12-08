@@ -17,8 +17,8 @@ route get_account (GetAccountArg, BasicAccount, GetAccountError)
     "Get information about a user's account."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+        scope = "sharing.read"
 
 struct GetAccountArg
     account_id users_common.AccountId
@@ -100,9 +100,9 @@ route get_current_account (Void, FullAccount, Void)
     "Get information about the current user's account."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "account_info.read"
 
 struct FullAccount extends Account
     "Detailed information about the current user's account."
@@ -224,8 +224,8 @@ route get_space_usage(Void, SpaceUsage, Void)
     "Get the space usage information for the current user's account."
 
     attrs
-        owner = "identity"
         allow_app_folder_app = true
+        scope = "account_info.read"
 
 struct SpaceUsage
     "Information about a user's space usage and quota."
@@ -267,12 +267,15 @@ struct TeamSpaceAllocation
         no restriction is imposed on the user's quota within its team)."
     user_within_team_space_limit_type team_common.MemberSpaceLimitType
         "The type of the space limit imposed on the team member (off, alert_only, stop_sync)."
+    user_within_team_space_used_cached UInt64
+        "An accurate cached calculation of a team member's total space usage (bytes)."
 
     example default
         used = 27182818284
         allocated = 100000000000
         user_within_team_space_allocated = 2000000000
         user_within_team_space_limit_type = stop_sync
+        user_within_team_space_used_cached = 314159265
 
 #
 # Route: get_account_batch
@@ -283,8 +286,8 @@ route get_account_batch (GetAccountBatchArg, GetAccountBatchResult, GetAccountBa
     per request."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+        scope = "sharing.read"
 
 struct GetAccountBatchArg
     account_ids List(users_common.AccountId, min_items=1)
@@ -302,3 +305,62 @@ union GetAccountBatchError
 
     example default
         no_account = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+
+#
+# User Features
+#
+
+union UserFeature
+    "A set of features that a Dropbox User account may have configured."
+
+    paper_as_files
+        "This feature contains information about how the user's Paper files are stored."
+
+
+union UserFeatureValue
+    "Values that correspond to entries in :type:`UserFeature`."
+
+    paper_as_files PaperAsFilesValue
+
+    example paper_as_files_enabled
+        paper_as_files = paper_as_files_enabled
+
+union PaperAsFilesValue
+    "The value for :field:`UserFeature.paper_as_files`.  "
+
+    enabled Boolean
+        "When this value is true, the user's Paper docs are accessible in Dropbox with the .paper
+        extension and must be accessed via the /files endpoints.  When this value is
+        false, the user's Paper docs are stored separate from Dropbox files and folders and should
+        be accessed via the /paper endpoints."
+
+    example paper_as_files_enabled
+        enabled = true
+
+
+#
+# Route: feature/get_value_batch
+#
+
+struct UserFeaturesGetValuesBatchArg
+    features List(UserFeature)
+        "A list of features in :type:`UserFeature`. If the list is empty,
+        this route will return :type:`UserFeaturesGetValuesBatchError`."
+
+    example listOfFeatures
+        features = [paper_as_files]
+
+struct UserFeaturesGetValuesBatchResult
+    values List(UserFeatureValue)
+
+    example listOfValues
+        values = [paper_as_files_enabled]
+
+union UserFeaturesGetValuesBatchError
+    empty_features_list
+        "At least one :type:`UserFeature` must be included in the
+        :type:`UserFeaturesGetValuesBatchArg`.features list."
+
+route features/get_values(UserFeaturesGetValuesBatchArg, UserFeaturesGetValuesBatchResult, UserFeaturesGetValuesBatchError)
+    "Get a list of feature values that may be configured for the current account."
+

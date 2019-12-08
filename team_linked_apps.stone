@@ -58,7 +58,7 @@ route linked_apps/list_member_linked_apps(ListMemberAppsArg, ListMemberAppsResul
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
+        scope = "sessions.list"
 
 #
 # Structs for linked_apps/list_members_linked_apps
@@ -109,7 +109,7 @@ route linked_apps/list_members_linked_apps(ListMembersAppsArg, ListMembersAppsRe
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
+        scope = "sessions.list"
 
 #
 # Structs for linked_apps/revoke_linked_app
@@ -141,7 +141,7 @@ route linked_apps/revoke_linked_app(RevokeLinkedApiAppArg, Void, RevokeLinkedApp
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
+        scope = "sessions.modify"
 
 #
 # structs for linked_apps/revoke_linked_app_batch
@@ -172,7 +172,7 @@ route linked_apps/revoke_linked_app_batch(RevokeLinkedApiAppBatchArg, RevokeLink
 
     attrs
         auth = "team"
-        owner = "super-admin-and-deployment"
+        scope = "sessions.modify"
 
 #
 # Deprecated endpoints
@@ -210,6 +210,3 @@ route linked_apps/list_team_linked_apps(ListTeamAppsArg, ListTeamAppsResult, Lis
 
     Note, this endpoint doesn't list any team-linked applications."
 
-    attrs
-        auth = "team"
-        owner = "super-admin-and-deployment"

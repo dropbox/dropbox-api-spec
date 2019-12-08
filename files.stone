@@ -70,6 +70,26 @@ struct Metadata
     example folder_metadata
         folder = default
 
+union MetadataV2
+    "Metadata for a file, folder or other resource types."
+
+    metadata Metadata
+    # new types can be added here in the future
+
+    example default
+        metadata = default
+
+struct HighlightSpan
+
+    highlight_str String
+        "String to be determined whether it should be highlighted or not."
+    is_highlighted Boolean
+        "The string should be highlighted or not."
+
+    example default
+        highlight_str = "test"
+        is_highlighted = false
+
 struct SharingInfo
     "Sharing info for a file or folder."
 
@@ -201,6 +221,26 @@ struct SymlinkInfo
     target String
         "The target this symlink points to."
 
+struct FileLockMetadata
+
+    is_locked Boolean
+        "True if the attached file is locked."
+
+    is_lockholder Boolean?
+        "True if caller holds the file lock. Missing if is_locked is false."
+
+    lockholder_name String?
+        "The display name of the lock holder. Missing if is_locked is false."
+
+    created common.DropboxTimestamp?
+        "The timestamp of the lock was created. Missing if is_locked is false."
+
+    example default
+        is_locked = true
+        is_lockholder = true
+        lockholder_name = "Imaginary User"
+        created =  "2015-05-12T15:50:38Z"
+
 struct FileMetadata extends Metadata
 
     id Id
@@ -256,6 +296,9 @@ struct FileMetadata extends Metadata
         "A hash of the file content. This field can be used to verify data integrity. For more
         information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
+    file_lock_info FileLockMetadata?
+        "If present, the metadata associated with the file's current lock."
+
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
         name = "Prime_Numbers.txt"
@@ -270,6 +313,7 @@ struct FileMetadata extends Metadata
         property_groups = [default]
         has_explicit_shared_members = false
         content_hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        file_lock_info = default
 
 struct FolderMetadata extends Metadata
     id Id
@@ -338,10 +382,9 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
     Note: Metadata for the root folder is unsupported."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
-        takes_path_root = true
         select_admin_mode = "whole_team"
+        scope = "files.metadata.read"
 
 #
 # General fileops
@@ -398,9 +441,9 @@ route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, Lis
     attrs
         host = "notify"
         auth = "noauth"
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.metadata.read"
 
 struct SharedLink
     url SharedLinkUrl
@@ -463,6 +506,7 @@ struct ListFolderResult
 
 union ListFolderError
     path LookupError
+    template_error file_properties.TemplateError
 
 route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
     "Starts returning the contents of a folder. If the result's :field:`ListFolderResult.has_more`
@@ -491,9 +535,9 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
     the previous request finishes."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.metadata.read"
 
 struct ListFolderContinueArg
     cursor ListFolderCursor
@@ -515,9 +559,9 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
     :route:`list_folder`."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.metadata.read"
 
 struct ListFolderGetLatestCursorResult
     cursor ListFolderCursor
@@ -534,9 +578,9 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
     files that already exist in Dropbox."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.metadata.read"
 
 #
 # Download
@@ -571,9 +615,9 @@ route download (DownloadArg, FileMetadata, DownloadError)
     attrs
         host = "content"
         style = "download"
-        owner = "storage-services-team"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.content.read"
 
 #
 # Download zip
@@ -613,8 +657,8 @@ route download_zip (DownloadZipArg, DownloadZipResult, DownloadZipError)
     attrs
         host = "content"
         style = "download"
-        owner = "storage-services-team"
         allow_app_folder_app = true
+        scope = "files.content.read"
 
 #
 # Export
@@ -624,6 +668,8 @@ union ExportError
     path LookupError
     non_exportable
         "This file type cannot be exported. Use :route:`download` instead."
+    retry_error
+        "The exportable content is not yet available. Please retry later."
 
 
 struct ExportArg
@@ -673,11 +719,11 @@ route export (ExportArg, ExportResult, ExportError)
 
     attrs
         is_preview = true
-        owner = "cloud-docs"
         host = "content"
         style = "download"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.content.read"
 
 
 #
@@ -781,10 +827,9 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 struct UploadSessionAppendArg
     cursor UploadSessionCursor
@@ -812,10 +857,9 @@ route upload_session/append:2 (UploadSessionAppendArg, Void, UploadSessionLookup
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 struct UploadSessionCursor
     session_id String
@@ -842,10 +886,9 @@ route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 union_closed WriteMode
     "Your intent when writing a file to some path. This is used to determine
@@ -949,10 +992,9 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope= "files.content.write"
 
 route upload (CommitInfo, FileMetadata, UploadError)
     "Create a new file with the contents provided in the request.
@@ -967,10 +1009,9 @@ route upload (CommitInfo, FileMetadata, UploadError)
     attrs
         host = "content"
         style = "upload"
-        owner = "storage-services-team"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 #
 # Batch Upload
@@ -1041,19 +1082,18 @@ route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFin
     per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
-        owner = "api-platform"
-        feature = "upload_api_rate_limit"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`upload_session/finish_batch`. If
     success, it returns list of result for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 #
 # Search
@@ -1143,14 +1183,160 @@ struct SearchResult
 union SearchError
     path LookupError
 
-route search (SearchArg, SearchResult, SearchError)
+route search (SearchArg, SearchResult, SearchError) deprecated by search:2
     "Searches for files and folders.
 
     Note: Recent changes may not immediately be reflected in search results due to a short delay in indexing."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+        scope = "files.metadata.read"
+
+#
+# Search:2
+#
+route search:2 (SearchV2Arg, SearchV2Result, SearchError)
+    "Searches for files and folders.
+
+    Note: :route:`search:2` along with :route:`search/continue:2` can only be used to
+    retrieve a maximum of 10,000 matches.
+
+    Recent changes may not immediately be reflected in search results due to a short delay in indexing.
+    Duplicate results may be returned across pages. Some results may not be returned."
+
+    attrs
+        allow_app_folder_app = true
+        scope = "files.metadata.read"
+
+struct SearchV2Arg
+
+    query String
+        "The string to search for. May match across multiple fields based on the request arguments."
+
+    options SearchOptions?
+        "Options for more targeted search results."
+
+    include_highlights Boolean = false
+
+    example default
+        query = "cat"
+
+struct SearchOptions
+
+    path PathROrId?
+        "Scopes the search to a path in the user's Dropbox. Searches the entire Dropbox if not specified."
+
+    max_results UInt64(min_value=1, max_value=1000) = 100
+        "The maximum number of search results to return."
+
+    file_status FileStatus = active
+        "Restricts search to the given file status."
+
+    filename_only Boolean = false
+        "Restricts search to only match on filenames."
+
+    file_extensions List(String)?
+        "Restricts search to only the extensions specified. Only supported for active file search."
+
+    file_categories List(FileCategory)?
+        "Restricts search to only the file categories specified. Only supported for active file search."
+
+    example default
+        path = ""
+        max_results = 20
+
+# both -- maybe supported in the future
+union FileStatus
+    active
+    deleted
+
+    example default
+        active = null
+
+union FileCategory
+
+    image
+        "jpg, png, gif, and more."
+
+    document
+        "doc, docx, txt, and more."
+
+    pdf
+        "pdf."
+
+    spreadsheet
+        "xlsx, xls, csv, and more."
+
+    presentation
+        "ppt, pptx, key, and more."
+
+    audio
+        "mp3, wav, mid, and more."
+
+    video
+        "mov, wmv, mp4, and more."
+
+    folder
+        "dropbox folder."
+
+    paper
+        "dropbox paper doc."
+
+    others
+        "any file not in one of the categories above."
+
+route search/continue:2 (SearchV2ContinueArg, SearchV2Result, SearchError)
+    "Fetches the next page of search results returned from :route:`search:2`.
+
+    Note: :route:`search:2` along with :route:`search/continue:2` can only be used to
+    retrieve a maximum of 10,000 matches.
+
+    Recent changes may not immediately be reflected in search results due to a short delay in indexing.
+    Duplicate results may be returned across pages. Some results may not be returned."
+
+    attrs
+        allow_app_folder_app = true
+        scope = "files.metadata.read"
+
+alias SearchV2Cursor = String(min_length=1)
+
+struct SearchV2ContinueArg
+    cursor SearchV2Cursor
+        "The cursor returned by your last call to :route:`search:2`. Used to fetch the next page of results."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+
+struct SearchV2Result
+
+    matches List(SearchMatchV2)
+        "A list (possibly empty) of matches for the query."
+
+    has_more Boolean
+        "Used for paging. If true, indicates there is another page of results
+        available that can be fetched by calling :route:`search/continue:2` with the cursor."
+
+    cursor SearchV2Cursor?
+        "Pass the cursor into :route:`search/continue:2` to fetch the next page of results."
+
+    example default
+        matches = [default]
+        has_more = false
+        cursor = null
+
+struct SearchMatchV2
+
+    metadata MetadataV2
+        "The metadata for the matched file or folder."
+
+    highlight_spans List(HighlightSpan)?
+        "The list of HighlightSpan determines which parts of the result should be highlighted."
+
+    example default
+        metadata = default
+        highlight_spans = null
+
 
 #
 # Errors shared by various operations
@@ -1226,17 +1412,17 @@ route create_folder:2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
     "Create a folder at a given path."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) deprecated by create_folder:2
     "Create a folder at a given path."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 struct CreateFolderBatchArg
     paths List(WritePath)
@@ -1312,18 +1498,18 @@ route create_folder_batch (CreateFolderBatchArg, CreateFolderBatchLaunch, Void)
     the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route create_folder_batch/check (async.PollArg, CreateFolderBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`create_folder_batch`. If
     success, it returns list of result for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 #
 # Delete
@@ -1420,9 +1606,9 @@ route delete:2 (DeleteArg, DeleteResult, DeleteError)
     deletion, and not a :type:`DeletedMetadata` object."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route delete (DeleteArg, Metadata, DeleteError) deprecated by delete:2
     "Delete the file or folder at a given path.
@@ -1434,9 +1620,9 @@ route delete (DeleteArg, Metadata, DeleteError) deprecated by delete:2
     deletion, and not a :type:`DeletedMetadata` object."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     "Delete multiple files/folders at once.
@@ -1446,18 +1632,18 @@ route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
     the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`delete_batch`. If
     success, it returns list of result for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route permanently_delete (DeleteArg, Void, DeleteError)
     "Permanently delete the file or folder at a given path
@@ -1466,8 +1652,9 @@ route permanently_delete (DeleteArg, Void, DeleteError)
     Note: This endpoint is only available for Dropbox Business apps."
 
     attrs
-        owner = "api-platform"
         select_admin_mode = "team_admin"
+        allow_app_folder_app = true
+        scope = "files.permanent_delete"
 
 #
 # Args and error shared by copy and move
@@ -1663,9 +1850,9 @@ route copy:2 (RelocationArg, RelocationResult, RelocationError)
     If the source path is a folder all its contents will be copied."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route copy (RelocationArg, Metadata, RelocationError) deprecated by copy:2
     "Copy a file or folder to a different location in the user's Dropbox.
@@ -1673,9 +1860,9 @@ route copy (RelocationArg, Metadata, RelocationError) deprecated by copy:2
     If the source path is a folder all its contents will be copied."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route copy_batch:2 (CopyBatchArg, RelocationBatchV2Launch, Void)
     "Copy multiple files or folders to different locations at once in the
@@ -1690,18 +1877,18 @@ route copy_batch:2 (CopyBatchArg, RelocationBatchV2Launch, Void)
     check the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route copy_batch/check:2 (async.PollArg, RelocationBatchV2JobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`copy_batch:2`. It returns
     list of results for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 # deprecated copy routes
 
@@ -1719,18 +1906,18 @@ route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated by
     background. Please use :route:`copy_batch/check:1` to check the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route copy_batch/check (async.PollArg, RelocationBatchJobStatus, async.PollError) deprecated by copy_batch/check:2
     "Returns the status of an asynchronous job for :route:`copy_batch:1`. If
     success, it returns list of results for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 #
 # Move
@@ -1750,9 +1937,9 @@ route move:2 (RelocationArg, RelocationResult, RelocationError)
     If the source path is a folder all its contents will be moved."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route move (RelocationArg, Metadata, RelocationError) deprecated by move:2
     "Move a file or folder to a different location in the user's Dropbox.
@@ -1760,9 +1947,9 @@ route move (RelocationArg, Metadata, RelocationError) deprecated by move:2
     If the source path is a folder all its contents will be moved."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route move_batch:2(MoveBatchArg, RelocationBatchV2Launch, Void)
     "Move multiple files or folders to different locations at once in the
@@ -1777,22 +1964,22 @@ route move_batch:2(MoveBatchArg, RelocationBatchV2Launch, Void)
     check the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 route move_batch/check:2(async.PollArg, RelocationBatchV2JobStatus, async.PollError)
     "Returns the status of an asynchronous job for :route:`move_batch:2`. It
     returns list of results for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 # deprecated move routes
 
-route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
+route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated by move_batch:2
     "Move multiple files or folders to different locations at once in the
     user's Dropbox.
 
@@ -1803,18 +1990,18 @@ route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void)
     background. Please use :route:`move_batch/check:1` to check the job status."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
-route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError)
+route move_batch/check(async.PollArg, RelocationBatchJobStatus, async.PollError) deprecated by move_batch/check:2
     "Returns the status of an asynchronous job for :route:`move_batch:1`. If
     success, it returns list of results for each entry."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 #
 # Thumbnail
@@ -1933,9 +2120,9 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
     attrs
         host = "content"
         style = "download"
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.content.read"
 
 route get_thumbnail_batch(GetThumbnailBatchArg, GetThumbnailBatchResult, GetThumbnailBatchError)
     "Get thumbnails for a list of images. We allow up to 25 thumbnails in a single batch.
@@ -1946,9 +2133,9 @@ route get_thumbnail_batch(GetThumbnailBatchArg, GetThumbnailBatchResult, GetThum
 
     attrs
         host = "content"
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.content.read"
 
 #
 # Preview
@@ -1994,9 +2181,9 @@ route get_preview(PreviewArg, FileMetadata, PreviewError)
     attrs
         host = "content"
         style = "download"
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.content.read"
 
 #
 # List revisions
@@ -2055,9 +2242,9 @@ route list_revisions(ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
     revisions for a given file across moves or renames."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
+        scope = "files.metadata.read"
 
 #
 # Restore
@@ -2085,9 +2272,9 @@ route restore(RestoreArg, FileMetadata, RestoreError)
     "Restore a specific revision of a file to the given path."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "files.content.write"
 
 #
 # Temporary link
@@ -2123,8 +2310,8 @@ route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTempora
     in the browser. The Content-Type of the link is determined automatically by the file's mime type."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+        scope = "files.content.read"
 
 #
 # Temporary upload link
@@ -2207,8 +2394,8 @@ route get_temporary_upload_link(GetTemporaryUploadLinkArg, GetTemporaryUploadLin
     "
 
     attrs
-        owner = "content-ecosystem"
         allow_app_folder_app = true
+        scope = "files.content.write"
 
 #
 # Copy reference
@@ -2244,8 +2431,8 @@ route copy_reference/get(GetCopyReferenceArg, GetCopyReferenceResult, GetCopyRef
     :route:`copy_reference/save`."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+        scope = "files.content.write"
 
 struct SaveCopyReferenceArg
     copy_reference String
@@ -2282,8 +2469,8 @@ route copy_reference/save(SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCop
     "Save a copy reference returned by :route:`copy_reference/get` to the user's Dropbox."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+        scope = "files.content.write"
 
 #
 # Save URL
@@ -2310,8 +2497,9 @@ union_closed SaveUrlResult extends async.LaunchResultBase
 union SaveUrlError
     path WriteError
     download_failed
-        "Failed downloading the given URL. The url may be
-        password-protected / the password provided was incorrect."
+        "Failed downloading the given URL. The URL may be
+         password-protected and the password provided was incorrect,
+         or the link may be disabled."
     invalid_url
         "The given URL is invalid."
     not_found
@@ -2327,8 +2515,8 @@ route save_url(SaveUrlArg, SaveUrlResult, SaveUrlError)
     conflict (e.g. myfile (1).txt)."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+        scope = "files.content.write"
 
 #
 # Save URL Job
@@ -2343,8 +2531,8 @@ route save_url/check_job_status(async.PollArg, SaveUrlJobStatus, async.PollError
     "Check the status of a :route:`save_url` job."
 
     attrs
-        owner = "api-platform"
         allow_app_folder_app = true
+        scope = "files.content.write"
 
 #
 # Patched File Properties endpoints
@@ -2362,8 +2550,6 @@ route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError) 
     Note: Metadata for the root folder is unsupported."
 
     attrs
-        owner = "api-platform"
-        api_group="properties"
         is_preview=true
         allow_app_folder_app = true
 
@@ -2399,10 +2585,8 @@ route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithPrope
     upload session with :route:`upload_session/start`."
 
     attrs
-        owner = "api-platform"
         host="content"
         style="upload"
-        api_group="properties"
         is_preview=true
         allow_app_folder_app = true
 
@@ -2420,29 +2604,11 @@ union UploadErrorWithProperties extends UploadError
 #
 
 route properties/add(file_properties.AddPropertiesArg, Void, file_properties.AddPropertiesError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/overwrite(file_properties.OverwritePropertyGroupArg, Void, file_properties.InvalidPropertyGroupError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/update(file_properties.UpdatePropertiesArg, Void, file_properties.UpdatePropertiesError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/remove(file_properties.RemovePropertiesArg, Void, file_properties.RemovePropertiesError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/template/get(file_properties.GetTemplateArg, file_properties.GetTemplateResult, file_properties.TemplateError) deprecated
-    attrs
-        owner = "api-platform"
-
 route properties/template/list(Void, file_properties.ListTemplateResult, file_properties.TemplateError) deprecated
-    attrs
-        owner = "api-platform"
-
 #
 # Team selective sync additions
 #
@@ -2499,3 +2665,171 @@ union SyncSettingsError
 
     unsupported_configuration
         "The specified configuration is not supported."
+
+#
+# FILE LOCKING
+#
+
+#
+# File Lock Definition
+#
+
+struct SingleUserLock
+    created common.DropboxTimestamp
+        "The time the lock was created."
+    lock_holder_account_id users_common.AccountId
+        "The account ID of the lock holder if known."
+    lock_holder_team_id String?
+        "The id of the team of the account holder if it exists."
+
+    example default
+        created = "2015-05-12T15:50:38Z"
+        lock_holder_account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+        lock_holder_team_id = "dbtid:1234abcd"
+
+union FileLockContent
+    unlocked
+        "Empty type to indicate no lock."
+    single_user SingleUserLock
+        "A lock held by a single user."
+
+    example default
+        single_user = default
+
+struct FileLock
+    content FileLockContent
+        "The lock description."
+
+    example default
+        content = default
+
+struct UnlockFileArg
+    path WritePath
+        "Path in the user's Dropbox to a file."
+
+    example lock
+        path = "/John Doe/sample/test.pdf"
+
+struct LockFileResult
+    metadata Metadata
+        "Metadata of the file."
+    lock FileLock
+        "The file lock state after the operation."
+
+    example default
+        metadata = default
+        lock = default
+
+struct LockConflictError
+    lock FileLock
+        "The lock that caused the conflict."
+
+union LockFileError
+    path_lookup LookupError
+        "Could not find the specified resource."
+    too_many_write_operations
+        "There are too many write operations in user's Dropbox. Please retry this request."
+    too_many_files
+        "There are too many files in one request. Please retry with fewer files."
+    no_write_permission
+        "The user does not have permissions to change the lock state or access the file."
+    cannot_be_locked
+        "Item is a type that cannot be locked."
+    file_not_shared
+        "Requested file is not currently shared."
+    lock_conflict LockConflictError
+        "The user action conflicts with an existing lock on the file."
+    internal_error
+        "Something went wrong with the job on Dropbox's end. You'll need to
+        verify that the action you were taking succeeded, and if not, try
+        again. This should happen very rarely."
+#    unlock_token
+#        "An invalid unlock_token was passed. For example, a garbage token, or a token which as already been used."
+
+union_closed LockFileResultEntry
+    success LockFileResult
+    failure LockFileError
+
+    example default
+        success = default
+
+struct LockFileBatchResult extends FileOpsResult
+    entries List(LockFileResultEntry)
+        "Each Entry in the 'entries' will have '.tag' with the operation status (e.g. success),
+        the metadata for the file and the lock state after the operation."
+
+    example default
+        entries = [default]
+
+struct LockFileArg
+    path WritePath
+        "Path in the user's Dropbox to a file."
+
+    example lock
+        path = "/John Doe/sample/test.pdf"
+
+struct LockFileBatchArg
+    entries List(LockFileArg)
+        "List of 'entries'. Each 'entry' contains a path of the file which will be
+        locked or queried.
+        Duplicate path arguments in the batch are considered only once."
+
+    example default
+        entries = [lock]
+
+struct UnlockFileBatchArg
+    entries List(UnlockFileArg)
+        "List of 'entries'. Each 'entry' contains a path of the file which will be unlocked.
+        Duplicate path arguments in the batch are considered only once."
+
+    example default
+        entries = [lock]
+
+#
+# Lock File
+#
+
+route lock_file_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
+    "
+    Lock the files at the given paths. A locked file will be writable only by the lock holder.
+    A successful response indicates that the file has been locked. Returns a list of the
+    locked file paths and their metadata after this operation.
+    "
+
+    attrs
+        is_preview = true
+        scope = "files.content.write"
+
+#
+# Unlock File
+#
+
+route unlock_file_batch (UnlockFileBatchArg, LockFileBatchResult, LockFileError)
+    "
+    Unlock the files at the given paths. A locked file can only be unlocked by the lock holder
+    or, if a business account, a team admin. A successful response indicates that the file has
+    been unlocked. Returns a list of the unlocked file paths and their metadata after
+    this operation.
+    "
+
+    attrs
+        is_preview = true
+        select_admin_mode = "whole_team"
+        scope = "files.content.write"
+
+#
+# Get Lock
+#
+
+route get_file_lock_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
+    "
+    Return the lock metadata for the given list of paths.
+    "
+
+    attrs
+        is_preview = true
+        scope = "files.content.read"
+
+#
+# END OF FILE LOCKING
+#

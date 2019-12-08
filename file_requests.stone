@@ -131,9 +131,9 @@ route list:2(ListFileRequestsArg, ListFileRequestsV2Result, ListFileRequestsErro
     the app folder."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
         is_preview = true
+        scope = "file_requests.read"
 
 struct ListFileRequestsArg
     "Arguments for :route:`list:2`."
@@ -168,9 +168,9 @@ route list/continue(ListFileRequestsContinueArg, ListFileRequestsV2Result, ListF
     file requests. The cursor must come from a previous call to :route:`list:2` or
     :route:`list/continue`."
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
         is_preview = true
+        scope = "file_requests.read"
 
 struct ListFileRequestsContinueArg
     cursor String
@@ -192,8 +192,8 @@ route list(Void, ListFileRequestsResult, ListFileRequestsError)
     the app folder."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "file_requests.read"
 
 struct ListFileRequestsResult
     "Result for :route:`list`."
@@ -217,8 +217,8 @@ route get(GetFileRequestArgs, FileRequest, GetFileRequestError)
     "Returns the specified file request."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "file_requests.read"
 
 struct GetFileRequestArgs
     "Arguments for :route:`get`."
@@ -241,8 +241,8 @@ route create(CreateFileRequestArgs, FileRequest, CreateFileRequestError)
     "Creates a file request for this user."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "file_requests.write"
 
 struct CreateFileRequestArgs
     "Arguments for :route:`create`."
@@ -273,7 +273,7 @@ union CreateFileRequestError extends FileRequestError
         "File requests are not available on the specified folder."
     rate_limit
         "The user has reached the rate limit for creating file requests. The
-        limit is currently 100 file requests per day."
+        limit is currently 4000 file requests total."
 
 #
 # Updating existing file requests
@@ -283,8 +283,8 @@ route update(UpdateFileRequestArgs, FileRequest, UpdateFileRequestError)
     "Update a file request."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "file_requests.write"
 
 struct UpdateFileRequestArgs
     "Arguments for :route:`update`."
@@ -330,9 +330,8 @@ route count(Void, CountFileRequestsResult, CountFileRequestsError)
     closed file requests."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
-
+        scope = "file_requests.read"
 
 struct CountFileRequestsResult
     "Result for :route:`count`."
@@ -354,8 +353,8 @@ route delete(DeleteFileRequestArgs, DeleteFileRequestsResult, DeleteFileRequestE
     "Delete a batch of closed file requests."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "file_requests.write"
 
 struct DeleteFileRequestArgs
     "Arguments for :route:`delete`."
@@ -389,8 +388,8 @@ route delete_all_closed(Void, DeleteAllClosedFileRequestsResult, DeleteAllClosed
     "Delete all closed file requests owned by this user."
 
     attrs
-        owner = "sharing"
         allow_app_folder_app = true
+        scope = "file_requests.write"
 
 struct DeleteAllClosedFileRequestsResult
     "Result for :route:`delete_all_closed`."

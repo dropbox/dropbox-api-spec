@@ -1,5 +1,7 @@
 namespace paper
-    "This namespace contains endpoints and data types for managing docs and folders in Dropbox Paper."
+    "This namespace contains endpoints and data types for managing docs and folders in Dropbox Paper.
+
+    New Paper users will see docs they create in their filesystem as '.paper' files alongside their other Dropbox content. The /paper endpoints are being deprecated and you'll need to use /files and /sharing endpoints to interact with their Paper content. Read more in the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide`."
 
 import common
 import sharing
@@ -164,8 +166,7 @@ union_closed FolderSubscriptionLevel
 union_closed FolderSharingPolicyType
     "The sharing policy of a Paper folder.
 
-
-    Note: The sharing policy of subfolders is inherited from the root folder."
+    The sharing policy of subfolders is inherited from the root folder."
     team
         "Everyone in your team and anyone directly invited can access this folder."
     invite_only
@@ -378,7 +379,7 @@ struct AddPaperDocUserMemberResult
 
 union PaperApiBaseError
     insufficient_permissions
-        "Your account does not have permissions to perform this action."
+        "Your account does not have permissions to perform this action. This may be due to it only having access to Paper as files in the Dropbox filesystem. For more information, refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide`."
 
 union PaperApiCursorError
     expired_cursor
@@ -451,11 +452,11 @@ union ImportFormat
     markdown
         "The provided data is interpreted as markdown.
 
-        Note: The first line of the provided document will be used as the doc title."
+        The first line of the provided document will be used as the doc title."
     plain_text
         "The provided data is interpreted as plain text.
 
-        Note: The first line of the provided document will be used as the doc title."
+        The first line of the provided document will be used as the doc title."
 
 struct PaperDocCreateArgs
     parent_folder_id String?
@@ -498,7 +499,7 @@ union PaperDocCreateError extends PaperApiBaseError
         Please split the content into multiple docs."
     image_size_exceeded
         "The imported document contains an image that is too large. The current limit is 1MB.
-        Note: This only applies to HTML with data uri."
+        This only applies to HTML with data URI."
 
 union PaperDocUpdatePolicy
     append
@@ -506,7 +507,7 @@ union PaperDocUpdatePolicy
     prepend
         "The content will be prepended to the doc.
 
-        Note: the doc title will not be affected."
+        The doc title will not be affected."
     overwrite_all
         "The document will be overwitten at the head with the provided content."
 
@@ -542,63 +543,126 @@ union PaperDocUpdateError extends DocLookupError
         "The newly created Paper doc would be too large, split the content into multiple docs."
     image_size_exceeded
         "The imported document contains an image that is too large. The current limit is 1MB.
-        Note: This only applies to HTML with data uri."
+        This only applies to HTML with data URI."
     doc_archived
         "This operation is not allowed on archived Paper docs."
     doc_deleted
         "This operation is not allowed on deleted Paper docs."
 
-route docs/folder_users/list (ListUsersOnFolderArgs, ListUsersOnFolderResponse, DocLookupError)
+struct PaperFolderCreateArg
+    name String
+        "The name of the new Paper folder."
+    parent_folder_id String?
+        "The encrypted Paper folder Id where the new Paper folder should be created. The API user has to have
+        write access to this folder or error is thrown. If not supplied, the new folder will be created at top level."
+    is_team_folder Boolean?
+        "Whether the folder to be created should be a team folder. This value will be ignored if parent_folder_id is supplied,
+        as the new folder will inherit the type (private or team folder) from its parent. We will by default create a top-level
+        private folder if both parent_folder_id and is_team_folder are not supplied."
+    example default
+        "Create a top-level private folder."
+        name = "my new folder"
+
+    example createTopLevelTeamFolder
+        "Create a top-level team folder."
+        name = "my new folder"
+        is_team_folder = true
+
+    example createSubFolder
+        "Create a new Paper folder inside an existing folder. The new folder will be a private or
+        team folder depending on its parent."
+        name = "my new folder"
+        parent_folder_id = "e.gGYT6HSafpMej9bUv306GarglI7GGeAM3yvfZvXHO9u4mV"
+
+struct PaperFolderCreateResult
+    folder_id String
+        "Folder ID of the newly created folder."
+    example default
+        folder_id = "abcd"
+
+union PaperFolderCreateError extends PaperApiBaseError
+    folder_not_found
+        "The specified parent Paper folder cannot be found."
+    invalid_folder_id
+        "The folder id cannot be decrypted to valid folder id."
+
+route docs/folder_users/list (ListUsersOnFolderArgs, ListUsersOnFolderResponse, DocLookupError) deprecated
     "Lists the users who are explicitly invited to the Paper folder in which the Paper doc
     is contained. For private folders all users (including owner) shared on the folder
-    are listed and for team folders all non-team users shared on the folder are returned."
-    attrs
-        owner="paper-eng"
+    are listed and for team folders all non-team users shared on the folder are returned.
 
-route docs/folder_users/list/continue (ListUsersOnFolderContinueArgs, ListUsersOnFolderResponse, ListUsersCursorError)
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "sharing.read"
+
+route docs/folder_users/list/continue (ListUsersOnFolderContinueArgs, ListUsersOnFolderResponse, ListUsersCursorError) deprecated
     "Once a cursor has been retrieved from :route:`docs/folder_users/list`, use this to
-    paginate through all users on the Paper folder."
-    attrs
-        owner="paper-eng"
+    paginate through all users on the Paper folder.
 
-route docs/sharing_policy/get (RefPaperDoc, SharingPolicy, DocLookupError)
-    "Gets the default sharing policy for the given Paper doc."
-    attrs
-        owner="paper-eng"
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
 
-route docs/sharing_policy/set (PaperDocSharingPolicy, Void, DocLookupError)
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "sharing.read"
+
+route docs/sharing_policy/get (RefPaperDoc, SharingPolicy, DocLookupError) deprecated
+    "Gets the default sharing policy for the given Paper doc.
+
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "sharing.read"
+
+route docs/sharing_policy/set (PaperDocSharingPolicy, Void, DocLookupError) deprecated
     "Sets the default sharing policy for the given Paper doc. The default 'team_sharing_policy'
     can be changed only by teams, omit this field for personal accounts.
 
+    The 'public_sharing_policy' policy can't be set to the value 'disabled' because this setting
+    can be changed only via the team admin console.
 
-    Note: 'public_sharing_policy' cannot be set to the value 'disabled' because this setting
-    can be changed only via the team admin console."
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
     attrs
-        owner="paper-eng"
+        scope = "sharing.write"
 
-route docs/archive (RefPaperDoc, Void, DocLookupError)
+route docs/archive (RefPaperDoc, Void, DocLookupError) deprecated
     "Marks the given Paper doc as archived.
 
-    Note: This action can be performed or undone by anyone with edit permissions to the doc."
-    attrs
-        owner="paper-eng"
+    This action can be performed or undone by anyone with edit permissions to the doc.
 
-route docs/permanently_delete (RefPaperDoc, Void, DocLookupError)
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    This endpoint will be retired in September 2020. Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for more information."
+    attrs
+        scope = "files.content.write"
+
+route docs/permanently_delete (RefPaperDoc, Void, DocLookupError) deprecated
     "Permanently deletes the given Paper doc. This operation is final as the doc
     cannot be recovered.
 
+    This action can be performed only by the doc owner.
 
-    Note: This action can be performed only by the doc owner."
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
     attrs
-        owner="paper-eng"
+        scope = "files.permanent_delete"
 
-route docs/download (PaperDocExport, PaperDocExportResult, DocLookupError)
-    "Exports and downloads Paper doc either as HTML or markdown."
+route docs/download (PaperDocExport, PaperDocExportResult, DocLookupError) deprecated
+    "Exports and downloads Paper doc either as HTML or markdown.
+
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
     attrs
         style="download"
-        owner="paper-eng"
+        scope = "files.content.read"
 
-route docs/get_folder_info (RefPaperDoc, FoldersContainingPaperDoc, DocLookupError)
+route docs/get_folder_info (RefPaperDoc, FoldersContainingPaperDoc, DocLookupError) deprecated
     "Retrieves folder information for the given Paper doc. This includes:
 
       - folder sharing policy; permissions for subfolders are set by the top-level folder.
@@ -607,64 +671,105 @@ route docs/get_folder_info (RefPaperDoc, FoldersContainingPaperDoc, DocLookupErr
         the root folder to the folder directly containing the Paper doc.
 
 
-    Note: If the Paper doc is not in any folder (aka unfiled) the response will be empty."
-    attrs
-        owner="paper-eng"
+    If the Paper doc is not in any folder (aka unfiled) the response will be empty.
 
-route docs/users/add (AddPaperDocUser, List(AddPaperDocUserMemberResult), DocLookupError)
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "sharing.read"
+
+route docs/users/add (AddPaperDocUser, List(AddPaperDocUserMemberResult), DocLookupError) deprecated
     "Allows an owner or editor to add users to a Paper doc or change their permissions
     using their email address or Dropbox account ID.
 
+    The doc owner's permissions cannot be changed.
 
-    Note: The Doc owner's permissions cannot be changed."
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
     attrs
-        owner="paper-eng"
+        scope = "sharing.write"
 
-route docs/users/remove (RemovePaperDocUser, Void, DocLookupError)
+route docs/users/remove (RemovePaperDocUser, Void, DocLookupError) deprecated
     "Allows an owner or editor to remove users from a Paper doc using their email address or
     Dropbox account ID.
 
+    The doc owner cannot be removed.
 
-    Note: Doc owner cannot be removed."
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
     attrs
-        owner="paper-eng"
+        scope = "sharing.write"
 
-route docs/users/list (ListUsersOnPaperDocArgs, ListUsersOnPaperDocResponse, DocLookupError)
+route docs/users/list (ListUsersOnPaperDocArgs, ListUsersOnPaperDocResponse, DocLookupError) deprecated
     "Lists all users who visited the Paper doc or users with explicit access. This call
     excludes users who have been removed. The list is sorted by the date of the visit or
     the share date.
 
     The list will include both users, the explicitly shared ones as well as those
-    who came in using the Paper url link."
-    attrs
-        owner="paper-eng"
+    who came in using the Paper url link.
 
-route docs/users/list/continue (ListUsersOnPaperDocContinueArgs, ListUsersOnPaperDocResponse, ListUsersCursorError)
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "sharing.read"
+
+route docs/users/list/continue (ListUsersOnPaperDocContinueArgs, ListUsersOnPaperDocResponse, ListUsersCursorError) deprecated
     "Once a cursor has been retrieved from :route:`docs/users/list`, use this to
-    paginate through all users on the Paper doc."
-    attrs
-        owner="paper-eng"
+    paginate through all users on the Paper doc.
 
-route docs/list (ListPaperDocsArgs, ListPaperDocsResponse, Void)
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "sharing.read"
+
+route docs/list (ListPaperDocsArgs, ListPaperDocsResponse, Void) deprecated
     "Return the list of all Paper docs according to the argument specifications. To iterate
-    over through the full pagination, pass the cursor to :route:`docs/list/continue`."
-    attrs
-        owner="paper-eng"
+    over through the full pagination, pass the cursor to :route:`docs/list/continue`.
 
-route docs/list/continue (ListPaperDocsContinueArgs, ListPaperDocsResponse, ListDocsCursorError)
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "files.metadata.read"
+
+route docs/list/continue (ListPaperDocsContinueArgs, ListPaperDocsResponse, ListDocsCursorError) deprecated
     "Once a cursor has been retrieved from :route:`docs/list`, use this to
-    paginate through all Paper doc."
-    attrs
-        owner="paper-eng"
+    paginate through all Paper doc.
 
-route docs/create (PaperDocCreateArgs, PaperDocCreateUpdateResult, PaperDocCreateError)
-    "Creates a new Paper doc with the provided content."
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "files.metadata.read"
+
+route docs/create (PaperDocCreateArgs, PaperDocCreateUpdateResult, PaperDocCreateError) deprecated
+    "Creates a new Paper doc with the provided content.
+
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    This endpoint will be retired in September 2020. Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for more information."
     attrs
         style="upload"
-        owner="paper-eng"
+        scope = "files.content.write"
 
-route docs/update (PaperDocUpdateArgs, PaperDocCreateUpdateResult, PaperDocUpdateError)
-    "Updates an existing Paper doc with the provided content."
+route docs/update (PaperDocUpdateArgs, PaperDocCreateUpdateResult, PaperDocUpdateError) deprecated
+    "Updates an existing Paper doc with the provided content.
+
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    This endpoint will be retired in September 2020. Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for more information."
     attrs
         style="upload"
-        owner="paper-eng"
+        scope = "files.content.write"
+
+route folders/create (PaperFolderCreateArg, PaperFolderCreateResult, PaperFolderCreateError) deprecated
+    "Create a new Paper folder with the provided info.
+
+    Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
+
+    Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
