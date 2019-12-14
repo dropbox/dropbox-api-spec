@@ -114,3 +114,6 @@ route get_events/continue(GetTeamEventsContinueArg, GetTeamEventsResult, GetTeam
 
     Permission : Team Auditing."
 
+    attrs
+        auth = "team"
+        scope = "events.read"

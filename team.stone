@@ -342,3 +342,5 @@ route properties/template/get(file_properties.GetTemplateArg, file_properties.Ge
 
 route properties/template/list(Void, file_properties.ListTemplateResult, file_properties.TemplateError) deprecated
     "Permission : Team member file access."
+    attrs
+        auth = "team"

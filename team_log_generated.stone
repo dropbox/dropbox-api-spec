@@ -67,6 +67,10 @@ union AccountCaptureAvailability
     unavailable
     available
 
+union AccountCaptureNotificationType
+    proactive_warning_notification
+    actionable_notification
+
 union AccountCapturePolicy
     disabled
     invited_users
@@ -561,6 +565,7 @@ union SharingMemberPolicy
     "External sharing policy"
     allow
     forbid
+    forbid_with_exclusions
 
 struct ShowcaseDocumentLogInfo 
     "Showcase document's logged information."
@@ -1874,13 +1879,16 @@ struct AccountCaptureMigrateAccountDetails
         domain_name = "mars.com"
 
 struct AccountCaptureNotificationEmailsSentDetails
-    "Sent proactive account capture email to all unmanaged members."
+    "Sent account capture email to all unmanaged members."
 
     domain_name String
         "Domain name."
+    notification_type AccountCaptureNotificationType?
+        "Account-capture email notification type."
 
     example default
         domain_name = "mars.com"
+        notification_type = proactive_warning_notification
 
 struct AccountCaptureRelinquishAccountDetails
     "Account-captured user changed account email to personal email."
@@ -3800,6 +3808,105 @@ struct SharedLinkRemoveExpiryDetails
     example default
         previous_value = "2017-01-25T15:51:30Z"
 
+struct SharedLinkSettingsAddExpirationDetails
+    "Added an expiration date to the shared link."
+
+    new_value common.DropboxTimestamp?
+        "New shared content link expiration date. Might be missing due to historical data gap."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        new_value = "2017-01-25T15:51:30Z"
+        shared_content_access_level = viewer_no_comment
+
+struct SharedLinkSettingsAddPasswordDetails
+    "Added a password to the shared link."
+
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        shared_content_access_level = viewer_no_comment
+
+struct SharedLinkSettingsAllowDownloadDisabledDetails
+    "Disabled downloads."
+
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        shared_content_access_level = viewer_no_comment
+
+struct SharedLinkSettingsAllowDownloadEnabledDetails
+    "Enabled downloads."
+
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        shared_content_access_level = viewer_no_comment
+
+struct SharedLinkSettingsChangeAudienceDetails
+    "Changed the audience of the shared link."
+
+    new_value sharing.LinkAudience
+        "New link audience value."
+    previous_value sharing.LinkAudience?
+        "Previous link audience value."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        new_value = no_one
+        previous_value = no_one
+        shared_content_access_level = viewer_no_comment
+
+struct SharedLinkSettingsChangeExpirationDetails
+    "Changed the expiration date of the shared link."
+
+    new_value common.DropboxTimestamp?
+        "New shared content link expiration date. Might be missing due to historical data gap."
+    previous_value common.DropboxTimestamp?
+        "Previous shared content link expiration date. Might be missing due to historical data gap."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        new_value = "2017-01-25T15:51:30Z"
+        previous_value = "2017-01-25T15:51:30Z"
+        shared_content_access_level = viewer_no_comment
+
+struct SharedLinkSettingsChangePasswordDetails
+    "Changed the password of the shared link."
+
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        shared_content_access_level = viewer_no_comment
+
+struct SharedLinkSettingsRemoveExpirationDetails
+    "Removed the expiration date from the shared link."
+
+    previous_value common.DropboxTimestamp?
+        "Previous shared link expiration date. Might be missing due to historical data gap."
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        previous_value = "2017-01-25T15:51:30Z"
+        shared_content_access_level = viewer_no_comment
+
+struct SharedLinkSettingsRemovePasswordDetails
+    "Removed the password from the shared link."
+
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+
+    example default
+        shared_content_access_level = viewer_no_comment
+
 struct SharedLinkShareDetails
     "Added members as audience of shared link."
 
@@ -5457,6 +5564,15 @@ union EventDetails
     shared_link_disable_details SharedLinkDisableDetails
     shared_link_download_details SharedLinkDownloadDetails
     shared_link_remove_expiry_details SharedLinkRemoveExpiryDetails
+    shared_link_settings_add_expiration_details SharedLinkSettingsAddExpirationDetails
+    shared_link_settings_add_password_details SharedLinkSettingsAddPasswordDetails
+    shared_link_settings_allow_download_disabled_details SharedLinkSettingsAllowDownloadDisabledDetails
+    shared_link_settings_allow_download_enabled_details SharedLinkSettingsAllowDownloadEnabledDetails
+    shared_link_settings_change_audience_details SharedLinkSettingsChangeAudienceDetails
+    shared_link_settings_change_expiration_details SharedLinkSettingsChangeExpirationDetails
+    shared_link_settings_change_password_details SharedLinkSettingsChangePasswordDetails
+    shared_link_settings_remove_expiration_details SharedLinkSettingsRemoveExpirationDetails
+    shared_link_settings_remove_password_details SharedLinkSettingsRemovePasswordDetails
     shared_link_share_details SharedLinkShareDetails
     shared_link_view_details SharedLinkViewDetails
     shared_note_opened_details SharedNoteOpenedDetails
@@ -5783,7 +5899,7 @@ struct AccountCaptureNotificationEmailsSentType
     description String
 
     example default
-        description = "(domains) Sent proactive account capture email to all unmanaged members"
+        description = "(domains) Sent account capture email to all unmanaged members"
 
 struct AccountCaptureRelinquishAccountType
     description String
@@ -7039,6 +7155,60 @@ struct SharedLinkRemoveExpiryType
     example default
         description = "(sharing) Removed shared link expiration date"
 
+struct SharedLinkSettingsAddExpirationType
+    description String
+
+    example default
+        description = "(sharing) Added an expiration date to the shared link"
+
+struct SharedLinkSettingsAddPasswordType
+    description String
+
+    example default
+        description = "(sharing) Added a password to the shared link"
+
+struct SharedLinkSettingsAllowDownloadDisabledType
+    description String
+
+    example default
+        description = "(sharing) Disabled downloads"
+
+struct SharedLinkSettingsAllowDownloadEnabledType
+    description String
+
+    example default
+        description = "(sharing) Enabled downloads"
+
+struct SharedLinkSettingsChangeAudienceType
+    description String
+
+    example default
+        description = "(sharing) Changed the audience of the shared link"
+
+struct SharedLinkSettingsChangeExpirationType
+    description String
+
+    example default
+        description = "(sharing) Changed the expiration date of the shared link"
+
+struct SharedLinkSettingsChangePasswordType
+    description String
+
+    example default
+        description = "(sharing) Changed the password of the shared link"
+
+struct SharedLinkSettingsRemoveExpirationType
+    description String
+
+    example default
+        description = "(sharing) Removed the expiration date from the shared link"
+
+struct SharedLinkSettingsRemovePasswordType
+    description String
+
+    example default
+        description = "(sharing) Removed the password from the shared link"
+
 struct SharedLinkShareType
     description String
 
@@ -7992,7 +8162,7 @@ union EventType
     account_capture_migrate_account AccountCaptureMigrateAccountType
         "(domains) Account-captured user migrated account to team"
     account_capture_notification_emails_sent AccountCaptureNotificationEmailsSentType
-        "(domains) Sent proactive account capture email to all unmanaged members"
+        "(domains) Sent account capture email to all unmanaged members"
     account_capture_relinquish_account AccountCaptureRelinquishAccountType
         "(domains) Account-captured user changed account email to personal email"
     disabled_domain_invites DisabledDomainInvitesType
@@ -8411,6 +8581,24 @@ union EventType
         "(sharing) Downloaded file/folder from shared link"
     shared_link_remove_expiry SharedLinkRemoveExpiryType
         "(sharing) Removed shared link expiration date"
+    shared_link_settings_add_expiration SharedLinkSettingsAddExpirationType
+        "(sharing) Added an expiration date to the shared link"
+    shared_link_settings_add_password SharedLinkSettingsAddPasswordType
+        "(sharing) Added a password to the shared link"
+    shared_link_settings_allow_download_disabled SharedLinkSettingsAllowDownloadDisabledType
+        "(sharing) Disabled downloads"
+    shared_link_settings_allow_download_enabled SharedLinkSettingsAllowDownloadEnabledType
+        "(sharing) Enabled downloads"
+    shared_link_settings_change_audience SharedLinkSettingsChangeAudienceType
+        "(sharing) Changed the audience of the shared link"
+    shared_link_settings_change_expiration SharedLinkSettingsChangeExpirationType
+        "(sharing) Changed the expiration date of the shared link"
+    shared_link_settings_change_password SharedLinkSettingsChangePasswordType
+        "(sharing) Changed the password of the shared link"
+    shared_link_settings_remove_expiration SharedLinkSettingsRemoveExpirationType
+        "(sharing) Removed the expiration date from the shared link"
+    shared_link_settings_remove_password SharedLinkSettingsRemovePasswordType
+        "(sharing) Removed the password from the shared link"
     shared_link_share SharedLinkShareType
         "(sharing) Added members as audience of shared link"
     shared_link_view SharedLinkViewType

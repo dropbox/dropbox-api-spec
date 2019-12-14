@@ -210,3 +210,5 @@ route linked_apps/list_team_linked_apps(ListTeamAppsArg, ListTeamAppsResult, Lis
 
     Note, this endpoint doesn't list any team-linked applications."
 
+    attrs
+        auth = "team"

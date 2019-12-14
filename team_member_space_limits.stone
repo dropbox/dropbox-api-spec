@@ -212,3 +212,6 @@ route member_space_limits/excluded_users/list(ExcludedUsersListArg, ExcludedUser
 route member_space_limits/excluded_users/list/continue(ExcludedUsersListContinueArg, ExcludedUsersListResult, ExcludedUsersListContinueError)
     "Continue listing member space limits excluded users."
 
+    attrs
+        auth = "team"
+        scope = "members.read"

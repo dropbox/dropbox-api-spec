@@ -765,3 +765,6 @@ route members/move_former_member_files/job_status/check(async.PollArg, async.Pol
 
     Permission : Team member management."
 
+    attrs
+        auth = "team"
+        scope = "members.write"

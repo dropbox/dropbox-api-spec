@@ -223,9 +223,6 @@ struct SymlinkInfo
 
 struct FileLockMetadata
 
-    is_locked Boolean
-        "True if the attached file is locked."
-
     is_lockholder Boolean?
         "True if caller holds the file lock. Missing if is_locked is false."
 
@@ -236,7 +233,6 @@ struct FileLockMetadata
         "The timestamp of the lock was created. Missing if is_locked is false."
 
     example default
-        is_locked = true
         is_lockholder = true
         lockholder_name = "Imaginary User"
         created =  "2015-05-12T15:50:38Z"

@@ -169,6 +169,8 @@ union LegalHoldsListHeldRevisionsError
         "There has been an unknown legal hold error."
     transient_error
         "Temporary infrastructure failure, please retry."
+    legal_hold_still_empty
+        "The legal hold is not holding any revisions yet"
 
 struct LegalHoldHeldRevisionMetadata
     new_filename String
@@ -402,3 +404,6 @@ route legal_holds/release_policy(LegalHoldsPolicyReleaseArg, Void, LegalHoldsPol
 
     Permission : Team member file access."
 
+    attrs
+        auth = "team"
+        scope = "team_data.member"

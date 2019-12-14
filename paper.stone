@@ -773,3 +773,5 @@ route folders/create (PaperFolderCreateArg, PaperFolderCreateResult, PaperFolder
     Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper.
 
     Refer to the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide` for migration information."
+    attrs
+        scope = "files.content.write"

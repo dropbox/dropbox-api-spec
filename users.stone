@@ -364,3 +364,6 @@ union UserFeaturesGetValuesBatchError
 route features/get_values(UserFeaturesGetValuesBatchArg, UserFeaturesGetValuesBatchResult, UserFeaturesGetValuesBatchError)
     "Get a list of feature values that may be configured for the current account."
 
+    attrs
+        allow_app_folder_app = true
+        scope = "account_info.read"

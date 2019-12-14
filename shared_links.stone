@@ -602,3 +602,6 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
     longer be the case, so your app shouldn't rely on this behavior. Instead, if
     your app needs to revoke a shared link, use :route:`revoke_shared_link`."
 
+    attrs
+        allow_app_folder_app = true
+        select_admin_mode = "team_admin"

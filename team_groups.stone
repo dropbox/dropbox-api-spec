@@ -553,3 +553,6 @@ route groups/job_status/get(async.PollArg, async.PollEmptyResult, GroupsPollErro
 
     Permission : Team member management."
 
+    attrs
+        auth = "team"
+        scope = "groups.write"

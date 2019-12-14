@@ -543,3 +543,5 @@ route properties/search/continue (PropertiesSearchContinueArg, PropertiesSearchR
     "Once a cursor has been retrieved from :route:`properties/search`, use this to paginate through all
     search results."
 
+    attrs
+        scope = "files.metadata.read"

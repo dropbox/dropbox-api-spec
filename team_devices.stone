@@ -354,3 +354,5 @@ route devices/list_team_devices(ListTeamDevicesArg, ListTeamDevicesResult, ListT
 
     Permission : Team member file access."
 
+    attrs
+        auth = "team"

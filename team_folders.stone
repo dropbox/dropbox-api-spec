@@ -333,3 +333,6 @@ union TeamFolderUpdateSyncSettingsError extends BaseTeamFolderError
 route team_folder/update_sync_settings(TeamFolderUpdateSyncSettingsArg, TeamFolderMetadata, TeamFolderUpdateSyncSettingsError)
     "Updates the sync settings on a team folder or its contents.  Use of this endpoint requires that the team has team selective sync enabled."
 
+    attrs
+        auth = "team"
+        scope = "team_data.team_space"

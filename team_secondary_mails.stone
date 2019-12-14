@@ -284,3 +284,7 @@ route members/secondary_emails/delete(DeleteSecondaryEmailsArg, DeleteSecondaryE
 
     Users will be notified of deletions of verified secondary emails at both the secondary email and their primary email."
 
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "members.write"

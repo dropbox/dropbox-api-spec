@@ -26,3 +26,5 @@ union DeleteManualContactsError
 route delete_manual_contacts_batch(DeleteManualContactsArg, Void, DeleteManualContactsError)
     "Removes manually added contacts from the given list."
 
+    attrs
+        scope = "contacts.write"

@@ -45,3 +45,5 @@ union SetProfilePhotoError
 route set_profile_photo(SetProfilePhotoArg, SetProfilePhotoResult, SetProfilePhotoError)
     "Sets a user's profile photo."
 
+    attrs
+        scope = "account_info.write"

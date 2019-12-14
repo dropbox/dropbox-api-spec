@@ -192,3 +192,6 @@ struct GetDevicesReport extends BaseDfbReport
 
 route reports/get_devices(DateRange, GetDevicesReport, DateRangeError)
     "Retrieves reporting data about a team's linked devices."
+    attrs
+        auth = "team"
+        scope = "team_info.read"
