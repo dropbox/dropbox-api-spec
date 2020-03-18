@@ -459,7 +459,7 @@ route get_shared_link_file(GetSharedLinkFileArg, SharedLinkMetadata, GetSharedLi
         scope = "sharing.read"
 
 #
-# Depracated endpoints
+# Deprecated endpoints
 #
 
 

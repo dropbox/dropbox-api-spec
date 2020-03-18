@@ -224,13 +224,16 @@ struct SymlinkInfo
 struct FileLockMetadata
 
     is_lockholder Boolean?
-        "True if caller holds the file lock. Missing if is_locked is false."
+        "True if caller holds the file lock."
 
     lockholder_name String?
-        "The display name of the lock holder. Missing if is_locked is false."
+        "The display name of the lock holder."
+
+    lockholder_account_id users_common.AccountId?
+        "The account ID of the lock holder if known."
 
     created common.DropboxTimestamp?
-        "The timestamp of the lock was created. Missing if is_locked is false."
+        "The timestamp of the lock was created."
 
     example default
         is_lockholder = true
@@ -381,7 +384,6 @@ route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
         scope = "files.metadata.read"
-
 #
 # General fileops
 #
@@ -535,6 +537,7 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
         select_admin_mode = "whole_team"
         scope = "files.metadata.read"
 
+
 struct ListFolderContinueArg
     cursor ListFolderCursor
         "The cursor returned by your last call to :route:`list_folder` or
@@ -577,7 +580,6 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
         allow_app_folder_app = true
         select_admin_mode = "whole_team"
         scope = "files.metadata.read"
-
 #
 # Download
 #
@@ -1178,6 +1180,7 @@ struct SearchResult
 
 union SearchError
     path LookupError
+    invalid_argument String?
 
 route search (SearchArg, SearchResult, SearchError) deprecated by search:2
     "Searches for files and folders.
@@ -1187,7 +1190,6 @@ route search (SearchArg, SearchResult, SearchError) deprecated by search:2
     attrs
         allow_app_folder_app = true
         scope = "files.metadata.read"
-
 #
 # Search:2
 #
@@ -1979,9 +1981,6 @@ route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated by
     "Move multiple files or folders to different locations at once in the
     user's Dropbox.
 
-    This route is 'all or nothing', which means if one entry fails, the
-    whole transaction will abort.
-
     This route will return job ID immediately and do the async moving job in
     background. Please use :route:`move_batch/check:1` to check the job status."
 
@@ -2133,6 +2132,99 @@ route get_thumbnail_batch(GetThumbnailBatchArg, GetThumbnailBatchResult, GetThum
         select_admin_mode = "whole_team"
         scope = "files.content.read"
 
+union ThumbnailV2Error
+    path LookupError
+        "An error occurred when downloading metadata for the image."
+    unsupported_extension
+        "The file extension doesn't allow conversion to a thumbnail."
+    unsupported_image
+        "The image cannot be converted to a thumbnail."
+    conversion_error
+        "An error occurred during thumbnail conversion."
+    access_denied
+        "Access to this shared link is forbidden."
+    not_found
+        "The shared link does not exist."
+
+
+struct MinimalFileLinkMetadata
+    url String
+        "URL of the shared link."
+
+    id Id?
+        "Unique identifier for the linked file."
+
+    path String?
+        "Full path in the user's Dropbox. This always starts with a slash.
+        This field will only be present only if the linked file is in the authenticated user's Dropbox."
+
+    rev Rev
+        "A unique identifier for the current revision of a file. This field is
+        the same rev as elsewhere in the API and can be used to detect changes
+        and avoid conflicts."
+
+
+struct PreviewResult
+    file_metadata FileMetadata?
+        "Metadata corresponding to the file received as an argument. Will be populated if the endpoint is called with
+        a path (ReadPath)."
+    link_metadata MinimalFileLinkMetadata?
+        "Minimal metadata corresponding to the file received as an argument. Will be populated if the endpoint is called
+        using a shared link (SharedLinkFileInfo)."
+    example default
+        file_metadata = default
+
+
+struct SharedLinkFileInfo
+    url String
+        "The shared link corresponding to either a file or shared link to a folder. If it is for a folder shared link,
+        we use the path param to determine for which file in the folder the view is for."
+    path String?
+        "The path corresponding to a file in a shared link to a folder. Required for shared links to folders."
+    password String?
+        "Password for the shared link. Required for password-protected shared links to files
+         unless it can be read from a cookie."
+
+    example default
+        url = "https://dropbox.com/s/hash/filename.png"
+
+
+union PathOrLink
+    path ReadPath
+    link SharedLinkFileInfo
+
+    example default
+        path = "/a.docx"
+
+
+struct ThumbnailV2Arg
+    resource PathOrLink
+        "Information specifying which file to preview. This could be a path to a file, a shared link pointing to a file,
+        or a shared link pointing to a folder, with a relative path."
+    format ThumbnailFormat = jpeg
+        "The format for the thumbnail image, jpeg (default) or png. For
+         images that are photos, jpeg should be preferred, while png is
+         better for screenshots and digital arts."
+    size ThumbnailSize = w64h64
+        "The size for the thumbnail image."
+    mode ThumbnailMode = strict
+        "How to resize and crop the image to achieve the desired size."
+
+    example default
+        resource = default
+        format = jpeg
+
+
+route get_thumbnail:2(ThumbnailV2Arg, PreviewResult, ThumbnailV2Error)
+    "Get a thumbnail for a file."
+
+    attrs
+        host = "content"
+        style = "download"
+        allow_app_folder_app = true
+        select_admin_mode = "whole_team"
+        scope = "files.content.read"
+        auth = "app, user"
 #
 # Preview
 #
@@ -2700,7 +2792,7 @@ struct FileLock
         content = default
 
 struct UnlockFileArg
-    path WritePath
+    path WritePathOrId
         "Path in the user's Dropbox to a file."
 
     example lock
@@ -2758,7 +2850,7 @@ struct LockFileBatchResult extends FileOpsResult
         entries = [default]
 
 struct LockFileArg
-    path WritePath
+    path WritePathOrId
         "Path in the user's Dropbox to a file."
 
     example lock

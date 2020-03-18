@@ -238,6 +238,8 @@ route groups/get_info(GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
 struct GroupCreateArg
     group_name String
         "Group name."
+    add_creator_as_owner Boolean = false
+        "Automatically add the creator of the group."
     group_external_id team_common.GroupExternalId?
         "The creator of a team can associate an arbitrary external ID to the group."
     group_management_type team_common.GroupManagementType?
@@ -338,7 +340,7 @@ struct GroupMembersChangeResult
     group_info GroupFullInfo
         "The group info after member change operation has been performed."
     async_job_id async.AsyncJobId
-        "An ID that can be used to obtain the status of granting/revoking group-owned resources."
+        "For legacy purposes async_job_id will always return one space ' '. Formerly, it was an ID that was used to obtain the status of granting/revoking group-owned resources. It's no longer necessary because the async processing now happens automatically."
 
     example default
         group_info = default
