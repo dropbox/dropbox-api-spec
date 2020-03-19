@@ -316,11 +316,15 @@ union UserFeature
     paper_as_files
         "This feature contains information about how the user's Paper files are stored."
 
+    file_locking
+        "This feature allows users to lock files in order to restrict other users from editing them."
+
 
 union UserFeatureValue
     "Values that correspond to entries in :type:`UserFeature`."
 
     paper_as_files PaperAsFilesValue
+    file_locking FileLockingValue
 
     example paper_as_files_enabled
         paper_as_files = paper_as_files_enabled
@@ -337,7 +341,16 @@ union PaperAsFilesValue
     example paper_as_files_enabled
         enabled = true
 
+union FileLockingValue
+    "The value for :field:`UserFeature.file_locking`.  "
 
+    enabled Boolean
+        "When this value is True, the user can lock files in shared directories. When the value is
+        False the user can unlock the files they have locked or request to unlock files locked by
+        others."
+
+    example file_locking_enabled
+        enabled = true
 #
 # Route: feature/get_value_batch
 #
@@ -348,7 +361,7 @@ struct UserFeaturesGetValuesBatchArg
         this route will return :type:`UserFeaturesGetValuesBatchError`."
 
     example listOfFeatures
-        features = [paper_as_files]
+        features = [paper_as_files, file_locking]
 
 struct UserFeaturesGetValuesBatchResult
     values List(UserFeatureValue)

@@ -83,12 +83,29 @@ union ActionDetails
         "Additional information relevant when a new member joins the team."
     remove_action MemberRemoveActionType
         "Define how the user was removed from the team."
+    team_invite_details TeamInviteDetails
+        "Additional information relevant when someone is invited to the team."
 
     example default
         team_join_details = default
 
     example default2
         team_join_details = default2
+
+struct TeamInviteDetails 
+    "Details about team invites"
+
+    invite_method InviteMethod
+        "How the user was invited to the team."
+
+    example default
+        invite_method = invite_link
+
+    example default2
+        invite_method = invite_link
+
+union InviteMethod
+    invite_link
 
 union MemberRemoveActionType
     delete
@@ -100,17 +117,23 @@ struct JoinTeamDetails
     "Additional information relevant when a new member joins the team."
 
     linked_apps List(UserLinkedAppLogInfo)
-        "Linked applications."
+        "Linked applications. (Deprecated) Please use has_linked_apps boolean field instead."
     linked_devices List(LinkedDeviceLogInfo)
-        "Linked devices."
+        "Linked devices. (Deprecated) Please use has_linked_devices boolean field instead."
     linked_shared_folders List(FolderLogInfo)
-        "Linked shared folders."
+        "Linked shared folders. (Deprecated) Please use has_linked_shared_folders boolean field instead."
     was_linked_apps_truncated Boolean?
         "True if the linked_apps list was truncated to the maximum supported length (50)."
     was_linked_devices_truncated Boolean?
         "True if the linked_devices list was truncated to the maximum supported length (50)."
     was_linked_shared_folders_truncated Boolean?
         "True if the linked_shared_folders list was truncated to the maximum supported length (50)."
+    has_linked_apps Boolean?
+        "True if the user had linked apps at event time."
+    has_linked_devices Boolean?
+        "True if the user had linked apps at event time."
+    has_linked_shared_folders Boolean?
+        "True if the user had linked shared folders at event time."
 
     example default
         linked_apps = [default]
@@ -119,6 +142,9 @@ struct JoinTeamDetails
         was_linked_apps_truncated = true
         was_linked_devices_truncated = true
         was_linked_shared_folders_truncated = true
+        has_linked_apps = true
+        has_linked_devices = true
+        has_linked_shared_folders = true
 
     example default2
         linked_apps = [default2]
@@ -127,6 +153,9 @@ struct JoinTeamDetails
         was_linked_apps_truncated = false
         was_linked_devices_truncated = false
         was_linked_shared_folders_truncated = false
+        has_linked_apps = false
+        has_linked_devices = false
+        has_linked_shared_folders = false
 
 union LinkedDeviceLogInfo
     "The device sessions that user is linked to."
@@ -434,6 +463,11 @@ union IntegrationPolicy
     disabled
     enabled
 
+union LockStatus
+    "File lock status"
+    locked
+    unlocked
+
 union LoginMethod
     password
     two_factor_authentication
@@ -528,6 +562,11 @@ union ResellerSupportPolicy
     "Policy for controlling if reseller can access the admin console as administrator"
     disabled
     enabled
+
+union RewindPolicy
+    "Policy for controlling whether team members can rewind"
+    admins_only
+    everyone
 
 union SecondaryMailsPolicy
     disabled
@@ -1992,6 +2031,18 @@ struct FileEditDetails
 struct FileGetCopyReferenceDetails
     "Created copy reference to file/folder."
 
+struct FileLockingLockStatusChangedDetails
+    "Locked/unlocked editing for a file."
+
+    previous_value LockStatus
+        "Previous lock status of the file."
+    new_value LockStatus
+        "New lock status of the file."
+
+    example default
+        previous_value = locked
+        new_value = locked
+
 struct FileMoveDetails
     "Moved files and/or folders."
 
@@ -2066,6 +2117,15 @@ struct FolderOverviewItemUnpinnedDetails
     example default
         folder_overview_location_asset = 3
         pinned_items_asset_indices = [3]
+
+struct RewindFolderDetails
+    "Rewound a folder."
+
+    rewind_folder_target_ts_ms common.DropboxTimestamp
+        "Folder was Rewound to this date."
+
+    example default
+        rewind_folder_target_ts_ms = "2017-01-25T15:51:30Z"
 
 struct FileRequestChangeDetails
     "Changed file request."
@@ -2323,10 +2383,64 @@ struct LegalHoldsExportAHoldDetails
         "Hold ID."
     name String
         "Hold name."
+    export_name String?
+        "Export name."
 
     example default
         legal_hold_id = "abc"
         name = "abc"
+        export_name = "abc"
+
+struct LegalHoldsExportCancelledDetails
+    "Canceled export for a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    export_name String
+        "Export name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        export_name = "abc"
+
+struct LegalHoldsExportDownloadedDetails
+    "Downloaded export for a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    export_name String
+        "Export name."
+    part String?
+        "Part."
+    file_name String?
+        "Filename."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        export_name = "abc"
+        part = "abc"
+        file_name = "abc"
+
+struct LegalHoldsExportRemovedDetails
+    "Removed export for a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    export_name String
+        "Export name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        export_name = "abc"
 
 struct LegalHoldsReleaseAHoldDetails
     "Released a hold."
@@ -2447,6 +2561,27 @@ struct SsoErrorDetails
 
     example default
         error_details = default
+
+struct CreateTeamInviteLinkDetails
+    "Created team invite link."
+
+    link_url String
+        "The invite link url that was created."
+    expiry_date String
+        "The expiration date of the invite link."
+
+    example default
+        link_url = "abc"
+        expiry_date = "abc"
+
+struct DeleteTeamInviteLinkDetails
+    "Deleted team invite link."
+
+    link_url String
+        "The invite link url that was deleted."
+
+    example default
+        link_url = "abc"
 
 struct MemberAddExternalIdDetails
     "Added an external ID for team member."
@@ -2650,6 +2785,132 @@ struct SecondaryMailsPolicyChangedDetails
         previous_value = disabled
         new_value = disabled
 
+struct BinderAddPageDetails
+    "Added Binder page."
+
+    event_uuid String
+        "Event unique identifier."
+    doc_title String
+        "Title of the Binder doc."
+    binder_item_name String
+        "Name of the Binder page/section."
+
+    example default
+        event_uuid = "abc"
+        doc_title = "abc"
+        binder_item_name = "abc"
+
+struct BinderAddSectionDetails
+    "Added Binder section."
+
+    event_uuid String
+        "Event unique identifier."
+    doc_title String
+        "Title of the Binder doc."
+    binder_item_name String
+        "Name of the Binder page/section."
+
+    example default
+        event_uuid = "abc"
+        doc_title = "abc"
+        binder_item_name = "abc"
+
+struct BinderRemovePageDetails
+    "Removed Binder page."
+
+    event_uuid String
+        "Event unique identifier."
+    doc_title String
+        "Title of the Binder doc."
+    binder_item_name String
+        "Name of the Binder page/section."
+
+    example default
+        event_uuid = "abc"
+        doc_title = "abc"
+        binder_item_name = "abc"
+
+struct BinderRemoveSectionDetails
+    "Removed Binder section."
+
+    event_uuid String
+        "Event unique identifier."
+    doc_title String
+        "Title of the Binder doc."
+    binder_item_name String
+        "Name of the Binder page/section."
+
+    example default
+        event_uuid = "abc"
+        doc_title = "abc"
+        binder_item_name = "abc"
+
+struct BinderRenamePageDetails
+    "Renamed Binder page."
+
+    event_uuid String
+        "Event unique identifier."
+    doc_title String
+        "Title of the Binder doc."
+    binder_item_name String
+        "Name of the Binder page/section."
+    previous_binder_item_name String?
+        "Previous name of the Binder page/section."
+
+    example default
+        event_uuid = "abc"
+        doc_title = "abc"
+        binder_item_name = "abc"
+        previous_binder_item_name = "abc"
+
+struct BinderRenameSectionDetails
+    "Renamed Binder section."
+
+    event_uuid String
+        "Event unique identifier."
+    doc_title String
+        "Title of the Binder doc."
+    binder_item_name String
+        "Name of the Binder page/section."
+    previous_binder_item_name String?
+        "Previous name of the Binder page/section."
+
+    example default
+        event_uuid = "abc"
+        doc_title = "abc"
+        binder_item_name = "abc"
+        previous_binder_item_name = "abc"
+
+struct BinderReorderPageDetails
+    "Reordered Binder page."
+
+    event_uuid String
+        "Event unique identifier."
+    doc_title String
+        "Title of the Binder doc."
+    binder_item_name String
+        "Name of the Binder page/section."
+
+    example default
+        event_uuid = "abc"
+        doc_title = "abc"
+        binder_item_name = "abc"
+
+struct BinderReorderSectionDetails
+    "Reordered Binder section."
+
+    event_uuid String
+        "Event unique identifier."
+    doc_title String
+        "Title of the Binder doc."
+    binder_item_name String
+        "Name of the Binder page/section."
+
+    example default
+        event_uuid = "abc"
+        doc_title = "abc"
+        binder_item_name = "abc"
+
 struct PaperContentAddMemberDetails
     "Added users and/or groups to Paper doc/folder."
 
@@ -2706,9 +2967,9 @@ struct PaperContentRemoveFromFolderDetails
 
     event_uuid String
         "Event unique identifier."
-    target_asset_index UInt64
+    target_asset_index UInt64?
         "Target asset position in the Assets list."
-    parent_asset_index UInt64
+    parent_asset_index UInt64?
         "Parent asset position in the Assets list."
 
     example default
@@ -3811,101 +4072,128 @@ struct SharedLinkRemoveExpiryDetails
 struct SharedLinkSettingsAddExpirationDetails
     "Added an expiration date to the shared link."
 
-    new_value common.DropboxTimestamp?
-        "New shared content link expiration date. Might be missing due to historical data gap."
     shared_content_access_level sharing.AccessLevel
         "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
+    new_value common.DropboxTimestamp?
+        "New shared content link expiration date. Might be missing due to historical data gap."
 
     example default
-        new_value = "2017-01-25T15:51:30Z"
         shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
+        new_value = "2017-01-25T15:51:30Z"
 
 struct SharedLinkSettingsAddPasswordDetails
     "Added a password to the shared link."
 
     shared_content_access_level sharing.AccessLevel
         "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
 
     example default
         shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
 
 struct SharedLinkSettingsAllowDownloadDisabledDetails
     "Disabled downloads."
 
     shared_content_access_level sharing.AccessLevel
         "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
 
     example default
         shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
 
 struct SharedLinkSettingsAllowDownloadEnabledDetails
     "Enabled downloads."
 
     shared_content_access_level sharing.AccessLevel
         "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
 
     example default
         shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
 
 struct SharedLinkSettingsChangeAudienceDetails
     "Changed the audience of the shared link."
 
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
     new_value sharing.LinkAudience
         "New link audience value."
     previous_value sharing.LinkAudience?
         "Previous link audience value."
-    shared_content_access_level sharing.AccessLevel
-        "Shared content access level."
 
     example default
+        shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
         new_value = no_one
         previous_value = no_one
-        shared_content_access_level = viewer_no_comment
 
 struct SharedLinkSettingsChangeExpirationDetails
     "Changed the expiration date of the shared link."
 
+    shared_content_access_level sharing.AccessLevel
+        "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
     new_value common.DropboxTimestamp?
         "New shared content link expiration date. Might be missing due to historical data gap."
     previous_value common.DropboxTimestamp?
         "Previous shared content link expiration date. Might be missing due to historical data gap."
-    shared_content_access_level sharing.AccessLevel
-        "Shared content access level."
 
     example default
+        shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
         new_value = "2017-01-25T15:51:30Z"
         previous_value = "2017-01-25T15:51:30Z"
-        shared_content_access_level = viewer_no_comment
 
 struct SharedLinkSettingsChangePasswordDetails
     "Changed the password of the shared link."
 
     shared_content_access_level sharing.AccessLevel
         "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
 
     example default
         shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
 
 struct SharedLinkSettingsRemoveExpirationDetails
     "Removed the expiration date from the shared link."
 
-    previous_value common.DropboxTimestamp?
-        "Previous shared link expiration date. Might be missing due to historical data gap."
     shared_content_access_level sharing.AccessLevel
         "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
+    previous_value common.DropboxTimestamp?
+        "Previous shared link expiration date. Might be missing due to historical data gap."
 
     example default
-        previous_value = "2017-01-25T15:51:30Z"
         shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
+        previous_value = "2017-01-25T15:51:30Z"
 
 struct SharedLinkSettingsRemovePasswordDetails
     "Removed the password from the shared link."
 
     shared_content_access_level sharing.AccessLevel
         "Shared content access level."
+    shared_content_link String?
+        "Shared content link."
 
     example default
         shared_content_access_level = viewer_no_comment
+        shared_content_link = "abc"
 
 struct SharedLinkShareDetails
     "Added members as audience of shared link."
@@ -4738,6 +5026,18 @@ struct ResellerSupportChangePolicyDetails
         new_value = disabled
         previous_value = disabled
 
+struct RewindPolicyChangedDetails
+    "Changed Rewind policy for team."
+
+    new_value RewindPolicy
+        "New Dropbox Rewind policy."
+    previous_value RewindPolicy
+        "Previous Dropbox Rewind policy."
+
+    example default
+        new_value = admins_only
+        previous_value = admins_only
+
 struct SharingChangeFolderJoinPolicyDetails
     "Changed whether team members can join shared folders owned outside team."
 
@@ -4894,6 +5194,18 @@ struct TeamSelectiveSyncPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct TeamSharingWhitelistSubjectsChangedDetails
+    "Edited the approved list for sharing externally."
+
+    added_whitelist_subjects List(String)
+        "Domains or emails added to the approved list for sharing externally."
+    removed_whitelist_subjects List(String)
+        "Domains or emails removed from the approved list for sharing externally."
+
+    example default
+        added_whitelist_subjects = ["example.com"]
+        removed_whitelist_subjects = ["example.com"]
+
 struct TfaAddExceptionDetails
     "Added members to two factor authentication exception list."
 
@@ -4947,6 +5259,18 @@ struct WatermarkingPolicyChangedDetails
     example default
         new_value = disabled
         previous_value = disabled
+
+struct WebSessionsChangeActiveSessionLimitDetails
+    "Changed limit on active sessions per member."
+
+    previous_value String
+        "Previous max number of concurrent active sessions policy."
+    new_value String
+        "New max number of concurrent active sessions policy."
+
+    example default
+        previous_value = "abc"
+        new_value = "abc"
 
 struct WebSessionsChangeFixedLengthPolicyDetails
     "Changed how long members can stay signed in to Dropbox.com."
@@ -5100,6 +5424,24 @@ struct EndedEnterpriseAdminSessionDeprecatedDetails
 
     example default
         federation_extra_details = default
+
+struct EnterpriseSettingsLockingDetails
+    "Changed who can update a setting."
+
+    team_name String
+        "The secondary team name."
+    settings_page_name String
+        "Settings page name."
+    previous_settings_page_locking_state String
+        "Previous locked settings page state."
+    new_settings_page_locking_state String
+        "New locked settings page state."
+
+    example default
+        team_name = "abc"
+        settings_page_name = "abc"
+        previous_settings_page_locking_state = "abc"
+        new_settings_page_locking_state = "abc"
 
 struct GuestAdminChangeStatusDetails
     "Changed guest team admin status."
@@ -5374,6 +5716,7 @@ union EventDetails
     file_download_details FileDownloadDetails
     file_edit_details FileEditDetails
     file_get_copy_reference_details FileGetCopyReferenceDetails
+    file_locking_lock_status_changed_details FileLockingLockStatusChangedDetails
     file_move_details FileMoveDetails
     file_permanently_delete_details FilePermanentlyDeleteDetails
     file_preview_details FilePreviewDetails
@@ -5385,6 +5728,7 @@ union EventDetails
     folder_overview_description_changed_details FolderOverviewDescriptionChangedDetails
     folder_overview_item_pinned_details FolderOverviewItemPinnedDetails
     folder_overview_item_unpinned_details FolderOverviewItemUnpinnedDetails
+    rewind_folder_details RewindFolderDetails
     file_request_change_details FileRequestChangeDetails
     file_request_close_details FileRequestCloseDetails
     file_request_create_details FileRequestCreateDetails
@@ -5408,6 +5752,9 @@ union EventDetails
     legal_holds_change_hold_details_details LegalHoldsChangeHoldDetailsDetails
     legal_holds_change_hold_name_details LegalHoldsChangeHoldNameDetails
     legal_holds_export_a_hold_details LegalHoldsExportAHoldDetails
+    legal_holds_export_cancelled_details LegalHoldsExportCancelledDetails
+    legal_holds_export_downloaded_details LegalHoldsExportDownloadedDetails
+    legal_holds_export_removed_details LegalHoldsExportRemovedDetails
     legal_holds_release_a_hold_details LegalHoldsReleaseAHoldDetails
     legal_holds_remove_members_details LegalHoldsRemoveMembersDetails
     legal_holds_report_a_hold_details LegalHoldsReportAHoldDetails
@@ -5422,6 +5769,8 @@ union EventDetails
     sign_in_as_session_end_details SignInAsSessionEndDetails
     sign_in_as_session_start_details SignInAsSessionStartDetails
     sso_error_details SsoErrorDetails
+    create_team_invite_link_details CreateTeamInviteLinkDetails
+    delete_team_invite_link_details DeleteTeamInviteLinkDetails
     member_add_external_id_details MemberAddExternalIdDetails
     member_add_name_details MemberAddNameDetails
     member_change_admin_role_details MemberChangeAdminRoleDetails
@@ -5445,6 +5794,14 @@ union EventDetails
     secondary_email_deleted_details SecondaryEmailDeletedDetails
     secondary_email_verified_details SecondaryEmailVerifiedDetails
     secondary_mails_policy_changed_details SecondaryMailsPolicyChangedDetails
+    binder_add_page_details BinderAddPageDetails
+    binder_add_section_details BinderAddSectionDetails
+    binder_remove_page_details BinderRemovePageDetails
+    binder_remove_section_details BinderRemoveSectionDetails
+    binder_rename_page_details BinderRenamePageDetails
+    binder_rename_section_details BinderRenameSectionDetails
+    binder_reorder_page_details BinderReorderPageDetails
+    binder_reorder_section_details BinderReorderSectionDetails
     paper_content_add_member_details PaperContentAddMemberDetails
     paper_content_add_to_folder_details PaperContentAddToFolderDetails
     paper_content_archive_details PaperContentArchiveDetails
@@ -5663,6 +6020,7 @@ union EventDetails
     password_strength_requirements_change_policy_details PasswordStrengthRequirementsChangePolicyDetails
     permanent_delete_change_policy_details PermanentDeleteChangePolicyDetails
     reseller_support_change_policy_details ResellerSupportChangePolicyDetails
+    rewind_policy_changed_details RewindPolicyChangedDetails
     sharing_change_folder_join_policy_details SharingChangeFolderJoinPolicyDetails
     sharing_change_link_policy_details SharingChangeLinkPolicyDetails
     sharing_change_member_policy_details SharingChangeMemberPolicyDetails
@@ -5676,12 +6034,14 @@ union EventDetails
     sso_change_policy_details SsoChangePolicyDetails
     team_extensions_policy_changed_details TeamExtensionsPolicyChangedDetails
     team_selective_sync_policy_changed_details TeamSelectiveSyncPolicyChangedDetails
+    team_sharing_whitelist_subjects_changed_details TeamSharingWhitelistSubjectsChangedDetails
     tfa_add_exception_details TfaAddExceptionDetails
     tfa_change_policy_details TfaChangePolicyDetails
     tfa_remove_exception_details TfaRemoveExceptionDetails
     two_account_change_policy_details TwoAccountChangePolicyDetails
     viewer_info_policy_changed_details ViewerInfoPolicyChangedDetails
     watermarking_policy_changed_details WatermarkingPolicyChangedDetails
+    web_sessions_change_active_session_limit_details WebSessionsChangeActiveSessionLimitDetails
     web_sessions_change_fixed_length_policy_details WebSessionsChangeFixedLengthPolicyDetails
     web_sessions_change_idle_length_policy_details WebSessionsChangeIdleLengthPolicyDetails
     team_merge_from_details TeamMergeFromDetails
@@ -5702,6 +6062,7 @@ union EventDetails
     changed_enterprise_connected_team_status_details ChangedEnterpriseConnectedTeamStatusDetails
     ended_enterprise_admin_session_details EndedEnterpriseAdminSessionDetails
     ended_enterprise_admin_session_deprecated_details EndedEnterpriseAdminSessionDeprecatedDetails
+    enterprise_settings_locking_details EnterpriseSettingsLockingDetails
     guest_admin_change_status_details GuestAdminChangeStatusDetails
     started_enterprise_admin_session_details StartedEnterpriseAdminSessionDetails
     team_merge_request_accepted_details TeamMergeRequestAcceptedDetails
@@ -6015,6 +6376,12 @@ struct FileGetCopyReferenceType
     example default
         description = "(file_operations) Created copy reference to file/folder"
 
+struct FileLockingLockStatusChangedType
+    description String
+
+    example default
+        description = "(file_operations) Locked/unlocked editing for a file"
+
 struct FileMoveType
     description String
 
@@ -6080,6 +6447,12 @@ struct FolderOverviewItemUnpinnedType
 
     example default
         description = "(file_operations) Unpinned item from folder overview"
+
+struct RewindFolderType
+    description String
+
+    example default
+        description = "(file_operations) Rewound a folder"
 
 struct FileRequestChangeType
     description String
@@ -6219,6 +6592,24 @@ struct LegalHoldsExportAHoldType
     example default
         description = "(legal_holds) Exported hold"
 
+struct LegalHoldsExportCancelledType
+    description String
+
+    example default
+        description = "(legal_holds) Canceled export for a hold"
+
+struct LegalHoldsExportDownloadedType
+    description String
+
+    example default
+        description = "(legal_holds) Downloaded export for a hold"
+
+struct LegalHoldsExportRemovedType
+    description String
+
+    example default
+        description = "(legal_holds) Removed export for a hold"
+
 struct LegalHoldsReleaseAHoldType
     description String
 
@@ -6302,6 +6693,18 @@ struct SsoErrorType
 
     example default
         description = "(logins) Failed to sign in via SSO (deprecated, replaced by 'Failed to sign in')"
+
+struct CreateTeamInviteLinkType
+    description String
+
+    example default
+        description = "(members) Created team invite link"
+
+struct DeleteTeamInviteLinkType
+    description String
+
+    example default
+        description = "(members) Deleted team invite link"
 
 struct MemberAddExternalIdType
     description String
@@ -6440,6 +6843,54 @@ struct SecondaryMailsPolicyChangedType
 
     example default
         description = "(members) Secondary mails policy changed"
+
+struct BinderAddPageType
+    description String
+
+    example default
+        description = "(paper) Added Binder page (deprecated, replaced by 'Edited files')"
+
+struct BinderAddSectionType
+    description String
+
+    example default
+        description = "(paper) Added Binder section (deprecated, replaced by 'Edited files')"
+
+struct BinderRemovePageType
+    description String
+
+    example default
+        description = "(paper) Removed Binder page (deprecated, replaced by 'Edited files')"
+
+struct BinderRemoveSectionType
+    description String
+
+    example default
+        description = "(paper) Removed Binder section (deprecated, replaced by 'Edited files')"
+
+struct BinderRenamePageType
+    description String
+
+    example default
+        description = "(paper) Renamed Binder page (deprecated, replaced by 'Edited files')"
+
+struct BinderRenameSectionType
+    description String
+
+    example default
+        description = "(paper) Renamed Binder section (deprecated, replaced by 'Edited files')"
+
+struct BinderReorderPageType
+    description String
+
+    example default
+        description = "(paper) Reordered Binder page (deprecated, replaced by 'Edited files')"
+
+struct BinderReorderSectionType
+    description String
+
+    example default
+        description = "(paper) Reordered Binder section (deprecated, replaced by 'Edited files')"
 
 struct PaperContentAddMemberType
     description String
@@ -7749,6 +8200,12 @@ struct ResellerSupportChangePolicyType
     example default
         description = "(team_policies) Enabled/disabled reseller support"
 
+struct RewindPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed Rewind policy for team"
+
 struct SharingChangeFolderJoinPolicyType
     description String
 
@@ -7827,6 +8284,12 @@ struct TeamSelectiveSyncPolicyChangedType
     example default
         description = "(team_policies) Enabled/disabled Team Selective Sync for team"
 
+struct TeamSharingWhitelistSubjectsChangedType
+    description String
+
+    example default
+        description = "(team_policies) Edited the approved list for sharing externally"
+
 struct TfaAddExceptionType
     description String
 
@@ -7862,6 +8325,12 @@ struct WatermarkingPolicyChangedType
 
     example default
         description = "(team_policies) Changed watermarking policy for team"
+
+struct WebSessionsChangeActiveSessionLimitType
+    description String
+
+    example default
+        description = "(team_policies) Changed limit on active sessions per member"
 
 struct WebSessionsChangeFixedLengthPolicyType
     description String
@@ -7982,6 +8451,12 @@ struct EndedEnterpriseAdminSessionDeprecatedType
 
     example default
         description = "(trusted_teams) Ended enterprise admin session (deprecated, replaced by 'Ended enterprise admin session')"
+
+struct EnterpriseSettingsLockingType
+    description String
+
+    example default
+        description = "(trusted_teams) Changed who can update a setting"
 
 struct GuestAdminChangeStatusType
     description String
@@ -8201,6 +8676,8 @@ union EventType
         "(file_operations) Edited files"
     file_get_copy_reference FileGetCopyReferenceType
         "(file_operations) Created copy reference to file/folder"
+    file_locking_lock_status_changed FileLockingLockStatusChangedType
+        "(file_operations) Locked/unlocked editing for a file"
     file_move FileMoveType
         "(file_operations) Moved files and/or folders"
     file_permanently_delete FilePermanentlyDeleteType
@@ -8223,6 +8700,8 @@ union EventType
         "(file_operations) Pinned item to folder overview"
     folder_overview_item_unpinned FolderOverviewItemUnpinnedType
         "(file_operations) Unpinned item from folder overview"
+    rewind_folder RewindFolderType
+        "(file_operations) Rewound a folder"
     file_request_change FileRequestChangeType
         "(file_requests) Changed file request"
     file_request_close FileRequestCloseType
@@ -8269,6 +8748,12 @@ union EventType
         "(legal_holds) Renamed a hold"
     legal_holds_export_a_hold LegalHoldsExportAHoldType
         "(legal_holds) Exported hold"
+    legal_holds_export_cancelled LegalHoldsExportCancelledType
+        "(legal_holds) Canceled export for a hold"
+    legal_holds_export_downloaded LegalHoldsExportDownloadedType
+        "(legal_holds) Downloaded export for a hold"
+    legal_holds_export_removed LegalHoldsExportRemovedType
+        "(legal_holds) Removed export for a hold"
     legal_holds_release_a_hold LegalHoldsReleaseAHoldType
         "(legal_holds) Released a hold"
     legal_holds_remove_members LegalHoldsRemoveMembersType
@@ -8297,6 +8782,10 @@ union EventType
         "(logins) Started admin sign-in-as session"
     sso_error SsoErrorType
         "(logins) Failed to sign in via SSO (deprecated, replaced by 'Failed to sign in')"
+    create_team_invite_link CreateTeamInviteLinkType
+        "(members) Created team invite link"
+    delete_team_invite_link DeleteTeamInviteLinkType
+        "(members) Deleted team invite link"
     member_add_external_id MemberAddExternalIdType
         "(members) Added an external ID for team member"
     member_add_name MemberAddNameType
@@ -8343,6 +8832,22 @@ union EventType
         "(members) Verified secondary email"
     secondary_mails_policy_changed SecondaryMailsPolicyChangedType
         "(members) Secondary mails policy changed"
+    binder_add_page BinderAddPageType
+        "(paper) Added Binder page (deprecated, replaced by 'Edited files')"
+    binder_add_section BinderAddSectionType
+        "(paper) Added Binder section (deprecated, replaced by 'Edited files')"
+    binder_remove_page BinderRemovePageType
+        "(paper) Removed Binder page (deprecated, replaced by 'Edited files')"
+    binder_remove_section BinderRemoveSectionType
+        "(paper) Removed Binder section (deprecated, replaced by 'Edited files')"
+    binder_rename_page BinderRenamePageType
+        "(paper) Renamed Binder page (deprecated, replaced by 'Edited files')"
+    binder_rename_section BinderRenameSectionType
+        "(paper) Renamed Binder section (deprecated, replaced by 'Edited files')"
+    binder_reorder_page BinderReorderPageType
+        "(paper) Reordered Binder page (deprecated, replaced by 'Edited files')"
+    binder_reorder_section BinderReorderSectionType
+        "(paper) Reordered Binder section (deprecated, replaced by 'Edited files')"
     paper_content_add_member PaperContentAddMemberType
         "(paper) Added users and/or groups to Paper doc/folder"
     paper_content_add_to_folder PaperContentAddToFolderType
@@ -8779,6 +9284,8 @@ union EventType
         "(team_policies) Enabled/disabled ability of team members to permanently delete content"
     reseller_support_change_policy ResellerSupportChangePolicyType
         "(team_policies) Enabled/disabled reseller support"
+    rewind_policy_changed RewindPolicyChangedType
+        "(team_policies) Changed Rewind policy for team"
     sharing_change_folder_join_policy SharingChangeFolderJoinPolicyType
         "(team_policies) Changed whether team members can join shared folders owned outside team"
     sharing_change_link_policy SharingChangeLinkPolicyType
@@ -8805,6 +9312,8 @@ union EventType
         "(team_policies) Changed App Integrations setting for team"
     team_selective_sync_policy_changed TeamSelectiveSyncPolicyChangedType
         "(team_policies) Enabled/disabled Team Selective Sync for team"
+    team_sharing_whitelist_subjects_changed TeamSharingWhitelistSubjectsChangedType
+        "(team_policies) Edited the approved list for sharing externally"
     tfa_add_exception TfaAddExceptionType
         "(team_policies) Added members to two factor authentication exception list"
     tfa_change_policy TfaChangePolicyType
@@ -8817,6 +9326,8 @@ union EventType
         "(team_policies) Changed team policy for viewer info"
     watermarking_policy_changed WatermarkingPolicyChangedType
         "(team_policies) Changed watermarking policy for team"
+    web_sessions_change_active_session_limit WebSessionsChangeActiveSessionLimitType
+        "(team_policies) Changed limit on active sessions per member"
     web_sessions_change_fixed_length_policy WebSessionsChangeFixedLengthPolicyType
         "(team_policies) Changed how long members can stay signed in to Dropbox.com"
     web_sessions_change_idle_length_policy WebSessionsChangeIdleLengthPolicyType
@@ -8857,6 +9368,8 @@ union EventType
         "(trusted_teams) Ended enterprise admin session"
     ended_enterprise_admin_session_deprecated EndedEnterpriseAdminSessionDeprecatedType
         "(trusted_teams) Ended enterprise admin session (deprecated, replaced by 'Ended enterprise admin session')"
+    enterprise_settings_locking EnterpriseSettingsLockingType
+        "(trusted_teams) Changed who can update a setting"
     guest_admin_change_status GuestAdminChangeStatusType
         "(trusted_teams) Changed guest team admin status"
     started_enterprise_admin_session StartedEnterpriseAdminSessionType

@@ -21,8 +21,26 @@ union LegalHoldStatus
         "The legal hold policy is activating."
     updating
         "The legal hold policy is updating."
+    exporting
+        "The legal hold policy is exporting."
     releasing
         "The legal hold policy is releasing."
+
+struct MembersInfo
+    team_member_ids List(team_common.TeamMemberId)
+        "Team member IDs of the users under this hold."
+    permanently_deleted_users UInt64
+        "The number of permanently deleted users that were under this hold."
+
+    example default
+        team_member_ids = ["dbmid:efgh5678"]
+        permanently_deleted_users = 2
+
+union LegalHoldsError
+    unknown_legal_hold_error
+        "There has been an unknown legal hold error."
+    insufficient_permissions
+        "You don't have permissions to perform this action."
 
 struct LegalHoldPolicy
     id LegalHoldId
@@ -33,7 +51,7 @@ struct LegalHoldPolicy
         "A description of the legal hold policy."
     activation_time common.DropboxTimestamp?
         "The time at which the legal hold was activated."
-    members List(team_common.TeamMemberId)
+    members MembersInfo
     status LegalHoldStatus
     start_date common.DropboxTimestamp
         "start date of the legal hold policy."
@@ -44,7 +62,7 @@ struct LegalHoldPolicy
         id = "pid_dbhid:abcd1234"
         name = "acme cfo policy"
         activation_time = "2016-01-20T00:00:10Z"
-        members = ["dbmid:efgh5678"]
+        members = default
         status = active
         start_date = "2016-01-01T00:00:00Z"
         end_date = "2017-12-31T00:00:00Z"
@@ -71,7 +89,7 @@ struct LegalHoldsPolicyCreateArg
         start_date = "2016-01-01T00:00:00Z"
         end_date = "2017-12-31T00:00:00Z"
 
-union LegalHoldsPolicyCreateError
+union LegalHoldsPolicyCreateError extends LegalHoldsError
     start_date_is_later_than_end_date
         "Start date must be earlier than end date."
     empty_members_list
@@ -108,11 +126,9 @@ struct LegalHoldsGetPolicyArg
 
 alias LegalHoldsGetPolicyResult = LegalHoldPolicy
 
-union LegalHoldsGetPolicyError
+union LegalHoldsGetPolicyError extends LegalHoldsError
     legal_hold_policy_not_found
         "Legal hold policy does not exist for :field:`LegalHoldsGetPolicyArg.id`."
-    insufficient_permissions
-        "You don't have permissions to perform this action."
 
 route legal_holds/get_policy(LegalHoldsGetPolicyArg, LegalHoldsGetPolicyResult, LegalHoldsGetPolicyError)
     "Gets a legal hold by Id.
@@ -140,7 +156,7 @@ struct LegalHoldsListPoliciesResult
     example default
         policies = [default]
 
-union LegalHoldsListPoliciesError
+union LegalHoldsListPoliciesError extends LegalHoldsError
     transient_error
         "Temporary infrastructure failure, please retry."
 
@@ -171,6 +187,8 @@ union LegalHoldsListHeldRevisionsError
         "Temporary infrastructure failure, please retry."
     legal_hold_still_empty
         "The legal hold is not holding any revisions yet"
+    inactive_legal_hold
+        "Trying to list revisions for an inactive legal hold."
 
 struct LegalHoldHeldRevisionMetadata
     new_filename String
@@ -306,7 +324,7 @@ union LegalHoldsExportPolicyError
 
 
 
-route legal_holds/export_policy(LegalHoldsPolicyExportArg, LegalHoldsExportPolicyResult, LegalHoldsExportPolicyError)
+route legal_holds/export_policy(LegalHoldsPolicyExportArg, LegalHoldsExportPolicyResult, LegalHoldsExportPolicyError) deprecated
     "Export everything for a single hold to a Dropbox file path.
 
     Permission : Team member file access."
@@ -329,7 +347,7 @@ struct ExportPolicyJobStatusResult
     status ExportPolicyJobStatus
 
 
-route legal_holds/export_policy_job_status/check(async.PollArg, ExportPolicyJobStatusResult, async.PollError)
+route legal_holds/export_policy_job_status/check(async.PollArg, ExportPolicyJobStatusResult, async.PollError) deprecated
     "Returns the status of an asynchronous job for :route:`legal_holds/export_policy_job_status/check`.
 
     Permission : Team member file access."
@@ -354,7 +372,7 @@ struct LegalHoldsPolicyUpdateArg
         id = "pid_dbhid:abcd1234"
         members = ["dbmid:FDFSVF-DFSDF"]
 
-union LegalHoldsPolicyUpdateError
+union LegalHoldsPolicyUpdateError extends LegalHoldsError
     inactive_legal_hold
         "Trying to release an inactive legal hold."
     legal_hold_performing_another_operation
@@ -367,7 +385,8 @@ union LegalHoldsPolicyUpdateError
         "The users list must have at least one user."
     name_must_be_unique
         "The name provided is already in use by another legal hold."
-
+    legal_hold_policy_not_found
+        "Legal hold policy does not exist for :field:`LegalHoldsPolicyUpdateArg.id`."
 
 
 alias LegalHoldsPolicyUpdateResult = LegalHoldPolicy
