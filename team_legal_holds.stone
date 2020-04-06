@@ -3,14 +3,11 @@ namespace team
 import common
 import team_common
 import files
-import async
 
 alias LegalHoldId = String(pattern="^pid_dbhid:.+")
 alias LegalHoldPolicyName = String(max_length=140)
 alias LegalHoldPolicyDescription = String(max_length=501)
 alias Path = String(pattern="(/(.|[\\r\\n])*)?")
-alias UserId = UInt64
-alias NSpath = String(pattern="(ns:[0-9]+(/.*)?)")
 
 union LegalHoldStatus
     active
@@ -274,91 +271,9 @@ route legal_holds/list_held_revisions_continue(LegalHoldsListHeldRevisionsContin
         scope = "team_data.member"
 
 #
-# route legal_holds/export_policy
-#
-
-struct LegalHoldsPolicyExportArg
-    id LegalHoldId
-        "The legal hold Id."
-    path NSpath
-        "The selected destination path in the team's Dropbox for the export.
-        The path must be a namespace path (see example) of a namespace that's accessible to the
-        application. To get the list of accessible namespaces use the
-        route :route:`namespaces/list`."
-
-
-    example default
-        id = "pid_dbhid:abcd1234"
-        path = "ns:123/Legal holds exports"
-
-    example root
-        id = "pid_dbhid:abcd1234"
-        path = "ns:123"
-
-struct LegalHoldsExportPolicyResult
-    async_job_id async.AsyncJobId
-        "Pass the given ID into :route:`legal_holds/export_policy_job_status/check` to
-        obtain the status of the export policy job status."
-    export_folder_metadata files.FolderMetadata
-        "Metadata for the newly created folder that will eventually, once the export policy job completes,
-        include the hold's export."
-
-    example default
-        async_job_id = "34g93hh34h04y384084"
-        export_folder_metadata = default
-
-
-union LegalHoldsExportPolicyError
-    invalid_path
-        "The path provided is invalid."
-    legal_hold_performing_another_operation
-        "Legal hold is currently performing another operation."
-    unknown_legal_hold_error
-        "There has been an unknown legal hold error."
-    transient_error
-        "Temporary infrastructure failure, please retry."
-    insufficient_quota
-        "The current team does not have enough space to export the legal hold policy."
-    legal_hold_export_still_empty
-        "The legal hold is not holding any revisions yet"
-
-
-
-route legal_holds/export_policy(LegalHoldsPolicyExportArg, LegalHoldsExportPolicyResult, LegalHoldsExportPolicyError) deprecated
-    "Export everything for a single hold to a Dropbox file path.
-
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.member"
-
-#
-# route legal_holds/export_policy_job_status/check
-#
-
-union ExportPolicyJobStatus extends async.PollResultBase
-    complete
-        "The asynchronous job has finished. Returning the metadata of the newly created folder that includes the exported hold."
-    failed
-        "The asynchronous job returned an error."
-
-struct ExportPolicyJobStatusResult
-    status ExportPolicyJobStatus
-
-
-route legal_holds/export_policy_job_status/check(async.PollArg, ExportPolicyJobStatusResult, async.PollError) deprecated
-    "Returns the status of an asynchronous job for :route:`legal_holds/export_policy_job_status/check`.
-
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.member"
-
-#
 # route legal_holds/update_policy
 #
+
 struct LegalHoldsPolicyUpdateArg
     id LegalHoldId
         "The legal hold Id."

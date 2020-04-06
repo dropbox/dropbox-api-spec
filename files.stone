@@ -2885,7 +2885,6 @@ route lock_file_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
     "
 
     attrs
-        is_preview = true
         scope = "files.content.write"
 
 #
@@ -2901,7 +2900,6 @@ route unlock_file_batch (UnlockFileBatchArg, LockFileBatchResult, LockFileError)
     "
 
     attrs
-        is_preview = true
         select_admin_mode = "whole_team"
         scope = "files.content.write"
 
@@ -2915,7 +2913,6 @@ route get_file_lock_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
     "
 
     attrs
-        is_preview = true
         scope = "files.content.read"
 
 #

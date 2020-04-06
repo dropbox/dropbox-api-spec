@@ -20,3 +20,5 @@ struct Route
         Valid values: team_admin, whole_team."
     scope String?
         "Name of the scope required to call this route."
+    is_cloud_doc_auth Boolean = false
+        "Whether the endpoint is a Dropbox cloud docs endpoint which takes cloud docs auth token."

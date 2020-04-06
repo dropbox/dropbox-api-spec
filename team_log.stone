@@ -66,7 +66,10 @@ union GetTeamEventsError
         account_id_not_found = null
 
 route get_events(GetTeamEventsArg, GetTeamEventsResult, GetTeamEventsError)
-    "Retrieves team events.
+    "Retrieves team events. If the result's :field:`GetTeamEventsResult.has_more` field is
+    :val:`true`, call :route:`get_events/continue` with the returned cursor to retrieve
+    more entries. If end_time is not specified in your request, you may use the returned cursor to
+    poll :route:`get_events/continue` for new events.
 
     Many attributes note 'may be missing due to historical data gap'.
 

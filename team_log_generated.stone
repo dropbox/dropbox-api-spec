@@ -76,6 +76,10 @@ union AccountCapturePolicy
     invited_users
     all_users
 
+union AccountState
+    locked
+    unlocked
+
 union ActionDetails
     "Additional information indicating the action taken that caused status change."
 
@@ -476,11 +480,18 @@ union LoginMethod
     web_session
     qr_code
     apple_oauth
+    first_party_token_exchange
 
 union MemberRequestsPolicy
     auto_accept
     disabled
     require_approval
+
+union MemberSendInvitePolicy
+    "Policy for controlling whether team members can send team invites"
+    disabled
+    specific_members
+    everyone
 
 union MemberStatus
     not_joined
@@ -1307,16 +1318,20 @@ struct FileOrFolderLogInfo
         "Display name. Might be missing due to historical data gap."
     file_id String?
         "Unique ID. Might be missing due to historical data gap."
+    file_size UInt64?
+        "File or folder size in bytes."
 
     example default
         path = default
         display_name = "reports.xls"
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
+        file_size = 3
 
     example default2
         path = default2
         display_name = "reports.xls"
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
+        file_size = 4
 
 struct FileLogInfo extends FileOrFolderLogInfo
     "File's logged information."
@@ -1325,24 +1340,33 @@ struct FileLogInfo extends FileOrFolderLogInfo
         path = default
         display_name = "reports.xls"
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
+        file_size = 3
 
     example default2
         path = default2
         display_name = "reports.xls"
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
+        file_size = 4
 
 struct FolderLogInfo extends FileOrFolderLogInfo
     "Folder's logged information."
+
+    file_count UInt64?
+        "Number of files within the folder."
 
     example default
         path = default
         display_name = "reports.xls"
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
+        file_size = 3
+        file_count = 3
 
     example default2
         path = default2
         display_name = "reports.xls"
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
+        file_size = 4
+        file_count = 4
 
 struct GroupLogInfo 
     "Group's logged information."
@@ -2477,6 +2501,18 @@ struct LegalHoldsReportAHoldDetails
     example default
         legal_hold_id = "abc"
         name = "abc"
+
+struct AccountLockOrUnlockedDetails
+    "Unlocked/locked account after failed sign in attempts."
+
+    previous_value AccountState
+        "The previous account status."
+    new_value AccountState
+        "The new account status."
+
+    example default
+        previous_value = locked
+        new_value = locked
 
 struct EmmErrorDetails
     "Failed to sign in via EMM."
@@ -4849,6 +4885,18 @@ struct MemberRequestsChangePolicyDetails
         new_value = require_approval
         previous_value = require_approval
 
+struct MemberSendInvitePolicyChangedDetails
+    "Changed member send invite policy for team."
+
+    new_value MemberSendInvitePolicy
+        "New team member send invite policy."
+    previous_value MemberSendInvitePolicy
+        "Previous team member send invite policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct MemberSpaceLimitsAddExceptionDetails
     "Added members to member space limit exception list."
 
@@ -5758,6 +5806,7 @@ union EventDetails
     legal_holds_release_a_hold_details LegalHoldsReleaseAHoldDetails
     legal_holds_remove_members_details LegalHoldsRemoveMembersDetails
     legal_holds_report_a_hold_details LegalHoldsReportAHoldDetails
+    account_lock_or_unlocked_details AccountLockOrUnlockedDetails
     emm_error_details EmmErrorDetails
     guest_admin_signed_in_via_trusted_teams_details GuestAdminSignedInViaTrustedTeamsDetails
     guest_admin_signed_out_via_trusted_teams_details GuestAdminSignedOutViaTrustedTeamsDetails
@@ -6002,6 +6051,7 @@ union EventDetails
     group_user_management_change_policy_details GroupUserManagementChangePolicyDetails
     integration_policy_changed_details IntegrationPolicyChangedDetails
     member_requests_change_policy_details MemberRequestsChangePolicyDetails
+    member_send_invite_policy_changed_details MemberSendInvitePolicyChangedDetails
     member_space_limits_add_exception_details MemberSpaceLimitsAddExceptionDetails
     member_space_limits_change_caps_type_policy_details MemberSpaceLimitsChangeCapsTypePolicyDetails
     member_space_limits_change_policy_details MemberSpaceLimitsChangePolicyDetails
@@ -6627,6 +6677,12 @@ struct LegalHoldsReportAHoldType
 
     example default
         description = "(legal_holds) Created a summary report for a hold"
+
+struct AccountLockOrUnlockedType
+    description String
+
+    example default
+        description = "(logins) Unlocked/locked account after failed sign in attempts"
 
 struct EmmErrorType
     description String
@@ -8092,6 +8148,12 @@ struct MemberRequestsChangePolicyType
     example default
         description = "(team_policies) Changed whether users can find team when not invited"
 
+struct MemberSendInvitePolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed member send invite policy for team"
+
 struct MemberSpaceLimitsAddExceptionType
     description String
 
@@ -8760,6 +8822,8 @@ union EventType
         "(legal_holds) Removed members from a hold"
     legal_holds_report_a_hold LegalHoldsReportAHoldType
         "(legal_holds) Created a summary report for a hold"
+    account_lock_or_unlocked AccountLockOrUnlockedType
+        "(logins) Unlocked/locked account after failed sign in attempts"
     emm_error EmmErrorType
         "(logins) Failed to sign in via EMM (deprecated, replaced by 'Failed to sign in')"
     guest_admin_signed_in_via_trusted_teams GuestAdminSignedInViaTrustedTeamsType
@@ -9248,6 +9312,8 @@ union EventType
         "(team_policies) Changed integration policy for team"
     member_requests_change_policy MemberRequestsChangePolicyType
         "(team_policies) Changed whether users can find team when not invited"
+    member_send_invite_policy_changed MemberSendInvitePolicyChangedType
+        "(team_policies) Changed member send invite policy for team"
     member_space_limits_add_exception MemberSpaceLimitsAddExceptionType
         "(team_policies) Added members to member space limit exception list"
     member_space_limits_change_caps_type_policy MemberSpaceLimitsChangeCapsTypePolicyType
