@@ -99,6 +99,8 @@ union LegalHoldsPolicyCreateError extends LegalHoldsError
         "Temporary infrastructure failure, please retry."
     name_must_be_unique
         "The name provided is already in use by another legal hold."
+    team_exceeded_legal_hold_quota
+        "Team exceeded legal hold quota."
 
 alias LegalHoldsPolicyCreateResult = LegalHoldPolicy
 
@@ -177,9 +179,7 @@ struct LegalHoldsListHeldRevisionsArg
     example default
         id = "pid_dbhid:abcd1234"
 
-union LegalHoldsListHeldRevisionsError
-    unknown_legal_hold_error
-        "There has been an unknown legal hold error."
+union LegalHoldsListHeldRevisionsError extends LegalHoldsError
     transient_error
         "Temporary infrastructure failure, please retry."
     legal_hold_still_empty
@@ -325,7 +325,7 @@ struct LegalHoldsPolicyReleaseArg
     example default
         id = "pid_dbhid:abcd1234"
 
-union LegalHoldsPolicyReleaseError
+union LegalHoldsPolicyReleaseError extends LegalHoldsError
     legal_hold_performing_another_operation
         "Legal hold is currently performing another operation."
     legal_hold_already_releasing

@@ -306,7 +306,7 @@ struct SharedLinkSettings
     example default
         requested_visibility = public
         audience = public
-        access = editor
+        access = viewer
 
 union LinkAccessLevel
     viewer
