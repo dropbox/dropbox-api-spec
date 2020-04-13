@@ -1120,10 +1120,10 @@ struct SearchArg
         a folder."
 
     query String
-        "The string to search for. The search string is split on spaces into
-        multiple tokens. For file name searching, the last token is used for
-        prefix matching (i.e. \"bat c\" matches \"bat cave\" but not \"batman
-        car\")."
+        "The string to search for. Query string may be rewritten to improve relevance of results.
+        The string is split on spaces into multiple tokens. For file name searching,
+        the last token is used for prefix matching (i.e. \"bat c\" matches \"bat cave\"
+        but not \"batman car\")."
 
     start UInt64(max_value=9999) = 0
         "The starting index within the search results (used for paging)."
@@ -1209,7 +1209,8 @@ route search:2 (SearchV2Arg, SearchV2Result, SearchError)
 struct SearchV2Arg
 
     query String
-        "The string to search for. May match across multiple fields based on the request arguments."
+        "The string to search for. May match across multiple fields based on the request arguments.
+        Query string may be rewritten to improve relevance of results."
 
     options SearchOptions?
         "Options for more targeted search results."
@@ -1932,7 +1933,9 @@ struct MoveBatchArg extends RelocationBatchArgBase
 route move:2 (RelocationArg, RelocationResult, RelocationError)
     "Move a file or folder to a different location in the user's Dropbox.
 
-    If the source path is a folder all its contents will be moved."
+    If the source path is a folder all its contents will be moved.
+
+    Note that we do not currently support case-only renaming."
 
     attrs
         allow_app_folder_app = true
@@ -1951,7 +1954,7 @@ route move (RelocationArg, Metadata, RelocationError) deprecated by move:2
 
 route move_batch:2(MoveBatchArg, RelocationBatchV2Launch, Void)
     "Move multiple files or folders to different locations at once in the
-    user's Dropbox.
+    user's Dropbox. Note that we do not currently support case-only renaming.
 
     This route will replace :route:`move_batch:1`. The main difference is this
     route will return status for each entry, while :route:`move_batch:1` raises

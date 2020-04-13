@@ -130,7 +130,8 @@ struct AddPropertiesArg
     path PathOrId
         "A unique identifier for the file or folder."
     property_groups List(PropertyGroup)
-        "The property groups which are to be added to a Dropbox file."
+        "The property groups which are to be added to a Dropbox file. No two groups in the input should
+         refer to the same template."
 
     example default
         path = "/my_awesome/word.docx"
@@ -168,6 +169,8 @@ union InvalidPropertyGroupError extends PropertiesError
         "One or more of the supplied property field values is too large."
     does_not_fit_template
         "One or more of the supplied property fields does not conform to the template specifications."
+    duplicate_property_groups
+        "There are 2 or more property groups referring to the same templates in the input. "
 
 union AddPropertiesError extends InvalidPropertyGroupError
     property_group_already_exists
@@ -184,7 +187,8 @@ struct OverwritePropertyGroupArg
     path PathOrId
         "A unique identifier for the file or folder."
     property_groups List(PropertyGroup, min_items=1)
-        "The property groups \"snapshot\" updates to force apply."
+        "The property groups \"snapshot\" updates to force apply. No two groups in the input should
+         refer to the same template."
 
     example default
         path = "/my_awesome/word.docx"

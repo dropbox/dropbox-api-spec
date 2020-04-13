@@ -3406,6 +3406,90 @@ struct ExportMembersReportFailDetails
     example default
         failure_reason = temporary_error
 
+struct NoExpirationLinkGenCreateReportDetails
+    "Report created: Links created with no expiration."
+
+    start_date common.DropboxTimestamp
+        "Report start date."
+    end_date common.DropboxTimestamp
+        "Report end date."
+
+    example default
+        start_date = "2017-01-25T15:51:30Z"
+        end_date = "2017-01-25T15:51:30Z"
+
+struct NoExpirationLinkGenReportFailedDetails
+    "Couldn't create report: Links created with no expiration."
+
+    failure_reason team.TeamReportFailureReason
+        "Failure reason."
+
+    example default
+        failure_reason = temporary_error
+
+struct NoPasswordLinkGenCreateReportDetails
+    "Report created: Links created without passwords."
+
+    start_date common.DropboxTimestamp
+        "Report start date."
+    end_date common.DropboxTimestamp
+        "Report end date."
+
+    example default
+        start_date = "2017-01-25T15:51:30Z"
+        end_date = "2017-01-25T15:51:30Z"
+
+struct NoPasswordLinkGenReportFailedDetails
+    "Couldn't create report: Links created without passwords."
+
+    failure_reason team.TeamReportFailureReason
+        "Failure reason."
+
+    example default
+        failure_reason = temporary_error
+
+struct NoPasswordLinkViewCreateReportDetails
+    "Report created: Views of links without passwords."
+
+    start_date common.DropboxTimestamp
+        "Report start date."
+    end_date common.DropboxTimestamp
+        "Report end date."
+
+    example default
+        start_date = "2017-01-25T15:51:30Z"
+        end_date = "2017-01-25T15:51:30Z"
+
+struct NoPasswordLinkViewReportFailedDetails
+    "Couldn't create report: Views of links without passwords."
+
+    failure_reason team.TeamReportFailureReason
+        "Failure reason."
+
+    example default
+        failure_reason = temporary_error
+
+struct OutdatedLinkViewCreateReportDetails
+    "Report created: Views of old links."
+
+    start_date common.DropboxTimestamp
+        "Report start date."
+    end_date common.DropboxTimestamp
+        "Report end date."
+
+    example default
+        start_date = "2017-01-25T15:51:30Z"
+        end_date = "2017-01-25T15:51:30Z"
+
+struct OutdatedLinkViewReportFailedDetails
+    "Couldn't create report: Views of old links."
+
+    failure_reason team.TeamReportFailureReason
+        "Failure reason."
+
+    example default
+        failure_reason = temporary_error
+
 struct PaperAdminExportStartDetails
     "Exported all team Paper docs."
 
@@ -5899,6 +5983,14 @@ union EventDetails
     emm_create_usage_report_details EmmCreateUsageReportDetails
     export_members_report_details ExportMembersReportDetails
     export_members_report_fail_details ExportMembersReportFailDetails
+    no_expiration_link_gen_create_report_details NoExpirationLinkGenCreateReportDetails
+    no_expiration_link_gen_report_failed_details NoExpirationLinkGenReportFailedDetails
+    no_password_link_gen_create_report_details NoPasswordLinkGenCreateReportDetails
+    no_password_link_gen_report_failed_details NoPasswordLinkGenReportFailedDetails
+    no_password_link_view_create_report_details NoPasswordLinkViewCreateReportDetails
+    no_password_link_view_report_failed_details NoPasswordLinkViewReportFailedDetails
+    outdated_link_view_create_report_details OutdatedLinkViewCreateReportDetails
+    outdated_link_view_report_failed_details OutdatedLinkViewReportFailedDetails
     paper_admin_export_start_details PaperAdminExportStartDetails
     smart_sync_create_admin_privilege_report_details SmartSyncCreateAdminPrivilegeReportDetails
     team_activity_create_report_details TeamActivityCreateReportDetails
@@ -7235,6 +7327,54 @@ struct ExportMembersReportFailType
 
     example default
         description = "(reports) Failed to create members data report"
+
+struct NoExpirationLinkGenCreateReportType
+    description String
+
+    example default
+        description = "(reports) Report created: Links created with no expiration"
+
+struct NoExpirationLinkGenReportFailedType
+    description String
+
+    example default
+        description = "(reports) Couldn't create report: Links created with no expiration"
+
+struct NoPasswordLinkGenCreateReportType
+    description String
+
+    example default
+        description = "(reports) Report created: Links created without passwords"
+
+struct NoPasswordLinkGenReportFailedType
+    description String
+
+    example default
+        description = "(reports) Couldn't create report: Links created without passwords"
+
+struct NoPasswordLinkViewCreateReportType
+    description String
+
+    example default
+        description = "(reports) Report created: Views of links without passwords"
+
+struct NoPasswordLinkViewReportFailedType
+    description String
+
+    example default
+        description = "(reports) Couldn't create report: Views of links without passwords"
+
+struct OutdatedLinkViewCreateReportType
+    description String
+
+    example default
+        description = "(reports) Report created: Views of old links"
+
+struct OutdatedLinkViewReportFailedType
+    description String
+
+    example default
+        description = "(reports) Couldn't create report: Views of old links"
 
 struct PaperAdminExportStartType
     description String
@@ -9008,6 +9148,22 @@ union EventType
         "(reports) Created member data report"
     export_members_report_fail ExportMembersReportFailType
         "(reports) Failed to create members data report"
+    no_expiration_link_gen_create_report NoExpirationLinkGenCreateReportType
+        "(reports) Report created: Links created with no expiration"
+    no_expiration_link_gen_report_failed NoExpirationLinkGenReportFailedType
+        "(reports) Couldn't create report: Links created with no expiration"
+    no_password_link_gen_create_report NoPasswordLinkGenCreateReportType
+        "(reports) Report created: Links created without passwords"
+    no_password_link_gen_report_failed NoPasswordLinkGenReportFailedType
+        "(reports) Couldn't create report: Links created without passwords"
+    no_password_link_view_create_report NoPasswordLinkViewCreateReportType
+        "(reports) Report created: Views of links without passwords"
+    no_password_link_view_report_failed NoPasswordLinkViewReportFailedType
+        "(reports) Couldn't create report: Views of links without passwords"
+    outdated_link_view_create_report OutdatedLinkViewCreateReportType
+        "(reports) Report created: Views of old links"
+    outdated_link_view_report_failed OutdatedLinkViewReportFailedType
+        "(reports) Couldn't create report: Views of old links"
     paper_admin_export_start PaperAdminExportStartType
         "(reports) Exported all team Paper docs"
     smart_sync_create_admin_privilege_report SmartSyncCreateAdminPrivilegeReportType

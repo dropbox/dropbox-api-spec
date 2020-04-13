@@ -129,7 +129,6 @@ route members/secondary_emails/add(AddSecondaryEmailsArg, AddSecondaryEmailsResu
 
     attrs
         auth = "team"
-        is_preview = true
         scope = "members.write"
 
 #
@@ -205,7 +204,6 @@ route members/secondary_emails/resend_verification_emails(ResendVerificationEmai
 
     attrs
         auth = "team"
-        is_preview = true
         scope = "members.write"
 
 
@@ -286,5 +284,4 @@ route members/secondary_emails/delete(DeleteSecondaryEmailsArg, DeleteSecondaryE
 
     attrs
         auth = "team"
-        is_preview = true
         scope = "members.write"
