@@ -127,11 +127,11 @@ struct JoinTeamDetails
     linked_shared_folders List(FolderLogInfo)
         "Linked shared folders. (Deprecated) Please use has_linked_shared_folders boolean field instead."
     was_linked_apps_truncated Boolean?
-        "True if the linked_apps list was truncated to the maximum supported length (50)."
+        "(Deprecated) True if the linked_apps list was truncated to the maximum supported length (50)."
     was_linked_devices_truncated Boolean?
-        "True if the linked_devices list was truncated to the maximum supported length (50)."
+        "(Deprecated) True if the linked_devices list was truncated to the maximum supported length (50)."
     was_linked_shared_folders_truncated Boolean?
-        "True if the linked_shared_folders list was truncated to the maximum supported length (50)."
+        "(Deprecated) True if the linked_shared_folders list was truncated to the maximum supported length (50)."
     has_linked_apps Boolean?
         "True if the user had linked apps at event time."
     has_linked_devices Boolean?
@@ -681,8 +681,8 @@ struct TeamLogInfo
         display_name = "A Team"
 
 union TeamMembershipType
-    free
     full
+    free
 
 union TeamMergeRequestAcceptedExtraDetails
     "Team merge request acceptance details"
@@ -8782,7 +8782,7 @@ struct TeamMergeRequestSentShownToSecondaryTeamType
 
 
 union EventType
-    "The type of the event."
+    "The type of the event with description."
 
     app_link_team AppLinkTeamType
         "(apps) Linked app for team"
@@ -9635,6 +9635,862 @@ union EventType
 
     example default
         shared_content_download = default
+
+
+union EventTypeArg
+    "The type of the event."
+
+    app_link_team
+        "(apps) Linked app for team"
+    app_link_user
+        "(apps) Linked app for member"
+    app_unlink_team
+        "(apps) Unlinked app for team"
+    app_unlink_user
+        "(apps) Unlinked app for member"
+    integration_connected
+        "(apps) Connected integration for member"
+    integration_disconnected
+        "(apps) Disconnected integration for member"
+    file_add_comment
+        "(comments) Added file comment"
+    file_change_comment_subscription
+        "(comments) Subscribed to or unsubscribed from comment notifications for file"
+    file_delete_comment
+        "(comments) Deleted file comment"
+    file_edit_comment
+        "(comments) Edited file comment"
+    file_like_comment
+        "(comments) Liked file comment (deprecated, no longer logged)"
+    file_resolve_comment
+        "(comments) Resolved file comment"
+    file_unlike_comment
+        "(comments) Unliked file comment (deprecated, no longer logged)"
+    file_unresolve_comment
+        "(comments) Unresolved file comment"
+    device_change_ip_desktop
+        "(devices) Changed IP address associated with active desktop session"
+    device_change_ip_mobile
+        "(devices) Changed IP address associated with active mobile session"
+    device_change_ip_web
+        "(devices) Changed IP address associated with active web session"
+    device_delete_on_unlink_fail
+        "(devices) Failed to delete all files from unlinked device"
+    device_delete_on_unlink_success
+        "(devices) Deleted all files from unlinked device"
+    device_link_fail
+        "(devices) Failed to link device"
+    device_link_success
+        "(devices) Linked device"
+    device_management_disabled
+        "(devices) Disabled device management (deprecated, no longer logged)"
+    device_management_enabled
+        "(devices) Enabled device management (deprecated, no longer logged)"
+    device_unlink
+        "(devices) Disconnected device"
+    emm_refresh_auth_token
+        "(devices) Refreshed auth token used for setting up EMM"
+    account_capture_change_availability
+        "(domains) Granted/revoked option to enable account capture on team domains"
+    account_capture_migrate_account
+        "(domains) Account-captured user migrated account to team"
+    account_capture_notification_emails_sent
+        "(domains) Sent account capture email to all unmanaged members"
+    account_capture_relinquish_account
+        "(domains) Account-captured user changed account email to personal email"
+    disabled_domain_invites
+        "(domains) Disabled domain invites (deprecated, no longer logged)"
+    domain_invites_approve_request_to_join_team
+        "(domains) Approved user's request to join team"
+    domain_invites_decline_request_to_join_team
+        "(domains) Declined user's request to join team"
+    domain_invites_email_existing_users
+        "(domains) Sent domain invites to existing domain accounts (deprecated, no longer logged)"
+    domain_invites_request_to_join_team
+        "(domains) Requested to join team"
+    domain_invites_set_invite_new_user_pref_to_no
+        "(domains) Disabled \"Automatically invite new users\" (deprecated, no longer logged)"
+    domain_invites_set_invite_new_user_pref_to_yes
+        "(domains) Enabled \"Automatically invite new users\" (deprecated, no longer logged)"
+    domain_verification_add_domain_fail
+        "(domains) Failed to verify team domain"
+    domain_verification_add_domain_success
+        "(domains) Verified team domain"
+    domain_verification_remove_domain
+        "(domains) Removed domain from list of verified team domains"
+    enabled_domain_invites
+        "(domains) Enabled domain invites (deprecated, no longer logged)"
+    create_folder
+        "(file_operations) Created folders (deprecated, no longer logged)"
+    file_add
+        "(file_operations) Added files and/or folders"
+    file_copy
+        "(file_operations) Copied files and/or folders"
+    file_delete
+        "(file_operations) Deleted files and/or folders"
+    file_download
+        "(file_operations) Downloaded files and/or folders"
+    file_edit
+        "(file_operations) Edited files"
+    file_get_copy_reference
+        "(file_operations) Created copy reference to file/folder"
+    file_locking_lock_status_changed
+        "(file_operations) Locked/unlocked editing for a file"
+    file_move
+        "(file_operations) Moved files and/or folders"
+    file_permanently_delete
+        "(file_operations) Permanently deleted files and/or folders"
+    file_preview
+        "(file_operations) Previewed files and/or folders"
+    file_rename
+        "(file_operations) Renamed files and/or folders"
+    file_restore
+        "(file_operations) Restored deleted files and/or folders"
+    file_revert
+        "(file_operations) Reverted files to previous version"
+    file_rollback_changes
+        "(file_operations) Rolled back file actions"
+    file_save_copy_reference
+        "(file_operations) Saved file/folder using copy reference"
+    folder_overview_description_changed
+        "(file_operations) Updated folder overview"
+    folder_overview_item_pinned
+        "(file_operations) Pinned item to folder overview"
+    folder_overview_item_unpinned
+        "(file_operations) Unpinned item from folder overview"
+    rewind_folder
+        "(file_operations) Rewound a folder"
+    file_request_change
+        "(file_requests) Changed file request"
+    file_request_close
+        "(file_requests) Closed file request"
+    file_request_create
+        "(file_requests) Created file request"
+    file_request_delete
+        "(file_requests) Delete file request"
+    file_request_receive_file
+        "(file_requests) Received files for file request"
+    group_add_external_id
+        "(groups) Added external ID for group"
+    group_add_member
+        "(groups) Added team members to group"
+    group_change_external_id
+        "(groups) Changed external ID for group"
+    group_change_management_type
+        "(groups) Changed group management type"
+    group_change_member_role
+        "(groups) Changed manager permissions of group member"
+    group_create
+        "(groups) Created group"
+    group_delete
+        "(groups) Deleted group"
+    group_description_updated
+        "(groups) Updated group (deprecated, no longer logged)"
+    group_join_policy_updated
+        "(groups) Updated group join policy (deprecated, no longer logged)"
+    group_moved
+        "(groups) Moved group (deprecated, no longer logged)"
+    group_remove_external_id
+        "(groups) Removed external ID for group"
+    group_remove_member
+        "(groups) Removed team members from group"
+    group_rename
+        "(groups) Renamed group"
+    legal_holds_activate_a_hold
+        "(legal_holds) Activated a hold"
+    legal_holds_add_members
+        "(legal_holds) Added members to a hold"
+    legal_holds_change_hold_details
+        "(legal_holds) Edited details for a hold"
+    legal_holds_change_hold_name
+        "(legal_holds) Renamed a hold"
+    legal_holds_export_a_hold
+        "(legal_holds) Exported hold"
+    legal_holds_export_cancelled
+        "(legal_holds) Canceled export for a hold"
+    legal_holds_export_downloaded
+        "(legal_holds) Downloaded export for a hold"
+    legal_holds_export_removed
+        "(legal_holds) Removed export for a hold"
+    legal_holds_release_a_hold
+        "(legal_holds) Released a hold"
+    legal_holds_remove_members
+        "(legal_holds) Removed members from a hold"
+    legal_holds_report_a_hold
+        "(legal_holds) Created a summary report for a hold"
+    account_lock_or_unlocked
+        "(logins) Unlocked/locked account after failed sign in attempts"
+    emm_error
+        "(logins) Failed to sign in via EMM (deprecated, replaced by 'Failed to sign in')"
+    guest_admin_signed_in_via_trusted_teams
+        "(logins) Started trusted team admin session"
+    guest_admin_signed_out_via_trusted_teams
+        "(logins) Ended trusted team admin session"
+    login_fail
+        "(logins) Failed to sign in"
+    login_success
+        "(logins) Signed in"
+    logout
+        "(logins) Signed out"
+    reseller_support_session_end
+        "(logins) Ended reseller support session"
+    reseller_support_session_start
+        "(logins) Started reseller support session"
+    sign_in_as_session_end
+        "(logins) Ended admin sign-in-as session"
+    sign_in_as_session_start
+        "(logins) Started admin sign-in-as session"
+    sso_error
+        "(logins) Failed to sign in via SSO (deprecated, replaced by 'Failed to sign in')"
+    create_team_invite_link
+        "(members) Created team invite link"
+    delete_team_invite_link
+        "(members) Deleted team invite link"
+    member_add_external_id
+        "(members) Added an external ID for team member"
+    member_add_name
+        "(members) Added team member name"
+    member_change_admin_role
+        "(members) Changed team member admin role"
+    member_change_email
+        "(members) Changed team member email"
+    member_change_external_id
+        "(members) Changed the external ID for team member"
+    member_change_membership_type
+        "(members) Changed membership type (limited/full) of member (deprecated, no longer logged)"
+    member_change_name
+        "(members) Changed team member name"
+    member_change_status
+        "(members) Changed member status (invited, joined, suspended, etc.)"
+    member_delete_manual_contacts
+        "(members) Cleared manually added contacts"
+    member_delete_profile_photo
+        "(members) Deleted team member profile photo"
+    member_permanently_delete_account_contents
+        "(members) Permanently deleted contents of deleted team member account"
+    member_remove_external_id
+        "(members) Removed the external ID for team member"
+    member_set_profile_photo
+        "(members) Set team member profile photo"
+    member_space_limits_add_custom_quota
+        "(members) Set custom member space limit"
+    member_space_limits_change_custom_quota
+        "(members) Changed custom member space limit"
+    member_space_limits_change_status
+        "(members) Changed space limit status"
+    member_space_limits_remove_custom_quota
+        "(members) Removed custom member space limit"
+    member_suggest
+        "(members) Suggested person to add to team"
+    member_transfer_account_contents
+        "(members) Transferred contents of deleted member account to another member"
+    pending_secondary_email_added
+        "(members) Added pending secondary email"
+    secondary_email_deleted
+        "(members) Deleted secondary email"
+    secondary_email_verified
+        "(members) Verified secondary email"
+    secondary_mails_policy_changed
+        "(members) Secondary mails policy changed"
+    binder_add_page
+        "(paper) Added Binder page (deprecated, replaced by 'Edited files')"
+    binder_add_section
+        "(paper) Added Binder section (deprecated, replaced by 'Edited files')"
+    binder_remove_page
+        "(paper) Removed Binder page (deprecated, replaced by 'Edited files')"
+    binder_remove_section
+        "(paper) Removed Binder section (deprecated, replaced by 'Edited files')"
+    binder_rename_page
+        "(paper) Renamed Binder page (deprecated, replaced by 'Edited files')"
+    binder_rename_section
+        "(paper) Renamed Binder section (deprecated, replaced by 'Edited files')"
+    binder_reorder_page
+        "(paper) Reordered Binder page (deprecated, replaced by 'Edited files')"
+    binder_reorder_section
+        "(paper) Reordered Binder section (deprecated, replaced by 'Edited files')"
+    paper_content_add_member
+        "(paper) Added users and/or groups to Paper doc/folder"
+    paper_content_add_to_folder
+        "(paper) Added Paper doc/folder to folder"
+    paper_content_archive
+        "(paper) Archived Paper doc/folder"
+    paper_content_create
+        "(paper) Created Paper doc/folder"
+    paper_content_permanently_delete
+        "(paper) Permanently deleted Paper doc/folder"
+    paper_content_remove_from_folder
+        "(paper) Removed Paper doc/folder from folder"
+    paper_content_remove_member
+        "(paper) Removed users and/or groups from Paper doc/folder"
+    paper_content_rename
+        "(paper) Renamed Paper doc/folder"
+    paper_content_restore
+        "(paper) Restored archived Paper doc/folder"
+    paper_doc_add_comment
+        "(paper) Added Paper doc comment"
+    paper_doc_change_member_role
+        "(paper) Changed member permissions for Paper doc"
+    paper_doc_change_sharing_policy
+        "(paper) Changed sharing setting for Paper doc"
+    paper_doc_change_subscription
+        "(paper) Followed/unfollowed Paper doc"
+    paper_doc_deleted
+        "(paper) Archived Paper doc (deprecated, no longer logged)"
+    paper_doc_delete_comment
+        "(paper) Deleted Paper doc comment"
+    paper_doc_download
+        "(paper) Downloaded Paper doc in specific format"
+    paper_doc_edit
+        "(paper) Edited Paper doc"
+    paper_doc_edit_comment
+        "(paper) Edited Paper doc comment"
+    paper_doc_followed
+        "(paper) Followed Paper doc (deprecated, replaced by 'Followed/unfollowed Paper doc')"
+    paper_doc_mention
+        "(paper) Mentioned user in Paper doc"
+    paper_doc_ownership_changed
+        "(paper) Transferred ownership of Paper doc"
+    paper_doc_request_access
+        "(paper) Requested access to Paper doc"
+    paper_doc_resolve_comment
+        "(paper) Resolved Paper doc comment"
+    paper_doc_revert
+        "(paper) Restored Paper doc to previous version"
+    paper_doc_slack_share
+        "(paper) Shared Paper doc via Slack"
+    paper_doc_team_invite
+        "(paper) Shared Paper doc with users and/or groups (deprecated, no longer logged)"
+    paper_doc_trashed
+        "(paper) Deleted Paper doc"
+    paper_doc_unresolve_comment
+        "(paper) Unresolved Paper doc comment"
+    paper_doc_untrashed
+        "(paper) Restored Paper doc"
+    paper_doc_view
+        "(paper) Viewed Paper doc"
+    paper_external_view_allow
+        "(paper) Changed Paper external sharing setting to anyone (deprecated, no longer logged)"
+    paper_external_view_default_team
+        "(paper) Changed Paper external sharing setting to default team (deprecated, no longer logged)"
+    paper_external_view_forbid
+        "(paper) Changed Paper external sharing setting to team-only (deprecated, no longer logged)"
+    paper_folder_change_subscription
+        "(paper) Followed/unfollowed Paper folder"
+    paper_folder_deleted
+        "(paper) Archived Paper folder (deprecated, no longer logged)"
+    paper_folder_followed
+        "(paper) Followed Paper folder (deprecated, replaced by 'Followed/unfollowed Paper folder')"
+    paper_folder_team_invite
+        "(paper) Shared Paper folder with users and/or groups (deprecated, no longer logged)"
+    paper_published_link_change_permission
+        "(paper) Changed permissions for published doc"
+    paper_published_link_create
+        "(paper) Published doc"
+    paper_published_link_disabled
+        "(paper) Unpublished doc"
+    paper_published_link_view
+        "(paper) Viewed published doc"
+    password_change
+        "(passwords) Changed password"
+    password_reset
+        "(passwords) Reset password"
+    password_reset_all
+        "(passwords) Reset all team member passwords"
+    emm_create_exceptions_report
+        "(reports) Created EMM-excluded users report"
+    emm_create_usage_report
+        "(reports) Created EMM mobile app usage report"
+    export_members_report
+        "(reports) Created member data report"
+    export_members_report_fail
+        "(reports) Failed to create members data report"
+    no_expiration_link_gen_create_report
+        "(reports) Report created: Links created with no expiration"
+    no_expiration_link_gen_report_failed
+        "(reports) Couldn't create report: Links created with no expiration"
+    no_password_link_gen_create_report
+        "(reports) Report created: Links created without passwords"
+    no_password_link_gen_report_failed
+        "(reports) Couldn't create report: Links created without passwords"
+    no_password_link_view_create_report
+        "(reports) Report created: Views of links without passwords"
+    no_password_link_view_report_failed
+        "(reports) Couldn't create report: Views of links without passwords"
+    outdated_link_view_create_report
+        "(reports) Report created: Views of old links"
+    outdated_link_view_report_failed
+        "(reports) Couldn't create report: Views of old links"
+    paper_admin_export_start
+        "(reports) Exported all team Paper docs"
+    smart_sync_create_admin_privilege_report
+        "(reports) Created Smart Sync non-admin devices report"
+    team_activity_create_report
+        "(reports) Created team activity report"
+    team_activity_create_report_fail
+        "(reports) Couldn't generate team activity report"
+    collection_share
+        "(sharing) Shared album"
+    file_transfers_file_add
+        "(sharing) Transfer files added"
+    file_transfers_transfer_delete
+        "(sharing) Deleted transfer"
+    file_transfers_transfer_download
+        "(sharing) Transfer downloaded"
+    file_transfers_transfer_send
+        "(sharing) Sent transfer"
+    file_transfers_transfer_view
+        "(sharing) Viewed transfer"
+    note_acl_invite_only
+        "(sharing) Changed Paper doc to invite-only (deprecated, no longer logged)"
+    note_acl_link
+        "(sharing) Changed Paper doc to link-accessible (deprecated, no longer logged)"
+    note_acl_team_link
+        "(sharing) Changed Paper doc to link-accessible for team (deprecated, no longer logged)"
+    note_shared
+        "(sharing) Shared Paper doc (deprecated, no longer logged)"
+    note_share_receive
+        "(sharing) Shared received Paper doc (deprecated, no longer logged)"
+    open_note_shared
+        "(sharing) Opened shared Paper doc (deprecated, no longer logged)"
+    sf_add_group
+        "(sharing) Added team to shared folder (deprecated, no longer logged)"
+    sf_allow_non_members_to_view_shared_links
+        "(sharing) Allowed non-collaborators to view links to files in shared folder (deprecated, no longer logged)"
+    sf_external_invite_warn
+        "(sharing) Set team members to see warning before sharing folders outside team (deprecated, no longer logged)"
+    sf_fb_invite
+        "(sharing) Invited Facebook users to shared folder (deprecated, no longer logged)"
+    sf_fb_invite_change_role
+        "(sharing) Changed Facebook user's role in shared folder (deprecated, no longer logged)"
+    sf_fb_uninvite
+        "(sharing) Uninvited Facebook user from shared folder (deprecated, no longer logged)"
+    sf_invite_group
+        "(sharing) Invited group to shared folder (deprecated, no longer logged)"
+    sf_team_grant_access
+        "(sharing) Granted access to shared folder (deprecated, no longer logged)"
+    sf_team_invite
+        "(sharing) Invited team members to shared folder (deprecated, replaced by 'Invited user to Dropbox and added them to shared file/folder')"
+    sf_team_invite_change_role
+        "(sharing) Changed team member's role in shared folder (deprecated, no longer logged)"
+    sf_team_join
+        "(sharing) Joined team member's shared folder (deprecated, no longer logged)"
+    sf_team_join_from_oob_link
+        "(sharing) Joined team member's shared folder from link (deprecated, no longer logged)"
+    sf_team_uninvite
+        "(sharing) Unshared folder with team member (deprecated, replaced by 'Removed invitee from shared file/folder before invite was accepted')"
+    shared_content_add_invitees
+        "(sharing) Invited user to Dropbox and added them to shared file/folder"
+    shared_content_add_link_expiry
+        "(sharing) Added expiration date to link for shared file/folder (deprecated, no longer logged)"
+    shared_content_add_link_password
+        "(sharing) Added password to link for shared file/folder (deprecated, no longer logged)"
+    shared_content_add_member
+        "(sharing) Added users and/or groups to shared file/folder"
+    shared_content_change_downloads_policy
+        "(sharing) Changed whether members can download shared file/folder (deprecated, no longer logged)"
+    shared_content_change_invitee_role
+        "(sharing) Changed access type of invitee to shared file/folder before invite was accepted"
+    shared_content_change_link_audience
+        "(sharing) Changed link audience of shared file/folder (deprecated, no longer logged)"
+    shared_content_change_link_expiry
+        "(sharing) Changed link expiration of shared file/folder (deprecated, no longer logged)"
+    shared_content_change_link_password
+        "(sharing) Changed link password of shared file/folder (deprecated, no longer logged)"
+    shared_content_change_member_role
+        "(sharing) Changed access type of shared file/folder member"
+    shared_content_change_viewer_info_policy
+        "(sharing) Changed whether members can see who viewed shared file/folder"
+    shared_content_claim_invitation
+        "(sharing) Acquired membership of shared file/folder by accepting invite"
+    shared_content_copy
+        "(sharing) Copied shared file/folder to own Dropbox"
+    shared_content_download
+        "(sharing) Downloaded shared file/folder"
+    shared_content_relinquish_membership
+        "(sharing) Left shared file/folder"
+    shared_content_remove_invitees
+        "(sharing) Removed invitee from shared file/folder before invite was accepted"
+    shared_content_remove_link_expiry
+        "(sharing) Removed link expiration date of shared file/folder (deprecated, no longer logged)"
+    shared_content_remove_link_password
+        "(sharing) Removed link password of shared file/folder (deprecated, no longer logged)"
+    shared_content_remove_member
+        "(sharing) Removed user/group from shared file/folder"
+    shared_content_request_access
+        "(sharing) Requested access to shared file/folder"
+    shared_content_restore_invitees
+        "(sharing) Restored shared file/folder invitees"
+    shared_content_restore_member
+        "(sharing) Restored users and/or groups to membership of shared file/folder"
+    shared_content_unshare
+        "(sharing) Unshared file/folder by clearing membership"
+    shared_content_view
+        "(sharing) Previewed shared file/folder"
+    shared_folder_change_link_policy
+        "(sharing) Changed who can access shared folder via link"
+    shared_folder_change_members_inheritance_policy
+        "(sharing) Changed whether shared folder inherits members from parent folder"
+    shared_folder_change_members_management_policy
+        "(sharing) Changed who can add/remove members of shared folder"
+    shared_folder_change_members_policy
+        "(sharing) Changed who can become member of shared folder"
+    shared_folder_create
+        "(sharing) Created shared folder"
+    shared_folder_decline_invitation
+        "(sharing) Declined team member's invite to shared folder"
+    shared_folder_mount
+        "(sharing) Added shared folder to own Dropbox"
+    shared_folder_nest
+        "(sharing) Changed parent of shared folder"
+    shared_folder_transfer_ownership
+        "(sharing) Transferred ownership of shared folder to another member"
+    shared_folder_unmount
+        "(sharing) Deleted shared folder from Dropbox"
+    shared_link_add_expiry
+        "(sharing) Added shared link expiration date"
+    shared_link_change_expiry
+        "(sharing) Changed shared link expiration date"
+    shared_link_change_visibility
+        "(sharing) Changed visibility of shared link"
+    shared_link_copy
+        "(sharing) Added file/folder to Dropbox from shared link"
+    shared_link_create
+        "(sharing) Created shared link"
+    shared_link_disable
+        "(sharing) Removed shared link"
+    shared_link_download
+        "(sharing) Downloaded file/folder from shared link"
+    shared_link_remove_expiry
+        "(sharing) Removed shared link expiration date"
+    shared_link_settings_add_expiration
+        "(sharing) Added an expiration date to the shared link"
+    shared_link_settings_add_password
+        "(sharing) Added a password to the shared link"
+    shared_link_settings_allow_download_disabled
+        "(sharing) Disabled downloads"
+    shared_link_settings_allow_download_enabled
+        "(sharing) Enabled downloads"
+    shared_link_settings_change_audience
+        "(sharing) Changed the audience of the shared link"
+    shared_link_settings_change_expiration
+        "(sharing) Changed the expiration date of the shared link"
+    shared_link_settings_change_password
+        "(sharing) Changed the password of the shared link"
+    shared_link_settings_remove_expiration
+        "(sharing) Removed the expiration date from the shared link"
+    shared_link_settings_remove_password
+        "(sharing) Removed the password from the shared link"
+    shared_link_share
+        "(sharing) Added members as audience of shared link"
+    shared_link_view
+        "(sharing) Opened shared link"
+    shared_note_opened
+        "(sharing) Opened shared Paper doc (deprecated, no longer logged)"
+    shmodel_group_share
+        "(sharing) Shared link with group (deprecated, no longer logged)"
+    showcase_access_granted
+        "(showcase) Granted access to showcase"
+    showcase_add_member
+        "(showcase) Added member to showcase"
+    showcase_archived
+        "(showcase) Archived showcase"
+    showcase_created
+        "(showcase) Created showcase"
+    showcase_delete_comment
+        "(showcase) Deleted showcase comment"
+    showcase_edited
+        "(showcase) Edited showcase"
+    showcase_edit_comment
+        "(showcase) Edited showcase comment"
+    showcase_file_added
+        "(showcase) Added file to showcase"
+    showcase_file_download
+        "(showcase) Downloaded file from showcase"
+    showcase_file_removed
+        "(showcase) Removed file from showcase"
+    showcase_file_view
+        "(showcase) Viewed file in showcase"
+    showcase_permanently_deleted
+        "(showcase) Permanently deleted showcase"
+    showcase_post_comment
+        "(showcase) Added showcase comment"
+    showcase_remove_member
+        "(showcase) Removed member from showcase"
+    showcase_renamed
+        "(showcase) Renamed showcase"
+    showcase_request_access
+        "(showcase) Requested access to showcase"
+    showcase_resolve_comment
+        "(showcase) Resolved showcase comment"
+    showcase_restored
+        "(showcase) Unarchived showcase"
+    showcase_trashed
+        "(showcase) Deleted showcase"
+    showcase_trashed_deprecated
+        "(showcase) Deleted showcase (old version) (deprecated, replaced by 'Deleted showcase')"
+    showcase_unresolve_comment
+        "(showcase) Unresolved showcase comment"
+    showcase_untrashed
+        "(showcase) Restored showcase"
+    showcase_untrashed_deprecated
+        "(showcase) Restored showcase (old version) (deprecated, replaced by 'Restored showcase')"
+    showcase_view
+        "(showcase) Viewed showcase"
+    sso_add_cert
+        "(sso) Added X.509 certificate for SSO"
+    sso_add_login_url
+        "(sso) Added sign-in URL for SSO"
+    sso_add_logout_url
+        "(sso) Added sign-out URL for SSO"
+    sso_change_cert
+        "(sso) Changed X.509 certificate for SSO"
+    sso_change_login_url
+        "(sso) Changed sign-in URL for SSO"
+    sso_change_logout_url
+        "(sso) Changed sign-out URL for SSO"
+    sso_change_saml_identity_mode
+        "(sso) Changed SAML identity mode for SSO"
+    sso_remove_cert
+        "(sso) Removed X.509 certificate for SSO"
+    sso_remove_login_url
+        "(sso) Removed sign-in URL for SSO"
+    sso_remove_logout_url
+        "(sso) Removed sign-out URL for SSO"
+    team_folder_change_status
+        "(team_folders) Changed archival status of team folder"
+    team_folder_create
+        "(team_folders) Created team folder in active status"
+    team_folder_downgrade
+        "(team_folders) Downgraded team folder to regular shared folder"
+    team_folder_permanently_delete
+        "(team_folders) Permanently deleted archived team folder"
+    team_folder_rename
+        "(team_folders) Renamed active/archived team folder"
+    team_selective_sync_settings_changed
+        "(team_folders) Changed sync default"
+    account_capture_change_policy
+        "(team_policies) Changed account capture setting on team domain"
+    allow_download_disabled
+        "(team_policies) Disabled downloads (deprecated, no longer logged)"
+    allow_download_enabled
+        "(team_policies) Enabled downloads (deprecated, no longer logged)"
+    camera_uploads_policy_changed
+        "(team_policies) Changed camera uploads setting for team"
+    data_placement_restriction_change_policy
+        "(team_policies) Set restrictions on data center locations where team data resides"
+    data_placement_restriction_satisfy_policy
+        "(team_policies) Completed restrictions on data center locations where team data resides"
+    device_approvals_add_exception
+        "(team_policies) Added members to device approvals exception list"
+    device_approvals_change_desktop_policy
+        "(team_policies) Set/removed limit on number of computers member can link to team Dropbox account"
+    device_approvals_change_mobile_policy
+        "(team_policies) Set/removed limit on number of mobile devices member can link to team Dropbox account"
+    device_approvals_change_overage_action
+        "(team_policies) Changed device approvals setting when member is over limit"
+    device_approvals_change_unlink_action
+        "(team_policies) Changed device approvals setting when member unlinks approved device"
+    device_approvals_remove_exception
+        "(team_policies) Removed members from device approvals exception list"
+    directory_restrictions_add_members
+        "(team_policies) Added members to directory restrictions list"
+    directory_restrictions_remove_members
+        "(team_policies) Removed members from directory restrictions list"
+    emm_add_exception
+        "(team_policies) Added members to EMM exception list"
+    emm_change_policy
+        "(team_policies) Enabled/disabled enterprise mobility management for members"
+    emm_remove_exception
+        "(team_policies) Removed members from EMM exception list"
+    extended_version_history_change_policy
+        "(team_policies) Accepted/opted out of extended version history"
+    file_comments_change_policy
+        "(team_policies) Enabled/disabled commenting on team files"
+    file_locking_policy_changed
+        "(team_policies) Changed file locking policy for team"
+    file_requests_change_policy
+        "(team_policies) Enabled/disabled file requests"
+    file_requests_emails_enabled
+        "(team_policies) Enabled file request emails for everyone (deprecated, no longer logged)"
+    file_requests_emails_restricted_to_team_only
+        "(team_policies) Enabled file request emails for team (deprecated, no longer logged)"
+    file_transfers_policy_changed
+        "(team_policies) Changed file transfers policy for team"
+    google_sso_change_policy
+        "(team_policies) Enabled/disabled Google single sign-on for team"
+    group_user_management_change_policy
+        "(team_policies) Changed who can create groups"
+    integration_policy_changed
+        "(team_policies) Changed integration policy for team"
+    member_requests_change_policy
+        "(team_policies) Changed whether users can find team when not invited"
+    member_send_invite_policy_changed
+        "(team_policies) Changed member send invite policy for team"
+    member_space_limits_add_exception
+        "(team_policies) Added members to member space limit exception list"
+    member_space_limits_change_caps_type_policy
+        "(team_policies) Changed member space limit type for team"
+    member_space_limits_change_policy
+        "(team_policies) Changed team default member space limit"
+    member_space_limits_remove_exception
+        "(team_policies) Removed members from member space limit exception list"
+    member_suggestions_change_policy
+        "(team_policies) Enabled/disabled option for team members to suggest people to add to team"
+    microsoft_office_addin_change_policy
+        "(team_policies) Enabled/disabled Microsoft Office add-in"
+    network_control_change_policy
+        "(team_policies) Enabled/disabled network control"
+    paper_change_deployment_policy
+        "(team_policies) Changed whether Dropbox Paper, when enabled, is deployed to all members or to specific members"
+    paper_change_member_link_policy
+        "(team_policies) Changed whether non-members can view Paper docs with link (deprecated, no longer logged)"
+    paper_change_member_policy
+        "(team_policies) Changed whether members can share Paper docs outside team, and if docs are accessible only by team members or anyone by default"
+    paper_change_policy
+        "(team_policies) Enabled/disabled Dropbox Paper for team"
+    paper_default_folder_policy_changed
+        "(team_policies) Changed Paper Default Folder Policy setting for team"
+    paper_desktop_policy_changed
+        "(team_policies) Enabled/disabled Paper Desktop for team"
+    paper_enabled_users_group_addition
+        "(team_policies) Added users to Paper-enabled users list"
+    paper_enabled_users_group_removal
+        "(team_policies) Removed users from Paper-enabled users list"
+    password_strength_requirements_change_policy
+        "(team_policies) Changed team password strength requirements"
+    permanent_delete_change_policy
+        "(team_policies) Enabled/disabled ability of team members to permanently delete content"
+    reseller_support_change_policy
+        "(team_policies) Enabled/disabled reseller support"
+    rewind_policy_changed
+        "(team_policies) Changed Rewind policy for team"
+    sharing_change_folder_join_policy
+        "(team_policies) Changed whether team members can join shared folders owned outside team"
+    sharing_change_link_policy
+        "(team_policies) Changed whether members can share links outside team, and if links are accessible only by team members or anyone by default"
+    sharing_change_member_policy
+        "(team_policies) Changed whether members can share files/folders outside team"
+    showcase_change_download_policy
+        "(team_policies) Enabled/disabled downloading files from Dropbox Showcase for team"
+    showcase_change_enabled_policy
+        "(team_policies) Enabled/disabled Dropbox Showcase for team"
+    showcase_change_external_sharing_policy
+        "(team_policies) Enabled/disabled sharing Dropbox Showcase externally for team"
+    smarter_smart_sync_policy_changed
+        "(team_policies) Changed automatic Smart Sync setting for team"
+    smart_sync_change_policy
+        "(team_policies) Changed default Smart Sync setting for team members"
+    smart_sync_not_opt_out
+        "(team_policies) Opted team into Smart Sync"
+    smart_sync_opt_out
+        "(team_policies) Opted team out of Smart Sync"
+    sso_change_policy
+        "(team_policies) Changed single sign-on setting for team"
+    team_extensions_policy_changed
+        "(team_policies) Changed App Integrations setting for team"
+    team_selective_sync_policy_changed
+        "(team_policies) Enabled/disabled Team Selective Sync for team"
+    team_sharing_whitelist_subjects_changed
+        "(team_policies) Edited the approved list for sharing externally"
+    tfa_add_exception
+        "(team_policies) Added members to two factor authentication exception list"
+    tfa_change_policy
+        "(team_policies) Changed two-step verification setting for team"
+    tfa_remove_exception
+        "(team_policies) Removed members from two factor authentication exception list"
+    two_account_change_policy
+        "(team_policies) Enabled/disabled option for members to link personal Dropbox account and team account to same computer"
+    viewer_info_policy_changed
+        "(team_policies) Changed team policy for viewer info"
+    watermarking_policy_changed
+        "(team_policies) Changed watermarking policy for team"
+    web_sessions_change_active_session_limit
+        "(team_policies) Changed limit on active sessions per member"
+    web_sessions_change_fixed_length_policy
+        "(team_policies) Changed how long members can stay signed in to Dropbox.com"
+    web_sessions_change_idle_length_policy
+        "(team_policies) Changed how long team members can be idle while signed in to Dropbox.com"
+    team_merge_from
+        "(team_profile) Merged another team into this team"
+    team_merge_to
+        "(team_profile) Merged this team into another team"
+    team_profile_add_logo
+        "(team_profile) Added team logo to display on shared link headers"
+    team_profile_change_default_language
+        "(team_profile) Changed default language for team"
+    team_profile_change_logo
+        "(team_profile) Changed team logo displayed on shared link headers"
+    team_profile_change_name
+        "(team_profile) Changed team name"
+    team_profile_remove_logo
+        "(team_profile) Removed team logo displayed on shared link headers"
+    tfa_add_backup_phone
+        "(tfa) Added backup phone for two-step verification"
+    tfa_add_security_key
+        "(tfa) Added security key for two-step verification"
+    tfa_change_backup_phone
+        "(tfa) Changed backup phone for two-step verification"
+    tfa_change_status
+        "(tfa) Enabled/disabled/changed two-step verification setting"
+    tfa_remove_backup_phone
+        "(tfa) Removed backup phone for two-step verification"
+    tfa_remove_security_key
+        "(tfa) Removed security key for two-step verification"
+    tfa_reset
+        "(tfa) Reset two-step verification for team member"
+    changed_enterprise_admin_role
+        "(trusted_teams) Changed enterprise admin role"
+    changed_enterprise_connected_team_status
+        "(trusted_teams) Changed enterprise-connected team status"
+    ended_enterprise_admin_session
+        "(trusted_teams) Ended enterprise admin session"
+    ended_enterprise_admin_session_deprecated
+        "(trusted_teams) Ended enterprise admin session (deprecated, replaced by 'Ended enterprise admin session')"
+    enterprise_settings_locking
+        "(trusted_teams) Changed who can update a setting"
+    guest_admin_change_status
+        "(trusted_teams) Changed guest team admin status"
+    started_enterprise_admin_session
+        "(trusted_teams) Started enterprise admin session"
+    team_merge_request_accepted
+        "(trusted_teams) Accepted a team merge request"
+    team_merge_request_accepted_shown_to_primary_team
+        "(trusted_teams) Accepted a team merge request (deprecated, replaced by 'Accepted a team merge request')"
+    team_merge_request_accepted_shown_to_secondary_team
+        "(trusted_teams) Accepted a team merge request (deprecated, replaced by 'Accepted a team merge request')"
+    team_merge_request_auto_canceled
+        "(trusted_teams) Automatically canceled team merge request"
+    team_merge_request_canceled
+        "(trusted_teams) Canceled a team merge request"
+    team_merge_request_canceled_shown_to_primary_team
+        "(trusted_teams) Canceled a team merge request (deprecated, replaced by 'Canceled a team merge request')"
+    team_merge_request_canceled_shown_to_secondary_team
+        "(trusted_teams) Canceled a team merge request (deprecated, replaced by 'Canceled a team merge request')"
+    team_merge_request_expired
+        "(trusted_teams) Team merge request expired"
+    team_merge_request_expired_shown_to_primary_team
+        "(trusted_teams) Team merge request expired (deprecated, replaced by 'Team merge request expired')"
+    team_merge_request_expired_shown_to_secondary_team
+        "(trusted_teams) Team merge request expired (deprecated, replaced by 'Team merge request expired')"
+    team_merge_request_rejected_shown_to_primary_team
+        "(trusted_teams) Rejected a team merge request (deprecated, no longer logged)"
+    team_merge_request_rejected_shown_to_secondary_team
+        "(trusted_teams) Rejected a team merge request (deprecated, no longer logged)"
+    team_merge_request_reminder
+        "(trusted_teams) Sent a team merge request reminder"
+    team_merge_request_reminder_shown_to_primary_team
+        "(trusted_teams) Sent a team merge request reminder (deprecated, replaced by 'Sent a team merge request reminder')"
+    team_merge_request_reminder_shown_to_secondary_team
+        "(trusted_teams) Sent a team merge request reminder (deprecated, replaced by 'Sent a team merge request reminder')"
+    team_merge_request_revoked
+        "(trusted_teams) Canceled the team merge"
+    team_merge_request_sent_shown_to_primary_team
+        "(trusted_teams) Requested to merge their Dropbox team into yours"
+    team_merge_request_sent_shown_to_secondary_team
+        "(trusted_teams) Requested to merge your team into another Dropbox team"
+
+    example default
+        shared_content_download = null
 
 
 struct TeamEvent
