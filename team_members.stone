@@ -537,7 +537,7 @@ struct MembersRemoveArg extends MembersDeactivateArg
         "Downgrade the member to a Basic account. The user will retain the email address associated with their Dropbox
          account and data in their account that is not restricted to team members. In order to keep the account the argument :field:`wipe_data` should be set to :val:`false`."
     retain_team_shares Boolean = false
-        "If provided, allows removed users to keep access to folders already explicitly shared with them (not via a group) when they are downgraded to a Basic account.
+        "If provided, allows removed users to keep access to Dropbox folders (not Dropbox Paper folders) already explicitly shared with them (not via a group) when they are downgraded to a Basic account.
         Users will not retain access to folders that do not allow external sharing. In order to keep the sharing relationships,
         the arguments :field:`wipe_data` should be set to :val:`false` and :field:`keep_account` should be set to :val:`true`."
 

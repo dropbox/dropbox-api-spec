@@ -49,11 +49,13 @@ struct LegalHoldPolicy
     activation_time common.DropboxTimestamp?
         "The time at which the legal hold was activated."
     members MembersInfo
+        "Team members IDs and number of permanetly deleted members under hold."
     status LegalHoldStatus
+        "The current state of the hold."
     start_date common.DropboxTimestamp
-        "start date of the legal hold policy."
+        "Start date of the legal hold policy."
     end_date common.DropboxTimestamp?
-        "end date of the legal hold policy."
+        "End date of the legal hold policy."
 
     example default
         id = "pid_dbhid:abcd1234"
@@ -183,7 +185,7 @@ union LegalHoldsListHeldRevisionsError extends LegalHoldsError
     transient_error
         "Temporary infrastructure failure, please retry."
     legal_hold_still_empty
-        "The legal hold is not holding any revisions yet"
+        "The legal hold is not holding any revisions yet."
     inactive_legal_hold
         "Trying to list revisions for an inactive legal hold."
 
@@ -226,17 +228,23 @@ alias ListHeldRevisionCursor = String(min_length=1)
 
 struct LegalHoldsListHeldRevisionResult
     entries List(LegalHoldHeldRevisionMetadata)
-        "Entries list."
+        "List of file entries that under the hold."
     cursor ListHeldRevisionCursor?
-        "List held revisions cursor."
+        "The cursor idicates where to continue reading file metadata entries for the next API call. When there are no more entries, the cursor will return none.
+
+        Pass the cursor into
+        /2/team/legal_holds/list_held_revisions/continue."
     has_more Boolean
-        "Has more."
+        "True if there are more file entries that haven't been returned. You can retrieve them with a call to /legal_holds/list_held_revisions_continue."
 
     example default
         entries = [default]
         has_more = false
 
 route legal_holds/list_held_revisions(LegalHoldsListHeldRevisionsArg, LegalHoldsListHeldRevisionResult, LegalHoldsListHeldRevisionsError)
+    "List the file metadata that's under the hold.
+
+    Permission : Team member file access."
 
     attrs
         auth = "team"
@@ -251,7 +259,7 @@ struct LegalHoldsListHeldRevisionsContinueArg
     id LegalHoldId
         "The legal hold Id."
     cursor ListHeldRevisionCursor?
-        "cursor of list held revisions."
+        "The cursor idicates where to continue reading file metadata entries for the next API call. When there are no more entries, the cursor will return none."
     example default
         id = "pid_dbhid:abcd1234"
 
@@ -265,6 +273,9 @@ union LegalHoldsListHeldRevisionsContinueError
         :route:`legal_holds/list_held_revisions_continue` again with an empty cursor to obtain a new cursor."
 
 route legal_holds/list_held_revisions_continue(LegalHoldsListHeldRevisionsContinueArg, LegalHoldsListHeldRevisionResult, LegalHoldsListHeldRevisionsError)
+    "Continue listing the file metadata that's under the hold.
+
+    Permission : Team member file access."
 
     attrs
         auth = "team"

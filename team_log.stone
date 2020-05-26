@@ -16,16 +16,20 @@ struct GetTeamEventsArg
         :field:`limit` number of events, and may even return no events, even with `has_more` set to true.
         In this case, callers should fetch again using :route:`get_events/continue`."
     account_id users_common.AccountId?
-        "Filter the events by account ID. Return ony events with this account_id as either
+        "Filter the events by account ID. Return only events with this account_id as either
         Actor, Context, or Participants."
     time team_common.TimeRange?
         "Filter by time range."
     category EventCategory?
         "Filter the returned events to a single category."
+    event_type EventTypeArg?
+        "Filter the returned events to a single event type. Note that event_type shouldn't be provided
+        together with category."
 
     example default
         limit=50
         category=groups
+        event_type=login_success
 
 # This is used only for `json_encode` in metaserver/tests/util/event_helper.py
 # simply because I don't know how to use the list.
@@ -61,6 +65,8 @@ union GetTeamEventsError
         "No user found matching the provided account_id."
     invalid_time_range
         "Invalid time range."
+    invalid_filters
+        "Invalid filters. event_type and category should not be provided together."
 
     example default
         account_id_not_found = null
