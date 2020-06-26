@@ -121,8 +121,8 @@ struct RevokeLinkedApiAppArg
     team_member_id String
         "The unique id of the member owning the device."
     keep_app_folder Boolean = true
-        "Whether to keep the application dedicated folder (in case the application uses
-         one)."
+        "This flag is not longer supported, the application dedicated folder (in case the application uses
+         one) will be kept."
 
 union RevokeLinkedAppError
     "Error returned by :route:`linked_apps/revoke_linked_app`."
@@ -131,6 +131,9 @@ union RevokeLinkedAppError
         "Application not found."
     member_not_found
         "Member not found."
+    app_folder_removal_not_supported
+        "App folder removal is not supported."
+
 
 #
 # Route: linked_apps/revoke_linked_app

@@ -21,7 +21,8 @@ struct GetTeamEventsArg
     time team_common.TimeRange?
         "Filter by time range."
     category EventCategory?
-        "Filter the returned events to a single category."
+        "Filter the returned events to a single category. Note that category shouldn't be provided
+        together with event_type."
     event_type EventTypeArg?
         "Filter the returned events to a single event type. Note that event_type shouldn't be provided
         together with category."
@@ -29,7 +30,6 @@ struct GetTeamEventsArg
     example default
         limit=50
         category=groups
-        event_type=login_success
 
 # This is used only for `json_encode` in metaserver/tests/util/event_helper.py
 # simply because I don't know how to use the list.
@@ -66,7 +66,7 @@ union GetTeamEventsError
     invalid_time_range
         "Invalid time range."
     invalid_filters
-        "Invalid filters. event_type and category should not be provided together."
+        "Invalid filters. Do not specify both event_type and category parameters for the same call."
 
     example default
         account_id_not_found = null
