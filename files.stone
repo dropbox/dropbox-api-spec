@@ -1181,11 +1181,14 @@ struct SearchResult
 union SearchError
     path LookupError
     invalid_argument String?
+    internal_error
+        "Something went wrong, please try again."
 
 route search (SearchArg, SearchResult, SearchError) deprecated by search:2
     "Searches for files and folders.
 
-    Note: Recent changes may not immediately be reflected in search results due to a short delay in indexing."
+    Note: Recent changes will be reflected in search results within a few seconds
+    and older revisions of existing files may still match your query for up to a few days."
 
     attrs
         allow_app_folder_app = true
@@ -1215,7 +1218,11 @@ struct SearchV2Arg
     options SearchOptions?
         "Options for more targeted search results."
 
+    match_field_options SearchMatchFieldOptions?
+        "Options for search results match fields."
+
     include_highlights Boolean = false
+        "Deprecated and moved this option to SearchMatchFieldOptions."
 
     example default
         query = "cat"
@@ -1243,6 +1250,11 @@ struct SearchOptions
     example default
         path = ""
         max_results = 20
+
+struct SearchMatchFieldOptions
+
+    include_highlights Boolean = false
+        "Whether to include highlight span from file title."
 
 # both -- maybe supported in the future
 union FileStatus
@@ -1330,7 +1342,7 @@ struct SearchMatchV2
         "The metadata for the matched file or folder."
 
     highlight_spans List(HighlightSpan)?
-        "The list of HighlightSpan determines which parts of the result should be highlighted."
+        "The list of HighlightSpan determines which parts of the file title should be highlighted."
 
     example default
         metadata = default
@@ -1357,6 +1369,8 @@ union LookupError
         sometimes there are legal restrictions due to copyright claims."
     unsupported_content_type
         "This operation is not supported for this content type."
+    locked
+        "The given path is locked."
 
 union WriteError
     malformed_path MalformedPathError
@@ -1716,6 +1730,12 @@ union RelocationError
         again. This should happen very rarely."
     cant_move_shared_folder
         "Can't move the shared folder to the given destination."
+    cant_move_into_vault MoveIntoVaultError
+        "Some content cannot be moved into Vault under certain circumstances, see detailed error."
+
+union MoveIntoVaultError
+    is_shared_folder
+        "Moving shared folder into Vault is not allowed."
 
 struct RelocationResult extends FileOpsResult
     metadata Metadata
@@ -2426,7 +2446,7 @@ struct GetTemporaryUploadLinkResult
         "The temporary link which can be used to stream a file to a Dropbox location."
 
     example default
-        link = "https://dl.dropboxusercontent.com/apitul/1/bNi2uIYF51cVBND"
+        link = "https://content.dropboxapi.com/apitul/1/bNi2uIYF51cVBND"
 
 route get_temporary_upload_link(GetTemporaryUploadLinkArg, GetTemporaryUploadLinkResult, Void)
     "Get a one-time use temporary upload link to upload a file to a Dropbox location.
@@ -2450,7 +2470,7 @@ route get_temporary_upload_link(GetTemporaryUploadLinkArg, GetTemporaryUploadLin
     Example temporary upload link consumption request:
 
 
-    curl -X POST https://dl.dropboxusercontent.com/apitul/1/bNi2uIYF51cVBND
+    curl -X POST https://content.dropboxapi.com/apitul/1/bNi2uIYF51cVBND
 
     --header \"Content-Type: application/octet-stream\"
 

@@ -735,6 +735,8 @@ union SharePathError
         "We do not support sharing a Mac OS X package."
     inside_osx_package
         "We do not support sharing a folder inside a Mac OS X package."
+    is_vault
+        "We do not support sharing the Vault folder."
 
 # --
 
@@ -1010,6 +1012,8 @@ union AddFolderMemberError
         "This action cannot be performed on a team shared folder."
     no_permission
         "The current user does not have permission to perform this action."
+    invalid_shared_folder
+        "Invalid shared folder error will be returned as an access_error."
 
     example default
         no_permission = null

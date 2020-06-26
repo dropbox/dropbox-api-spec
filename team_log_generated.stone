@@ -3,14 +3,14 @@
 
 namespace team_log
 
-import async
 import common
-import team_common
-import users_common
 import file_requests
 import files
-import team_policies
 import sharing
+import team
+import team_common
+import team_policies
+import users_common
 
 alias FilePath = String
 alias NamespaceId = String
@@ -96,7 +96,7 @@ union ActionDetails
     example default2
         team_join_details = default2
 
-struct TeamInviteDetails 
+struct TeamInviteDetails
     "Details about team invites"
 
     invite_method InviteMethod
@@ -110,6 +110,8 @@ struct TeamInviteDetails
 
 union InviteMethod
     invite_link
+    auto_approve
+    moved_from_another_team
 
 union MemberRemoveActionType
     delete
@@ -117,7 +119,7 @@ union MemberRemoveActionType
     leave
     offboard_and_retain_team_folders
 
-struct JoinTeamDetails 
+struct JoinTeamDetails
     "Additional information relevant when a new member joins the team."
 
     linked_apps List(UserLinkedAppLogInfo)
@@ -191,7 +193,7 @@ union CameraUploadsPolicy
     disabled
     enabled
 
-struct Certificate 
+struct Certificate
     "Certificate details."
 
     subject String
@@ -255,7 +257,7 @@ union ExtendedVersionHistoryPolicy
     implicitly_limited
     implicitly_unlimited
 
-struct FailureDetailsLogInfo 
+struct FailureDetailsLogInfo
     "Provides details about a failure"
 
     user_friendly_message String?
@@ -289,7 +291,7 @@ union FedExtraDetails
     example default2
         team = default2
 
-struct OrganizationDetails 
+struct OrganizationDetails
     "More details about the organization."
 
     organization String
@@ -301,7 +303,7 @@ struct OrganizationDetails
     example default2
         organization = "My Organization"
 
-struct TeamDetails 
+struct TeamDetails
     "More details about the team."
 
     team String
@@ -337,7 +339,7 @@ union FederationStatusChangeAdditionalInfo
     example default2
         connected_team_name = default2
 
-struct OrganizationName 
+struct OrganizationName
     "The name of the organization"
 
     organization String
@@ -349,7 +351,7 @@ struct OrganizationName
     example default2
         organization = "My Organization"
 
-struct NonTrustedTeamDetails 
+struct NonTrustedTeamDetails
     "The email to which the request was sent"
 
     team String
@@ -361,7 +363,7 @@ struct NonTrustedTeamDetails
     example default2
         team = "xyz"
 
-struct ConnectedTeamName 
+struct ConnectedTeamName
     "The name of the team"
 
     team String
@@ -383,7 +385,7 @@ union FileCommentsPolicy
     disabled
     enabled
 
-struct FileRequestDetails 
+struct FileRequestDetails
     "File request details"
 
     asset_index UInt64
@@ -399,7 +401,7 @@ struct FileRequestDetails
         asset_index = 4
         deadline = default2
 
-struct FileRequestDeadline 
+struct FileRequestDeadline
     "File request deadline"
 
     deadline common.DropboxTimestamp?
@@ -425,7 +427,7 @@ union FileTransfersPolicy
     disabled
     enabled
 
-struct GeoLocationLogInfo 
+struct GeoLocationLogInfo
     "Geographic location details."
 
     city String?
@@ -499,6 +501,7 @@ union MemberStatus
     active
     suspended
     removed
+    moved_to_another_team
 
 union MemberSuggestionsPolicy
     "Member suggestions policy"
@@ -553,7 +556,7 @@ union PlacementRestriction
     japan_only
     none
 
-struct RelocateAssetReferencesLogInfo 
+struct RelocateAssetReferencesLogInfo
     "Provides the indices of the source asset and the destination asset for a relocate action."
 
     src_asset_index UInt64
@@ -583,6 +586,11 @@ union SecondaryMailsPolicy
     disabled
     enabled
 
+union SendForSignaturePolicy
+    "Policy for controlling team access to send for signature feature"
+    disabled
+    enabled
+
 union SharedFolderMembersInheritancePolicy
     "Specifies if a shared folder inherits its members from the parent folder."
     inherit_members
@@ -596,6 +604,7 @@ union SharedLinkAccessLevel
 
 union SharedLinkVisibility
     "Defines who has access to a shared link."
+    no_one
     password
     public
     team_only
@@ -617,7 +626,7 @@ union SharingMemberPolicy
     forbid
     forbid_with_exclusions
 
-struct ShowcaseDocumentLogInfo 
+struct ShowcaseDocumentLogInfo
     "Showcase document's logged information."
 
     showcase_id String
@@ -668,7 +677,7 @@ union TeamExtensionsPolicy
     disabled
     enabled
 
-struct TeamLogInfo 
+struct TeamLogInfo
     "Team's logged information."
 
     display_name String
@@ -698,7 +707,7 @@ union TeamMergeRequestAcceptedExtraDetails
     example default2
         primary_team = default2
 
-struct SecondaryTeamRequestAcceptedDetails 
+struct SecondaryTeamRequestAcceptedDetails
     "Team merge request acceptance details shown to the secondary team"
 
     primary_team String
@@ -714,7 +723,7 @@ struct SecondaryTeamRequestAcceptedDetails
         primary_team = "IT Department"
         sent_by = "Dan Eveninglily"
 
-struct PrimaryTeamRequestAcceptedDetails 
+struct PrimaryTeamRequestAcceptedDetails
     "Team merge request acceptance details shown to the primary team"
 
     secondary_team String
@@ -744,7 +753,7 @@ union TeamMergeRequestCanceledExtraDetails
     example default2
         primary_team = default2
 
-struct SecondaryTeamRequestCanceledDetails 
+struct SecondaryTeamRequestCanceledDetails
     "Team merge request cancellation details shown to the secondary team"
 
     sent_to String
@@ -760,7 +769,7 @@ struct SecondaryTeamRequestCanceledDetails
         sent_to = "admin@it_department.com"
         sent_by = "Dan Eveninglily"
 
-struct PrimaryTeamRequestCanceledDetails 
+struct PrimaryTeamRequestCanceledDetails
     "Team merge request cancellation details shown to the primary team"
 
     secondary_team String
@@ -790,7 +799,7 @@ union TeamMergeRequestExpiredExtraDetails
     example default2
         primary_team = default2
 
-struct SecondaryTeamRequestExpiredDetails 
+struct SecondaryTeamRequestExpiredDetails
     "Team merge request expiration details shown to the secondary team"
 
     sent_to String
@@ -802,7 +811,7 @@ struct SecondaryTeamRequestExpiredDetails
     example default2
         sent_to = "admin@it_department.com"
 
-struct PrimaryTeamRequestExpiredDetails 
+struct PrimaryTeamRequestExpiredDetails
     "Team merge request expiration details shown to the primary team"
 
     secondary_team String
@@ -832,7 +841,7 @@ union TeamMergeRequestReminderExtraDetails
     example default2
         primary_team = default2
 
-struct SecondaryTeamRequestReminderDetails 
+struct SecondaryTeamRequestReminderDetails
     "Team merge request reminder details shown to the secondary team"
 
     sent_to String
@@ -844,7 +853,7 @@ struct SecondaryTeamRequestReminderDetails
     example default2
         sent_to = "admin@it_department.com"
 
-struct PrimaryTeamRequestReminderDetails 
+struct PrimaryTeamRequestReminderDetails
     "Team merge request reminder details shown to the primary team"
 
     secondary_team String
@@ -860,7 +869,7 @@ struct PrimaryTeamRequestReminderDetails
         secondary_team = "IT Department"
         sent_to = "Dan Eveninglily"
 
-struct TeamName 
+struct TeamName
     "Team name details"
 
     team_display_name String
@@ -941,7 +950,7 @@ union TwoAccountPolicy
     disabled
     enabled
 
-struct UserNameLogInfo 
+struct UserNameLogInfo
     "User's name logged information"
 
     given_name String
@@ -998,7 +1007,7 @@ union WebSessionsIdleLengthPolicy
 # Built-in types
 ##################
 
-struct ApiSessionLogInfo 
+struct ApiSessionLogInfo
     "Api session."
 
     request_id RequestId
@@ -1010,7 +1019,7 @@ struct ApiSessionLogInfo
     example default2
         request_id = "dbarid:f451ce673cc5da6818aed4c160a3ebaa"
 
-struct AppLogInfo 
+struct AppLogInfo
     "App's logged information."
     union
         user_or_team_linked_app UserOrTeamLinkedAppLogInfo
@@ -1037,7 +1046,7 @@ struct DesktopSessionLogInfo extends SessionLogInfo
     example default2
         session_id = "dbwsid:abcd5678901234567890123456789012345abcd"
 
-struct DeviceSessionLogInfo 
+struct DeviceSessionLogInfo
     "Device's session logged information."
     union
         desktop_device_session DesktopDeviceSessionLogInfo
@@ -1214,7 +1223,7 @@ struct LegacyDeviceSessionLogInfo extends DeviceSessionLogInfo
         client_version = "xyz"
         legacy_uniq_id = "xyz"
 
-struct SessionLogInfo 
+struct SessionLogInfo
     "Session's logged information."
     union
         web WebSessionLogInfo
@@ -1230,7 +1239,7 @@ struct SessionLogInfo
     example default2
         web = default2
 
-struct UserLogInfo 
+struct UserLogInfo
     "User's logged information."
     union
         team_member TeamMemberLogInfo
@@ -1309,7 +1318,7 @@ struct TeamLinkedAppLogInfo extends AppLogInfo
         app_id = "dbaid:AAG1NxJeBtby__IZENPAvDGeOssreFpPALE"
         display_name = "xyz"
 
-struct FileOrFolderLogInfo 
+struct FileOrFolderLogInfo
     "Generic information relevant both for files and folders"
 
     path PathLogInfo
@@ -1368,7 +1377,7 @@ struct FolderLogInfo extends FileOrFolderLogInfo
         file_size = 4
         file_count = 4
 
-struct GroupLogInfo 
+struct GroupLogInfo
     "Group's logged information."
 
     group_id team_common.GroupId?
@@ -1388,7 +1397,7 @@ struct GroupLogInfo
         display_name = "xyz"
         external_id = "another group id"
 
-struct PathLogInfo 
+struct PathLogInfo
     "Path's details."
 
     contextual FilePath?
@@ -1404,7 +1413,7 @@ struct PathLogInfo
         contextual = "/Contract Work/Draft"
         namespace_relative = default2
 
-struct PaperDocumentLogInfo 
+struct PaperDocumentLogInfo
     "Paper document's logged information."
 
     doc_id String
@@ -1420,7 +1429,7 @@ struct PaperDocumentLogInfo
         doc_id = "xyz"
         doc_title = "xyz"
 
-struct PaperFolderLogInfo 
+struct PaperFolderLogInfo
     "Paper folder's logged information."
 
     folder_id String
@@ -1449,7 +1458,7 @@ struct NonTeamMemberLogInfo extends UserLogInfo
         display_name = "Jane Smith"
         email = "jane_smith@acmecorp.com"
 
-struct NamespaceRelativePathLogInfo 
+struct NamespaceRelativePathLogInfo
     "Namespace relative path details."
 
     ns_id NamespaceId?
@@ -1487,7 +1496,7 @@ struct MobileSessionLogInfo extends SessionLogInfo
     example default2
         session_id = "dbwsid:abcd5678901234567890123456789012345abcd"
 
-struct ResellerLogInfo 
+struct ResellerLogInfo
     "Reseller information."
 
     reseller_name String
@@ -1503,7 +1512,7 @@ struct ResellerLogInfo
         reseller_name = "xyz"
         reseller_email = "jane_smith@acmecorp.com"
 
-struct OriginLogInfo 
+struct OriginLogInfo
     "The origin from which the actor performed the action."
 
     geo_location GeoLocationLogInfo?
@@ -1519,7 +1528,7 @@ struct OriginLogInfo
         geo_location = default2
         access_method = default2
 
-struct DurationLogInfo 
+struct DurationLogInfo
     "Represents a time duration: unit and amount"
 
     unit TimeUnit
@@ -1535,7 +1544,7 @@ struct DurationLogInfo
         unit = milliseconds
         amount = 4
 
-struct ExternalUserLogInfo 
+struct ExternalUserLogInfo
     "A user without a Dropbox account."
 
     user_identifier String
@@ -1551,7 +1560,7 @@ struct ExternalUserLogInfo
         user_identifier = "david@example.com"
         identifier_type = email
 
-struct MissingDetails 
+struct MissingDetails
     "An indication that an error occurred while retrieving the event. Some attributes of the event may be omitted as a result."
 
     source_event_fields String?
@@ -2707,11 +2716,17 @@ struct MemberChangeStatusDetails
     action ActionDetails?
         "Additional information indicating the action taken
 that caused status change."
+    new_team String?
+        "The user's new team name. This field is relevant when the user is transferred off the team."
+    previous_team String?
+        "The user's previous team name. This field is relevant when the user is transferred onto the team."
 
     example default
         previous_value = not_joined
         new_value = not_joined
         action = default
+        new_team = "abc"
+        previous_team = "abc"
 
 struct MemberDeleteManualContactsDetails
     "Cleared manually added contacts."
@@ -3399,6 +3414,18 @@ struct ExportMembersReportDetails
 
 struct ExportMembersReportFailDetails
     "Failed to create members data report."
+
+    failure_reason team.TeamReportFailureReason
+        "Failure reason."
+
+    example default
+        failure_reason = temporary_error
+
+struct ExternalSharingCreateReportDetails
+    "Report created: Data shared outside the team."
+
+struct ExternalSharingReportFailedDetails
+    "Couldn't create report: Data shared outside the team."
 
     failure_reason team.TeamReportFailureReason
         "Failure reason."
@@ -4753,6 +4780,18 @@ struct CameraUploadsPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct ContentAdministrationPolicyChangedDetails
+    "Changed content management setting."
+
+    new_value String
+        "New content administration policy."
+    previous_value String
+        "Previous content administration policy."
+
+    example default
+        new_value = "abc"
+        previous_value = "abc"
+
 struct DataPlacementRestrictionChangePolicyDetails
     "Set restrictions on data center locations where team data resides."
 
@@ -5169,6 +5208,18 @@ struct RewindPolicyChangedDetails
     example default
         new_value = admins_only
         previous_value = admins_only
+
+struct SendForSignaturePolicyChangedDetails
+    "Changed send for signature policy for team."
+
+    new_value SendForSignaturePolicy
+        "New send for signature policy."
+    previous_value SendForSignaturePolicy
+        "Previous send for signature policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
 
 struct SharingChangeFolderJoinPolicyDetails
     "Changed whether team members can join shared folders owned outside team."
@@ -5983,6 +6034,8 @@ union EventDetails
     emm_create_usage_report_details EmmCreateUsageReportDetails
     export_members_report_details ExportMembersReportDetails
     export_members_report_fail_details ExportMembersReportFailDetails
+    external_sharing_create_report_details ExternalSharingCreateReportDetails
+    external_sharing_report_failed_details ExternalSharingReportFailedDetails
     no_expiration_link_gen_create_report_details NoExpirationLinkGenCreateReportDetails
     no_expiration_link_gen_report_failed_details NoExpirationLinkGenReportFailedDetails
     no_password_link_gen_create_report_details NoPasswordLinkGenCreateReportDetails
@@ -6119,6 +6172,7 @@ union EventDetails
     allow_download_disabled_details AllowDownloadDisabledDetails
     allow_download_enabled_details AllowDownloadEnabledDetails
     camera_uploads_policy_changed_details CameraUploadsPolicyChangedDetails
+    content_administration_policy_changed_details ContentAdministrationPolicyChangedDetails
     data_placement_restriction_change_policy_details DataPlacementRestrictionChangePolicyDetails
     data_placement_restriction_satisfy_policy_details DataPlacementRestrictionSatisfyPolicyDetails
     device_approvals_add_exception_details DeviceApprovalsAddExceptionDetails
@@ -6163,6 +6217,7 @@ union EventDetails
     permanent_delete_change_policy_details PermanentDeleteChangePolicyDetails
     reseller_support_change_policy_details ResellerSupportChangePolicyDetails
     rewind_policy_changed_details RewindPolicyChangedDetails
+    send_for_signature_policy_changed_details SendForSignaturePolicyChangedDetails
     sharing_change_folder_join_policy_details SharingChangeFolderJoinPolicyDetails
     sharing_change_link_policy_details SharingChangeLinkPolicyDetails
     sharing_change_member_policy_details SharingChangeMemberPolicyDetails
@@ -7328,6 +7383,18 @@ struct ExportMembersReportFailType
     example default
         description = "(reports) Failed to create members data report"
 
+struct ExternalSharingCreateReportType
+    description String
+
+    example default
+        description = "(reports) Report created: Data shared outside the team"
+
+struct ExternalSharingReportFailedType
+    description String
+
+    example default
+        description = "(reports) Couldn't create report: Data shared outside the team"
+
 struct NoExpirationLinkGenCreateReportType
     description String
 
@@ -8144,6 +8211,12 @@ struct CameraUploadsPolicyChangedType
     example default
         description = "(team_policies) Changed camera uploads setting for team"
 
+struct ContentAdministrationPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed content management setting"
+
 struct DataPlacementRestrictionChangePolicyType
     description String
 
@@ -8407,6 +8480,12 @@ struct RewindPolicyChangedType
 
     example default
         description = "(team_policies) Changed Rewind policy for team"
+
+struct SendForSignaturePolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed send for signature policy for team"
 
 struct SharingChangeFolderJoinPolicyType
     description String
@@ -9148,6 +9227,10 @@ union EventType
         "(reports) Created member data report"
     export_members_report_fail ExportMembersReportFailType
         "(reports) Failed to create members data report"
+    external_sharing_create_report ExternalSharingCreateReportType
+        "(reports) Report created: Data shared outside the team"
+    external_sharing_report_failed ExternalSharingReportFailedType
+        "(reports) Couldn't create report: Data shared outside the team"
     no_expiration_link_gen_create_report NoExpirationLinkGenCreateReportType
         "(reports) Report created: Links created with no expiration"
     no_expiration_link_gen_report_failed NoExpirationLinkGenReportFailedType
@@ -9420,6 +9503,8 @@ union EventType
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
     camera_uploads_policy_changed CameraUploadsPolicyChangedType
         "(team_policies) Changed camera uploads setting for team"
+    content_administration_policy_changed ContentAdministrationPolicyChangedType
+        "(team_policies) Changed content management setting"
     data_placement_restriction_change_policy DataPlacementRestrictionChangePolicyType
         "(team_policies) Set restrictions on data center locations where team data resides"
     data_placement_restriction_satisfy_policy DataPlacementRestrictionSatisfyPolicyType
@@ -9508,6 +9593,8 @@ union EventType
         "(team_policies) Enabled/disabled reseller support"
     rewind_policy_changed RewindPolicyChangedType
         "(team_policies) Changed Rewind policy for team"
+    send_for_signature_policy_changed SendForSignaturePolicyChangedType
+        "(team_policies) Changed send for signature policy for team"
     sharing_change_folder_join_policy SharingChangeFolderJoinPolicyType
         "(team_policies) Changed whether team members can join shared folders owned outside team"
     sharing_change_link_policy SharingChangeLinkPolicyType
@@ -10004,6 +10091,10 @@ union EventTypeArg
         "(reports) Created member data report"
     export_members_report_fail
         "(reports) Failed to create members data report"
+    external_sharing_create_report
+        "(reports) Report created: Data shared outside the team"
+    external_sharing_report_failed
+        "(reports) Couldn't create report: Data shared outside the team"
     no_expiration_link_gen_create_report
         "(reports) Report created: Links created with no expiration"
     no_expiration_link_gen_report_failed
@@ -10276,6 +10367,8 @@ union EventTypeArg
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
     camera_uploads_policy_changed
         "(team_policies) Changed camera uploads setting for team"
+    content_administration_policy_changed
+        "(team_policies) Changed content management setting"
     data_placement_restriction_change_policy
         "(team_policies) Set restrictions on data center locations where team data resides"
     data_placement_restriction_satisfy_policy
@@ -10364,6 +10457,8 @@ union EventTypeArg
         "(team_policies) Enabled/disabled reseller support"
     rewind_policy_changed
         "(team_policies) Changed Rewind policy for team"
+    send_for_signature_policy_changed
+        "(team_policies) Changed send for signature policy for team"
     sharing_change_folder_join_policy
         "(team_policies) Changed whether team members can join shared folders owned outside team"
     sharing_change_link_policy

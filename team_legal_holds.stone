@@ -76,7 +76,7 @@ struct LegalHoldsPolicyCreateArg
     description LegalHoldPolicyDescription?
         "A description of the legal hold policy."
     members List(team_common.TeamMemberId)
-        "List of team members added to the hold."
+        "List of team member IDs added to the hold."
     start_date common.DropboxTimestamp?
         "start date of the legal hold policy."
     end_date common.DropboxTimestamp?
@@ -108,6 +108,7 @@ alias LegalHoldsPolicyCreateResult = LegalHoldPolicy
 
 route legal_holds/create_policy(LegalHoldsPolicyCreateArg, LegalHoldsPolicyCreateResult, LegalHoldsPolicyCreateError)
     "Creates new legal hold policy.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
 
     Permission : Team member file access."
 
@@ -133,6 +134,7 @@ union LegalHoldsGetPolicyError extends LegalHoldsError
 
 route legal_holds/get_policy(LegalHoldsGetPolicyArg, LegalHoldsGetPolicyResult, LegalHoldsGetPolicyError)
     "Gets a legal hold by Id.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
 
     Permission : Team member file access."
 
@@ -163,6 +165,7 @@ union LegalHoldsListPoliciesError extends LegalHoldsError
 
 route legal_holds/list_policies(LegalHoldsListPoliciesArg, LegalHoldsListPoliciesResult, LegalHoldsListPoliciesError)
     "Lists legal holds on a team.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
 
     Permission : Team member file access."
 
@@ -243,6 +246,7 @@ struct LegalHoldsListHeldRevisionResult
 
 route legal_holds/list_held_revisions(LegalHoldsListHeldRevisionsArg, LegalHoldsListHeldRevisionResult, LegalHoldsListHeldRevisionsError)
     "List the file metadata that's under the hold.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
 
     Permission : Team member file access."
 
@@ -274,6 +278,7 @@ union LegalHoldsListHeldRevisionsContinueError
 
 route legal_holds/list_held_revisions_continue(LegalHoldsListHeldRevisionsContinueArg, LegalHoldsListHeldRevisionResult, LegalHoldsListHeldRevisionsError)
     "Continue listing the file metadata that's under the hold.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
 
     Permission : Team member file access."
 
@@ -292,8 +297,8 @@ struct LegalHoldsPolicyUpdateArg
         "Policy new name."
     description LegalHoldPolicyDescription?
         "Policy new description."
-    members List(team_common.TeamMemberId)
-        "List of team members to apply the policy on."
+    members List(team_common.TeamMemberId)?
+        "List of team member IDs to apply the policy on."
     example default
         id = "pid_dbhid:abcd1234"
         members = ["dbmid:FDFSVF-DFSDF"]
@@ -319,6 +324,7 @@ alias LegalHoldsPolicyUpdateResult = LegalHoldPolicy
 
 route legal_holds/update_policy(LegalHoldsPolicyUpdateArg, LegalHoldsPolicyUpdateResult, LegalHoldsPolicyUpdateError)
     "Updates a legal hold.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
 
     Permission : Team member file access."
 
@@ -346,6 +352,7 @@ union LegalHoldsPolicyReleaseError extends LegalHoldsError
 
 route legal_holds/release_policy(LegalHoldsPolicyReleaseArg, Void, LegalHoldsPolicyReleaseError)
     "Releases a legal hold by Id.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
 
     Permission : Team member file access."
 
