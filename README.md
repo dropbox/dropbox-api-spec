@@ -26,8 +26,6 @@ If you need help that is not specific to the API Spec, please reach out to [Drop
 The API Spec is distributed under the MIT license, please see [LICENSE][license] for more information.
 
 [logo]: {logo_link}
-[documentation]: {documentation_link}
-[examples]: {examples_link}
 [license]: https://github.com/dropbox/dropbox-api-spec/blobs/master/LICENSE
 [contributing]: https://github.com/dropbox/dropbox-api-spec/blobs/master/CONTRIBUTING.md
 [support]: https://www.dropbox.com/developers/contact
