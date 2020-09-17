@@ -42,12 +42,12 @@ struct Account
         "Details of a user's name."
 
     email String
-        "The user's e-mail address. Do not rely on this without checking the
+        "The user's email address. Do not rely on this without checking the
         :field:`email_verified` field. Even then, it's possible that the user
-        has since lost access to their e-mail."
+        has since lost access to their email."
 
     email_verified Boolean
-        "Whether the user has verified their e-mail address."
+        "Whether the user has verified their email address."
 
     profile_photo_url String?
         "URL for the photo representing the user, if one is set."
@@ -215,6 +215,13 @@ struct Name
         familiar_name = "Franz"
         display_name = "Franz Ferdinand (Personal)"
         abbreviated_name = "FF"
+
+    example second_name
+        given_name = "Zexy Desperado"
+        surname = "Desperado"
+        familiar_name = "Zexy"
+        display_name = "Zexy Desperado (Personal)"
+        abbreviated_name = "ZD"
 
 #
 # Route: get_space_usage

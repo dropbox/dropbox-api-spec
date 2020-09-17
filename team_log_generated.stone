@@ -44,18 +44,18 @@ union QuickActionType
 union AccessMethodLogInfo
     "Indicates the method in which the action was performed."
 
-    end_user SessionLogInfo
-        "End user session details."
-    sign_in_as WebSessionLogInfo
-        "Sign in as session details."
-    content_manager WebSessionLogInfo
-        "Content manager session details."
     admin_console WebSessionLogInfo
         "Admin console session details."
-    enterprise_console WebSessionLogInfo
-        "Enterprise console session details."
     api ApiSessionLogInfo
         "Api session details."
+    content_manager WebSessionLogInfo
+        "Content manager session details."
+    end_user SessionLogInfo
+        "End user session details."
+    enterprise_console WebSessionLogInfo
+        "Enterprise console session details."
+    sign_in_as WebSessionLogInfo
+        "Sign in as session details."
 
     example default
         end_user = default
@@ -64,17 +64,17 @@ union AccessMethodLogInfo
         end_user = default2
 
 union AccountCaptureAvailability
-    unavailable
     available
+    unavailable
 
 union AccountCaptureNotificationType
-    proactive_warning_notification
     actionable_notification
+    proactive_warning_notification
 
 union AccountCapturePolicy
+    all_users
     disabled
     invited_users
-    all_users
 
 union AccountState
     locked
@@ -83,41 +83,18 @@ union AccountState
 union ActionDetails
     "Additional information indicating the action taken that caused status change."
 
-    team_join_details JoinTeamDetails
-        "Additional information relevant when a new member joins the team."
     remove_action MemberRemoveActionType
         "Define how the user was removed from the team."
     team_invite_details TeamInviteDetails
         "Additional information relevant when someone is invited to the team."
+    team_join_details JoinTeamDetails
+        "Additional information relevant when a new member joins the team."
 
     example default
         team_join_details = default
 
     example default2
         team_join_details = default2
-
-struct TeamInviteDetails
-    "Details about team invites"
-
-    invite_method InviteMethod
-        "How the user was invited to the team."
-
-    example default
-        invite_method = invite_link
-
-    example default2
-        invite_method = invite_link
-
-union InviteMethod
-    invite_link
-    auto_approve
-    moved_from_another_team
-
-union MemberRemoveActionType
-    delete
-    offboard
-    leave
-    offboard_and_retain_team_folders
 
 struct JoinTeamDetails
     "Additional information relevant when a new member joins the team."
@@ -166,14 +143,14 @@ struct JoinTeamDetails
 union LinkedDeviceLogInfo
     "The device sessions that user is linked to."
 
-    mobile_device_session MobileDeviceSessionLogInfo
-        "mobile device session's details."
     desktop_device_session DesktopDeviceSessionLogInfo
         "desktop device session's details."
-    web_device_session WebDeviceSessionLogInfo
-        "web device session's details."
     legacy_device_session LegacyDeviceSessionLogInfo
         "legacy device session's details."
+    mobile_device_session MobileDeviceSessionLogInfo
+        "mobile device session's details."
+    web_device_session WebDeviceSessionLogInfo
+        "web device session's details."
 
     example default
         mobile_device_session = default
@@ -181,12 +158,45 @@ union LinkedDeviceLogInfo
     example default2
         mobile_device_session = default2
 
+struct TeamInviteDetails
+    "Details about team invites"
+
+    invite_method InviteMethod
+        "How the user was invited to the team."
+    additional_license_purchase Boolean?
+        "True if the invitation incurred an additional license purchase."
+
+    example default
+        invite_method = invite_link
+        additional_license_purchase = true
+
+    example default2
+        invite_method = invite_link
+        additional_license_purchase = false
+
+union InviteMethod
+    auto_approve
+    invite_link
+    member_invite
+    moved_from_another_team
+
+union MemberRemoveActionType
+    delete
+    leave
+    offboard
+    offboard_and_retain_team_folders
+
 union AdminRole
-    team_admin
-    user_management_admin
-    support_admin
     limited_admin
     member_only
+    support_admin
+    team_admin
+    user_management_admin
+
+union BackupStatus
+    "Backup status"
+    disabled
+    enabled
 
 union CameraUploadsPolicy
     "Policy for controlling if team members can activate camera uploads"
@@ -235,16 +245,16 @@ union ContentPermanentDeletePolicy
     enabled
 
 union DeviceApprovalsPolicy
-    unlimited
     limited
+    unlimited
 
 union DeviceType
     desktop
     mobile
 
 union DeviceUnlinkPolicy
-    remove
     keep
+    remove
 
 union DownloadPolicyType
     "Shared content downloads policy"
@@ -274,34 +284,22 @@ struct FailureDetailsLogInfo
         technical_error_message = "xyz"
 
 union FedAdminRole
-    not_enterprise_admin
     enterprise_admin
+    not_enterprise_admin
 
 union FedExtraDetails
     "More details about the organization or team."
 
-    team TeamDetails
-        "More details about the team."
     organization OrganizationDetails
         "More details about the organization."
+    team TeamDetails
+        "More details about the team."
 
     example default
         team = default
 
     example default2
         team = default2
-
-struct OrganizationDetails
-    "More details about the organization."
-
-    organization String
-        "The name of the organization."
-
-    example default
-        organization = "My Organization"
-
-    example default2
-        organization = "My Organization"
 
 struct TeamDetails
     "More details about the team."
@@ -315,13 +313,25 @@ struct TeamDetails
     example default2
         team = "My Team"
 
+struct OrganizationDetails
+    "More details about the organization."
+
+    organization String
+        "The name of the organization."
+
+    example default
+        organization = "My Organization"
+
+    example default2
+        organization = "My Organization"
+
 union FedHandshakeAction
-    invited
     accepted_invite
-    rejected_invite
     canceled_invite
-    removed_team
     invite_expired
+    invited
+    rejected_invite
+    removed_team
 
 union FederationStatusChangeAdditionalInfo
     "Additional information about the organization or connected team"
@@ -475,14 +485,14 @@ union LockStatus
     unlocked
 
 union LoginMethod
-    password
-    two_factor_authentication
-    saml
-    google_oauth
-    web_session
-    qr_code
     apple_oauth
     first_party_token_exchange
+    google_oauth
+    password
+    qr_code
+    saml
+    two_factor_authentication
+    web_session
 
 union MemberRequestsPolicy
     auto_accept
@@ -492,16 +502,16 @@ union MemberRequestsPolicy
 union MemberSendInvitePolicy
     "Policy for controlling whether team members can send team invites"
     disabled
-    specific_members
     everyone
+    specific_members
 
 union MemberStatus
-    not_joined
-    invited
     active
-    suspended
-    removed
+    invited
     moved_to_another_team
+    not_joined
+    removed
+    suspended
 
 union MemberSuggestionsPolicy
     "Member suggestions policy"
@@ -519,9 +529,9 @@ union NetworkControlPolicy
     enabled
 
 union PaperAccessType
-    viewer
     commenter
     editor
+    viewer
 
 union PaperDefaultFolderPolicy
     "Policy to set default access for newly created Paper folders."
@@ -546,15 +556,18 @@ union PaperMemberPolicy
     team_and_explicitly_shared
 
 union PassPolicy
-    enabled
     allow
     disabled
+    enabled
 
 union PlacementRestriction
     australia_only
     europe_only
     japan_only
     none
+
+union PolicyType
+    retention
 
 struct RelocateAssetReferencesLogInfo
     "Provides the indices of the source asset and the destination asset for a relocate action."
@@ -593,8 +606,8 @@ union SendForSignaturePolicy
 
 union SharedFolderMembersInheritancePolicy
     "Specifies if a shared folder inherits its members from the parent folder."
-    inherit_members
     dont_inherit_members
+    inherit_members
 
 union SharedLinkAccessLevel
     "Shared link access level."
@@ -668,9 +681,9 @@ union SpaceCapsType
     soft
 
 union SpaceLimitsStatus
-    within_quota
     near_quota
     over_quota
+    within_quota
 
 union TeamExtensionsPolicy
     "Policy for controlling whether App Integrations are enabled for the team."
@@ -690,8 +703,8 @@ struct TeamLogInfo
         display_name = "A Team"
 
 union TeamMembershipType
-    full
     free
+    full
 
 union TeamMergeRequestAcceptedExtraDetails
     "Team merge request acceptance details"
@@ -892,19 +905,19 @@ union TeamSelectiveSyncPolicy
 
 union TfaConfiguration
     "Two factor authentication configuration. Note: the enabled option is deprecated."
+    authenticator
     disabled
     enabled
     sms
-    authenticator
 
 union TimeUnit
-    milliseconds
-    seconds
-    minutes
-    hours
     days
-    weeks
+    hours
+    milliseconds
+    minutes
     months
+    seconds
+    weeks
     years
 
 struct TrustedNonTeamMemberLogInfo extends UserLogInfo
@@ -913,7 +926,7 @@ struct TrustedNonTeamMemberLogInfo extends UserLogInfo
     trusted_non_team_member_type TrustedNonTeamMemberType
         "Indicates the type of the member of a trusted team."
     team TeamLogInfo?
-        "Details about this user\u2019s trusted team."
+        "Details about this user's trusted team."
 
     example default
         account_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
@@ -930,15 +943,15 @@ struct TrustedNonTeamMemberLogInfo extends UserLogInfo
         team = default2
 
 union TrustedNonTeamMemberType
-    multi_instance_admin
     enterprise_admin
+    multi_instance_admin
 
 union TrustedTeamsRequestAction
-    invited
-    expired
-    revoked
     accepted
     declined
+    expired
+    invited
+    revoked
 
 union TrustedTeamsRequestState
     invited
@@ -1032,10 +1045,10 @@ struct AppLogInfo
         "App display name. Might be missing due to historical data gap."
 
     example default
-        user_or_team_linked_app = default
+        team_linked_app = default
 
     example default2
-        user_or_team_linked_app = default2
+        team_linked_app = default2
 
 struct DesktopSessionLogInfo extends SessionLogInfo
     "Desktop session."
@@ -1234,10 +1247,10 @@ struct SessionLogInfo
         "Session ID. Might be missing due to historical data gap."
 
     example default
-        web = default
+        desktop = default
 
     example default2
-        web = default2
+        desktop = default2
 
 struct UserLogInfo
     "User's logged information."
@@ -1254,10 +1267,10 @@ struct UserLogInfo
         "User email address. Might be missing due to historical data gap."
 
     example default
-        team_member = default
+        non_team_member = default
 
     example default2
-        team_member = default2
+        non_team_member = default2
 
 struct UserLinkedAppLogInfo extends AppLogInfo
     "User linked app"
@@ -1570,18 +1583,18 @@ struct MissingDetails
 union ActorLogInfo
     "The entity who performed the action."
 
-    user UserLogInfo
-        "The user who did the action."
     admin UserLogInfo
         "The admin who did the action."
-    app AppLogInfo
-        "The application who did the action."
-    reseller ResellerLogInfo
-        "Action done by reseller."
-    dropbox 
-        "Action done by Dropbox."
     anonymous 
         "Anonymous actor."
+    app AppLogInfo
+        "The application who did the action."
+    dropbox 
+        "Action done by Dropbox."
+    reseller ResellerLogInfo
+        "Action done by reseller."
+    user UserLogInfo
+        "The user who did the action."
 
     example default
         user = default
@@ -1612,16 +1625,16 @@ union AssetLogInfo
 union ContextLogInfo
     "The primary entity on which the action was done."
 
-    team_member TeamMemberLogInfo
-        "Action was done on behalf of a team member."
-    non_team_member NonTeamMemberLogInfo
-        "Action was done on behalf of a non team member."
     anonymous 
         "Anonymous context."
-    team 
-        "Action was done on behalf of the team."
+    non_team_member NonTeamMemberLogInfo
+        "Action was done on behalf of a non team member."
     organization_team TeamLogInfo
         "Action was done on behalf of a team that's part of an organization."
+    team 
+        "Action was done on behalf of the team."
+    team_member TeamMemberLogInfo
+        "Action was done on behalf of a team member."
     trusted_non_team_member TrustedNonTeamMemberLogInfo
         "Action was done on behalf of a trusted non team member."
 
@@ -1634,10 +1647,10 @@ union ContextLogInfo
 union ParticipantLogInfo
     "A user or group"
 
-    user UserLogInfo
-        "A user with a Dropbox account."
     group GroupLogInfo
         "Group details."
+    user UserLogInfo
+        "A user with a Dropbox account."
 
     example default
         user = default
@@ -1652,6 +1665,8 @@ union EventCategory
         "Events that apply to management of linked apps."
     comments
         "Events that have to do with comments on files and Paper documents."
+    data_governance
+        "Events that involve data governance actions"
     devices
         "Events that apply to linked devices on mobile, desktop and Web platforms."
     domains
@@ -1662,8 +1677,6 @@ union EventCategory
         "Events that apply to the file requests feature."
     groups
         "Events that involve group management."
-    legal_holds
-        "Events that involve placing holds on content for litigation reasons"
     logins
         "Events that involve users signing in to or out of Dropbox."
     members
@@ -1830,6 +1843,288 @@ struct FileUnresolveCommentDetails
     example default
         comment_text = "abc"
 
+struct GovernancePolicyAddFoldersDetails
+    "Added folders to policy."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    folders List(String)?
+        "Folders."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        folders = ["abc"]
+
+struct GovernancePolicyCreateDetails
+    "Activated a new policy."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    duration DurationLogInfo
+        "Duration in days."
+    folders List(String)?
+        "Folders."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        duration = default
+        folders = ["abc"]
+
+struct GovernancePolicyDeleteDetails
+    "Deleted a policy."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+
+struct GovernancePolicyEditDetailsDetails
+    "Edited policy."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    attribute String
+        "Attribute."
+    previous_value String
+        "From."
+    new_value String
+        "To."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        attribute = "abc"
+        previous_value = "abc"
+        new_value = "abc"
+
+struct GovernancePolicyEditDurationDetails
+    "Changed policy duration."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    previous_value DurationLogInfo
+        "From."
+    new_value DurationLogInfo
+        "To."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        previous_value = default
+        new_value = default
+
+struct GovernancePolicyRemoveFoldersDetails
+    "Removed folders from policy."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    folders List(String)?
+        "Folders."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        folders = ["abc"]
+
+struct LegalHoldsActivateAHoldDetails
+    "Activated a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    start_date common.DropboxTimestamp
+        "Hold start date."
+    end_date common.DropboxTimestamp?
+        "Hold end date."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        start_date = "2017-01-25T15:51:30Z"
+        end_date = "2017-01-25T15:51:30Z"
+
+struct LegalHoldsAddMembersDetails
+    "Added members to a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+
+struct LegalHoldsChangeHoldDetailsDetails
+    "Edited details for a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    previous_value String
+        "Previous details."
+    new_value String
+        "New details."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        previous_value = "abc"
+        new_value = "abc"
+
+struct LegalHoldsChangeHoldNameDetails
+    "Renamed a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    previous_value String
+        "Previous Name."
+    new_value String
+        "New Name."
+
+    example default
+        legal_hold_id = "abc"
+        previous_value = "abc"
+        new_value = "abc"
+
+struct LegalHoldsExportAHoldDetails
+    "Exported hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    export_name String?
+        "Export name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        export_name = "abc"
+
+struct LegalHoldsExportCancelledDetails
+    "Canceled export for a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    export_name String
+        "Export name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        export_name = "abc"
+
+struct LegalHoldsExportDownloadedDetails
+    "Downloaded export for a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    export_name String
+        "Export name."
+    part String?
+        "Part."
+    file_name String?
+        "Filename."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        export_name = "abc"
+        part = "abc"
+        file_name = "abc"
+
+struct LegalHoldsExportRemovedDetails
+    "Removed export for a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+    export_name String
+        "Export name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+        export_name = "abc"
+
+struct LegalHoldsReleaseAHoldDetails
+    "Released a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+
+struct LegalHoldsRemoveMembersDetails
+    "Removed members from a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+
+struct LegalHoldsReportAHoldDetails
+    "Created a summary report for a hold."
+
+    legal_hold_id String
+        "Hold ID."
+    name String
+        "Hold name."
+
+    example default
+        legal_hold_id = "abc"
+        name = "abc"
+
 struct DeviceChangeIpDesktopDetails
     "Changed IP address associated with active desktop session."
 
@@ -1910,6 +2205,21 @@ struct DeviceManagementDisabledDetails
 
 struct DeviceManagementEnabledDetails
     "Enabled device management."
+
+struct DeviceSyncBackupStatusChangedDetails
+    "Enabled/disabled backup for computer."
+
+    desktop_device_session_info DesktopDeviceSessionLogInfo
+        "Device's session logged information."
+    previous_value BackupStatus
+        "Previous status of computer backup on the device."
+    new_value BackupStatus
+        "Next status of computer backup on the device."
+
+    example default
+        desktop_device_session_info = default
+        previous_value = disabled
+        new_value = disabled
 
 struct DeviceUnlinkDetails
     "Disconnected device."
@@ -2346,171 +2656,6 @@ struct GroupRenameDetails
         previous_value = "abc"
         new_value = "abc"
 
-struct LegalHoldsActivateAHoldDetails
-    "Activated a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-    start_date common.DropboxTimestamp
-        "Hold start date."
-    end_date common.DropboxTimestamp?
-        "Hold end date."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-        start_date = "2017-01-25T15:51:30Z"
-        end_date = "2017-01-25T15:51:30Z"
-
-struct LegalHoldsAddMembersDetails
-    "Added members to a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-
-struct LegalHoldsChangeHoldDetailsDetails
-    "Edited details for a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-    previous_value String
-        "Previous details."
-    new_value String
-        "New details."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-        previous_value = "abc"
-        new_value = "abc"
-
-struct LegalHoldsChangeHoldNameDetails
-    "Renamed a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    previous_value String
-        "Previous Name."
-    new_value String
-        "New Name."
-
-    example default
-        legal_hold_id = "abc"
-        previous_value = "abc"
-        new_value = "abc"
-
-struct LegalHoldsExportAHoldDetails
-    "Exported hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-    export_name String?
-        "Export name."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-        export_name = "abc"
-
-struct LegalHoldsExportCancelledDetails
-    "Canceled export for a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-    export_name String
-        "Export name."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-        export_name = "abc"
-
-struct LegalHoldsExportDownloadedDetails
-    "Downloaded export for a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-    export_name String
-        "Export name."
-    part String?
-        "Part."
-    file_name String?
-        "Filename."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-        export_name = "abc"
-        part = "abc"
-        file_name = "abc"
-
-struct LegalHoldsExportRemovedDetails
-    "Removed export for a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-    export_name String
-        "Export name."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-        export_name = "abc"
-
-struct LegalHoldsReleaseAHoldDetails
-    "Released a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-
-struct LegalHoldsRemoveMembersDetails
-    "Removed members from a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-
-struct LegalHoldsReportAHoldDetails
-    "Created a summary report for a hold."
-
-    legal_hold_id String
-        "Hold ID."
-    name String
-        "Hold name."
-
-    example default
-        legal_hold_id = "abc"
-        name = "abc"
-
 struct AccountLockOrUnlockedDetails
     "Unlocked/locked account after failed sign in attempts."
 
@@ -2585,6 +2730,12 @@ struct LoginSuccessDetails
 
 struct LogoutDetails
     "Signed out."
+
+    login_id String?
+        "Login session id."
+
+    example default
+        login_id = "abc"
 
 struct ResellerSupportSessionEndDetails
     "Ended reseller support session."
@@ -3422,10 +3573,10 @@ struct ExportMembersReportFailDetails
         failure_reason = temporary_error
 
 struct ExternalSharingCreateReportDetails
-    "Report created: Data shared outside the team."
+    "Created External sharing report."
 
 struct ExternalSharingReportFailedDetails
-    "Couldn't create report: Data shared outside the team."
+    "Couldn't create External sharing report."
 
     failure_reason team.TeamReportFailureReason
         "Failure reason."
@@ -4365,6 +4516,24 @@ struct SharedLinkViewDetails
 
 struct SharedNoteOpenedDetails
     "Opened shared Paper doc."
+
+struct ShmodelDisableDownloadsDetails
+    "Disabled downloads for link."
+
+    shared_link_owner UserLogInfo?
+        "Shared link owner details. Might be missing due to historical data gap."
+
+    example default
+        shared_link_owner = default
+
+struct ShmodelEnableDownloadsDetails
+    "Enabled downloads for link."
+
+    shared_link_owner UserLogInfo?
+        "Shared link owner details. Might be missing due to historical data gap."
+
+    example default
+        shared_link_owner = default
 
 struct ShmodelGroupShareDetails
     "Shared link with group."
@@ -5866,6 +6035,23 @@ union EventDetails
     file_resolve_comment_details FileResolveCommentDetails
     file_unlike_comment_details FileUnlikeCommentDetails
     file_unresolve_comment_details FileUnresolveCommentDetails
+    governance_policy_add_folders_details GovernancePolicyAddFoldersDetails
+    governance_policy_create_details GovernancePolicyCreateDetails
+    governance_policy_delete_details GovernancePolicyDeleteDetails
+    governance_policy_edit_details_details GovernancePolicyEditDetailsDetails
+    governance_policy_edit_duration_details GovernancePolicyEditDurationDetails
+    governance_policy_remove_folders_details GovernancePolicyRemoveFoldersDetails
+    legal_holds_activate_a_hold_details LegalHoldsActivateAHoldDetails
+    legal_holds_add_members_details LegalHoldsAddMembersDetails
+    legal_holds_change_hold_details_details LegalHoldsChangeHoldDetailsDetails
+    legal_holds_change_hold_name_details LegalHoldsChangeHoldNameDetails
+    legal_holds_export_a_hold_details LegalHoldsExportAHoldDetails
+    legal_holds_export_cancelled_details LegalHoldsExportCancelledDetails
+    legal_holds_export_downloaded_details LegalHoldsExportDownloadedDetails
+    legal_holds_export_removed_details LegalHoldsExportRemovedDetails
+    legal_holds_release_a_hold_details LegalHoldsReleaseAHoldDetails
+    legal_holds_remove_members_details LegalHoldsRemoveMembersDetails
+    legal_holds_report_a_hold_details LegalHoldsReportAHoldDetails
     device_change_ip_desktop_details DeviceChangeIpDesktopDetails
     device_change_ip_mobile_details DeviceChangeIpMobileDetails
     device_change_ip_web_details DeviceChangeIpWebDetails
@@ -5875,6 +6061,7 @@ union EventDetails
     device_link_success_details DeviceLinkSuccessDetails
     device_management_disabled_details DeviceManagementDisabledDetails
     device_management_enabled_details DeviceManagementEnabledDetails
+    device_sync_backup_status_changed_details DeviceSyncBackupStatusChangedDetails
     device_unlink_details DeviceUnlinkDetails
     emm_refresh_auth_token_details EmmRefreshAuthTokenDetails
     account_capture_change_availability_details AccountCaptureChangeAvailabilityDetails
@@ -5930,17 +6117,6 @@ union EventDetails
     group_remove_external_id_details GroupRemoveExternalIdDetails
     group_remove_member_details GroupRemoveMemberDetails
     group_rename_details GroupRenameDetails
-    legal_holds_activate_a_hold_details LegalHoldsActivateAHoldDetails
-    legal_holds_add_members_details LegalHoldsAddMembersDetails
-    legal_holds_change_hold_details_details LegalHoldsChangeHoldDetailsDetails
-    legal_holds_change_hold_name_details LegalHoldsChangeHoldNameDetails
-    legal_holds_export_a_hold_details LegalHoldsExportAHoldDetails
-    legal_holds_export_cancelled_details LegalHoldsExportCancelledDetails
-    legal_holds_export_downloaded_details LegalHoldsExportDownloadedDetails
-    legal_holds_export_removed_details LegalHoldsExportRemovedDetails
-    legal_holds_release_a_hold_details LegalHoldsReleaseAHoldDetails
-    legal_holds_remove_members_details LegalHoldsRemoveMembersDetails
-    legal_holds_report_a_hold_details LegalHoldsReportAHoldDetails
     account_lock_or_unlocked_details AccountLockOrUnlockedDetails
     emm_error_details EmmErrorDetails
     guest_admin_signed_in_via_trusted_teams_details GuestAdminSignedInViaTrustedTeamsDetails
@@ -6127,6 +6303,8 @@ union EventDetails
     shared_link_share_details SharedLinkShareDetails
     shared_link_view_details SharedLinkViewDetails
     shared_note_opened_details SharedNoteOpenedDetails
+    shmodel_disable_downloads_details ShmodelDisableDownloadsDetails
+    shmodel_enable_downloads_details ShmodelEnableDownloadsDetails
     shmodel_group_share_details ShmodelGroupShareDetails
     showcase_access_granted_details ShowcaseAccessGrantedDetails
     showcase_add_member_details ShowcaseAddMemberDetails
@@ -6375,6 +6553,108 @@ struct FileUnresolveCommentType
     example default
         description = "(comments) Unresolved file comment"
 
+struct GovernancePolicyAddFoldersType
+    description String
+
+    example default
+        description = "(data_governance) Added folders to policy"
+
+struct GovernancePolicyCreateType
+    description String
+
+    example default
+        description = "(data_governance) Activated a new policy"
+
+struct GovernancePolicyDeleteType
+    description String
+
+    example default
+        description = "(data_governance) Deleted a policy"
+
+struct GovernancePolicyEditDetailsType
+    description String
+
+    example default
+        description = "(data_governance) Edited policy"
+
+struct GovernancePolicyEditDurationType
+    description String
+
+    example default
+        description = "(data_governance) Changed policy duration"
+
+struct GovernancePolicyRemoveFoldersType
+    description String
+
+    example default
+        description = "(data_governance) Removed folders from policy"
+
+struct LegalHoldsActivateAHoldType
+    description String
+
+    example default
+        description = "(data_governance) Activated a hold"
+
+struct LegalHoldsAddMembersType
+    description String
+
+    example default
+        description = "(data_governance) Added members to a hold"
+
+struct LegalHoldsChangeHoldDetailsType
+    description String
+
+    example default
+        description = "(data_governance) Edited details for a hold"
+
+struct LegalHoldsChangeHoldNameType
+    description String
+
+    example default
+        description = "(data_governance) Renamed a hold"
+
+struct LegalHoldsExportAHoldType
+    description String
+
+    example default
+        description = "(data_governance) Exported hold"
+
+struct LegalHoldsExportCancelledType
+    description String
+
+    example default
+        description = "(data_governance) Canceled export for a hold"
+
+struct LegalHoldsExportDownloadedType
+    description String
+
+    example default
+        description = "(data_governance) Downloaded export for a hold"
+
+struct LegalHoldsExportRemovedType
+    description String
+
+    example default
+        description = "(data_governance) Removed export for a hold"
+
+struct LegalHoldsReleaseAHoldType
+    description String
+
+    example default
+        description = "(data_governance) Released a hold"
+
+struct LegalHoldsRemoveMembersType
+    description String
+
+    example default
+        description = "(data_governance) Removed members from a hold"
+
+struct LegalHoldsReportAHoldType
+    description String
+
+    example default
+        description = "(data_governance) Created a summary report for a hold"
+
 struct DeviceChangeIpDesktopType
     description String
 
@@ -6428,6 +6708,12 @@ struct DeviceManagementEnabledType
 
     example default
         description = "(devices) Enabled device management (deprecated, no longer logged)"
+
+struct DeviceSyncBackupStatusChangedType
+    description String
+
+    example default
+        description = "(devices) Enabled/disabled backup for computer"
 
 struct DeviceUnlinkType
     description String
@@ -6758,72 +7044,6 @@ struct GroupRenameType
 
     example default
         description = "(groups) Renamed group"
-
-struct LegalHoldsActivateAHoldType
-    description String
-
-    example default
-        description = "(legal_holds) Activated a hold"
-
-struct LegalHoldsAddMembersType
-    description String
-
-    example default
-        description = "(legal_holds) Added members to a hold"
-
-struct LegalHoldsChangeHoldDetailsType
-    description String
-
-    example default
-        description = "(legal_holds) Edited details for a hold"
-
-struct LegalHoldsChangeHoldNameType
-    description String
-
-    example default
-        description = "(legal_holds) Renamed a hold"
-
-struct LegalHoldsExportAHoldType
-    description String
-
-    example default
-        description = "(legal_holds) Exported hold"
-
-struct LegalHoldsExportCancelledType
-    description String
-
-    example default
-        description = "(legal_holds) Canceled export for a hold"
-
-struct LegalHoldsExportDownloadedType
-    description String
-
-    example default
-        description = "(legal_holds) Downloaded export for a hold"
-
-struct LegalHoldsExportRemovedType
-    description String
-
-    example default
-        description = "(legal_holds) Removed export for a hold"
-
-struct LegalHoldsReleaseAHoldType
-    description String
-
-    example default
-        description = "(legal_holds) Released a hold"
-
-struct LegalHoldsRemoveMembersType
-    description String
-
-    example default
-        description = "(legal_holds) Removed members from a hold"
-
-struct LegalHoldsReportAHoldType
-    description String
-
-    example default
-        description = "(legal_holds) Created a summary report for a hold"
 
 struct AccountLockOrUnlockedType
     description String
@@ -7387,13 +7607,13 @@ struct ExternalSharingCreateReportType
     description String
 
     example default
-        description = "(reports) Report created: Data shared outside the team"
+        description = "(reports) Created External sharing report"
 
 struct ExternalSharingReportFailedType
     description String
 
     example default
-        description = "(reports) Couldn't create report: Data shared outside the team"
+        description = "(reports) Couldn't create External sharing report"
 
 struct NoExpirationLinkGenCreateReportType
     description String
@@ -7940,6 +8160,18 @@ struct SharedNoteOpenedType
 
     example default
         description = "(sharing) Opened shared Paper doc (deprecated, no longer logged)"
+
+struct ShmodelDisableDownloadsType
+    description String
+
+    example default
+        description = "(sharing) Disabled downloads for link (deprecated, no longer logged)"
+
+struct ShmodelEnableDownloadsType
+    description String
+
+    example default
+        description = "(sharing) Enabled downloads for link (deprecated, no longer logged)"
 
 struct ShmodelGroupShareType
     description String
@@ -8891,6 +9123,40 @@ union EventType
         "(comments) Unliked file comment (deprecated, no longer logged)"
     file_unresolve_comment FileUnresolveCommentType
         "(comments) Unresolved file comment"
+    governance_policy_add_folders GovernancePolicyAddFoldersType
+        "(data_governance) Added folders to policy"
+    governance_policy_create GovernancePolicyCreateType
+        "(data_governance) Activated a new policy"
+    governance_policy_delete GovernancePolicyDeleteType
+        "(data_governance) Deleted a policy"
+    governance_policy_edit_details GovernancePolicyEditDetailsType
+        "(data_governance) Edited policy"
+    governance_policy_edit_duration GovernancePolicyEditDurationType
+        "(data_governance) Changed policy duration"
+    governance_policy_remove_folders GovernancePolicyRemoveFoldersType
+        "(data_governance) Removed folders from policy"
+    legal_holds_activate_a_hold LegalHoldsActivateAHoldType
+        "(data_governance) Activated a hold"
+    legal_holds_add_members LegalHoldsAddMembersType
+        "(data_governance) Added members to a hold"
+    legal_holds_change_hold_details LegalHoldsChangeHoldDetailsType
+        "(data_governance) Edited details for a hold"
+    legal_holds_change_hold_name LegalHoldsChangeHoldNameType
+        "(data_governance) Renamed a hold"
+    legal_holds_export_a_hold LegalHoldsExportAHoldType
+        "(data_governance) Exported hold"
+    legal_holds_export_cancelled LegalHoldsExportCancelledType
+        "(data_governance) Canceled export for a hold"
+    legal_holds_export_downloaded LegalHoldsExportDownloadedType
+        "(data_governance) Downloaded export for a hold"
+    legal_holds_export_removed LegalHoldsExportRemovedType
+        "(data_governance) Removed export for a hold"
+    legal_holds_release_a_hold LegalHoldsReleaseAHoldType
+        "(data_governance) Released a hold"
+    legal_holds_remove_members LegalHoldsRemoveMembersType
+        "(data_governance) Removed members from a hold"
+    legal_holds_report_a_hold LegalHoldsReportAHoldType
+        "(data_governance) Created a summary report for a hold"
     device_change_ip_desktop DeviceChangeIpDesktopType
         "(devices) Changed IP address associated with active desktop session"
     device_change_ip_mobile DeviceChangeIpMobileType
@@ -8909,6 +9175,8 @@ union EventType
         "(devices) Disabled device management (deprecated, no longer logged)"
     device_management_enabled DeviceManagementEnabledType
         "(devices) Enabled device management (deprecated, no longer logged)"
+    device_sync_backup_status_changed DeviceSyncBackupStatusChangedType
+        "(devices) Enabled/disabled backup for computer"
     device_unlink DeviceUnlinkType
         "(devices) Disconnected device"
     emm_refresh_auth_token EmmRefreshAuthTokenType
@@ -9019,28 +9287,6 @@ union EventType
         "(groups) Removed team members from group"
     group_rename GroupRenameType
         "(groups) Renamed group"
-    legal_holds_activate_a_hold LegalHoldsActivateAHoldType
-        "(legal_holds) Activated a hold"
-    legal_holds_add_members LegalHoldsAddMembersType
-        "(legal_holds) Added members to a hold"
-    legal_holds_change_hold_details LegalHoldsChangeHoldDetailsType
-        "(legal_holds) Edited details for a hold"
-    legal_holds_change_hold_name LegalHoldsChangeHoldNameType
-        "(legal_holds) Renamed a hold"
-    legal_holds_export_a_hold LegalHoldsExportAHoldType
-        "(legal_holds) Exported hold"
-    legal_holds_export_cancelled LegalHoldsExportCancelledType
-        "(legal_holds) Canceled export for a hold"
-    legal_holds_export_downloaded LegalHoldsExportDownloadedType
-        "(legal_holds) Downloaded export for a hold"
-    legal_holds_export_removed LegalHoldsExportRemovedType
-        "(legal_holds) Removed export for a hold"
-    legal_holds_release_a_hold LegalHoldsReleaseAHoldType
-        "(legal_holds) Released a hold"
-    legal_holds_remove_members LegalHoldsRemoveMembersType
-        "(legal_holds) Removed members from a hold"
-    legal_holds_report_a_hold LegalHoldsReportAHoldType
-        "(legal_holds) Created a summary report for a hold"
     account_lock_or_unlocked AccountLockOrUnlockedType
         "(logins) Unlocked/locked account after failed sign in attempts"
     emm_error EmmErrorType
@@ -9228,9 +9474,9 @@ union EventType
     export_members_report_fail ExportMembersReportFailType
         "(reports) Failed to create members data report"
     external_sharing_create_report ExternalSharingCreateReportType
-        "(reports) Report created: Data shared outside the team"
+        "(reports) Created External sharing report"
     external_sharing_report_failed ExternalSharingReportFailedType
-        "(reports) Couldn't create report: Data shared outside the team"
+        "(reports) Couldn't create External sharing report"
     no_expiration_link_gen_create_report NoExpirationLinkGenCreateReportType
         "(reports) Report created: Links created with no expiration"
     no_expiration_link_gen_report_failed NoExpirationLinkGenReportFailedType
@@ -9413,6 +9659,10 @@ union EventType
         "(sharing) Opened shared link"
     shared_note_opened SharedNoteOpenedType
         "(sharing) Opened shared Paper doc (deprecated, no longer logged)"
+    shmodel_disable_downloads ShmodelDisableDownloadsType
+        "(sharing) Disabled downloads for link (deprecated, no longer logged)"
+    shmodel_enable_downloads ShmodelEnableDownloadsType
+        "(sharing) Enabled downloads for link (deprecated, no longer logged)"
     shmodel_group_share ShmodelGroupShareType
         "(sharing) Shared link with group (deprecated, no longer logged)"
     showcase_access_granted ShowcaseAccessGrantedType
@@ -9755,6 +10005,40 @@ union EventTypeArg
         "(comments) Unliked file comment (deprecated, no longer logged)"
     file_unresolve_comment
         "(comments) Unresolved file comment"
+    governance_policy_add_folders
+        "(data_governance) Added folders to policy"
+    governance_policy_create
+        "(data_governance) Activated a new policy"
+    governance_policy_delete
+        "(data_governance) Deleted a policy"
+    governance_policy_edit_details
+        "(data_governance) Edited policy"
+    governance_policy_edit_duration
+        "(data_governance) Changed policy duration"
+    governance_policy_remove_folders
+        "(data_governance) Removed folders from policy"
+    legal_holds_activate_a_hold
+        "(data_governance) Activated a hold"
+    legal_holds_add_members
+        "(data_governance) Added members to a hold"
+    legal_holds_change_hold_details
+        "(data_governance) Edited details for a hold"
+    legal_holds_change_hold_name
+        "(data_governance) Renamed a hold"
+    legal_holds_export_a_hold
+        "(data_governance) Exported hold"
+    legal_holds_export_cancelled
+        "(data_governance) Canceled export for a hold"
+    legal_holds_export_downloaded
+        "(data_governance) Downloaded export for a hold"
+    legal_holds_export_removed
+        "(data_governance) Removed export for a hold"
+    legal_holds_release_a_hold
+        "(data_governance) Released a hold"
+    legal_holds_remove_members
+        "(data_governance) Removed members from a hold"
+    legal_holds_report_a_hold
+        "(data_governance) Created a summary report for a hold"
     device_change_ip_desktop
         "(devices) Changed IP address associated with active desktop session"
     device_change_ip_mobile
@@ -9773,6 +10057,8 @@ union EventTypeArg
         "(devices) Disabled device management (deprecated, no longer logged)"
     device_management_enabled
         "(devices) Enabled device management (deprecated, no longer logged)"
+    device_sync_backup_status_changed
+        "(devices) Enabled/disabled backup for computer"
     device_unlink
         "(devices) Disconnected device"
     emm_refresh_auth_token
@@ -9883,28 +10169,6 @@ union EventTypeArg
         "(groups) Removed team members from group"
     group_rename
         "(groups) Renamed group"
-    legal_holds_activate_a_hold
-        "(legal_holds) Activated a hold"
-    legal_holds_add_members
-        "(legal_holds) Added members to a hold"
-    legal_holds_change_hold_details
-        "(legal_holds) Edited details for a hold"
-    legal_holds_change_hold_name
-        "(legal_holds) Renamed a hold"
-    legal_holds_export_a_hold
-        "(legal_holds) Exported hold"
-    legal_holds_export_cancelled
-        "(legal_holds) Canceled export for a hold"
-    legal_holds_export_downloaded
-        "(legal_holds) Downloaded export for a hold"
-    legal_holds_export_removed
-        "(legal_holds) Removed export for a hold"
-    legal_holds_release_a_hold
-        "(legal_holds) Released a hold"
-    legal_holds_remove_members
-        "(legal_holds) Removed members from a hold"
-    legal_holds_report_a_hold
-        "(legal_holds) Created a summary report for a hold"
     account_lock_or_unlocked
         "(logins) Unlocked/locked account after failed sign in attempts"
     emm_error
@@ -10092,9 +10356,9 @@ union EventTypeArg
     export_members_report_fail
         "(reports) Failed to create members data report"
     external_sharing_create_report
-        "(reports) Report created: Data shared outside the team"
+        "(reports) Created External sharing report"
     external_sharing_report_failed
-        "(reports) Couldn't create report: Data shared outside the team"
+        "(reports) Couldn't create External sharing report"
     no_expiration_link_gen_create_report
         "(reports) Report created: Links created with no expiration"
     no_expiration_link_gen_report_failed
@@ -10277,6 +10541,10 @@ union EventTypeArg
         "(sharing) Opened shared link"
     shared_note_opened
         "(sharing) Opened shared Paper doc (deprecated, no longer logged)"
+    shmodel_disable_downloads
+        "(sharing) Disabled downloads for link (deprecated, no longer logged)"
+    shmodel_enable_downloads
+        "(sharing) Enabled downloads for link (deprecated, no longer logged)"
     shmodel_group_share
         "(sharing) Shared link with group (deprecated, no longer logged)"
     showcase_access_granted

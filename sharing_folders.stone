@@ -268,7 +268,7 @@ union InviteeInfo
     "Information about the recipient of a shared content invitation."
 
     email common.EmailAddress
-        "E-mail address of invited user."
+        "Email address of invited user."
 
     example default
         email = "jessica@example.com"
@@ -694,7 +694,9 @@ struct ShareFolderArg extends ShareFolderArgBase
 
 union ShareFolderErrorBase
     email_unverified
-        "The current user's e-mail address is unverified."
+        "This user's email address is not verified. This functionality is only
+        available on accounts with a verified email address. Users can verify
+        their email address :link:`here https://www.dropbox.com/help/317`."
     bad_path SharePathError
         ":field:`ShareFolderArg.path` is invalid."
     team_policy_disallows_member_policy
@@ -858,7 +860,9 @@ union TransferFolderError
     new_owner_unmounted
         "The new designated owner has not added the folder to their Dropbox."
     new_owner_email_unverified
-        "The new designated owner's e-mail address is unverified."
+        "The new designated owner's email address is not verified. This functionality
+        is only available on accounts with a verified email address. Users can verify
+        their email address :link:`here https://www.dropbox.com/help/317`."
     team_folder
         "This action cannot be performed on a team shared folder."
     no_permission
@@ -974,7 +978,7 @@ union MemberSelector
     dropbox_id DropboxId
         "Dropbox account, team member, or group ID of member."
     email common.EmailAddress
-        "E-mail address of member."
+        "Email address of member."
 
     example default
         email = "justin@example.com"
@@ -989,7 +993,9 @@ union AddFolderMemberError
     access_error SharedFolderAccessError
         "Unable to access shared folder."
     email_unverified
-        "The current user's e-mail address is unverified."
+        "This user's email address is not verified. This functionality is only
+        available on accounts with a verified email address. Users can verify
+        their email address :link:`here https://www.dropbox.com/help/317`."
     banned_member
         "The current user has been banned."
     bad_member AddMemberSelectorError
@@ -1029,8 +1035,8 @@ union AddMemberSelectorError
     invalid_email common.EmailAddress
         "The value is the e-email address that is malformed."
     unverified_dropbox_id DropboxId
-        "The value is the ID of the Dropbox user with an unverified e-mail
-        address.  Invite unverified users by e-mail address instead of by their
+        "The value is the ID of the Dropbox user with an unverified email
+        address. Invite unverified users by email address instead of by their
         Dropbox ID."
     group_deleted
         "At least one of the specified groups in :field:`AddFolderMemberArg.members`
