@@ -8,6 +8,7 @@ alias GroupExternalId = String
 
 alias GroupId = String
 alias ResellerId = String
+alias TeamId = String
 
 struct GroupSummary
     "Information about a group."

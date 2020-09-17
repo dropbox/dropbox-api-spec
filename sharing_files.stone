@@ -14,7 +14,9 @@ alias PathOrId = String(pattern="((\/|id:).*|nspath:[0-9]+:.*)|ns:[0-9]+(/.*)?",
 union SharingUserError
     "User account had a problem preventing this action."
     email_unverified
-        "The current user must verify the account e-mail address before performing this action."
+        "This user's email address is not verified. This functionality is only
+        available on accounts with a verified email address. Users can verify
+        their email address :link:`here https://www.dropbox.com/help/317`."
 
 union SharingFileAccessError
     "User could not access this file."

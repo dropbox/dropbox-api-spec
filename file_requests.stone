@@ -61,6 +61,8 @@ struct FileRequest
         closed, it will not accept any more file submissions."
     file_count Int64
         "The number of files this file request has received."
+    description String?
+        "A description of the file request."
 
     example default
         id = "oaCAVmEyrqYnkZX9955Y"
@@ -71,6 +73,7 @@ struct FileRequest
         deadline = deadline_with_grace_period
         is_open = true
         file_count = 3
+        description = "Please submit your homework here."
 
     example with_deadline
         id = "BAJ7IrRGicQKGToykQdB"
@@ -260,6 +263,8 @@ struct CreateFileRequestArgs
         "Whether or not the file request should be open. If the file request is
         closed, it will not accept any file submissions, but it can be opened
         later."
+    description String?
+        "A description of the file request."
 
     example default
         title = "Homework submission"
@@ -310,6 +315,8 @@ struct UpdateFileRequestArgs
                 update = deadline_with_grace_period
     open Boolean?
         "Whether to set this file request as open or closed."
+    description String?
+        "The description of the file request."
 
     example default
         id = "oaCAVmEyrqYnkZX9955Y"

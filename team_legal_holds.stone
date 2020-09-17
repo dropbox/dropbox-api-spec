@@ -103,6 +103,8 @@ union LegalHoldsPolicyCreateError extends LegalHoldsError
         "The name provided is already in use by another legal hold."
     team_exceeded_legal_hold_quota
         "Team exceeded legal hold quota."
+    invalid_date
+        "The provided date is invalid."
 
 alias LegalHoldsPolicyCreateResult = LegalHoldPolicy
 
