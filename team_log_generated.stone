@@ -239,6 +239,12 @@ struct Certificate
         sha1_fingerprint = "xyz"
         common_name = "xyz"
 
+union ComputerBackupPolicy
+    "Policy for controlling team access to computer backup feature"
+    default
+    disabled
+    enabled
+
 union ContentPermanentDeletePolicy
     "Policy for pemanent content deletion"
     disabled
@@ -4949,6 +4955,18 @@ struct CameraUploadsPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct ComputerBackupPolicyChangedDetails
+    "Changed computer backup policy for team."
+
+    new_value ComputerBackupPolicy
+        "New computer backup policy."
+    previous_value ComputerBackupPolicy
+        "Previous computer backup policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct ContentAdministrationPolicyChangedDetails
     "Changed content management setting."
 
@@ -6350,6 +6368,7 @@ union EventDetails
     allow_download_disabled_details AllowDownloadDisabledDetails
     allow_download_enabled_details AllowDownloadEnabledDetails
     camera_uploads_policy_changed_details CameraUploadsPolicyChangedDetails
+    computer_backup_policy_changed_details ComputerBackupPolicyChangedDetails
     content_administration_policy_changed_details ContentAdministrationPolicyChangedDetails
     data_placement_restriction_change_policy_details DataPlacementRestrictionChangePolicyDetails
     data_placement_restriction_satisfy_policy_details DataPlacementRestrictionSatisfyPolicyDetails
@@ -8443,6 +8462,12 @@ struct CameraUploadsPolicyChangedType
     example default
         description = "(team_policies) Changed camera uploads setting for team"
 
+struct ComputerBackupPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed computer backup policy for team"
+
 struct ContentAdministrationPolicyChangedType
     description String
 
@@ -9753,6 +9778,8 @@ union EventType
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
     camera_uploads_policy_changed CameraUploadsPolicyChangedType
         "(team_policies) Changed camera uploads setting for team"
+    computer_backup_policy_changed ComputerBackupPolicyChangedType
+        "(team_policies) Changed computer backup policy for team"
     content_administration_policy_changed ContentAdministrationPolicyChangedType
         "(team_policies) Changed content management setting"
     data_placement_restriction_change_policy DataPlacementRestrictionChangePolicyType
@@ -10635,6 +10662,8 @@ union EventTypeArg
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
     camera_uploads_policy_changed
         "(team_policies) Changed camera uploads setting for team"
+    computer_backup_policy_changed
+        "(team_policies) Changed computer backup policy for team"
     content_administration_policy_changed
         "(team_policies) Changed content management setting"
     data_placement_restriction_change_policy
