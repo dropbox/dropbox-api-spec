@@ -208,3 +208,11 @@ union SuggestMembersPolicy
         "Suggest members is disabled."
     enabled
         "Suggest members is enabled."
+
+union ComputerBackupPolicyState
+    disabled
+        "Computer Backup feature is disabled."
+    enabled
+        "Computer Backup feature is enabled."
+    default
+        "Computer Backup defaults to ON for SSB teams, and OFF for Enterprise teams."
