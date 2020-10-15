@@ -1222,11 +1222,13 @@ struct SearchV2Arg
     match_field_options SearchMatchFieldOptions?
         "Options for search results match fields."
 
-    include_highlights Boolean = false
+    include_highlights Boolean?
         "Deprecated and moved this option to SearchMatchFieldOptions."
 
     example default
         query = "cat"
+        options = default
+        match_field_options = default
 
 struct SearchOptions
 
@@ -1235,6 +1237,9 @@ struct SearchOptions
 
     max_results UInt64(min_value=1, max_value=1000) = 100
         "The maximum number of search results to return."
+
+    order_by SearchOrderBy?
+        "Specified property of the order of search results. By default, results are sorted by relevance."
 
     file_status FileStatus = active
         "Restricts search to the given file status."
@@ -1249,13 +1254,22 @@ struct SearchOptions
         "Restricts search to only the file categories specified. Only supported for active file search."
 
     example default
-        path = ""
+        path = "/Folder"
         max_results = 20
 
 struct SearchMatchFieldOptions
 
     include_highlights Boolean = false
         "Whether to include highlight span from file title."
+    example default
+        include_highlights = false
+
+union SearchOrderBy
+    relevance
+    last_modified_time
+
+    example default
+        relevance = null
 
 # both -- maybe supported in the future
 union FileStatus
@@ -1342,6 +1356,9 @@ struct SearchMatchV2
     metadata MetadataV2
         "The metadata for the matched file or folder."
 
+    match_type SearchMatchTypeV2?
+        "The type of the match."
+
     highlight_spans List(HighlightSpan)?
         "The list of HighlightSpan determines which parts of the file title should be highlighted."
 
@@ -1349,6 +1366,17 @@ struct SearchMatchV2
         metadata = default
         highlight_spans = null
 
+union SearchMatchTypeV2
+    "Indicates what type of match was found for a given item."
+
+    filename
+        "This item was matched on its file or folder name."
+    file_content
+        "This item was matched based on its file contents."
+    filename_and_content
+        "This item was matched based on both its contents and its file name."
+    image_content
+        "This item was matched on image content."
 
 #
 # Errors shared by various operations

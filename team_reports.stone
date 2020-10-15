@@ -70,7 +70,7 @@ struct GetStorageReport extends BaseDfbReport
         number of users in that bucket. There is one such summary per day.
         If there is no data for a day, the storage summary will be empty."
 
-route reports/get_storage(DateRange, GetStorageReport, DateRangeError)
+route reports/get_storage(DateRange, GetStorageReport, DateRangeError) deprecated
     "Retrieves reporting data about a team's storage usage."
     attrs
         auth = "team"
@@ -115,7 +115,7 @@ struct GetActivityReport extends BaseDfbReport
     shared_links_viewed_total NumberPerDay
         "Array of the total number of views to shared links created by the team."
 
-route reports/get_activity(DateRange, GetActivityReport, DateRangeError)
+route reports/get_activity(DateRange, GetActivityReport, DateRangeError) deprecated
     "Retrieves reporting data about a team's user activity."
     attrs
         auth = "team"
@@ -143,7 +143,7 @@ struct GetMembershipReport extends BaseDfbReport
 
 
 
-route reports/get_membership(DateRange, GetMembershipReport, DateRangeError)
+route reports/get_membership(DateRange, GetMembershipReport, DateRangeError) deprecated
     "Retrieves reporting data about a team's membership."
     attrs
         auth = "team"
@@ -190,7 +190,7 @@ struct GetDevicesReport extends BaseDfbReport
         "Report of the number of devices active in the last 28 days."
 
 
-route reports/get_devices(DateRange, GetDevicesReport, DateRangeError)
+route reports/get_devices(DateRange, GetDevicesReport, DateRangeError) deprecated
     "Retrieves reporting data about a team's linked devices."
     attrs
         auth = "team"
