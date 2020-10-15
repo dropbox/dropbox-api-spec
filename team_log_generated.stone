@@ -691,6 +691,11 @@ union SpaceLimitsStatus
     over_quota
     within_quota
 
+union TeamBrandingPolicy
+    "Policy for controlling team access to setting up branding feature"
+    disabled
+    enabled
+
 union TeamExtensionsPolicy
     "Policy for controlling whether App Integrations are enabled for the team."
     disabled
@@ -5540,6 +5545,18 @@ struct SsoChangePolicyDetails
         new_value = disabled
         previous_value = disabled
 
+struct TeamBrandingPolicyChangedDetails
+    "Changed team branding policy for team."
+
+    new_value TeamBrandingPolicy
+        "New team branding policy."
+    previous_value TeamBrandingPolicy
+        "Previous team branding policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct TeamExtensionsPolicyChangedDetails
     "Changed App Integrations setting for team."
 
@@ -6426,6 +6443,7 @@ union EventDetails
     smart_sync_not_opt_out_details SmartSyncNotOptOutDetails
     smart_sync_opt_out_details SmartSyncOptOutDetails
     sso_change_policy_details SsoChangePolicyDetails
+    team_branding_policy_changed_details TeamBrandingPolicyChangedDetails
     team_extensions_policy_changed_details TeamExtensionsPolicyChangedDetails
     team_selective_sync_policy_changed_details TeamSelectiveSyncPolicyChangedDetails
     team_sharing_whitelist_subjects_changed_details TeamSharingWhitelistSubjectsChangedDetails
@@ -8810,6 +8828,12 @@ struct SsoChangePolicyType
     example default
         description = "(team_policies) Changed single sign-on setting for team"
 
+struct TeamBrandingPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed team branding policy for team"
+
 struct TeamExtensionsPolicyChangedType
     description String
 
@@ -9894,6 +9918,8 @@ union EventType
         "(team_policies) Opted team out of Smart Sync"
     sso_change_policy SsoChangePolicyType
         "(team_policies) Changed single sign-on setting for team"
+    team_branding_policy_changed TeamBrandingPolicyChangedType
+        "(team_policies) Changed team branding policy for team"
     team_extensions_policy_changed TeamExtensionsPolicyChangedType
         "(team_policies) Changed App Integrations setting for team"
     team_selective_sync_policy_changed TeamSelectiveSyncPolicyChangedType
@@ -10778,6 +10804,8 @@ union EventTypeArg
         "(team_policies) Opted team out of Smart Sync"
     sso_change_policy
         "(team_policies) Changed single sign-on setting for team"
+    team_branding_policy_changed
+        "(team_policies) Changed team branding policy for team"
     team_extensions_policy_changed
         "(team_policies) Changed App Integrations setting for team"
     team_selective_sync_policy_changed
