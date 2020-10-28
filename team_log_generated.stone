@@ -239,6 +239,15 @@ struct Certificate
         sha1_fingerprint = "xyz"
         common_name = "xyz"
 
+union ClassificationPolicyEnumWrapper
+    "Policy for controlling team access to the classification feature"
+    disabled
+    enabled
+
+union ClassificationType
+    "The type of classification (currently only PII)"
+    pii
+
 union ComputerBackupPolicy
     "Policy for controlling team access to computer backup feature"
     default
@@ -2246,6 +2255,27 @@ struct DeviceUnlinkDetails
         session_info = default
         display_name = "abc"
         delete_data = true
+
+struct DropboxPasswordsExportedDetails
+    "Exported passwords."
+
+    platform String
+        "The platform the device runs export."
+
+    example default
+        platform = "abc"
+
+struct DropboxPasswordsNewDeviceEnrolledDetails
+    "Enrolled new Dropbox Passwords device."
+
+    is_first_device Boolean
+        "Whether it's a first device enrolled."
+    platform String
+        "The platform the device is enrolled."
+
+    example default
+        is_first_device = true
+        platform = "abc"
 
 struct EmmRefreshAuthTokenDetails
     "Refreshed auth token used for setting up EMM."
@@ -4960,6 +4990,21 @@ struct CameraUploadsPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct ClassificationChangePolicyDetails
+    "Changed classification policy for team."
+
+    previous_value ClassificationPolicyEnumWrapper
+        "Previous classification policy."
+    new_value ClassificationPolicyEnumWrapper
+        "New classification policy."
+    classification_type ClassificationType
+        "Policy type."
+
+    example default
+        previous_value = disabled
+        new_value = disabled
+        classification_type = pii
+
 struct ComputerBackupPolicyChangedDetails
     "Changed computer backup policy for team."
 
@@ -6098,6 +6143,8 @@ union EventDetails
     device_management_enabled_details DeviceManagementEnabledDetails
     device_sync_backup_status_changed_details DeviceSyncBackupStatusChangedDetails
     device_unlink_details DeviceUnlinkDetails
+    dropbox_passwords_exported_details DropboxPasswordsExportedDetails
+    dropbox_passwords_new_device_enrolled_details DropboxPasswordsNewDeviceEnrolledDetails
     emm_refresh_auth_token_details EmmRefreshAuthTokenDetails
     account_capture_change_availability_details AccountCaptureChangeAvailabilityDetails
     account_capture_migrate_account_details AccountCaptureMigrateAccountDetails
@@ -6385,6 +6432,7 @@ union EventDetails
     allow_download_disabled_details AllowDownloadDisabledDetails
     allow_download_enabled_details AllowDownloadEnabledDetails
     camera_uploads_policy_changed_details CameraUploadsPolicyChangedDetails
+    classification_change_policy_details ClassificationChangePolicyDetails
     computer_backup_policy_changed_details ComputerBackupPolicyChangedDetails
     content_administration_policy_changed_details ContentAdministrationPolicyChangedDetails
     data_placement_restriction_change_policy_details DataPlacementRestrictionChangePolicyDetails
@@ -6757,6 +6805,18 @@ struct DeviceUnlinkType
 
     example default
         description = "(devices) Disconnected device"
+
+struct DropboxPasswordsExportedType
+    description String
+
+    example default
+        description = "(devices) Exported passwords"
+
+struct DropboxPasswordsNewDeviceEnrolledType
+    description String
+
+    example default
+        description = "(devices) Enrolled new Dropbox Passwords device"
 
 struct EmmRefreshAuthTokenType
     description String
@@ -8480,6 +8540,12 @@ struct CameraUploadsPolicyChangedType
     example default
         description = "(team_policies) Changed camera uploads setting for team"
 
+struct ClassificationChangePolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed classification policy for team"
+
 struct ComputerBackupPolicyChangedType
     description String
 
@@ -9228,6 +9294,10 @@ union EventType
         "(devices) Enabled/disabled backup for computer"
     device_unlink DeviceUnlinkType
         "(devices) Disconnected device"
+    dropbox_passwords_exported DropboxPasswordsExportedType
+        "(devices) Exported passwords"
+    dropbox_passwords_new_device_enrolled DropboxPasswordsNewDeviceEnrolledType
+        "(devices) Enrolled new Dropbox Passwords device"
     emm_refresh_auth_token EmmRefreshAuthTokenType
         "(devices) Refreshed auth token used for setting up EMM"
     account_capture_change_availability AccountCaptureChangeAvailabilityType
@@ -9802,6 +9872,8 @@ union EventType
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
     camera_uploads_policy_changed CameraUploadsPolicyChangedType
         "(team_policies) Changed camera uploads setting for team"
+    classification_change_policy ClassificationChangePolicyType
+        "(team_policies) Changed classification policy for team"
     computer_backup_policy_changed ComputerBackupPolicyChangedType
         "(team_policies) Changed computer backup policy for team"
     content_administration_policy_changed ContentAdministrationPolicyChangedType
@@ -10114,6 +10186,10 @@ union EventTypeArg
         "(devices) Enabled/disabled backup for computer"
     device_unlink
         "(devices) Disconnected device"
+    dropbox_passwords_exported
+        "(devices) Exported passwords"
+    dropbox_passwords_new_device_enrolled
+        "(devices) Enrolled new Dropbox Passwords device"
     emm_refresh_auth_token
         "(devices) Refreshed auth token used for setting up EMM"
     account_capture_change_availability
@@ -10688,6 +10764,8 @@ union EventTypeArg
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
     camera_uploads_policy_changed
         "(team_policies) Changed camera uploads setting for team"
+    classification_change_policy
+        "(team_policies) Changed classification policy for team"
     computer_backup_policy_changed
         "(team_policies) Changed computer backup policy for team"
     content_administration_policy_changed
