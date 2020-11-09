@@ -186,6 +186,23 @@ union MemberRemoveActionType
     offboard
     offboard_and_retain_team_folders
 
+struct AdminAlertingAlertConfiguration
+    "Alert configurations"
+
+    alert_state AdminAlertingAlertStatePolicy
+        "Alert state."
+
+    example default
+        alert_state = off
+
+    example default2
+        alert_state = off
+
+union AdminAlertingAlertStatePolicy
+    "Policy for controlling whether an alert can be triggered or not"
+    off
+    on
+
 union AdminRole
     limited_admin
     member_only
@@ -599,6 +616,10 @@ struct RelocateAssetReferencesLogInfo
     example default2
         src_asset_index = 4
         dest_asset_index = 4
+
+union ResellerRole
+    not_reseller
+    reseller_admin
 
 union ResellerSupportPolicy
     "Policy for controlling if reseller can access the admin console as administrator"
@@ -1681,6 +1702,8 @@ union ParticipantLogInfo
 union EventCategory
     "Category of events in event audit log."
 
+    admin_alerting
+        "Events that involve team related alerts."
     apps
         "Events that apply to management of linked apps."
     comments
@@ -1730,6 +1753,21 @@ union EventCategory
 #############################
 # Types for specific events
 #############################
+
+struct AdminAlertingChangedAlertConfigDetails
+    "Changed an alert setting."
+
+    alert_name String
+        "Alert Name."
+    previous_alert_config AdminAlertingAlertConfiguration
+        "Previous alert configuration."
+    new_alert_config AdminAlertingAlertConfiguration
+        "New alert configuration."
+
+    example default
+        alert_name = "abc"
+        previous_alert_config = default
+        new_alert_config = default
 
 struct AppLinkTeamDetails
     "Linked app for team."
@@ -1973,12 +2011,15 @@ struct GovernancePolicyRemoveFoldersDetails
         "Policy type."
     folders List(String)?
         "Folders."
+    reason String?
+        "Reason."
 
     example default
         governance_policy_id = "abc"
         name = "abc"
         policy_type = retention
         folders = ["abc"]
+        reason = "abc"
 
 struct LegalHoldsActivateAHoldDetails
     "Activated a hold."
@@ -2897,6 +2938,18 @@ struct MemberChangeNameDetails
     example default
         new_value = default
         previous_value = default
+
+struct MemberChangeResellerRoleDetails
+    "Changed team member reseller role."
+
+    new_value ResellerRole
+        "New reseller role. This field is relevant when the reseller role is changed."
+    previous_value ResellerRole
+        "Previous reseller role. This field is relevant when the reseller role is changed or when the reseller role is removed."
+
+    example default
+        new_value = not_reseller
+        previous_value = not_reseller
 
 struct MemberChangeStatusDetails
     "Changed member status (invited, joined, suspended, etc.)."
@@ -5746,8 +5799,14 @@ struct TeamMergeToDetails
     example default
         team_name = "abc"
 
+struct TeamProfileAddBackgroundDetails
+    "Added team background to display on shared link headers."
+
 struct TeamProfileAddLogoDetails
     "Added team logo to display on shared link headers."
+
+struct TeamProfileChangeBackgroundDetails
+    "Changed team background displayed on shared link headers."
 
 struct TeamProfileChangeDefaultLanguageDetails
     "Changed default language for team."
@@ -5775,6 +5834,9 @@ struct TeamProfileChangeNameDetails
     example default
         previous_value = default
         new_value = default
+
+struct TeamProfileRemoveBackgroundDetails
+    "Removed team background displayed on shared link headers."
 
 struct TeamProfileRemoveLogoDetails
     "Removed team logo displayed on shared link headers."
@@ -6101,6 +6163,7 @@ struct TeamMergeRequestSentShownToSecondaryTeamDetails
 union EventDetails
     "Additional fields depending on the event type."
 
+    admin_alerting_changed_alert_config_details AdminAlertingChangedAlertConfigDetails
     app_link_team_details AppLinkTeamDetails
     app_link_user_details AppLinkUserDetails
     app_unlink_team_details AppUnlinkTeamDetails
@@ -6220,6 +6283,7 @@ union EventDetails
     member_change_external_id_details MemberChangeExternalIdDetails
     member_change_membership_type_details MemberChangeMembershipTypeDetails
     member_change_name_details MemberChangeNameDetails
+    member_change_reseller_role_details MemberChangeResellerRoleDetails
     member_change_status_details MemberChangeStatusDetails
     member_delete_manual_contacts_details MemberDeleteManualContactsDetails
     member_delete_profile_photo_details MemberDeleteProfilePhotoDetails
@@ -6506,10 +6570,13 @@ union EventDetails
     web_sessions_change_idle_length_policy_details WebSessionsChangeIdleLengthPolicyDetails
     team_merge_from_details TeamMergeFromDetails
     team_merge_to_details TeamMergeToDetails
+    team_profile_add_background_details TeamProfileAddBackgroundDetails
     team_profile_add_logo_details TeamProfileAddLogoDetails
+    team_profile_change_background_details TeamProfileChangeBackgroundDetails
     team_profile_change_default_language_details TeamProfileChangeDefaultLanguageDetails
     team_profile_change_logo_details TeamProfileChangeLogoDetails
     team_profile_change_name_details TeamProfileChangeNameDetails
+    team_profile_remove_background_details TeamProfileRemoveBackgroundDetails
     team_profile_remove_logo_details TeamProfileRemoveLogoDetails
     tfa_add_backup_phone_details TfaAddBackupPhoneDetails
     tfa_add_security_key_details TfaAddSecurityKeyDetails
@@ -6553,6 +6620,12 @@ union EventDetails
 ##############
 # Event Type
 ##############
+
+struct AdminAlertingChangedAlertConfigType
+    description String
+
+    example default
+        description = "(admin_alerting) Changed an alert setting"
 
 struct AppLinkTeamType
     description String
@@ -7267,6 +7340,12 @@ struct MemberChangeNameType
 
     example default
         description = "(members) Changed team member name"
+
+struct MemberChangeResellerRoleType
+    description String
+
+    example default
+        description = "(members) Changed team member reseller role"
 
 struct MemberChangeStatusType
     description String
@@ -8984,11 +9063,23 @@ struct TeamMergeToType
     example default
         description = "(team_profile) Merged this team into another team"
 
+struct TeamProfileAddBackgroundType
+    description String
+
+    example default
+        description = "(team_profile) Added team background to display on shared link headers"
+
 struct TeamProfileAddLogoType
     description String
 
     example default
         description = "(team_profile) Added team logo to display on shared link headers"
+
+struct TeamProfileChangeBackgroundType
+    description String
+
+    example default
+        description = "(team_profile) Changed team background displayed on shared link headers"
 
 struct TeamProfileChangeDefaultLanguageType
     description String
@@ -9007,6 +9098,12 @@ struct TeamProfileChangeNameType
 
     example default
         description = "(team_profile) Changed team name"
+
+struct TeamProfileRemoveBackgroundType
+    description String
+
+    example default
+        description = "(team_profile) Removed team background displayed on shared link headers"
 
 struct TeamProfileRemoveLogoType
     description String
@@ -9210,6 +9307,8 @@ struct TeamMergeRequestSentShownToSecondaryTeamType
 union EventType
     "The type of the event with description."
 
+    admin_alerting_changed_alert_config AdminAlertingChangedAlertConfigType
+        "(admin_alerting) Changed an alert setting"
     app_link_team AppLinkTeamType
         "(apps) Linked app for team"
     app_link_user AppLinkUserType
@@ -9448,6 +9547,8 @@ union EventType
         "(members) Changed membership type (limited/full) of member (deprecated, no longer logged)"
     member_change_name MemberChangeNameType
         "(members) Changed team member name"
+    member_change_reseller_role MemberChangeResellerRoleType
+        "(members) Changed team member reseller role"
     member_change_status MemberChangeStatusType
         "(members) Changed member status (invited, joined, suspended, etc.)"
     member_delete_manual_contacts MemberDeleteManualContactsType
@@ -10020,14 +10121,20 @@ union EventType
         "(team_profile) Merged another team into this team"
     team_merge_to TeamMergeToType
         "(team_profile) Merged this team into another team"
+    team_profile_add_background TeamProfileAddBackgroundType
+        "(team_profile) Added team background to display on shared link headers"
     team_profile_add_logo TeamProfileAddLogoType
         "(team_profile) Added team logo to display on shared link headers"
+    team_profile_change_background TeamProfileChangeBackgroundType
+        "(team_profile) Changed team background displayed on shared link headers"
     team_profile_change_default_language TeamProfileChangeDefaultLanguageType
         "(team_profile) Changed default language for team"
     team_profile_change_logo TeamProfileChangeLogoType
         "(team_profile) Changed team logo displayed on shared link headers"
     team_profile_change_name TeamProfileChangeNameType
         "(team_profile) Changed team name"
+    team_profile_remove_background TeamProfileRemoveBackgroundType
+        "(team_profile) Removed team background displayed on shared link headers"
     team_profile_remove_logo TeamProfileRemoveLogoType
         "(team_profile) Removed team logo displayed on shared link headers"
     tfa_add_backup_phone TfaAddBackupPhoneType
@@ -10102,6 +10209,8 @@ union EventType
 union EventTypeArg
     "The type of the event."
 
+    admin_alerting_changed_alert_config
+        "(admin_alerting) Changed an alert setting"
     app_link_team
         "(apps) Linked app for team"
     app_link_user
@@ -10340,6 +10449,8 @@ union EventTypeArg
         "(members) Changed membership type (limited/full) of member (deprecated, no longer logged)"
     member_change_name
         "(members) Changed team member name"
+    member_change_reseller_role
+        "(members) Changed team member reseller role"
     member_change_status
         "(members) Changed member status (invited, joined, suspended, etc.)"
     member_delete_manual_contacts
@@ -10912,14 +11023,20 @@ union EventTypeArg
         "(team_profile) Merged another team into this team"
     team_merge_to
         "(team_profile) Merged this team into another team"
+    team_profile_add_background
+        "(team_profile) Added team background to display on shared link headers"
     team_profile_add_logo
         "(team_profile) Added team logo to display on shared link headers"
+    team_profile_change_background
+        "(team_profile) Changed team background displayed on shared link headers"
     team_profile_change_default_language
         "(team_profile) Changed default language for team"
     team_profile_change_logo
         "(team_profile) Changed team logo displayed on shared link headers"
     team_profile_change_name
         "(team_profile) Changed team name"
+    team_profile_remove_background
+        "(team_profile) Removed team background displayed on shared link headers"
     team_profile_remove_logo
         "(team_profile) Removed team logo displayed on shared link headers"
     tfa_add_backup_phone
