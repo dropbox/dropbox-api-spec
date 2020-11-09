@@ -747,6 +747,12 @@ struct UploadSessionOffsetError
     correct_offset UInt64
         "The offset up to which data has been collected."
 
+union UploadSessionStartError
+    concurrent_session_data_not_allowed
+        "Uploading data not allowed when starting concurrent upload session."
+    concurrent_session_close_not_allowed
+        "Can not start a closed concurrent upload session."
+
 union UploadSessionLookupError
     not_found
         "The upload session ID was not found or has expired. Upload sessions are
@@ -764,6 +770,10 @@ union UploadSessionLookupError
     too_large
         "You can not append to the upload session because the size of a file should not reach the
         max file size limit (i.e. 350GB)."
+    concurrent_session_invalid_offset
+        "For concurrent upload sessions, offset needs to be multiple of 4194304 bytes."
+    concurrent_session_invalid_data_size
+        "For concurrent upload sessions, only chunks with size multiple of 4194304 bytes can be uploaded."
 
 union UploadSessionFinishError
     lookup_failed UploadSessionLookupError
@@ -780,14 +790,31 @@ union UploadSessionFinishError
     too_many_write_operations
         "There are too many write operations happening in the user's Dropbox. You should
         retry uploading this file."
+    concurrent_session_data_not_allowed
+        "Uploading data not allowed when finishing concurrent upload session."
+    concurrent_session_not_closed
+        "Concurrent upload sessions need to be closed before finishing."
+    concurrent_session_missing_data
+        "Not all pieces of data were uploaded before trying to finish the session."
 
 # Req/Resp
+
+union UploadSessionType
+    sequential
+        "Pieces of content are uploaded sequentially one after another. This is the default
+        behavior."
+    concurrent
+        "Pieces of data can be uploaded in concurrent RPCs in any order."
 
 struct UploadSessionStartArg
     close Boolean = false
         "If true, the current session will be closed, at which point you won't
         be able to call :route:`upload_session/append:2` anymore with the
         current session."
+
+    session_type UploadSessionType?
+        "Type of upload session you want to start. If not specified, default is
+        :field:`UploadSessionType.sequential`."
 
     example with_close
         close = false
@@ -801,7 +828,7 @@ struct UploadSessionStartResult
     example default
         session_id = "1234faaf0678bcde"
 
-route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Void)
+route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, UploadSessionStartError)
     "Upload sessions allow you to upload a single file in one or more
     requests, for example where the size of the file is greater than 150
     MB.  This call starts a new upload session with the given data. You
@@ -820,7 +847,22 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Voi
 
     Calls to this endpoint will count as data transport calls for any Dropbox
     Business teams with a limit on the number of data transport calls allowed
-    per month. For more information, see the :link:`Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit`."
+    per month. For more information, see the :link:`Data transport limit page
+    https://www.dropbox.com/developers/reference/data-transport-limit`.
+
+    By default, upload sessions require you to send content of the file in sequential order via
+    consecutive :route:`upload_session/start`, :route:`upload_session/append:2`,
+    :route:`upload_session/finish` calls. For better performance, you can instead optionally use
+    a :field:`UploadSessionType.concurrent` upload session. To start a new concurrent session,
+    set :field:`UploadSessionStartArg.session_type` to :field:`UploadSessionType.concurrent`.
+    After that, you can send file data in concurrent :route:`upload_session/append:2` requests.
+    Finally finish the session with :route:`upload_session/finish`.
+
+    There are couple of constraints with concurrent sessions to make them work. You can not send
+    data with :route:`upload_session/start` or :route:`upload_session/finish` call, only with
+    :route:`upload_session/append:2` call. Also data uploaded in :route:`upload_session/append:2`
+    call must be multiple of 4194304 bytes (except for last :route:`upload_session/append:2` with
+    :field:`UploadSessionStartArg.close` to :val:`true`, that may contain any remaining data)."
 
     attrs
         host = "content"
