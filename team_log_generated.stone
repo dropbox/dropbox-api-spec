@@ -3648,6 +3648,18 @@ struct PasswordResetDetails
 struct PasswordResetAllDetails
     "Reset all team member passwords."
 
+struct ClassificationCreateReportDetails
+    "Created Classification report."
+
+struct ClassificationCreateReportFailDetails
+    "Couldn't create Classification report."
+
+    failure_reason team.TeamReportFailureReason
+        "Failure reason."
+
+    example default
+        failure_reason = temporary_error
+
 struct EmmCreateExceptionsReportDetails
     "Created EMM-excluded users report."
 
@@ -6352,6 +6364,8 @@ union EventDetails
     password_change_details PasswordChangeDetails
     password_reset_details PasswordResetDetails
     password_reset_all_details PasswordResetAllDetails
+    classification_create_report_details ClassificationCreateReportDetails
+    classification_create_report_fail_details ClassificationCreateReportFailDetails
     emm_create_exceptions_report_details EmmCreateExceptionsReportDetails
     emm_create_usage_report_details EmmCreateUsageReportDetails
     export_members_report_details ExportMembersReportDetails
@@ -7754,6 +7768,18 @@ struct PasswordResetAllType
 
     example default
         description = "(passwords) Reset all team member passwords"
+
+struct ClassificationCreateReportType
+    description String
+
+    example default
+        description = "(reports) Created Classification report"
+
+struct ClassificationCreateReportFailType
+    description String
+
+    example default
+        description = "(reports) Couldn't create Classification report"
 
 struct EmmCreateExceptionsReportType
     description String
@@ -9685,6 +9711,10 @@ union EventType
         "(passwords) Reset password"
     password_reset_all PasswordResetAllType
         "(passwords) Reset all team member passwords"
+    classification_create_report ClassificationCreateReportType
+        "(reports) Created Classification report"
+    classification_create_report_fail ClassificationCreateReportFailType
+        "(reports) Couldn't create Classification report"
     emm_create_exceptions_report EmmCreateExceptionsReportType
         "(reports) Created EMM-excluded users report"
     emm_create_usage_report EmmCreateUsageReportType
@@ -10587,6 +10617,10 @@ union EventTypeArg
         "(passwords) Reset password"
     password_reset_all
         "(passwords) Reset all team member passwords"
+    classification_create_report
+        "(reports) Created Classification report"
+    classification_create_report_fail
+        "(reports) Couldn't create Classification report"
     emm_create_exceptions_report
         "(reports) Created EMM-excluded users report"
     emm_create_usage_report

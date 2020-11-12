@@ -10,8 +10,8 @@ route user (EchoArg, EchoResult, Void)
 
     attrs
         allow_app_folder_app = true
-        is_preview = true
         auth = "user"
+        is_preview = true
 
 route app (EchoArg, EchoResult, Void)
     "This endpoint performs App Authentication, validating the supplied app key and secret,
@@ -22,6 +22,6 @@ route app (EchoArg, EchoResult, Void)
 
     attrs
         allow_app_folder_app = true
-        is_preview = true
         auth = "app"
+        is_preview = true
 

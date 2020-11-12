@@ -22,7 +22,7 @@ alias NamePart = String(pattern="[^\/:?*<>\"|]*", min_length=1, max_length=100)
 alias OptionalNamePart = String(pattern="[^\/:?*<>\"|]*", max_length=100)
 
 # We don't limit the length because it's always generated from the first & last names.
-alias DisplayName = String(pattern="[^\/:?*<>\"|]*", min_length=1)
+alias DisplayName = String(pattern="[^\/:?*<>\"|]*")
 
 # There are some existing accounts with special characters in their names. Though we don't allow such special characters
 # being used through UI, it's still possible to use them right now through some endpoints. This alias should be used in
