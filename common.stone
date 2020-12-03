@@ -87,7 +87,7 @@ union PathRoot
 union PathRootError
     invalid_root RootInfo
         "The root namespace id in Dropbox-API-Path-Root header is not valid. The value
-        of this error is use's latest root info."
+        of this error is the user's latest root info."
     no_permission
         "You don't have permission to access the namespace id in Dropbox-API-Path-Root
          header."

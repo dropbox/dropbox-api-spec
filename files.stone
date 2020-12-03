@@ -70,6 +70,9 @@ struct Metadata
     example folder_metadata
         folder = default
 
+    example search_metadata
+        file = search_file_metadata
+
 union MetadataV2
     "Metadata for a file, folder or other resource types."
 
@@ -77,7 +80,7 @@ union MetadataV2
     # new types can be added here in the future
 
     example default
-        metadata = default
+        metadata = search_metadata
 
 struct HighlightSpan
 
@@ -313,6 +316,20 @@ struct FileMetadata extends Metadata
         has_explicit_shared_members = false
         content_hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         file_lock_info = default
+
+    example search_file_metadata
+        id = "id:a4ayc_80_OEAAAAAAAAAXw"
+        name = "Prime_Numbers.txt"
+        path_lower = "/homework/math/prime_numbers.txt"
+        path_display = "/Homework/math/Prime_Numbers.txt"
+        sharing_info = default
+        client_modified = "2015-05-12T15:50:38Z"
+        server_modified = "2015-05-12T15:50:38Z"
+        rev = "a1c10ce0dd78"
+        size = 7212
+        is_downloadable = true
+        has_explicit_shared_members = false
+        content_hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 struct FolderMetadata extends Metadata
     id Id
