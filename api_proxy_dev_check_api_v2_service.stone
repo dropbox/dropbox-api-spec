@@ -12,6 +12,7 @@ route user (EchoArg, EchoResult, Void)
         allow_app_folder_app = true
         auth = "user"
         is_preview = true
+        scope = "account_info.read"
 
 route app (EchoArg, EchoResult, Void)
     "This endpoint performs App Authentication, validating the supplied app key and secret,

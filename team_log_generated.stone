@@ -186,6 +186,23 @@ union MemberRemoveActionType
     offboard
     offboard_and_retain_team_folders
 
+union AdminAlertCategoryEnum
+    "Alert category"
+    account_takeover
+    data_loss_protection
+    malware_sharing
+    massive_file_operation
+    na
+    threat_management
+
+union AdminAlertSeverityEnum
+    "Alert severity"
+    high
+    info
+    low
+    medium
+    na
+
 struct AdminAlertingAlertConfiguration
     "Alert configurations"
 
@@ -1769,6 +1786,24 @@ struct AdminAlertingChangedAlertConfigDetails
         previous_alert_config = default
         new_alert_config = default
 
+struct AdminAlertingTriggeredAlertDetails
+    "Triggered security alert."
+
+    alert_name String
+        "Alert name."
+    alert_severity AdminAlertSeverityEnum
+        "Alert severity."
+    alert_category AdminAlertCategoryEnum
+        "Alert category."
+    alert_instance_id String
+        "Alert ID."
+
+    example default
+        alert_name = "abc"
+        alert_severity = na
+        alert_category = na
+        alert_instance_id = "pid_admin_alert:AAgAAOVHYCEuavqE0v3Jj9VDogV4wG9q8F-XZKwYpuYTVBm5"
+
 struct AppLinkTeamDetails
     "Linked app for team."
 
@@ -1919,6 +1954,27 @@ struct GovernancePolicyAddFoldersDetails
         policy_type = retention
         folders = ["abc"]
 
+struct GovernancePolicyAddFolderFailedDetails
+    "Couldn't add a folder to a policy."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    folder String
+        "Folder."
+    reason String?
+        "Reason."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        folder = "abc"
+        reason = "abc"
+
 struct GovernancePolicyCreateDetails
     "Activated a new policy."
 
@@ -2000,6 +2056,42 @@ struct GovernancePolicyEditDurationDetails
         previous_value = default
         new_value = default
 
+struct GovernancePolicyExportCreatedDetails
+    "Created a policy download."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    export_name String
+        "Export name."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        export_name = "abc"
+
+struct GovernancePolicyExportRemovedDetails
+    "Removed a policy download."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    export_name String
+        "Export name."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        export_name = "abc"
+
 struct GovernancePolicyRemoveFoldersDetails
     "Removed folders from policy."
 
@@ -2020,6 +2112,42 @@ struct GovernancePolicyRemoveFoldersDetails
         policy_type = retention
         folders = ["abc"]
         reason = "abc"
+
+struct GovernancePolicyReportCreatedDetails
+    "Created a summary report for a policy."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+
+struct GovernancePolicyZipPartDownloadedDetails
+    "Downloaded content from a policy."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    export_name String
+        "Export name."
+    part String?
+        "Part."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        export_name = "abc"
+        part = "abc"
 
 struct LegalHoldsActivateAHoldDetails
     "Activated a hold."
@@ -6176,6 +6304,7 @@ union EventDetails
     "Additional fields depending on the event type."
 
     admin_alerting_changed_alert_config_details AdminAlertingChangedAlertConfigDetails
+    admin_alerting_triggered_alert_details AdminAlertingTriggeredAlertDetails
     app_link_team_details AppLinkTeamDetails
     app_link_user_details AppLinkUserDetails
     app_unlink_team_details AppUnlinkTeamDetails
@@ -6191,11 +6320,16 @@ union EventDetails
     file_unlike_comment_details FileUnlikeCommentDetails
     file_unresolve_comment_details FileUnresolveCommentDetails
     governance_policy_add_folders_details GovernancePolicyAddFoldersDetails
+    governance_policy_add_folder_failed_details GovernancePolicyAddFolderFailedDetails
     governance_policy_create_details GovernancePolicyCreateDetails
     governance_policy_delete_details GovernancePolicyDeleteDetails
     governance_policy_edit_details_details GovernancePolicyEditDetailsDetails
     governance_policy_edit_duration_details GovernancePolicyEditDurationDetails
+    governance_policy_export_created_details GovernancePolicyExportCreatedDetails
+    governance_policy_export_removed_details GovernancePolicyExportRemovedDetails
     governance_policy_remove_folders_details GovernancePolicyRemoveFoldersDetails
+    governance_policy_report_created_details GovernancePolicyReportCreatedDetails
+    governance_policy_zip_part_downloaded_details GovernancePolicyZipPartDownloadedDetails
     legal_holds_activate_a_hold_details LegalHoldsActivateAHoldDetails
     legal_holds_add_members_details LegalHoldsAddMembersDetails
     legal_holds_change_hold_details_details LegalHoldsChangeHoldDetailsDetails
@@ -6641,6 +6775,12 @@ struct AdminAlertingChangedAlertConfigType
     example default
         description = "(admin_alerting) Changed an alert setting"
 
+struct AdminAlertingTriggeredAlertType
+    description String
+
+    example default
+        description = "(admin_alerting) Triggered security alert"
+
 struct AppLinkTeamType
     description String
 
@@ -6731,6 +6871,12 @@ struct GovernancePolicyAddFoldersType
     example default
         description = "(data_governance) Added folders to policy"
 
+struct GovernancePolicyAddFolderFailedType
+    description String
+
+    example default
+        description = "(data_governance) Couldn't add a folder to a policy"
+
 struct GovernancePolicyCreateType
     description String
 
@@ -6755,11 +6901,35 @@ struct GovernancePolicyEditDurationType
     example default
         description = "(data_governance) Changed policy duration"
 
+struct GovernancePolicyExportCreatedType
+    description String
+
+    example default
+        description = "(data_governance) Created a policy download"
+
+struct GovernancePolicyExportRemovedType
+    description String
+
+    example default
+        description = "(data_governance) Removed a policy download"
+
 struct GovernancePolicyRemoveFoldersType
     description String
 
     example default
         description = "(data_governance) Removed folders from policy"
+
+struct GovernancePolicyReportCreatedType
+    description String
+
+    example default
+        description = "(data_governance) Created a summary report for a policy"
+
+struct GovernancePolicyZipPartDownloadedType
+    description String
+
+    example default
+        description = "(data_governance) Downloaded content from a policy"
 
 struct LegalHoldsActivateAHoldType
     description String
@@ -9335,6 +9505,8 @@ union EventType
 
     admin_alerting_changed_alert_config AdminAlertingChangedAlertConfigType
         "(admin_alerting) Changed an alert setting"
+    admin_alerting_triggered_alert AdminAlertingTriggeredAlertType
+        "(admin_alerting) Triggered security alert"
     app_link_team AppLinkTeamType
         "(apps) Linked app for team"
     app_link_user AppLinkUserType
@@ -9365,6 +9537,8 @@ union EventType
         "(comments) Unresolved file comment"
     governance_policy_add_folders GovernancePolicyAddFoldersType
         "(data_governance) Added folders to policy"
+    governance_policy_add_folder_failed GovernancePolicyAddFolderFailedType
+        "(data_governance) Couldn't add a folder to a policy"
     governance_policy_create GovernancePolicyCreateType
         "(data_governance) Activated a new policy"
     governance_policy_delete GovernancePolicyDeleteType
@@ -9373,8 +9547,16 @@ union EventType
         "(data_governance) Edited policy"
     governance_policy_edit_duration GovernancePolicyEditDurationType
         "(data_governance) Changed policy duration"
+    governance_policy_export_created GovernancePolicyExportCreatedType
+        "(data_governance) Created a policy download"
+    governance_policy_export_removed GovernancePolicyExportRemovedType
+        "(data_governance) Removed a policy download"
     governance_policy_remove_folders GovernancePolicyRemoveFoldersType
         "(data_governance) Removed folders from policy"
+    governance_policy_report_created GovernancePolicyReportCreatedType
+        "(data_governance) Created a summary report for a policy"
+    governance_policy_zip_part_downloaded GovernancePolicyZipPartDownloadedType
+        "(data_governance) Downloaded content from a policy"
     legal_holds_activate_a_hold LegalHoldsActivateAHoldType
         "(data_governance) Activated a hold"
     legal_holds_add_members LegalHoldsAddMembersType
@@ -10241,6 +10423,8 @@ union EventTypeArg
 
     admin_alerting_changed_alert_config
         "(admin_alerting) Changed an alert setting"
+    admin_alerting_triggered_alert
+        "(admin_alerting) Triggered security alert"
     app_link_team
         "(apps) Linked app for team"
     app_link_user
@@ -10271,6 +10455,8 @@ union EventTypeArg
         "(comments) Unresolved file comment"
     governance_policy_add_folders
         "(data_governance) Added folders to policy"
+    governance_policy_add_folder_failed
+        "(data_governance) Couldn't add a folder to a policy"
     governance_policy_create
         "(data_governance) Activated a new policy"
     governance_policy_delete
@@ -10279,8 +10465,16 @@ union EventTypeArg
         "(data_governance) Edited policy"
     governance_policy_edit_duration
         "(data_governance) Changed policy duration"
+    governance_policy_export_created
+        "(data_governance) Created a policy download"
+    governance_policy_export_removed
+        "(data_governance) Removed a policy download"
     governance_policy_remove_folders
         "(data_governance) Removed folders from policy"
+    governance_policy_report_created
+        "(data_governance) Created a summary report for a policy"
+    governance_policy_zip_part_downloaded
+        "(data_governance) Downloaded content from a policy"
     legal_holds_activate_a_hold
         "(data_governance) Activated a hold"
     legal_holds_add_members
