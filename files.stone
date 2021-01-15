@@ -1272,8 +1272,7 @@ route search:2 (SearchV2Arg, SearchV2Result, SearchError)
 struct SearchV2Arg
 
     query String(max_length=1000)
-        "The string to search for. May match across multiple fields based on the request arguments.
-        Query string may be rewritten to improve relevance of results."
+        "The string to search for. May match across multiple fields based on the request arguments."
 
     options SearchOptions?
         "Options for more targeted search results."
