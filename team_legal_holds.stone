@@ -306,6 +306,8 @@ struct LegalHoldsPolicyUpdateArg
         members = ["dbmid:FDFSVF-DFSDF"]
 
 union LegalHoldsPolicyUpdateError extends LegalHoldsError
+    transient_error
+        "Temporary infrastructure failure, please retry."
     inactive_legal_hold
         "Trying to release an inactive legal hold."
     legal_hold_performing_another_operation
