@@ -2748,6 +2748,7 @@ route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError) 
     attrs
         is_preview=true
         allow_app_folder_app = true
+        scope = "files.metadata.read"
 
 struct AlphaGetMetadataArg extends GetMetadataArg
 
@@ -2785,6 +2786,7 @@ route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithPrope
         style="upload"
         is_preview=true
         allow_app_folder_app = true
+        scope = "files.content.write"
 
 struct CommitInfoWithProperties extends CommitInfo
     example default
@@ -2800,11 +2802,29 @@ union UploadErrorWithProperties extends UploadError
 #
 
 route properties/add(file_properties.AddPropertiesArg, Void, file_properties.AddPropertiesError) deprecated
+    attrs
+        scope = "files.metadata.write"
+
 route properties/overwrite(file_properties.OverwritePropertyGroupArg, Void, file_properties.InvalidPropertyGroupError) deprecated
+    attrs
+        scope = "files.metadata.write"
+
 route properties/update(file_properties.UpdatePropertiesArg, Void, file_properties.UpdatePropertiesError) deprecated
+    attrs
+        scope = "files.metadata.write"
+
 route properties/remove(file_properties.RemovePropertiesArg, Void, file_properties.RemovePropertiesError) deprecated
+    attrs
+        scope = "files.metadata.write"
+
 route properties/template/get(file_properties.GetTemplateArg, file_properties.GetTemplateResult, file_properties.TemplateError) deprecated
+    attrs
+        scope = "files.metadata.read"
+
 route properties/template/list(Void, file_properties.ListTemplateResult, file_properties.TemplateError) deprecated
+    attrs
+        scope = "files.metadata.read"
+
 #
 # Team selective sync additions
 #

@@ -570,6 +570,7 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
 
     attrs
         allow_app_folder_app = true
+        scope = "sharing.read"
 
 union_closed PendingUploadMode
     "Flag to indicate pending upload default (for linking to not-yet-existing paths)."
@@ -615,3 +616,4 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
     attrs
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
+        scope = "sharing.write"
