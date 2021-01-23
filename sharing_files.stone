@@ -289,6 +289,9 @@ struct AddFileMemberArgs
 route change_file_member_access(ChangeFileMemberAccessArgs, FileMemberActionResult, FileMemberActionError) deprecated by update_file_member
     "Identical to update_file_member but with less information returned."
 
+    attrs
+        scope = "sharing.write"
+
 struct ChangeFileMemberAccessArgs
     "Arguments for :route:`change_file_member_access`."
 

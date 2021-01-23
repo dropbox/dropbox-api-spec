@@ -215,3 +215,4 @@ route linked_apps/list_team_linked_apps(ListTeamAppsArg, ListTeamAppsResult, Lis
 
     attrs
         auth = "team"
+        scope = "sessions.list"
