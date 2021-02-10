@@ -123,6 +123,10 @@ struct ExportInfo
     export_as String?
         "Format to which the file can be exported to."
 
+    export_options List(String)?
+        "Additional formats to which the file can be exported. These values can be
+        specified as the export_format in /files/export."
+
     example default
         export_as = "xlsx"
 
@@ -683,6 +687,8 @@ union ExportError
     path LookupError
     non_exportable
         "This file type cannot be exported. Use :route:`download` instead."
+    invalid_export_format
+        "The specified export format is not a valid option for this file type."
     retry_error
         "The exportable content is not yet available. Please retry later."
 
@@ -691,6 +697,13 @@ struct ExportArg
 
     path ReadPath
         "The path of the file to be exported."
+
+    export_format String?
+        "The file format to which the file should be exported.
+        This must be one of the formats listed in the file's
+        export_options returned by :route:`get_metadata`.
+        If none is specified, the default format (specified
+        in export_as in file metadata) will be used."
 
     example default
         path = "/Homework/math/Prime_Numbers.gsheet"
@@ -710,6 +723,10 @@ struct ExportMetadata
     export_hash Sha256HexHash?
         "A hash based on the exported file content. This field can be used to verify data integrity. Similar to content hash.
         For more information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+
+    paper_revision Int64?
+        # TODO(jessk): after /files/paper/update is made public, add "which can be used in :route:`paper/update`."
+        "If the file is a Paper doc, this gives the latest doc revision."
 
     example default
         name = "Prime_Numbers.xlsx"
@@ -773,7 +790,7 @@ union UploadSessionStartError
 union UploadSessionLookupError
     not_found
         "The upload session ID was not found or has expired. Upload sessions are
-        valid for 48 hours."
+        valid for 7 days."
     incorrect_offset UploadSessionOffsetError
         "The specified offset was incorrect. See the value for the
         correct offset. This error may occur when a previous request
@@ -818,7 +835,7 @@ union UploadSessionFinishError
 
 union UploadSessionType
     sequential
-        "Pieces of content are uploaded sequentially one after another. This is the default
+        "Pieces of data are uploaded sequentially one after another. This is the default
         behavior."
     concurrent
         "Pieces of data can be uploaded in concurrent RPCs in any order."
@@ -856,10 +873,10 @@ route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, Upl
     A single request should not upload more than 150 MB. The maximum size of
     a file one can upload to an upload session is 350 GB.
 
-    An upload session can be used for a maximum of 48 hours. Attempting
+    An upload session can be used for a maximum of 7 days. Attempting
     to use an :field:`UploadSessionStartResult.session_id` with
     :route:`upload_session/append:2` or :route:`upload_session/finish` more
-    than 48 hours after its creation will return a
+    than 7 days after its creation will return a
     :field:`UploadSessionLookupError.not_found`.
 
     Calls to this endpoint will count as data transport calls for any Dropbox
@@ -922,9 +939,8 @@ struct UploadSessionCursor
     session_id String
         "The upload session ID (returned by :route:`upload_session/start`)."
     offset UInt64
-        "The amount of data that has been uploaded so far. We use this to make
-        sure upload data isn't lost or duplicated in the event of a network
-        error."
+        "Offset in bytes at which data should be appended. We use this to make
+        sure upload data isn't lost or duplicated in the event of a network error."
 
     example default
         session_id = "1234faaf0678bcde"
@@ -2213,7 +2229,7 @@ route get_thumbnail(ThumbnailArg, FileMetadata, ThumbnailError)
     "Get a thumbnail for an image.
 
     This method currently supports files with the following file extensions:
-    jpg, jpeg, png, tiff, tif, gif and bmp. Photos that are larger than 20MB
+    jpg, jpeg, png, tiff, tif, gif, webp, ppm and bmp. Photos that are larger than 20MB
     in size won't be converted to a thumbnail."
 
     attrs
@@ -2227,7 +2243,7 @@ route get_thumbnail_batch(GetThumbnailBatchArg, GetThumbnailBatchResult, GetThum
     "Get thumbnails for a list of images. We allow up to 25 thumbnails in a single batch.
 
     This method currently supports files with the following file extensions:
-    jpg, jpeg, png, tiff, tif, gif and bmp. Photos that are larger than 20MB
+    jpg, jpeg, png, tiff, tif, gif, webp, ppm and bmp. Photos that are larger than 20MB
     in size won't be converted to a thumbnail."
 
     attrs
@@ -2320,7 +2336,11 @@ struct ThumbnailV2Arg
 
 
 route get_thumbnail:2(ThumbnailV2Arg, PreviewResult, ThumbnailV2Error)
-    "Get a thumbnail for a file."
+    "Get a thumbnail for an image.
+
+    This method currently supports files with the following file extensions:
+    jpg, jpeg, png, tiff, tif, gif, webp, ppm and bmp. Photos that are larger than 20MB
+    in size won't be converted to a thumbnail."
 
     attrs
         host = "content"
@@ -2499,6 +2519,10 @@ union GetTemporaryLinkError
         their email address :link:`here https://www.dropbox.com/help/317`."
     unsupported_file
         "Cannot get temporary link to this file type; use :route:`export` instead."
+    not_allowed
+        "The user is not allowed to request a temporary link to the specified file.
+        For example, this can occur if the file is restricted or if the user's links
+        are :link:`banned https://help.dropbox.com/files-folders/share/banned-links`."
 
 route get_temporary_link(GetTemporaryLinkArg, GetTemporaryLinkResult, GetTemporaryLinkError)
     "Get a temporary link to stream content of a file. This link will expire in four hours and
