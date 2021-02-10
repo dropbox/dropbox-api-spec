@@ -206,14 +206,58 @@ union AdminAlertSeverityEnum
 struct AdminAlertingAlertConfiguration
     "Alert configurations"
 
-    alert_state AdminAlertingAlertStatePolicy
+    alert_state AdminAlertingAlertStatePolicy?
         "Alert state."
+    sensitivity_level AdminAlertingAlertSensitivity?
+        "Sensitivity level."
+    recipients_settings RecipientsConfiguration?
+        "Recipient settings."
 
     example default
         alert_state = off
+        sensitivity_level = invalid
+        recipients_settings = default
 
     example default2
         alert_state = off
+        sensitivity_level = invalid
+        recipients_settings = default2
+
+struct RecipientsConfiguration
+    "Recipients Configuration"
+
+    recipient_setting_type AlertRecipientsSettingType?
+        "Recipients setting type."
+    emails List(EmailAddress)?
+        "A list of user emails to notify."
+    groups List(String)?
+        "A list of groups to notify."
+
+    example default
+        recipient_setting_type = invalid
+        emails = ["john_smith@acmecorp.com"]
+        groups = ["abc"]
+
+    example default2
+        recipient_setting_type = invalid
+        emails = ["jane_smith@acmecorp.com"]
+        groups = ["xyz"]
+
+union AlertRecipientsSettingType
+    "Alert recipients setting type"
+    custom_list
+    invalid
+    none
+    team_admins
+
+union AdminAlertingAlertSensitivity
+    "Alert sensitivity"
+    high
+    highest
+    invalid
+    low
+    lowest
+    medium
 
 union AdminAlertingAlertStatePolicy
     "Policy for controlling whether an alert can be triggered or not"
@@ -528,6 +572,10 @@ union IntegrationPolicy
     disabled
     enabled
 
+union LabelType
+    "Label type"
+    personal_information
+
 union LockStatus
     "File lock status"
     locked
@@ -614,6 +662,7 @@ union PlacementRestriction
     europe_only
     japan_only
     none
+    uk_only
 
 union PolicyType
     disposition
@@ -2671,6 +2720,33 @@ struct FolderOverviewItemUnpinnedDetails
     example default
         folder_overview_location_asset = 3
         pinned_items_asset_indices = [3]
+
+struct ObjectLabelAddedDetails
+    "Added a label."
+
+    label_type LabelType
+        "Labels mark a file or folder."
+
+    example default
+        label_type = personal_information
+
+struct ObjectLabelRemovedDetails
+    "Removed a label."
+
+    label_type LabelType
+        "Labels mark a file or folder."
+
+    example default
+        label_type = personal_information
+
+struct ObjectLabelUpdatedValueDetails
+    "Updated a label's value."
+
+    label_type LabelType
+        "Labels mark a file or folder."
+
+    example default
+        label_type = personal_information
 
 struct RewindFolderDetails
     "Rewound a folder."
@@ -6390,6 +6466,9 @@ union EventDetails
     folder_overview_description_changed_details FolderOverviewDescriptionChangedDetails
     folder_overview_item_pinned_details FolderOverviewItemPinnedDetails
     folder_overview_item_unpinned_details FolderOverviewItemUnpinnedDetails
+    object_label_added_details ObjectLabelAddedDetails
+    object_label_removed_details ObjectLabelRemovedDetails
+    object_label_updated_value_details ObjectLabelUpdatedValueDetails
     rewind_folder_details RewindFolderDetails
     file_request_change_details FileRequestChangeDetails
     file_request_close_details FileRequestCloseDetails
@@ -7285,6 +7364,24 @@ struct FolderOverviewItemUnpinnedType
 
     example default
         description = "(file_operations) Unpinned item from folder overview"
+
+struct ObjectLabelAddedType
+    description String
+
+    example default
+        description = "(file_operations) Added a label"
+
+struct ObjectLabelRemovedType
+    description String
+
+    example default
+        description = "(file_operations) Removed a label"
+
+struct ObjectLabelUpdatedValueType
+    description String
+
+    example default
+        description = "(file_operations) Updated a label's value"
 
 struct RewindFolderType
     description String
@@ -9676,6 +9773,12 @@ union EventType
         "(file_operations) Pinned item to folder overview"
     folder_overview_item_unpinned FolderOverviewItemUnpinnedType
         "(file_operations) Unpinned item from folder overview"
+    object_label_added ObjectLabelAddedType
+        "(file_operations) Added a label"
+    object_label_removed ObjectLabelRemovedType
+        "(file_operations) Removed a label"
+    object_label_updated_value ObjectLabelUpdatedValueType
+        "(file_operations) Updated a label's value"
     rewind_folder RewindFolderType
         "(file_operations) Rewound a folder"
     file_request_change FileRequestChangeType
@@ -10594,6 +10697,12 @@ union EventTypeArg
         "(file_operations) Pinned item to folder overview"
     folder_overview_item_unpinned
         "(file_operations) Unpinned item from folder overview"
+    object_label_added
+        "(file_operations) Added a label"
+    object_label_removed
+        "(file_operations) Removed a label"
+    object_label_updated_value
+        "(file_operations) Updated a label's value"
     rewind_folder
         "(file_operations) Rewound a folder"
     file_request_change
