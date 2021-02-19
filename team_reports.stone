@@ -71,7 +71,8 @@ struct GetStorageReport extends BaseDfbReport
         If there is no data for a day, the storage summary will be empty."
 
 route reports/get_storage(DateRange, GetStorageReport, DateRangeError) deprecated
-    "Retrieves reporting data about a team's storage usage."
+    "Retrieves reporting data about a team's storage usage.
+    Deprecated: Will be removed on July 1st 2021."
     attrs
         auth = "team"
         scope = "team_info.read"
@@ -116,7 +117,8 @@ struct GetActivityReport extends BaseDfbReport
         "Array of the total number of views to shared links created by the team."
 
 route reports/get_activity(DateRange, GetActivityReport, DateRangeError) deprecated
-    "Retrieves reporting data about a team's user activity."
+    "Retrieves reporting data about a team's user activity.
+    Deprecated: Will be removed on July 1st 2021."
     attrs
         auth = "team"
         scope = "team_info.read"
@@ -144,7 +146,8 @@ struct GetMembershipReport extends BaseDfbReport
 
 
 route reports/get_membership(DateRange, GetMembershipReport, DateRangeError) deprecated
-    "Retrieves reporting data about a team's membership."
+    "Retrieves reporting data about a team's membership.
+    Deprecated: Will be removed on July 1st 2021."
     attrs
         auth = "team"
         scope = "team_info.read"
@@ -191,7 +194,9 @@ struct GetDevicesReport extends BaseDfbReport
 
 
 route reports/get_devices(DateRange, GetDevicesReport, DateRangeError) deprecated
-    "Retrieves reporting data about a team's linked devices."
+    "Retrieves reporting data about a team's linked devices.
+    Deprecated: Will be removed on July 1st 2021."
+
     attrs
         auth = "team"
         scope = "team_info.read"

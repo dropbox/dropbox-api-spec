@@ -323,7 +323,8 @@ union ClassificationPolicyEnumWrapper
     enabled
 
 union ClassificationType
-    "The type of classification (currently only PII)"
+    "The type of classification (currently only personal information)"
+    personal_information
     pii
 
 union ComputerBackupPolicy
@@ -348,6 +349,10 @@ union DeviceType
 union DeviceUnlinkPolicy
     keep
     remove
+
+union DispositionActionType
+    automatic_delete
+    automatic_permanently_delete
 
 union DownloadPolicyType
     "Shared content downloads policy"
@@ -2024,6 +2029,24 @@ struct GovernancePolicyAddFolderFailedDetails
         policy_type = retention
         folder = "abc"
         reason = "abc"
+
+struct GovernancePolicyContentDisposedDetails
+    "Content disposed."
+
+    governance_policy_id String
+        "Policy ID."
+    name String
+        "Policy name."
+    policy_type PolicyType?
+        "Policy type."
+    disposition_type DispositionActionType
+        "Disposition type."
+
+    example default
+        governance_policy_id = "abc"
+        name = "abc"
+        policy_type = retention
+        disposition_type = automatic_delete
 
 struct GovernancePolicyCreateDetails
     "Activated a new policy."
@@ -6398,6 +6421,7 @@ union EventDetails
     file_unresolve_comment_details FileUnresolveCommentDetails
     governance_policy_add_folders_details GovernancePolicyAddFoldersDetails
     governance_policy_add_folder_failed_details GovernancePolicyAddFolderFailedDetails
+    governance_policy_content_disposed_details GovernancePolicyContentDisposedDetails
     governance_policy_create_details GovernancePolicyCreateDetails
     governance_policy_delete_details GovernancePolicyDeleteDetails
     governance_policy_edit_details_details GovernancePolicyEditDetailsDetails
@@ -6956,6 +6980,12 @@ struct GovernancePolicyAddFolderFailedType
 
     example default
         description = "(data_governance) Couldn't add a folder to a policy"
+
+struct GovernancePolicyContentDisposedType
+    description String
+
+    example default
+        description = "(data_governance) Content disposed"
 
 struct GovernancePolicyCreateType
     description String
@@ -9637,6 +9667,8 @@ union EventType
         "(data_governance) Added folders to policy"
     governance_policy_add_folder_failed GovernancePolicyAddFolderFailedType
         "(data_governance) Couldn't add a folder to a policy"
+    governance_policy_content_disposed GovernancePolicyContentDisposedType
+        "(data_governance) Content disposed"
     governance_policy_create GovernancePolicyCreateType
         "(data_governance) Activated a new policy"
     governance_policy_delete GovernancePolicyDeleteType
@@ -10561,6 +10593,8 @@ union EventTypeArg
         "(data_governance) Added folders to policy"
     governance_policy_add_folder_failed
         "(data_governance) Couldn't add a folder to a policy"
+    governance_policy_content_disposed
+        "(data_governance) Content disposed"
     governance_policy_create
         "(data_governance) Activated a new policy"
     governance_policy_delete

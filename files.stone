@@ -725,8 +725,7 @@ struct ExportMetadata
         For more information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     paper_revision Int64?
-        # TODO(jessk): after /files/paper/update is made public, add "which can be used in :route:`paper/update`."
-        "If the file is a Paper doc, this gives the latest doc revision."
+        "If the file is a Paper doc, this gives the latest doc revision which can be used in :route:`paper/update`."
 
     example default
         name = "Prime_Numbers.xlsx"
@@ -3069,4 +3068,149 @@ route get_file_lock_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
 
 #
 # END OF FILE LOCKING
+#
+
+
+#
+# Paper routes
+#
+
+union ImportFormat
+    "The import format of the incoming Paper doc content."
+
+    html
+        "The provided data is interpreted as standard HTML."
+    markdown
+        "The provided data is interpreted as markdown."
+    plain_text
+        "The provided data is interpreted as plain text."
+
+
+union PaperContentError
+    insufficient_permissions
+        "Your account does not have permissions to edit Paper docs."
+    content_malformed
+        "The provided content was malformed and cannot be imported to Paper."
+    doc_length_exceeded
+        "The Paper doc would be too large, split the content into multiple docs."
+    image_size_exceeded
+        "The imported document contains an image that is too large. The current limit is 1MB.
+        This only applies to HTML with data URI."
+
+
+struct PaperCreateArg
+
+    path Path
+        "The fully qualified path to the location in the user's Dropbox where the Paper Doc should be created.
+        This should include the document's title and end with .paper."
+    import_format ImportFormat
+        "The format of the provided data."
+
+    example default
+        path = "/Paper Docs/New Doc.paper"
+        import_format = html
+
+
+struct PaperCreateResult
+
+    url String
+        "URL to open the Paper Doc."
+    result_path String
+        "The fully qualified path the Paper Doc was actually created at."
+    file_id FileId
+        "The id to use in Dropbox APIs when referencing the Paper Doc."
+    paper_revision Int64
+        "The current doc revision."
+
+    example default
+        url = "https://www.dropbox.com/scl/xxx.paper?dl=0"
+        result_path = "/Paper Docs/New Doc.paper"
+        file_id = "id:a4ayc_80_OEAAAAAAAAAXw"
+        paper_revision = 1
+
+
+union PaperCreateError extends PaperContentError
+    invalid_path
+        "The file could not be saved to the specified location."
+    email_unverified
+        "The user's email must be verified to create Paper docs."
+    invalid_file_extension
+        "The file path must end in .paper."
+    paper_disabled
+        "Paper is disabled for your team."
+
+union PaperDocUpdatePolicy
+    update
+        "Sets the doc content to the provided content if the provided paper_revision matches the latest doc revision.
+        Otherwise, returns an error."
+    overwrite
+        "Sets the doc content to the provided content without checking paper_revision."
+    prepend
+        "Adds the provided content to the beginning of the doc without checking paper_revision."
+    append
+        "Adds the provided content to the end of the doc without checking paper_revision."
+
+
+struct PaperUpdateArg
+
+    path WritePathOrId
+        "Path in the user's Dropbox to update. The path must correspond to a Paper doc or an error will be returned."
+    import_format ImportFormat
+        "The format of the provided data."
+    doc_update_policy PaperDocUpdatePolicy
+        "How the provided content should be applied to the doc."
+    paper_revision Int64?
+        "The latest doc revision. Required when doc_update_policy is update.
+        This value must match the current revision of the doc or error revision_mismatch will be returned."
+
+    example default
+        path = "/Paper Docs/My Doc.paper"
+        import_format = html
+        doc_update_policy = update
+        paper_revision = 123
+
+
+struct PaperUpdateResult
+
+    paper_revision Int64
+        "The current doc revision."
+
+    example default
+        paper_revision = 124
+
+
+union PaperUpdateError extends PaperContentError
+    path LookupError
+    revision_mismatch
+        "The provided revision does not match the document head."
+    doc_archived
+        "This operation is not allowed on archived Paper docs."
+    doc_deleted
+        "This operation is not allowed on deleted Paper docs."
+
+
+route paper/create (PaperCreateArg, PaperCreateResult, PaperCreateError)
+    "
+    Creates a new Paper doc with the provided content.
+    "
+
+    attrs
+        is_preview = true
+        style = "upload"
+        scope = "files.content.write"
+
+
+route paper/update (PaperUpdateArg, PaperUpdateResult, PaperUpdateError)
+    "
+    Updates an existing Paper doc with the provided content.
+    "
+
+    attrs
+        is_preview = true
+        style = "upload"
+        scope = "files.content.write"
+
+
+#
+# End of Paper routes
 #
