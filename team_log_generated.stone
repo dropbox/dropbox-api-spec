@@ -265,6 +265,7 @@ union AdminAlertingAlertStatePolicy
     on
 
 union AdminRole
+    billing_admin
     limited_admin
     member_only
     support_admin

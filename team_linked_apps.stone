@@ -41,6 +41,9 @@ struct ListMemberAppsResult
     linked_api_apps List(ApiApp)
         "List of third party applications linked by this team member."
 
+    example default
+        linked_api_apps = [default]
+
 union ListMemberAppsError
     "Error returned by :route:`linked_apps/list_member_linked_apps`."
 
@@ -72,6 +75,9 @@ struct ListMembersAppsArg
         passed. Then, if the result of the call includes a cursor, the following requests should
         include the received cursors in order to receive the next sub list of the team applications."
 
+    example default
+        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
+
 struct MemberLinkedApps
     "Information on linked applications of a team member."
 
@@ -79,6 +85,10 @@ struct MemberLinkedApps
         "The member unique Id."
     linked_api_apps List(ApiApp)
         "List of third party applications linked by this team member."
+
+    example default
+        team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+        linked_api_apps = [default]
 
 struct ListMembersAppsResult
     "Information returned by :route:`linked_apps/list_members_linked_apps`."
@@ -91,6 +101,11 @@ struct ListMembersAppsResult
     cursor String?
         "Pass the cursor into :route:`linked_apps/list_members_linked_apps` to receive the next
         sub list of team's applications."
+
+    example default
+        apps = [default]
+        has_more = true
+        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
 
 union ListMembersAppsError
     "Error returned by :route:`linked_apps/list_members_linked_apps`."
@@ -124,6 +139,10 @@ struct RevokeLinkedApiAppArg
         "This flag is not longer supported, the application dedicated folder (in case the application uses
          one) will be kept."
 
+    example default
+        app_id = "dbaid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+        team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+
 union RevokeLinkedAppError
     "Error returned by :route:`linked_apps/revoke_linked_app`."
 
@@ -133,7 +152,6 @@ union RevokeLinkedAppError
         "Member not found."
     app_folder_removal_not_supported
         "App folder removal is not supported."
-
 
 #
 # Route: linked_apps/revoke_linked_app
@@ -153,6 +171,9 @@ route linked_apps/revoke_linked_app(RevokeLinkedApiAppArg, Void, RevokeLinkedApp
 struct RevokeLinkedApiAppBatchArg
     revoke_linked_app List(RevokeLinkedApiAppArg)
 
+    example default
+        revoke_linked_app = [default]
+
 struct RevokeLinkedAppStatus
 
     success Boolean
@@ -160,8 +181,15 @@ struct RevokeLinkedAppStatus
     error_type RevokeLinkedAppError?
         "The error cause in case of a failure."
 
+    example default
+        success = false
+        error_type = app_not_found
+
 struct RevokeLinkedAppBatchResult
     revoke_linked_app_status List(RevokeLinkedAppStatus)
+
+    example default
+        revoke_linked_app_status = [default]
 
 union RevokeLinkedAppBatchError
     "Error returned by :route:`linked_apps/revoke_linked_app_batch`."
@@ -189,6 +217,9 @@ struct ListTeamAppsArg
         passed. Then, if the result of the call includes a cursor, the following requests should
         include the received cursors in order to receive the next sub list of the team applications."
 
+    example default
+        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
+
 struct ListTeamAppsResult
     "Information returned by :route:`linked_apps/list_team_linked_apps`."
 
@@ -200,6 +231,11 @@ struct ListTeamAppsResult
     cursor String?
         "Pass the cursor into :route:`linked_apps/list_team_linked_apps` to receive the next
         sub list of team's applications."
+
+    example default
+        apps = [default]
+        has_more = true
+        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
 
 union ListTeamAppsError
     "Error returned by :route:`linked_apps/list_team_linked_apps`."
