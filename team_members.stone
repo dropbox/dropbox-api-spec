@@ -14,7 +14,7 @@ union_closed AdminTier
     user_management_admin
         "User can do most user provisioning, de-provisioning and management."
     support_admin
-        "User can do a limited set of common support tasks for existing users."
+        "User can do a limited set of common support tasks for existing users. Note: Dropbox is adding new types of admin roles; these may display as support_admin."
     member_only
         "User is not an admin of the team."
 

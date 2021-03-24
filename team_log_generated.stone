@@ -322,6 +322,8 @@ union ClassificationPolicyEnumWrapper
     "Policy for controlling team access to the classification feature"
     disabled
     enabled
+    member_and_team_folders
+    team_folders
 
 union ClassificationType
     "The type of classification (currently only personal information)"
@@ -5295,8 +5297,8 @@ struct ClassificationChangePolicyDetails
         "Policy type."
 
     example default
-        previous_value = disabled
-        new_value = disabled
+        previous_value = team_folders
+        new_value = team_folders
         classification_type = pii
 
 struct ComputerBackupPolicyChangedDetails
