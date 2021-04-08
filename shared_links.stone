@@ -407,7 +407,9 @@ union_closed CreateSharedLinkWithSettingsError
     settings_error SharedLinkSettingsError
         "There is an error with the given settings."
     access_denied
-        "Access to the requested path is forbidden."
+        "The user is not allowed to create a shared link to the specified file. For
+         example, this can occur if the file is restricted or if the user's links are
+         :link:`banned https://help.dropbox.com/files-folders/share/banned-links`."
 
 route create_shared_link_with_settings(CreateSharedLinkWithSettingsArg, SharedLinkMetadata, CreateSharedLinkWithSettingsError)
     "Create a shared link with custom settings.

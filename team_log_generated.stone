@@ -190,6 +190,7 @@ union AdminAlertCategoryEnum
     "Alert category"
     account_takeover
     data_loss_protection
+    information_governance
     malware_sharing
     massive_file_operation
     na
@@ -264,10 +265,23 @@ union AdminAlertingAlertStatePolicy
     off
     on
 
+union AdminConsoleAppPermission
+    default_for_listed_apps
+    default_for_unlisted_apps
+
+union AdminConsoleAppPolicy
+    allow
+    block
+    default
+
 union AdminRole
     billing_admin
+    compliance_admin
+    content_admin
     limited_admin
     member_only
+    reporting_admin
+    security_admin
     support_admin
     team_admin
     user_management_admin
@@ -1861,6 +1875,15 @@ struct AdminAlertingTriggeredAlertDetails
         alert_severity = na
         alert_category = na
         alert_instance_id = "pid_admin_alert:AAgAAOVHYCEuavqE0v3Jj9VDogV4wG9q8F-XZKwYpuYTVBm5"
+
+struct AppBlockedByPermissionsDetails
+    "Failed to connect app for member."
+
+    app_info AppLogInfo
+        "Relevant application details."
+
+    example default
+        app_info = default
 
 struct AppLinkTeamDetails
     "Linked app for team."
@@ -5274,6 +5297,24 @@ struct AllowDownloadDisabledDetails
 struct AllowDownloadEnabledDetails
     "Enabled downloads."
 
+struct AppPermissionsChangedDetails
+    "Changed app permissions."
+
+    app_name String?
+        "Name of the app."
+    permission AdminConsoleAppPermission?
+        "Permission that was changed."
+    previous_value AdminConsoleAppPolicy
+        "Previous policy."
+    new_value AdminConsoleAppPolicy
+        "New policy."
+
+    example default
+        app_name = "abc"
+        permission = default_for_listed_apps
+        previous_value = default
+        new_value = default
+
 struct CameraUploadsPolicyChangedDetails
     "Changed camera uploads setting for team."
 
@@ -6408,6 +6449,7 @@ union EventDetails
 
     admin_alerting_changed_alert_config_details AdminAlertingChangedAlertConfigDetails
     admin_alerting_triggered_alert_details AdminAlertingTriggeredAlertDetails
+    app_blocked_by_permissions_details AppBlockedByPermissionsDetails
     app_link_team_details AppLinkTeamDetails
     app_link_user_details AppLinkUserDetails
     app_unlink_team_details AppUnlinkTeamDetails
@@ -6750,6 +6792,7 @@ union EventDetails
     account_capture_change_policy_details AccountCaptureChangePolicyDetails
     allow_download_disabled_details AllowDownloadDisabledDetails
     allow_download_enabled_details AllowDownloadEnabledDetails
+    app_permissions_changed_details AppPermissionsChangedDetails
     camera_uploads_policy_changed_details CameraUploadsPolicyChangedDetails
     classification_change_policy_details ClassificationChangePolicyDetails
     computer_backup_policy_changed_details ComputerBackupPolicyChangedDetails
@@ -6887,6 +6930,12 @@ struct AdminAlertingTriggeredAlertType
 
     example default
         description = "(admin_alerting) Triggered security alert"
+
+struct AppBlockedByPermissionsType
+    description String
+
+    example default
+        description = "(apps) Failed to connect app for member"
 
 struct AppLinkTeamType
     description String
@@ -8940,6 +8989,12 @@ struct AllowDownloadEnabledType
     example default
         description = "(team_policies) Enabled downloads (deprecated, no longer logged)"
 
+struct AppPermissionsChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed app permissions"
+
 struct CameraUploadsPolicyChangedType
     description String
 
@@ -9638,6 +9693,8 @@ union EventType
         "(admin_alerting) Changed an alert setting"
     admin_alerting_triggered_alert AdminAlertingTriggeredAlertType
         "(admin_alerting) Triggered security alert"
+    app_blocked_by_permissions AppBlockedByPermissionsType
+        "(apps) Failed to connect app for member"
     app_link_team AppLinkTeamType
         "(apps) Linked app for team"
     app_link_user AppLinkUserType
@@ -10322,6 +10379,8 @@ union EventType
         "(team_policies) Disabled downloads (deprecated, no longer logged)"
     allow_download_enabled AllowDownloadEnabledType
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
+    app_permissions_changed AppPermissionsChangedType
+        "(team_policies) Changed app permissions"
     camera_uploads_policy_changed CameraUploadsPolicyChangedType
         "(team_policies) Changed camera uploads setting for team"
     classification_change_policy ClassificationChangePolicyType
@@ -10564,6 +10623,8 @@ union EventTypeArg
         "(admin_alerting) Changed an alert setting"
     admin_alerting_triggered_alert
         "(admin_alerting) Triggered security alert"
+    app_blocked_by_permissions
+        "(apps) Failed to connect app for member"
     app_link_team
         "(apps) Linked app for team"
     app_link_user
@@ -11248,6 +11309,8 @@ union EventTypeArg
         "(team_policies) Disabled downloads (deprecated, no longer logged)"
     allow_download_enabled
         "(team_policies) Enabled downloads (deprecated, no longer logged)"
+    app_permissions_changed
+        "(team_policies) Changed app permissions"
     camera_uploads_policy_changed
         "(team_policies) Changed camera uploads setting for team"
     classification_change_policy
