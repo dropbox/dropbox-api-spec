@@ -6,6 +6,39 @@ import users
 import common
 import team_common
 
+alias TeamMemberRoleId = String(pattern="pid_dbtmr:.*", max_length=128)
+
+struct TeamMemberRole
+    "A role which can be attached to a team member. This replaces AdminTier; each AdminTier corresponds to a new TeamMemberRole with a matching name."
+
+    role_id TeamMemberRoleId
+        "A string containing encoded role ID. For roles defined by Dropbox, this is the same across all teams."
+    name String(max_length=32)
+        "The role display name."
+    description String(max_length=256)
+        "Role description. Describes which permissions come with this role."
+
+    example team_member_role_super
+        role_id = "pid_dbtmr:2345"
+        name = "Team admin"
+        description = "User can do most user provisioning, de-provisioning and management."
+
+    example team_member_role_user_management
+        role_id = "pid_dbtmr:3456"
+        name = "User management admin"
+        description = "Add, remove, and manage member accounts."
+
+    example team_member_role_support
+        role_id = "pid_dbtmr:4567"
+        name = "Support admin"
+        description = "Help members with limited tasks, including password reset."
+
+    example team_member_role_billing
+        role_id = "pid_dbtmr:5678"
+        name = "Billing admin"
+        description = "Make payments and renew contracts."
+
+
 union_closed AdminTier
     "Describes which team-related admin permissions a user has."
 
@@ -437,6 +470,79 @@ route members/delete_profile_photo(MembersDeleteProfilePhotoArg, TeamMemberInfo,
     attrs
         auth = "team"
         scope = "members.write"
+
+
+#
+# Route members/get_available_team_member_roles
+#
+
+struct MembersGetAvailableTeamMemberRolesResult
+    "Available TeamMemberRole for the connected team. To be used with :route:`members/set_admin_permissions:2`."
+
+    roles List(TeamMemberRole)
+        "Available roles."
+
+    example default
+        roles = [team_member_role_super, team_member_role_billing, team_member_role_user_management, team_member_role_support]
+
+
+route members/get_available_team_member_roles(Void, MembersGetAvailableTeamMemberRolesResult, Void)
+    "Get available TeamMemberRoles for the connected team. To be used with :route:`members/set_admin_permissions:2`.
+
+    Permission : Team member management."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.read"
+
+#
+# Route members/set_admin_permissions:2
+#
+
+struct MembersSetPermissions2Arg
+    "Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
+
+    user UserSelectorArg
+        "Identity of user whose role will be set."
+    new_roles List(TeamMemberRoleId, max_items=1)?
+        "The new roles for the member. Send empty list to make user member only. For now, only up to one role is allowed."
+
+    example default
+        user = default
+        new_roles = ["pid_dbtmr:1234"]
+
+struct MembersSetPermissions2Result
+    team_member_id team_common.TeamMemberId
+        "The member ID of the user to which the change was applied."
+    roles List(TeamMemberRole)?
+        "The roles after the change. Empty in case the user become a non-admin."
+
+    example default
+        team_member_id = "dbmid:9978889"
+        roles = [team_member_role_user_management]
+
+union MembersSetPermissions2Error extends UserSelectorError
+    last_admin
+        "Cannot remove the admin setting of the last admin."
+    user_not_in_team
+        "The user is not a member of the team."
+    cannot_set_permissions
+        "Cannot remove/grant permissions. This can happen if the team member is suspended."
+    role_not_found
+        "No matching role found. At least one of the provided new_roles does not exist on this team."
+
+
+route members/set_admin_permissions:2(MembersSetPermissions2Arg, MembersSetPermissions2Result, MembersSetPermissions2Error)
+    "Updates a team member's permissions.
+
+    Permission : Team member management."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.write"
+
 
 #
 # Route members/set_admin_permissions
