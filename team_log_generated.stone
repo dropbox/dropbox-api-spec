@@ -637,6 +637,22 @@ union MemberSuggestionsPolicy
     disabled
     enabled
 
+struct MemberTransferredInternalFields
+    "Internal only - fields for target team computations"
+
+    source_team_id team_common.TeamId
+        "Internal only - team user was moved from."
+    target_team_id team_common.TeamId
+        "Internal only - team user was moved to."
+
+    example default
+        source_team_id = "dbtid:AAE3tIYgVuVT1gZork5wQJbXbmlrkBMq26c"
+        target_team_id = "dbtid:AAE3tIYgVuVT1gZork5wQJbXbmlrkBMq26c"
+
+    example default2
+        source_team_id = "dbtid:AAFAqKNLrx_W9MFkS2gWftX0QfTZpo03WsE"
+        target_team_id = "dbtid:AAFAqKNLrx_W9MFkS2gWftX0QfTZpo03WsE"
+
 union MicrosoftOfficeAddinPolicy
     "Microsoft Office addin policy"
     disabled
@@ -2706,6 +2722,9 @@ struct FileMoveDetails
 
 struct FilePermanentlyDeleteDetails
     "Permanently deleted files and/or folders."
+
+
+    example default
 
 struct FilePreviewDetails
     "Previewed files and/or folders."

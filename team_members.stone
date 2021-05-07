@@ -105,6 +105,29 @@ struct MembersListArg
         include_removed = false
 
 
+struct TeamMemberInfoV2
+    "Information about a team member."
+
+    profile TeamMemberProfile
+        "Profile of a user as a member of a team."
+    roles List(TeamMemberRole)?
+        "The user's roles in the team."
+
+    example default
+        profile = default
+        roles = [team_member_role_user_management]
+
+
+struct TeamMemberInfoV2Result
+    "Information about a team member, after the change, like at :route:`members/set_profile:2`."
+
+    member_info TeamMemberInfoV2
+        "Member info, after the change."
+
+    example default
+        member_info = default
+
+
 struct TeamMemberInfo
     "Information about a team member."
 
@@ -116,6 +139,20 @@ struct TeamMemberInfo
     example default
         profile = default
         role = member_only
+
+struct MembersListV2Result
+    members List(TeamMemberInfoV2)
+        "List of team members."
+    cursor String
+        "Pass the cursor into :route:`members/list/continue:2` to obtain the additional members."
+    has_more Boolean
+        "Is true if there are additional team members that have not been returned
+        yet. An additional call to :route:`members/list/continue:2` can retrieve them."
+
+    example default
+        members = [default]
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+        has_more = true
 
 
 struct MembersListResult
@@ -135,6 +172,19 @@ struct MembersListResult
 
 union MembersListError
     ""
+
+
+route members/list:2(MembersListArg, MembersListV2Result, MembersListError)
+    "Lists members of a team.
+
+    Permission : Team information."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.read"
+
+
 
 route members/list(MembersListArg, MembersListResult, MembersListError)
     "Lists members of a team.
@@ -161,6 +211,17 @@ union MembersListContinueError
     invalid_cursor
         "The cursor is invalid."
 
+route members/list/continue:2(MembersListContinueArg, MembersListV2Result, MembersListContinueError)
+    "Once a cursor has been retrieved from :route:`members/list:2`, use this to paginate
+    through all team members.
+
+    Permission : Team information."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.read"
+
 route members/list/continue(MembersListContinueArg, MembersListResult, MembersListContinueError)
     "Once a cursor has been retrieved from :route:`members/list`, use this to paginate
     through all team members.
@@ -176,6 +237,13 @@ route members/list/continue(MembersListContinueArg, MembersListResult, MembersLi
 # Route: members/get_info
 #
 
+struct MembersGetInfoV2Arg
+    members List(UserSelectorArg)
+        "List of team members."
+
+    example default
+        members = [default]
+
 struct MembersGetInfoArgs
     members List(UserSelectorArg)
         "List of team members."
@@ -183,14 +251,27 @@ struct MembersGetInfoArgs
     example default
         members = [default]
 
-union_closed MembersGetInfoItem
+union_closed MembersGetInfoItemBase
+    id_not_found String
+        "An ID that was provided as a parameter to :route:`members/get_info` or :route:`members/get_info:2`,
+        and did not match a corresponding user. This might be a team_member_id, an
+        email, or an external ID, depending on how the method was called."
+
+union MembersGetInfoItemV2 extends MembersGetInfoItemBase
+    "Describes a result obtained for a single user whose id was specified in the
+    parameter of :route:`members/get_info:2`."
+
+    member_info TeamMemberInfoV2
+        "Info about a team member."
+
+    example default
+        member_info = default
+
+
+union_closed MembersGetInfoItem extends MembersGetInfoItemBase
     "Describes a result obtained for a single user whose id was specified in the
     parameter of :route:`members/get_info`."
 
-    id_not_found String
-        "An ID that was provided as a parameter to :route:`members/get_info`,
-        and did not match a corresponding user. This might be a team_member_id, an
-        email, or an external ID, depending on how the method was called."
     member_info TeamMemberInfo
         "Info about a team member."
 
@@ -202,9 +283,29 @@ union_closed MembersGetInfoItem
 # describing multiple team members."
 alias MembersGetInfoResult = List(MembersGetInfoItem)
 
+struct MembersGetInfoV2Result
+    members_info List(MembersGetInfoItemV2)
+        "List of team members info."
+
+    example default
+        members_info = [default]
+
 
 union MembersGetInfoError
     ""
+
+route members/get_info:2(MembersGetInfoV2Arg, MembersGetInfoV2Result, MembersGetInfoError)
+    "Returns information about multiple team members.
+
+    Permission : Team information
+
+    This endpoint will return :field:`MembersGetInfoItem.id_not_found`,
+    for IDs (or emails) that cannot be matched to a valid team member."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.read"
 
 
 route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoError)
@@ -229,7 +330,7 @@ route members/get_info(MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoE
 # Route members/add
 #
 
-struct MemberAddArg
+struct MemberAddArgBase
     member_email common.EmailAddress
     member_given_name common.OptionalNamePart?
         "Member's first name."
@@ -244,7 +345,6 @@ struct MemberAddArg
         If send_welcome_email is false, no email invitation will be sent to the user.
         This may be useful for apps using single sign-on (SSO) flows for onboarding that
         want to handle announcements themselves."
-    role AdminTier = member_only
     is_directory_restricted Boolean?
         "Whether a user is directory restricted."
 
@@ -253,26 +353,49 @@ struct MemberAddArg
         member_given_name = "Tom"
         member_surname = "Silverstone"
         member_external_id = "company_id:342432"
+
+struct MemberAddArg extends MemberAddArgBase
+    role AdminTier = member_only
+
+    example default
+        member_email = "tom.s@company.com"
+        member_given_name = "Tom"
+        member_surname = "Silverstone"
+        member_external_id = "company_id:342432"
         role = default
 
-struct MembersAddArg
-    new_members List(MemberAddArg)
-        "Details of new members to be added to the team."
+struct MemberAddV2Arg extends MemberAddArgBase
+    role_ids List(TeamMemberRoleId, max_items=1)?
+
+    example default
+        member_email = "tom.s@company.com"
+        member_given_name = "Tom"
+        member_surname = "Silverstone"
+        member_external_id = "company_id:342432"
+        role_ids = ["pid_dbtmr:2345"]
+
+struct MembersAddArgBase
     force_async Boolean = false
         "Whether to force the add to happen asynchronously."
 
     example default
+        force_async = true
+
+struct MembersAddV2Arg extends MembersAddArgBase
+    new_members List(MemberAddV2Arg)
+        "Details of new members to be added to the team."
+
+    example default
         new_members = [default]
 
+struct MembersAddArg extends MembersAddArgBase
+    new_members List(MemberAddArg)
+        "Details of new members to be added to the team."
 
-union_closed MemberAddResult
-    "Describes the result of attempting to add a single user to the team.
-    'success' is the only value indicating that a user was indeed added to the team -
-    the other values explain the type of failure that occurred, and include the email
-    of the user for which the operation has failed."
+    example default
+        new_members = [default]
 
-    success TeamMemberInfo
-        "Describes a user that was successfully added to the team."
+union_closed MemberAddResultBase
     team_license_limit common.EmailAddress
         "Team is already full. The organization has no available licenses."
     free_team_member_limit_reached common.EmailAddress
@@ -297,13 +420,67 @@ union_closed MemberAddResult
         "User creation has failed."
 
     example default
+        team_license_limit = "apple@orange.com"
+
+
+union MemberAddV2Result extends MemberAddResultBase
+    "Describes the result of attempting to add a single user to the team.
+    'success' is the only value indicating that a user was indeed added to the team -
+    the other values explain the type of failure that occurred, and include the email
+    of the user for which the operation has failed."
+
+    success TeamMemberInfoV2
+        "Describes a user that was successfully added to the team."
+
+    example default
         success = default
+
+union_closed MemberAddResult extends MemberAddResultBase
+    "Describes the result of attempting to add a single user to the team.
+    'success' is the only value indicating that a user was indeed added to the team -
+    the other values explain the type of failure that occurred, and include the email
+    of the user for which the operation has failed."
+
+    success TeamMemberInfo
+        "Describes a user that was successfully added to the team."
+
+    example default
+        success = default
+
+union MembersAddLaunchV2Result extends async.LaunchResultBase
+    complete List(MemberAddV2Result)
+
+    example default
+        complete = [default]
 
 union_closed MembersAddLaunch extends async.LaunchResultBase
     complete List(MemberAddResult)
 
     example default
         complete = [default]
+
+route members/add:2(MembersAddV2Arg, MembersAddLaunchV2Result, Void)
+    "Adds members to a team.
+
+    Permission : Team member management
+
+    A maximum of 20 members can be specified in a single call.
+
+    If no Dropbox account exists with the email address specified, a new Dropbox account will
+    be created with the given email address, and that account will be invited to the team.
+
+    If a personal Dropbox account exists with the email address specified in the call,
+    this call will create a placeholder Dropbox account for the user on the team and send an
+    email inviting the user to migrate their existing personal account onto the team.
+
+    Team member management apps are required to set an initial given_name and surname for a
+    user to use in the team invitation and for 'Perform as team member' actions taken on
+    the user before they become 'active'."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.write"
 
 route members/add(MembersAddArg, MembersAddLaunch, Void)
     "Adds members to a team.
@@ -331,6 +508,17 @@ route members/add(MembersAddArg, MembersAddLaunch, Void)
 # Route members/add/job_status/get
 #
 
+union MembersAddJobStatusV2Result extends async.PollResultBase
+    complete List(MemberAddV2Result)
+        "The asynchronous job has finished. For each member that was specified in the
+        parameter :type:`MembersAddArg` that was provided to :route:`members/add:2`, a
+        corresponding item is returned in this list."
+    failed String
+        "The asynchronous job returned an error. The string contains an error message."
+
+    example default
+        complete = [default]
+
 union_closed MembersAddJobStatus extends async.PollResultBase
     complete List(MemberAddResult)
         "The asynchronous job has finished. For each member that was specified in the
@@ -341,6 +529,18 @@ union_closed MembersAddJobStatus extends async.PollResultBase
 
     example default
         complete = [default]
+
+route members/add/job_status/get:2(async.PollArg, MembersAddJobStatusV2Result, async.PollError)
+    "Once an async_job_id is returned from :route:`members/add:2` ,
+    use this to poll the status of the asynchronous request.
+
+    Permission : Team member management."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.write"
+
 
 route members/add/job_status/get(async.PollArg, MembersAddJobStatus, async.PollError)
     "Once an async_job_id is returned from :route:`members/add` ,
@@ -404,6 +604,17 @@ union MembersSetProfileError extends MemberSelectorError
         "Directory Restrictions option is not available."
 
 
+route members/set_profile:2(MembersSetProfileArg, TeamMemberInfoV2Result, MembersSetProfileError)
+    "Updates a team member's profile.
+
+    Permission : Team member management."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.write"
+
+
 route members/set_profile(MembersSetProfileArg, TeamMemberInfo, MembersSetProfileError)
     "Updates a team member's profile.
 
@@ -435,6 +646,17 @@ union MembersSetProfilePhotoError extends MemberSelectorError
     photo_error account.SetProfilePhotoError
 
 
+route members/set_profile_photo:2(MembersSetProfilePhotoArg, TeamMemberInfoV2Result, MembersSetProfilePhotoError)
+    "Updates a team member's profile photo.
+
+    Permission : Team member management."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.write"
+
+
 route members/set_profile_photo(MembersSetProfilePhotoArg, TeamMemberInfo, MembersSetProfilePhotoError)
     "Updates a team member's profile photo.
 
@@ -461,6 +683,16 @@ union MembersDeleteProfilePhotoError extends MemberSelectorError
     set_profile_disallowed
         "Modifying deleted users is not allowed."
 
+
+route members/delete_profile_photo:2(MembersDeleteProfilePhotoArg, TeamMemberInfoV2Result, MembersDeleteProfilePhotoError)
+    "Deletes a team member's profile photo.
+
+    Permission : Team member management."
+
+    attrs
+        is_preview = true
+        auth = "team"
+        scope = "members.write"
 
 route members/delete_profile_photo(MembersDeleteProfilePhotoArg, TeamMemberInfo, MembersDeleteProfilePhotoError)
     "Deletes a team member's profile photo.
