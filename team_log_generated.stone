@@ -597,6 +597,7 @@ union IntegrationPolicy
 union LabelType
     "Label type"
     personal_information
+    user_defined_tag
 
 union LockStatus
     "File lock status"
