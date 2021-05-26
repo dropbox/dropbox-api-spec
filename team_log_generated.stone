@@ -196,6 +196,14 @@ union AdminAlertCategoryEnum
     na
     threat_management
 
+union AdminAlertGeneralStateEnum
+    "Alert state"
+    active
+    dismissed
+    in_progress
+    na
+    resolved
+
 union AdminAlertSeverityEnum
     "Alert severity"
     high
@@ -1860,6 +1868,30 @@ union EventCategory
 # Types for specific events
 #############################
 
+struct AdminAlertingAlertStateChangedDetails
+    "Changed an alert state."
+
+    alert_name String
+        "Alert name."
+    alert_severity AdminAlertSeverityEnum
+        "Alert severity."
+    alert_category AdminAlertCategoryEnum
+        "Alert category."
+    alert_instance_id String
+        "Alert ID."
+    previous_value AdminAlertGeneralStateEnum
+        "Alert state before the change."
+    new_value AdminAlertGeneralStateEnum
+        "Alert state after the change."
+
+    example default
+        alert_name = "abc"
+        alert_severity = na
+        alert_category = na
+        alert_instance_id = "pid_admin_alert:AAgAAOVHYCEuavqE0v3Jj9VDogV4wG9q8F-XZKwYpuYTVBm5"
+        previous_value = na
+        new_value = na
+
 struct AdminAlertingChangedAlertConfigDetails
     "Changed an alert setting."
 
@@ -2816,6 +2848,9 @@ struct ObjectLabelUpdatedValueDetails
 
     example default
         label_type = personal_information
+
+struct OrganizeFolderWithTidyDetails
+    "Organized a folder with the Tidy Up action."
 
 struct RewindFolderDetails
     "Rewound a folder."
@@ -6467,6 +6502,7 @@ struct TeamMergeRequestSentShownToSecondaryTeamDetails
 union EventDetails
     "Additional fields depending on the event type."
 
+    admin_alerting_alert_state_changed_details AdminAlertingAlertStateChangedDetails
     admin_alerting_changed_alert_config_details AdminAlertingChangedAlertConfigDetails
     admin_alerting_triggered_alert_details AdminAlertingTriggeredAlertDetails
     app_blocked_by_permissions_details AppBlockedByPermissionsDetails
@@ -6558,6 +6594,7 @@ union EventDetails
     object_label_added_details ObjectLabelAddedDetails
     object_label_removed_details ObjectLabelRemovedDetails
     object_label_updated_value_details ObjectLabelUpdatedValueDetails
+    organize_folder_with_tidy_details OrganizeFolderWithTidyDetails
     rewind_folder_details RewindFolderDetails
     file_request_change_details FileRequestChangeDetails
     file_request_close_details FileRequestCloseDetails
@@ -6938,6 +6975,12 @@ union EventDetails
 ##############
 # Event Type
 ##############
+
+struct AdminAlertingAlertStateChangedType
+    description String
+
+    example default
+        description = "(admin_alerting) Changed an alert state"
 
 struct AdminAlertingChangedAlertConfigType
     description String
@@ -7484,6 +7527,12 @@ struct ObjectLabelUpdatedValueType
 
     example default
         description = "(file_operations) Updated a label's value"
+
+struct OrganizeFolderWithTidyType
+    description String
+
+    example default
+        description = "(file_operations) Organized a folder with the Tidy Up action"
 
 struct RewindFolderType
     description String
@@ -9709,6 +9758,8 @@ struct TeamMergeRequestSentShownToSecondaryTeamType
 union EventType
     "The type of the event with description."
 
+    admin_alerting_alert_state_changed AdminAlertingAlertStateChangedType
+        "(admin_alerting) Changed an alert state"
     admin_alerting_changed_alert_config AdminAlertingChangedAlertConfigType
         "(admin_alerting) Changed an alert setting"
     admin_alerting_triggered_alert AdminAlertingTriggeredAlertType
@@ -9891,6 +9942,8 @@ union EventType
         "(file_operations) Removed a label"
     object_label_updated_value ObjectLabelUpdatedValueType
         "(file_operations) Updated a label's value"
+    organize_folder_with_tidy OrganizeFolderWithTidyType
+        "(file_operations) Organized a folder with the Tidy Up action"
     rewind_folder RewindFolderType
         "(file_operations) Rewound a folder"
     file_request_change FileRequestChangeType
@@ -10639,6 +10692,8 @@ union EventType
 union EventTypeArg
     "The type of the event."
 
+    admin_alerting_alert_state_changed
+        "(admin_alerting) Changed an alert state"
     admin_alerting_changed_alert_config
         "(admin_alerting) Changed an alert setting"
     admin_alerting_triggered_alert
@@ -10821,6 +10876,8 @@ union EventTypeArg
         "(file_operations) Removed a label"
     object_label_updated_value
         "(file_operations) Updated a label's value"
+    organize_folder_with_tidy
+        "(file_operations) Organized a folder with the Tidy Up action"
     rewind_folder
         "(file_operations) Rewound a folder"
     file_request_change

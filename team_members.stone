@@ -180,7 +180,6 @@ route members/list:2(MembersListArg, MembersListV2Result, MembersListError)
     Permission : Team information."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.read"
 
@@ -218,7 +217,6 @@ route members/list/continue:2(MembersListContinueArg, MembersListV2Result, Membe
     Permission : Team information."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.read"
 
@@ -303,7 +301,6 @@ route members/get_info:2(MembersGetInfoV2Arg, MembersGetInfoV2Result, MembersGet
     for IDs (or emails) that cannot be matched to a valid team member."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.read"
 
@@ -478,7 +475,6 @@ route members/add:2(MembersAddV2Arg, MembersAddLaunchV2Result, Void)
     the user before they become 'active'."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.write"
 
@@ -537,7 +533,6 @@ route members/add/job_status/get:2(async.PollArg, MembersAddJobStatusV2Result, a
     Permission : Team member management."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.write"
 
@@ -610,7 +605,6 @@ route members/set_profile:2(MembersSetProfileArg, TeamMemberInfoV2Result, Member
     Permission : Team member management."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.write"
 
@@ -652,7 +646,6 @@ route members/set_profile_photo:2(MembersSetProfilePhotoArg, TeamMemberInfoV2Res
     Permission : Team member management."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.write"
 
@@ -690,7 +683,6 @@ route members/delete_profile_photo:2(MembersDeleteProfilePhotoArg, TeamMemberInf
     Permission : Team member management."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.write"
 
@@ -724,7 +716,6 @@ route members/get_available_team_member_roles(Void, MembersGetAvailableTeamMembe
     Permission : Team member management."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.read"
 
@@ -771,7 +762,6 @@ route members/set_admin_permissions:2(MembersSetPermissions2Arg, MembersSetPermi
     Permission : Team member management."
 
     attrs
-        is_preview = true
         auth = "team"
         scope = "members.write"
 
