@@ -340,6 +340,11 @@ struct Certificate
         sha1_fingerprint = "xyz"
         common_name = "xyz"
 
+union ChangeLinkExpirationPolicy
+    "Policy for deciding whether the team's default expiration days policy must be enforced when an externally shared is updated"
+    allowed
+    not_allowed
+
 union ClassificationPolicyEnumWrapper
     "Policy for controlling team access to the classification feature"
     disabled
@@ -363,6 +368,17 @@ union ContentPermanentDeletePolicy
     disabled
     enabled
 
+union DefaultLinkExpirationDaysPolicy
+    "Policy for the default number of days until an externally shared link expires"
+    day_1
+    day_180
+    day_3
+    day_30
+    day_7
+    day_90
+    none
+    year_1
+
 union DeviceApprovalsPolicy
     limited
     unlimited
@@ -383,6 +399,11 @@ union DownloadPolicyType
     "Shared content downloads policy"
     allow
     disallow
+
+union EnforceLinkPasswordPolicy
+    "Policy for deciding whether password must be enforced when an externally shared link is updated"
+    optional
+    required
 
 union ExtendedVersionHistoryPolicy
     explicitly_limited
@@ -605,6 +626,7 @@ union IntegrationPolicy
 union LabelType
     "Label type"
     personal_information
+    test_only
     user_defined_tag
 
 union LockStatus
@@ -2705,6 +2727,9 @@ struct DomainVerificationRemoveDomainDetails
 struct EnabledDomainInvitesDetails
     "Enabled domain invites."
 
+struct ApplyNamingConventionDetails
+    "Applied a Naming Convention rule."
+
 struct CreateFolderDetails
     "Created folders."
 
@@ -2829,7 +2854,7 @@ struct ObjectLabelAddedDetails
         "Labels mark a file or folder."
 
     example default
-        label_type = personal_information
+        label_type = test_only
 
 struct ObjectLabelRemovedDetails
     "Removed a label."
@@ -2838,7 +2863,7 @@ struct ObjectLabelRemovedDetails
         "Labels mark a file or folder."
 
     example default
-        label_type = personal_information
+        label_type = test_only
 
 struct ObjectLabelUpdatedValueDetails
     "Updated a label's value."
@@ -2847,7 +2872,7 @@ struct ObjectLabelUpdatedValueDetails
         "Labels mark a file or folder."
 
     example default
-        label_type = personal_information
+        label_type = test_only
 
 struct OrganizeFolderWithTidyDetails
     "Organized a folder with the Tidy Up action."
@@ -2860,6 +2885,24 @@ struct RewindFolderDetails
 
     example default
         rewind_folder_target_ts_ms = "2017-01-25T15:51:30Z"
+
+struct UserTagsAddedDetails
+    "Tagged a file."
+
+    values List(String)
+        "values."
+
+    example default
+        values = ["abc"]
+
+struct UserTagsRemovedDetails
+    "Removed tags."
+
+    values List(String)
+        "values."
+
+    example default
+        values = ["abc"]
 
 struct FileRequestChangeDetails
     "Changed file request."
@@ -5862,6 +5905,42 @@ struct SharingChangeFolderJoinPolicyDetails
         new_value = from_anyone
         previous_value = from_anyone
 
+struct SharingChangeLinkAllowChangeExpirationPolicyDetails
+    "Changed the password requirement for the links shared outside of the team."
+
+    new_value EnforceLinkPasswordPolicy
+        "To."
+    previous_value EnforceLinkPasswordPolicy?
+        "From."
+
+    example default
+        new_value = optional
+        previous_value = optional
+
+struct SharingChangeLinkDefaultExpirationPolicyDetails
+    "Changed the default expiration for the links shared outside of the team."
+
+    new_value DefaultLinkExpirationDaysPolicy
+        "To."
+    previous_value DefaultLinkExpirationDaysPolicy?
+        "From."
+
+    example default
+        new_value = none
+        previous_value = none
+
+struct SharingChangeLinkEnforcePasswordPolicyDetails
+    "Changed the allow remove or change expiration policy for the links shared outside of the team."
+
+    new_value ChangeLinkExpirationPolicy
+        "To."
+    previous_value ChangeLinkExpirationPolicy?
+        "From."
+
+    example default
+        new_value = allowed
+        previous_value = allowed
+
 struct SharingChangeLinkPolicyDetails
     "Changed whether members can share links outside team, and if links are accessible only by team members or anyone by default."
 
@@ -6572,6 +6651,7 @@ union EventDetails
     domain_verification_add_domain_success_details DomainVerificationAddDomainSuccessDetails
     domain_verification_remove_domain_details DomainVerificationRemoveDomainDetails
     enabled_domain_invites_details EnabledDomainInvitesDetails
+    apply_naming_convention_details ApplyNamingConventionDetails
     create_folder_details CreateFolderDetails
     file_add_details FileAddDetails
     file_copy_details FileCopyDetails
@@ -6596,6 +6676,8 @@ union EventDetails
     object_label_updated_value_details ObjectLabelUpdatedValueDetails
     organize_folder_with_tidy_details OrganizeFolderWithTidyDetails
     rewind_folder_details RewindFolderDetails
+    user_tags_added_details UserTagsAddedDetails
+    user_tags_removed_details UserTagsRemovedDetails
     file_request_change_details FileRequestChangeDetails
     file_request_close_details FileRequestCloseDetails
     file_request_create_details FileRequestCreateDetails
@@ -6900,6 +6982,9 @@ union EventDetails
     rewind_policy_changed_details RewindPolicyChangedDetails
     send_for_signature_policy_changed_details SendForSignaturePolicyChangedDetails
     sharing_change_folder_join_policy_details SharingChangeFolderJoinPolicyDetails
+    sharing_change_link_allow_change_expiration_policy_details SharingChangeLinkAllowChangeExpirationPolicyDetails
+    sharing_change_link_default_expiration_policy_details SharingChangeLinkDefaultExpirationPolicyDetails
+    sharing_change_link_enforce_password_policy_details SharingChangeLinkEnforcePasswordPolicyDetails
     sharing_change_link_policy_details SharingChangeLinkPolicyDetails
     sharing_change_member_policy_details SharingChangeMemberPolicyDetails
     showcase_change_download_policy_details ShowcaseChangeDownloadPolicyDetails
@@ -7396,6 +7481,12 @@ struct EnabledDomainInvitesType
     example default
         description = "(domains) Enabled domain invites (deprecated, no longer logged)"
 
+struct ApplyNamingConventionType
+    description String
+
+    example default
+        description = "(file_operations) Applied a Naming Convention rule"
+
 struct CreateFolderType
     description String
 
@@ -7539,6 +7630,18 @@ struct RewindFolderType
 
     example default
         description = "(file_operations) Rewound a folder"
+
+struct UserTagsAddedType
+    description String
+
+    example default
+        description = "(file_operations) Tagged a file"
+
+struct UserTagsRemovedType
+    description String
+
+    example default
+        description = "(file_operations) Removed tags"
 
 struct FileRequestChangeType
     description String
@@ -9364,6 +9467,24 @@ struct SharingChangeFolderJoinPolicyType
     example default
         description = "(team_policies) Changed whether team members can join shared folders owned outside team"
 
+struct SharingChangeLinkAllowChangeExpirationPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed the password requirement for the links shared outside of the team"
+
+struct SharingChangeLinkDefaultExpirationPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed the default expiration for the links shared outside of the team"
+
+struct SharingChangeLinkEnforcePasswordPolicyType
+    description String
+
+    example default
+        description = "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
+
 struct SharingChangeLinkPolicyType
     description String
 
@@ -9898,6 +10019,8 @@ union EventType
         "(domains) Removed domain from list of verified team domains"
     enabled_domain_invites EnabledDomainInvitesType
         "(domains) Enabled domain invites (deprecated, no longer logged)"
+    apply_naming_convention ApplyNamingConventionType
+        "(file_operations) Applied a Naming Convention rule"
     create_folder CreateFolderType
         "(file_operations) Created folders (deprecated, no longer logged)"
     file_add FileAddType
@@ -9946,6 +10069,10 @@ union EventType
         "(file_operations) Organized a folder with the Tidy Up action"
     rewind_folder RewindFolderType
         "(file_operations) Rewound a folder"
+    user_tags_added UserTagsAddedType
+        "(file_operations) Tagged a file"
+    user_tags_removed UserTagsRemovedType
+        "(file_operations) Removed tags"
     file_request_change FileRequestChangeType
         "(file_requests) Changed file request"
     file_request_close FileRequestCloseType
@@ -10554,6 +10681,12 @@ union EventType
         "(team_policies) Changed send for signature policy for team"
     sharing_change_folder_join_policy SharingChangeFolderJoinPolicyType
         "(team_policies) Changed whether team members can join shared folders owned outside team"
+    sharing_change_link_allow_change_expiration_policy SharingChangeLinkAllowChangeExpirationPolicyType
+        "(team_policies) Changed the password requirement for the links shared outside of the team"
+    sharing_change_link_default_expiration_policy SharingChangeLinkDefaultExpirationPolicyType
+        "(team_policies) Changed the default expiration for the links shared outside of the team"
+    sharing_change_link_enforce_password_policy SharingChangeLinkEnforcePasswordPolicyType
+        "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
     sharing_change_link_policy SharingChangeLinkPolicyType
         "(team_policies) Changed whether members can share links outside team, and if links are accessible only by team members or anyone by default"
     sharing_change_member_policy SharingChangeMemberPolicyType
@@ -10832,6 +10965,8 @@ union EventTypeArg
         "(domains) Removed domain from list of verified team domains"
     enabled_domain_invites
         "(domains) Enabled domain invites (deprecated, no longer logged)"
+    apply_naming_convention
+        "(file_operations) Applied a Naming Convention rule"
     create_folder
         "(file_operations) Created folders (deprecated, no longer logged)"
     file_add
@@ -10880,6 +11015,10 @@ union EventTypeArg
         "(file_operations) Organized a folder with the Tidy Up action"
     rewind_folder
         "(file_operations) Rewound a folder"
+    user_tags_added
+        "(file_operations) Tagged a file"
+    user_tags_removed
+        "(file_operations) Removed tags"
     file_request_change
         "(file_requests) Changed file request"
     file_request_close
@@ -11488,6 +11627,12 @@ union EventTypeArg
         "(team_policies) Changed send for signature policy for team"
     sharing_change_folder_join_policy
         "(team_policies) Changed whether team members can join shared folders owned outside team"
+    sharing_change_link_allow_change_expiration_policy
+        "(team_policies) Changed the password requirement for the links shared outside of the team"
+    sharing_change_link_default_expiration_policy
+        "(team_policies) Changed the default expiration for the links shared outside of the team"
+    sharing_change_link_enforce_password_policy
+        "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
     sharing_change_link_policy
         "(team_policies) Changed whether members can share links outside team, and if links are accessible only by team members or anyone by default"
     sharing_change_member_policy

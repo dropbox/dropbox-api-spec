@@ -293,10 +293,10 @@ route list_shared_links(ListSharedLinksArg, ListSharedLinksResult, ListSharedLin
 #
 
 struct SharedLinkSettings
-    requested_visibility RequestedVisibility?
-        "The requested access for this shared link."
+    require_password Boolean?
+        "Boolean flag to enable or disable password protection."
     link_password String?
-        "If :field:`requested_visibility` is :field:`RequestedVisibility.password` this is needed
+        "If :field:`require_password` is true, this is needed
         to specify the password to access the link."
     expires common.DropboxTimestamp?
         "Expiration time of the shared link. By default the link won't expire."
@@ -308,6 +308,8 @@ struct SharedLinkSettings
     access RequestedLinkAccessLevel?
         "Requested access level you want the audience to gain from this link. Note, modifying access
         level for an existing link is not supported."
+    requested_visibility RequestedVisibility?
+        "Use :field:`audience` instead.  The requested access for this shared link."
 
     example default
         requested_visibility = public
