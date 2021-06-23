@@ -49,7 +49,7 @@ struct LegalHoldPolicy
     activation_time common.DropboxTimestamp?
         "The time at which the legal hold was activated."
     members MembersInfo
-        "Team members IDs and number of permanetly deleted members under hold."
+        "Team members IDs and number of permanently deleted members under hold."
     status LegalHoldStatus
         "The current state of the hold."
     start_date common.DropboxTimestamp

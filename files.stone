@@ -2590,7 +2590,7 @@ route get_temporary_upload_link(GetTemporaryUploadLinkArg, GetTemporaryUploadLin
     of the uploaded data in JSON format.
 
 
-    Example succesful temporary upload link consumption response:
+    Example successful temporary upload link consumption response:
 
     {\"content-hash\": \"599d71033d700ac892a0e48fa61b125d2f5994\"}
 

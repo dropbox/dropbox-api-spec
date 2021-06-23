@@ -24,7 +24,7 @@ struct UserSecondaryEmailsArg
 union AddSecondaryEmailResult
     "Result of trying to add a secondary email to a user.
     'success' is the only value indicating that a secondary email was successfully added to a user.
-    The other values explain the type of error that occurred, and include the email for which the error occured."
+    The other values explain the type of error that occurred, and include the email for which the error occurred."
 
     success SecondaryEmail
         "Describes a secondary email that was successfully added to a user."
@@ -72,7 +72,7 @@ struct UserSecondaryEmailsResult
 union UserAddResult
     "Result of trying to add secondary emails to a user.
     'success' is the only value indicating that a user was successfully retrieved for adding secondary emails.
-    The other values explain the type of error that occurred, and include the user for which the error occured."
+    The other values explain the type of error that occurred, and include the user for which the error occurred."
 
     success UserSecondaryEmailsResult
         "Describes a user and the results for each attempt to add a secondary email."
@@ -147,7 +147,7 @@ struct ResendVerificationEmailArg
 union ResendSecondaryEmailResult
     "Result of trying to resend verification email to a secondary email address.
     'success' is the only value indicating that a verification email was successfully sent.
-    The other values explain the type of error that occurred, and include the email for which the error occured."
+    The other values explain the type of error that occurred, and include the email for which the error occurred."
 
     success common.EmailAddress
         "A verification email was successfully sent to the secondary email address."
@@ -174,7 +174,7 @@ struct UserResendEmailsResult
 union UserResendResult
     "Result of trying to resend verification emails to a user.
     'success' is the only value indicating that a user was successfully retrieved for sending verification emails.
-    The other values explain the type of error that occurred, and include the user for which the error occured."
+    The other values explain the type of error that occurred, and include the user for which the error occurred."
 
     success UserResendEmailsResult
         "Describes a user and the results for each attempt to resend verification emails."
@@ -223,7 +223,7 @@ struct DeleteSecondaryEmailsArg
 union DeleteSecondaryEmailResult
     "Result of trying to delete a secondary email address.
     'success' is the only value indicating that a secondary email was successfully deleted.
-    The other values explain the type of error that occurred, and include the email for which the error occured."
+    The other values explain the type of error that occurred, and include the email for which the error occurred."
 
     success common.EmailAddress
         "The secondary email was successfully deleted."
@@ -253,7 +253,7 @@ struct UserDeleteEmailsResult
 union UserDeleteResult
     "Result of trying to delete a user's secondary emails.
     'success' is the only value indicating that a user was successfully retrieved for deleting secondary emails.
-    The other values explain the type of error that occurred, and include the user for which the error occured."
+    The other values explain the type of error that occurred, and include the user for which the error occurred."
 
     success UserDeleteEmailsResult
         "Describes a user and the results for each attempt to delete a secondary email."

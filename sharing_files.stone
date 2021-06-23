@@ -261,7 +261,7 @@ struct AddFileMemberArgs
 
     members List(MemberSelector)
         "Members to add. Note that even an email address is given, this
-        may result in a user being directy added to the membership if that
+        may result in a user being directly added to the membership if that
         email is the user's main account email."
 
     custom_message String?
