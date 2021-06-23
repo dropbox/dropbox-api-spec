@@ -623,6 +623,11 @@ union IntegrationPolicy
     disabled
     enabled
 
+union InviteAcceptanceEmailPolicy
+    "Policy for deciding whether team admins receive email when an invitation to join the team is accepted"
+    disabled
+    enabled
+
 union LabelType
     "Label type"
     personal_information
@@ -5668,6 +5673,18 @@ struct IntegrationPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct InviteAcceptanceEmailPolicyChangedDetails
+    "Changed invite accept email policy for team."
+
+    new_value InviteAcceptanceEmailPolicy
+        "To."
+    previous_value InviteAcceptanceEmailPolicy
+        "From."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct MemberRequestsChangePolicyDetails
     "Changed whether users can find team when not invited."
 
@@ -6959,6 +6976,7 @@ union EventDetails
     google_sso_change_policy_details GoogleSsoChangePolicyDetails
     group_user_management_change_policy_details GroupUserManagementChangePolicyDetails
     integration_policy_changed_details IntegrationPolicyChangedDetails
+    invite_acceptance_email_policy_changed_details InviteAcceptanceEmailPolicyChangedDetails
     member_requests_change_policy_details MemberRequestsChangePolicyDetails
     member_send_invite_policy_changed_details MemberSendInvitePolicyChangedDetails
     member_space_limits_add_exception_details MemberSpaceLimitsAddExceptionDetails
@@ -9329,6 +9347,12 @@ struct IntegrationPolicyChangedType
     example default
         description = "(team_policies) Changed integration policy for team"
 
+struct InviteAcceptanceEmailPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed invite accept email policy for team"
+
 struct MemberRequestsChangePolicyType
     description String
 
@@ -10635,6 +10659,8 @@ union EventType
         "(team_policies) Changed who can create groups"
     integration_policy_changed IntegrationPolicyChangedType
         "(team_policies) Changed integration policy for team"
+    invite_acceptance_email_policy_changed InviteAcceptanceEmailPolicyChangedType
+        "(team_policies) Changed invite accept email policy for team"
     member_requests_change_policy MemberRequestsChangePolicyType
         "(team_policies) Changed whether users can find team when not invited"
     member_send_invite_policy_changed MemberSendInvitePolicyChangedType
@@ -11581,6 +11607,8 @@ union EventTypeArg
         "(team_policies) Changed who can create groups"
     integration_policy_changed
         "(team_policies) Changed integration policy for team"
+    invite_acceptance_email_policy_changed
+        "(team_policies) Changed invite accept email policy for team"
     member_requests_change_policy
         "(team_policies) Changed whether users can find team when not invited"
     member_send_invite_policy_changed
