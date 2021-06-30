@@ -1,5 +1,6 @@
 import os
 import re
+import six
 from enum import Enum
 from datetime import date
 from collections import defaultdict
@@ -80,7 +81,7 @@ def parse_change_log(change_log_diff):
         updated_datatypes = []
 
         route_map = defaultdict(int)
-        
+
         # Pass for checking for creation/deletion of datatypes
         for hunk in patch_file:
             for line in hunk:
@@ -124,14 +125,14 @@ def parse_change_log(change_log_diff):
                         updated_datatypes.append((datatype, datatype_name))
                         seen_datatypes.add(datatype_name)
 
-        for route, ref_count in route_map.iteritems():
+        for route, ref_count in six.iteritems(route_map):
             if ref_count > 0:
                 added_routes.append(route)
             if ref_count < 0:
                 removed_routes.append(route)
 
         ns_change = NsChange(
-            ns_file_name, 
+            ns_file_name,
             added_routes,
             added_structs,
             added_unions,
@@ -142,7 +143,7 @@ def parse_change_log(change_log_diff):
             updated_datatypes,
         )
         ns_changes.append(ns_change)
-    
+
     change_log = ChangeLog(ns_changes, added_nses, removed_nses)
     return change_log
 
@@ -151,38 +152,37 @@ def main():
     stream = os.popen('git diff')
     diff = stream.read()
     change_log = parse_change_log(diff)
-    print "Spec Update {} (#<TODO>)".format(date.today().strftime("%m/%d/%Y"))
-    print
-    print "Change Notes:"
+    print("Spec Update {} (#<TODO>)".format(date.today().strftime("%m/%d/%Y")))
+    print()
+    print("Change Notes:")
     for ns_change in change_log.ns_changes:
-        print
-        print "{} Namespace".format(ns_change.file_name)
+        print()
+        print("{} Namespace".format(ns_change.file_name))
         if ns_change.added_routes:
-            print "- Add {} routes".format(", ".join(ns_change.added_routes))
+            print("- Add {} routes".format(", ".join(ns_change.added_routes)))
         if ns_change.added_structs:
-            print "- Add {} structs".format(", ".join(ns_change.added_structs))
+            print("- Add {} structs".format(", ".join(ns_change.added_structs)))
         if ns_change.added_unions:
-            print "- Add {} unions".format(", ".join(ns_change.added_unions))
+            print("- Add {} unions".format(", ".join(ns_change.added_unions)))
         if ns_change.removed_routes:
-            print "- Remove {} routes".format(", ".join(ns_change.removed_routes))
+            print("- Remove {} routes".format(", ".join(ns_change.removed_routes)))
         if ns_change.removed_structs:
-            print "- Remove {} structs".format(", ".join(ns_change.removed_structs))
+            print("- Remove {} structs".format(", ".join(ns_change.removed_structs)))
         if ns_change.removed_unions:
-            print "- Remove {} unions".format(", ".join(ns_change.removed_unions))
+            print("- Remove {} unions".format(", ".join(ns_change.removed_unions)))
         if ns_change.updated_datatypes:
             for datatype, datatype_name in ns_change.updated_datatypes:
-                print "- Update {} {} to include/remove/deprecate <TODO>".format(datatype_name, datatype)
+                print("- Update {} {} to include/remove/deprecate <TODO>".format(datatype_name, datatype))
     if change_log.added_nses:
-        print
+        print()
         for ns in change_log.added_nses:
             print("Add {} namespace".format(ns))
 
     if change_log.removed_nses:
-        print
+        print()
         for ns in change_log.removed_nses:
             print("Add {} namespace".format(ns))
 
 
 if __name__ == "__main__":
     main()
-
