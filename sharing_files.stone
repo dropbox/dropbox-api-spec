@@ -187,7 +187,7 @@ union ViewerInfoPolicy
 ##################################
 
 struct FileMemberActionResult
-    "Per-member result for :route:`add_file_member` or :route:`change_file_member_access`."
+    "Per-member result for :route:`add_file_member`."
 
     member MemberSelector
         "One of specified input members."
@@ -286,14 +286,8 @@ struct AddFileMemberArgs
 
 # --
 
-route change_file_member_access(ChangeFileMemberAccessArgs, FileMemberActionResult, FileMemberActionError) deprecated by update_file_member
-    "Identical to update_file_member but with less information returned."
-
-    attrs
-        scope = "sharing.write"
-
-struct ChangeFileMemberAccessArgs
-    "Arguments for :route:`change_file_member_access`."
+struct UpdateFileMemberArgs
+    "Arguments for :route:`update_file_member`."
 
     file PathOrId
         "File for which we are changing a member's access."
@@ -301,14 +295,6 @@ struct ChangeFileMemberAccessArgs
         "The member whose access we are changing."
     access_level AccessLevel
         "The new access level for the member."
-
-    example default
-        file = "id:3kmLmQFnf1AAAAAAAAAAAw"
-        member = default
-        access_level = viewer
-
-struct UpdateFileMemberArgs extends ChangeFileMemberAccessArgs
-    "Arguments for :route:`update_file_member`."
 
     example default
         file = "id:3kmLmQFnf1AAAAAAAAAAAw"
