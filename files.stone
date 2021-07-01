@@ -555,6 +555,7 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
 
     attrs
         allow_app_folder_app = true
+        auth = "app, user"
         select_admin_mode = "whole_team"
         scope = "files.metadata.read"
 
@@ -580,6 +581,7 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
 
     attrs
         allow_app_folder_app = true
+        auth = "app, user"
         select_admin_mode = "whole_team"
         scope = "files.metadata.read"
 
@@ -599,6 +601,7 @@ route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorRes
 
     attrs
         allow_app_folder_app = true
+        auth = "app, user"
         select_admin_mode = "whole_team"
         scope = "files.metadata.read"
 #
