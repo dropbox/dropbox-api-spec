@@ -1,6 +1,5 @@
 import os
 import re
-import six
 from enum import Enum
 from datetime import date
 from collections import defaultdict
@@ -125,7 +124,7 @@ def parse_change_log(change_log_diff):
                         updated_datatypes.append((datatype, datatype_name))
                         seen_datatypes.add(datatype_name)
 
-        for route, ref_count in six.iteritems(route_map):
+        for route, ref_count in route_map.items():
             if ref_count > 0:
                 added_routes.append(route)
             if ref_count < 0:
