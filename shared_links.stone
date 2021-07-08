@@ -55,6 +55,13 @@ union ResolvedVisibility extends RequestedVisibility
     shared_folder_only
         "Only members of the shared folder containing the linked file
         can access the link. Login is required."
+    no_one
+        "The link merely points the user to the content, and does not grant any additional rights.
+        Existing members of the content who use this link can only access the content with their
+        pre-existing access rights. Either on the file directly, or inherited from a parent folder."
+    only_you
+        "Only the current user can view this link."
+
 
 union SharedLinkAccessFailureReason
     login_required
@@ -97,11 +104,53 @@ struct LinkPermissions
         gain editor privileges. The `link_access_level` is a property of the link, and does not
         depend on who is calling this API. In particular, `link_access_level` does not take into
         account the API caller's current permissions to the content."
+    visibility_policies List(VisibilityPolicy)
+        "A list of policies that the user might be able to set for the visibility."
+    can_set_expiry Boolean
+        "Whether the user can set the expiry settings of the link. This refers to the ability to
+        create a new expiry and modify an existing expiry."
+    can_remove_expiry Boolean
+        "Whether the user can remove the expiry of the link."
+    allow_download Boolean
+        "Whether the link can be downloaded or not."
+    can_allow_download Boolean
+        "Whether the user can allow downloads via the link. This refers to the ability to remove a
+        no-download restriction on the link."
+    can_disallow_download Boolean
+        "Whether the user can disallow downloads via the link. This refers to the ability to impose
+        a no-download restriction on the link."
+    allow_comments Boolean
+        "Whether comments are enabled for the linked file. This takes the team commenting policy into account."
+    team_restricts_comments Boolean
+        "Whether the team has disabled commenting globally."
+    audience_options List(LinkAudienceOption)?
+        "A list of link audience options the user might be able to set as the new audience."
+    can_set_password Boolean?
+        "Whether the user can set a password for the link."
+    can_remove_password Boolean?
+        "Whether the user can remove the password of the link."
+    require_password Boolean?
+        "Whether the user is required to provide a password to view the link."
+    can_use_extended_sharing_controls Boolean?
+        "Whether the user can use extended sharing controls, based on their account type."
 
     example default
         resolved_visibility = public
         can_revoke = false
         revoke_failure_reason = owner_only
+        visibility_policies = [public, password]
+        can_set_expiry = false
+        can_remove_expiry = false
+        allow_download = true
+        can_allow_download = true
+        can_disallow_download = false
+        allow_comments = true
+        team_restricts_comments = true
+        audience_options = [public, team, no_one]
+        can_set_password = true
+        can_remove_password = true
+        require_password = false
+        can_use_extended_sharing_controls = false
 
 struct TeamMemberInfo
     "Information about a team member."
@@ -310,11 +359,15 @@ struct SharedLinkSettings
         level for an existing link is not supported."
     requested_visibility RequestedVisibility?
         "Use :field:`audience` instead.  The requested access for this shared link."
+    allow_download Boolean?
+        "Boolean flag to allow or not download capabilities for shared links."
 
     example default
         requested_visibility = public
         audience = public
         access = viewer
+        allow_download = true
+
 
 union LinkAccessLevel
     viewer
@@ -621,3 +674,106 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
         scope = "sharing.write"
+
+struct LinkAudienceOption
+    audience LinkAudience
+        "Specifies who can access the link."
+    allowed Boolean
+        "Whether the user calling this API can select this audience option."
+    disallowed_reason LinkAudienceDisallowedReason?
+        "If :field:`allowed` is :val:`false`, this will provide the reason that the user is not
+        permitted to set the visibility to this policy."
+
+    example public
+        audience = public
+        allowed = true
+
+    example team
+        audience = team
+        allowed = false
+
+    example no_one
+        audience = no_one
+        allowed = true
+
+#
+# Alpha version of LinkPermissions with visibility information and controls
+#
+
+union VisibilityPolicyDisallowedReason
+    delete_and_recreate
+        "The user needs to delete and recreate the link to change the visibility policy."
+    restricted_by_shared_folder
+        "The parent shared folder restricts sharing of links outside the shared folder. To change
+        the visibility policy, remove the restriction from the parent shared folder."
+    restricted_by_team
+        "The team policy prevents links being shared outside the team."
+    user_not_on_team
+        "The user needs to be on a team to set this policy."
+    user_account_type
+        "The user is a basic user or is on a limited team."
+    permission_denied
+        "The user does not have permission."
+
+union LinkAudienceDisallowedReason extends VisibilityPolicyDisallowedReason
+    "check documentation for VisibilityPolicyDisallowedReason."
+
+union AlphaResolvedVisibility extends ResolvedVisibility
+    "check documentation for ResolvedVisibility."
+
+struct VisibilityPolicy
+    policy RequestedVisibility
+        "This is the value to submit when saving the visibility setting."
+    resolved_policy AlphaResolvedVisibility
+        "This is what the effective policy would be, if you selected this option. The resolved
+        policy is obtained after considering external effects such as shared folder settings and
+        team policy. This value is guaranteed to be provided."
+    allowed Boolean
+        "Whether the user is permitted to set the visibility to this policy."
+    disallowed_reason VisibilityPolicyDisallowedReason?
+        "If :field:`allowed` is :val:`false`, this will provide the reason that the user is not
+        permitted to set the visibility to this policy."
+
+    example public
+        policy = public
+        resolved_policy = public
+        allowed = true
+
+    example public_team
+        policy = public
+        resolved_policy = team_only
+        allowed = false
+        disallowed_reason = restricted_by_team
+
+    example public_shared_folder
+        policy = public
+        resolved_policy = shared_folder_only
+        allowed = false
+        disallowed_reason = restricted_by_shared_folder
+
+    example password
+        policy = password
+        resolved_policy = password
+        allowed = true
+
+    example password_team
+        policy = password
+        resolved_policy = team_and_password
+        allowed = true
+
+    example password_shared_folder
+        policy = password
+        resolved_policy = shared_folder_only
+        allowed = false
+        disallowed_reason = restricted_by_shared_folder
+
+    example team_only
+        policy = team_only
+        resolved_policy = team_only
+        allowed = true
+
+    example team_shared_folder
+        policy = team_only
+        resolved_policy = shared_folder_only
+        allowed = false
+        disallowed_reason = restricted_by_shared_folder
