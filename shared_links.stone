@@ -621,9 +621,7 @@ route get_shared_links(GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksEr
 
     If a non-empty path is given, returns a list of all shared links
     that allow access to the given path.  Collection links are never
-    returned in this case.
-
-    Note that the url field in the response is never the shortened URL."
+    returned in this case."
 
     attrs
         allow_app_folder_app = true
@@ -643,7 +641,6 @@ struct CreateSharedLinkArg
         "The path to share."
 
     short_url Boolean = false
-        "Whether to return a shortened URL."
 
     pending_upload PendingUploadMode?
         "If it's okay to share a path that does not yet exist, set this to
@@ -660,10 +657,6 @@ route create_shared_link(CreateSharedLinkArg, PathLinkMetadata, CreateSharedLink
     "Create a shared link.
 
     If a shared link already exists for the given path, that link is returned.
-
-    Note that in the returned :type:`PathLinkMetadata`, the
-    :field:`PathLinkMetadata.url` field is the shortened URL if
-    :field:`CreateSharedLinkArg.short_url` argument is set to :val:`true`.
 
     Previously, it was technically possible to break a shared link by moving or
     renaming the corresponding file or folder. In the future, this will no
