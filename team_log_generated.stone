@@ -341,7 +341,7 @@ struct Certificate
         common_name = "xyz"
 
 union ChangeLinkExpirationPolicy
-    "Policy for deciding whether the team's default expiration days policy must be enforced when an externally shared is updated"
+    "Policy for deciding whether the team's default expiration days policy must be enforced when an externally shared link is updated"
     allowed
     not_allowed
 
@@ -5923,7 +5923,7 @@ struct SharingChangeFolderJoinPolicyDetails
         previous_value = from_anyone
 
 struct SharingChangeLinkAllowChangeExpirationPolicyDetails
-    "Changed the password requirement for the links shared outside of the team."
+    "Changed the allow remove or change expiration policy for the links shared outside of the team."
 
     new_value EnforceLinkPasswordPolicy
         "To."
@@ -5947,7 +5947,7 @@ struct SharingChangeLinkDefaultExpirationPolicyDetails
         previous_value = none
 
 struct SharingChangeLinkEnforcePasswordPolicyDetails
-    "Changed the allow remove or change expiration policy for the links shared outside of the team."
+    "Changed the password requirement for the links shared outside of the team."
 
     new_value ChangeLinkExpirationPolicy
         "To."
@@ -9495,7 +9495,7 @@ struct SharingChangeLinkAllowChangeExpirationPolicyType
     description String
 
     example default
-        description = "(team_policies) Changed the password requirement for the links shared outside of the team"
+        description = "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
 
 struct SharingChangeLinkDefaultExpirationPolicyType
     description String
@@ -9507,7 +9507,7 @@ struct SharingChangeLinkEnforcePasswordPolicyType
     description String
 
     example default
-        description = "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
+        description = "(team_policies) Changed the password requirement for the links shared outside of the team"
 
 struct SharingChangeLinkPolicyType
     description String
@@ -10708,11 +10708,11 @@ union EventType
     sharing_change_folder_join_policy SharingChangeFolderJoinPolicyType
         "(team_policies) Changed whether team members can join shared folders owned outside team"
     sharing_change_link_allow_change_expiration_policy SharingChangeLinkAllowChangeExpirationPolicyType
-        "(team_policies) Changed the password requirement for the links shared outside of the team"
+        "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
     sharing_change_link_default_expiration_policy SharingChangeLinkDefaultExpirationPolicyType
         "(team_policies) Changed the default expiration for the links shared outside of the team"
     sharing_change_link_enforce_password_policy SharingChangeLinkEnforcePasswordPolicyType
-        "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
+        "(team_policies) Changed the password requirement for the links shared outside of the team"
     sharing_change_link_policy SharingChangeLinkPolicyType
         "(team_policies) Changed whether members can share links outside team, and if links are accessible only by team members or anyone by default"
     sharing_change_member_policy SharingChangeMemberPolicyType
@@ -11656,11 +11656,11 @@ union EventTypeArg
     sharing_change_folder_join_policy
         "(team_policies) Changed whether team members can join shared folders owned outside team"
     sharing_change_link_allow_change_expiration_policy
-        "(team_policies) Changed the password requirement for the links shared outside of the team"
+        "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
     sharing_change_link_default_expiration_policy
         "(team_policies) Changed the default expiration for the links shared outside of the team"
     sharing_change_link_enforce_password_policy
-        "(team_policies) Changed the allow remove or change expiration policy for the links shared outside of the team"
+        "(team_policies) Changed the password requirement for the links shared outside of the team"
     sharing_change_link_policy
         "(team_policies) Changed whether members can share links outside team, and if links are accessible only by team members or anyone by default"
     sharing_change_member_policy
