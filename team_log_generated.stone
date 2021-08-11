@@ -411,6 +411,11 @@ union ExtendedVersionHistoryPolicy
     implicitly_limited
     implicitly_unlimited
 
+union ExternalDriveBackupPolicy
+    "Policy for controlling team access to external drive backup feature"
+    disabled
+    enabled
+
 struct FailureDetailsLogInfo
     "Provides details about a failure"
 
@@ -5580,6 +5585,18 @@ struct ExtendedVersionHistoryChangePolicyDetails
         new_value = implicitly_limited
         previous_value = implicitly_limited
 
+struct ExternalDriveBackupPolicyChangedDetails
+    "Changed external drive backup policy for team."
+
+    new_value ExternalDriveBackupPolicy
+        "New external drive backup policy."
+    previous_value ExternalDriveBackupPolicy
+        "Previous external drive backup policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct FileCommentsChangePolicyDetails
     "Enabled/disabled commenting on team files."
 
@@ -6967,6 +6984,7 @@ union EventDetails
     emm_change_policy_details EmmChangePolicyDetails
     emm_remove_exception_details EmmRemoveExceptionDetails
     extended_version_history_change_policy_details ExtendedVersionHistoryChangePolicyDetails
+    external_drive_backup_policy_changed_details ExternalDriveBackupPolicyChangedDetails
     file_comments_change_policy_details FileCommentsChangePolicyDetails
     file_locking_policy_changed_details FileLockingPolicyChangedDetails
     file_requests_change_policy_details FileRequestsChangePolicyDetails
@@ -9293,6 +9311,12 @@ struct ExtendedVersionHistoryChangePolicyType
     example default
         description = "(team_policies) Accepted/opted out of extended version history"
 
+struct ExternalDriveBackupPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed external drive backup policy for team"
+
 struct FileCommentsChangePolicyType
     description String
 
@@ -10641,6 +10665,8 @@ union EventType
         "(team_policies) Removed members from EMM exception list"
     extended_version_history_change_policy ExtendedVersionHistoryChangePolicyType
         "(team_policies) Accepted/opted out of extended version history"
+    external_drive_backup_policy_changed ExternalDriveBackupPolicyChangedType
+        "(team_policies) Changed external drive backup policy for team"
     file_comments_change_policy FileCommentsChangePolicyType
         "(team_policies) Enabled/disabled commenting on team files"
     file_locking_policy_changed FileLockingPolicyChangedType
@@ -11589,6 +11615,8 @@ union EventTypeArg
         "(team_policies) Removed members from EMM exception list"
     extended_version_history_change_policy
         "(team_policies) Accepted/opted out of extended version history"
+    external_drive_backup_policy_changed
+        "(team_policies) Changed external drive backup policy for team"
     file_comments_change_policy
         "(team_policies) Enabled/disabled commenting on team files"
     file_locking_policy_changed

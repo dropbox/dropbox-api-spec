@@ -1067,8 +1067,8 @@ struct RemoveFolderMemberArg
     leave_a_copy Boolean
         "If true, the removed user will keep their copy of the folder after
         it's unshared, assuming it was mounted. Otherwise, it will be removed
-        from their Dropbox. Also, this must be set to false when kicking a
-        group."
+        from their Dropbox. This must be set to false when removing a group,
+        or when the folder is within a team folder or another shared folder."
 
     example default
         shared_folder_id = "84528192421"
@@ -1234,7 +1234,9 @@ struct RelinquishFolderMembershipArg
     shared_folder_id common.SharedFolderId
         "The ID for the shared folder."
     leave_a_copy Boolean = false
-        "Keep a copy of the folder's contents upon relinquishing membership."
+        "Keep a copy of the folder's contents upon relinquishing membership.
+        This must be set to false when the folder is within a team folder
+        or another shared folder."
 
     example default
         shared_folder_id = "84528192421"
