@@ -446,7 +446,8 @@ struct UserFileMembershipInfo extends UserMembershipInfo
     "The information about a user member of the shared content with an appended last seen timestamp."
 
     time_last_seen common.DropboxTimestamp?
-        "The UTC timestamp of when the user has last seen the content, if they have."
+        "The UTC timestamp of when the user has last seen the content. Only populated if the
+        user has seen the content and the caller has a plan that includes viewer history."
     platform_type seen_state.PlatformType?
         "The platform on which the user has last seen the content, or unknown."
 

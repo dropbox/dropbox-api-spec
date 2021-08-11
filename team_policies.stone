@@ -216,3 +216,9 @@ union ComputerBackupPolicyState
         "Computer Backup feature is enabled."
     default
         "Computer Backup defaults to ON for SSB teams, and OFF for Enterprise teams."
+
+union ExternalDriveBackupPolicyState
+    disabled
+        "External Drive Backup feature is disabled."
+    enabled
+        "External Drive Backup feature is enabled."

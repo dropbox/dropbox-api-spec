@@ -86,7 +86,8 @@ union BaseTeamFolderError
 #
 
 route team_folder/create(TeamFolderCreateArg, TeamFolderMetadata, TeamFolderCreateError)
-    "Creates a new, active, team folder with no members.
+    "Creates a new, active, team folder with no members. This endpoint can only be used for teams
+    that do not already have a shared team space.
 
     Permission : Team member file access."
 
@@ -249,6 +250,7 @@ union TeamFolderActivateError extends BaseTeamFolderError
 
 route team_folder/archive(TeamFolderArchiveArg, TeamFolderArchiveLaunch, TeamFolderArchiveError)
     "Sets an active team folder's status to archived and removes all folder and file members.
+    This endpoint cannot be used for teams that have a shared team space.
 
     Permission : Team member file access."
 
@@ -299,7 +301,8 @@ union_closed TeamFolderArchiveJobStatus extends async.PollResultBase
 #
 
 route team_folder/permanently_delete(TeamFolderIdArg, Void, TeamFolderPermanentlyDeleteError)
-    "Permanently deletes an archived team folder.
+    "Permanently deletes an archived team folder. This endpoint cannot be used for teams
+    that have a shared team space.
 
     Permission : Team member file access."
 
