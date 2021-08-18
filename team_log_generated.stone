@@ -304,6 +304,12 @@ union CameraUploadsPolicy
     disabled
     enabled
 
+union CaptureTranscriptPolicy
+    "Policy for deciding whether team users can transcription in Capture"
+    default
+    disabled
+    enabled
+
 struct Certificate
     "Certificate details."
 
@@ -5435,6 +5441,18 @@ struct CameraUploadsPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct CaptureTranscriptPolicyChangedDetails
+    "Changed Capture transcription policy for team."
+
+    new_value CaptureTranscriptPolicy
+        "To."
+    previous_value CaptureTranscriptPolicy
+        "From."
+
+    example default
+        new_value = default
+        previous_value = default
+
 struct ClassificationChangePolicyDetails
     "Changed classification policy for team."
 
@@ -6967,6 +6985,7 @@ union EventDetails
     allow_download_enabled_details AllowDownloadEnabledDetails
     app_permissions_changed_details AppPermissionsChangedDetails
     camera_uploads_policy_changed_details CameraUploadsPolicyChangedDetails
+    capture_transcript_policy_changed_details CaptureTranscriptPolicyChangedDetails
     classification_change_policy_details ClassificationChangePolicyDetails
     computer_backup_policy_changed_details ComputerBackupPolicyChangedDetails
     content_administration_policy_changed_details ContentAdministrationPolicyChangedDetails
@@ -9209,6 +9228,12 @@ struct CameraUploadsPolicyChangedType
     example default
         description = "(team_policies) Changed camera uploads setting for team"
 
+struct CaptureTranscriptPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed Capture transcription policy for team"
+
 struct ClassificationChangePolicyType
     description String
 
@@ -10631,6 +10656,8 @@ union EventType
         "(team_policies) Changed app permissions"
     camera_uploads_policy_changed CameraUploadsPolicyChangedType
         "(team_policies) Changed camera uploads setting for team"
+    capture_transcript_policy_changed CaptureTranscriptPolicyChangedType
+        "(team_policies) Changed Capture transcription policy for team"
     classification_change_policy ClassificationChangePolicyType
         "(team_policies) Changed classification policy for team"
     computer_backup_policy_changed ComputerBackupPolicyChangedType
@@ -11581,6 +11608,8 @@ union EventTypeArg
         "(team_policies) Changed app permissions"
     camera_uploads_policy_changed
         "(team_policies) Changed camera uploads setting for team"
+    capture_transcript_policy_changed
+        "(team_policies) Changed Capture transcription policy for team"
     classification_change_policy
         "(team_policies) Changed classification policy for team"
     computer_backup_policy_changed
