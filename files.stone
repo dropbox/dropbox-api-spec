@@ -946,6 +946,10 @@ struct UploadSessionCursor
         session_id = "1234faaf0678bcde"
         offset = 0
 
+    example another
+        session_id = "8dd9d57374911153"
+        offset = 1073741824
+
 route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError) deprecated by upload_session/append:2
     "Append more data to an upload session.
 
@@ -986,6 +990,10 @@ union_closed WriteMode
         strategy is the same as it is for :field:`add`."
     update Rev
         "Overwrite if the given \"rev\" matches the existing file's \"rev\".
+        The supplied value should be the latest known \"rev\" of the file, for example,
+        from :type:`FileMetadata`, from when the file was last downloaded by the app.
+        This will cause the file on the Dropbox servers to be overwritten if the given \"rev\"
+        matches the existing file's current \"rev\" on the Dropbox servers.
         The autorename strategy is to append the string \"conflicted copy\"
         to the file name. For example, \"document.txt\" might become
         \"document (conflicted copy).txt\" or \"document (Panda's conflicted copy).txt\"."
@@ -1032,6 +1040,10 @@ struct CommitInfo
         path = "/Homework/math/Matrices.txt"
         autorename = true
 
+    example another
+        path = "/Homework/math/Vectors.txt"
+        autorename = true
+
     example update
         path = "/Homework/math/Matrices.txt"
         mode = with_revision
@@ -1047,6 +1059,10 @@ struct UploadSessionFinishArg
     example default
         cursor = default
         commit = default
+
+    example another
+        cursor = another
+        commit = another
 
     example update
         cursor = default
@@ -1097,6 +1113,9 @@ struct UploadSessionFinishBatchArg
 
     example default
         entries = [default]
+
+    example multiple
+        entries = [default, another]
 
 struct UploadSessionFinishBatchResult
     entries List(UploadSessionFinishBatchResultEntry)
