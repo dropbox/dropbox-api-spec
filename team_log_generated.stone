@@ -406,6 +406,11 @@ union DownloadPolicyType
     allow
     disallow
 
+union EmailIngestPolicy
+    "Email ingest policy"
+    disabled
+    enabled
+
 union EnforceLinkPasswordPolicy
     "Policy for deciding whether password must be enforced when an externally shared link is updated"
     optional
@@ -2919,6 +2924,27 @@ struct UserTagsRemovedDetails
 
     example default
         values = ["abc"]
+
+struct EmailIngestReceiveFileDetails
+    "Received files via Email to my Dropbox."
+
+    inbox_name String
+        "Inbox name."
+    attachment_names List(String)
+        "Submitted file names."
+    subject String?
+        "Subject of the email."
+    from_name common.DisplayNameLegacy?
+        "The name as provided by the submitter."
+    from_email EmailAddress?
+        "The email as provided by the submitter."
+
+    example default
+        inbox_name = "abc"
+        attachment_names = ["abc"]
+        subject = "abc"
+        from_name = "John Smith"
+        from_email = "john_smith@acmecorp.com"
 
 struct FileRequestChangeDetails
     "Changed file request."
@@ -5573,6 +5599,18 @@ struct DirectoryRestrictionsAddMembersDetails
 struct DirectoryRestrictionsRemoveMembersDetails
     "Removed members from directory restrictions list."
 
+struct EmailIngestPolicyChangedDetails
+    "Changed email to my dropbox policy for team."
+
+    new_value EmailIngestPolicy
+        "New email to my dropbox policy."
+    previous_value EmailIngestPolicy
+        "Previous email to my dropbox policy."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct EmmAddExceptionDetails
     "Added members to EMM exception list."
 
@@ -6730,6 +6768,7 @@ union EventDetails
     rewind_folder_details RewindFolderDetails
     user_tags_added_details UserTagsAddedDetails
     user_tags_removed_details UserTagsRemovedDetails
+    email_ingest_receive_file_details EmailIngestReceiveFileDetails
     file_request_change_details FileRequestChangeDetails
     file_request_close_details FileRequestCloseDetails
     file_request_create_details FileRequestCreateDetails
@@ -6999,6 +7038,7 @@ union EventDetails
     device_approvals_remove_exception_details DeviceApprovalsRemoveExceptionDetails
     directory_restrictions_add_members_details DirectoryRestrictionsAddMembersDetails
     directory_restrictions_remove_members_details DirectoryRestrictionsRemoveMembersDetails
+    email_ingest_policy_changed_details EmailIngestPolicyChangedDetails
     emm_add_exception_details EmmAddExceptionDetails
     emm_change_policy_details EmmChangePolicyDetails
     emm_remove_exception_details EmmRemoveExceptionDetails
@@ -7697,6 +7737,12 @@ struct UserTagsRemovedType
 
     example default
         description = "(file_operations) Removed tags"
+
+struct EmailIngestReceiveFileType
+    description String
+
+    example default
+        description = "(file_requests) Received files via Email to my Dropbox"
 
 struct FileRequestChangeType
     description String
@@ -9312,6 +9358,12 @@ struct DirectoryRestrictionsRemoveMembersType
     example default
         description = "(team_policies) Removed members from directory restrictions list"
 
+struct EmailIngestPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed email to my dropbox policy for team"
+
 struct EmmAddExceptionType
     description String
 
@@ -10146,6 +10198,8 @@ union EventType
         "(file_operations) Tagged a file"
     user_tags_removed UserTagsRemovedType
         "(file_operations) Removed tags"
+    email_ingest_receive_file EmailIngestReceiveFileType
+        "(file_requests) Received files via Email to my Dropbox"
     file_request_change FileRequestChangeType
         "(file_requests) Changed file request"
     file_request_close FileRequestCloseType
@@ -10684,6 +10738,8 @@ union EventType
         "(team_policies) Added members to directory restrictions list"
     directory_restrictions_remove_members DirectoryRestrictionsRemoveMembersType
         "(team_policies) Removed members from directory restrictions list"
+    email_ingest_policy_changed EmailIngestPolicyChangedType
+        "(team_policies) Changed email to my dropbox policy for team"
     emm_add_exception EmmAddExceptionType
         "(team_policies) Added members to EMM exception list"
     emm_change_policy EmmChangePolicyType
@@ -11098,6 +11154,8 @@ union EventTypeArg
         "(file_operations) Tagged a file"
     user_tags_removed
         "(file_operations) Removed tags"
+    email_ingest_receive_file
+        "(file_requests) Received files via Email to my Dropbox"
     file_request_change
         "(file_requests) Changed file request"
     file_request_close
@@ -11636,6 +11694,8 @@ union EventTypeArg
         "(team_policies) Added members to directory restrictions list"
     directory_restrictions_remove_members
         "(team_policies) Removed members from directory restrictions list"
+    email_ingest_policy_changed
+        "(team_policies) Changed email to my dropbox policy for team"
     emm_add_exception
         "(team_policies) Added members to EMM exception list"
     emm_change_policy
