@@ -407,7 +407,7 @@ union DownloadPolicyType
     disallow
 
 union EmailIngestPolicy
-    "Email ingest policy"
+    "Policy for deciding whether a team can use Email to my Dropbox feature"
     disabled
     enabled
 
@@ -5600,12 +5600,12 @@ struct DirectoryRestrictionsRemoveMembersDetails
     "Removed members from directory restrictions list."
 
 struct EmailIngestPolicyChangedDetails
-    "Changed email to my dropbox policy for team."
+    "Changed email to my Dropbox policy for team."
 
     new_value EmailIngestPolicy
-        "New email to my dropbox policy."
+        "To."
     previous_value EmailIngestPolicy
-        "Previous email to my dropbox policy."
+        "From."
 
     example default
         new_value = disabled
@@ -9362,7 +9362,7 @@ struct EmailIngestPolicyChangedType
     description String
 
     example default
-        description = "(team_policies) Changed email to my dropbox policy for team"
+        description = "(team_policies) Changed email to my Dropbox policy for team"
 
 struct EmmAddExceptionType
     description String
@@ -10739,7 +10739,7 @@ union EventType
     directory_restrictions_remove_members DirectoryRestrictionsRemoveMembersType
         "(team_policies) Removed members from directory restrictions list"
     email_ingest_policy_changed EmailIngestPolicyChangedType
-        "(team_policies) Changed email to my dropbox policy for team"
+        "(team_policies) Changed email to my Dropbox policy for team"
     emm_add_exception EmmAddExceptionType
         "(team_policies) Added members to EMM exception list"
     emm_change_policy EmmChangePolicyType
@@ -11695,7 +11695,7 @@ union EventTypeArg
     directory_restrictions_remove_members
         "(team_policies) Removed members from directory restrictions list"
     email_ingest_policy_changed
-        "(team_policies) Changed email to my dropbox policy for team"
+        "(team_policies) Changed email to my Dropbox policy for team"
     emm_add_exception
         "(team_policies) Added members to EMM exception list"
     emm_change_policy
