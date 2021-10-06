@@ -69,6 +69,9 @@ union SharedLinkCreatePolicy
     team_only
         "Only members of the same team can access all shared links.
         Login will be required to access all shared links."
+    default_no_one
+        "Only people invited can access newly created links.
+        Login will be required to access the shared links unless overridden."
 
 union EmmState
     disabled

@@ -822,6 +822,7 @@ union SharingFolderJoinPolicy
 
 union SharingLinkPolicy
     "Policy for controlling if team members can share links externally"
+    default_no_one
     default_private
     default_public
     only_private
