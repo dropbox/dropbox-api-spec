@@ -1151,7 +1151,7 @@ union UploadSessionFinishBatchLaunch extends async.LaunchResultBase
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
-route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFinishBatchLaunch, Void)
+route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFinishBatchLaunch, Void) deprecated by upload_session/finish_batch:2
     "This route helps you commit many files at once into a user's Dropbox. Use
     :route:`upload_session/start` and :route:`upload_session/append:2` to
     upload file contents. We recommend uploading many files in parallel to increase
@@ -1202,7 +1202,6 @@ route upload_session/finish_batch:2 (UploadSessionFinishBatchArg, UploadSessionF
         allow_app_folder_app = true
         select_admin_mode = "team_admin"
         scope = "files.content.write"
-        is_preview = true
 
 
 route upload_session/finish_batch/check(async.PollArg, UploadSessionFinishBatchJobStatus, async.PollError)

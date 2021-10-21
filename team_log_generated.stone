@@ -4679,6 +4679,9 @@ struct SharedContentRestoreMemberDetails
 struct SharedContentUnshareDetails
     "Unshared file/folder by clearing membership."
 
+
+    example default
+
 struct SharedContentViewDetails
     "Previewed shared file/folder."
 
