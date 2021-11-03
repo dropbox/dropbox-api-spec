@@ -555,6 +555,7 @@ route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
 
     attrs
         allow_app_folder_app = true
+        auth = "app, user"
         select_admin_mode = "whole_team"
         scope = "files.metadata.read"
 
@@ -580,6 +581,7 @@ route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderC
 
     attrs
         allow_app_folder_app = true
+        auth = "app, user"
         select_admin_mode = "whole_team"
         scope = "files.metadata.read"
 
@@ -2553,7 +2555,7 @@ struct GetTemporaryLinkResult
 
     example default
         metadata = default
-        link = "https://content.dropboxapi.com/apitl/1/YXNkZmFzZGcyMzQyMzI0NjU2NDU2NDU2"
+        link = "https://ucabc123456.dl.dropboxusercontent.com/cd/0/get/abcdefghijklmonpqrstuvwxyz1234567890/file"
 
 union GetTemporaryLinkError
     path LookupError
