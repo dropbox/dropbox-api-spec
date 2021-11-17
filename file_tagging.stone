@@ -15,16 +15,6 @@ union Tag
         user_generated_tag = default
 
 
-union BaseError
-    unknown
-        "Action failed."
-    transient
-        "Action failed. Try again."
-    input_validation
-        "Action failed due to wrong params."
-    cancelled
-        "Action cancelled."
-
 struct UserGeneratedTag
     tag_text TagText
 
@@ -32,13 +22,8 @@ struct UserGeneratedTag
         tag_text = "my_tag"
 
 
-
-union BaseTagError extends BaseError
-    feature_not_supported
-        "Tags are not turned on for your team. Please turn on the feature."
-
-    path_not_found
-        "Path not found."
+union BaseTagError
+    path LookupError
 
 
 #####################################
@@ -57,7 +42,7 @@ struct AddTagArg
 
 union AddTagError extends BaseTagError
     too_many_tags
-        "Item already has max supported tags."
+        "The item already has the maximum supported number of tags."
 
 route tags/add(AddTagArg, Void, AddTagError)
     "Add a tag to an item. A tag is a string. No more than 20 tags can be added to a given item."
@@ -84,7 +69,7 @@ struct RemoveTagArg
         tag_text = "MyTag"
 
 union RemoveTagError extends BaseTagError
-    tag_not_exists_for_this_path
+    tag_not_present
         "That tag doesn't exist at this path."
 
 route tags/remove(RemoveTagArg, Void, RemoveTagError)
