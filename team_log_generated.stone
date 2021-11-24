@@ -2750,7 +2750,7 @@ struct EnabledDomainInvitesDetails
     "Enabled domain invites."
 
 struct ApplyNamingConventionDetails
-    "Applied a Naming Convention rule."
+    "Applied naming convention."
 
 struct CreateFolderDetails
     "Created folders."
@@ -2897,7 +2897,7 @@ struct ObjectLabelUpdatedValueDetails
         label_type = test_only
 
 struct OrganizeFolderWithTidyDetails
-    "Organized a folder with the Tidy Up action."
+    "Organized a folder with multi-file organize."
 
 struct RewindFolderDetails
     "Rewound a folder."
@@ -2907,6 +2907,12 @@ struct RewindFolderDetails
 
     example default
         rewind_folder_target_ts_ms = "2017-01-25T15:51:30Z"
+
+struct UndoNamingConventionDetails
+    "Reverted naming convention."
+
+struct UndoOrganizeFolderWithTidyDetails
+    "Removed multi-file organize."
 
 struct UserTagsAddedDetails
     "Tagged a file."
@@ -6770,6 +6776,8 @@ union EventDetails
     object_label_updated_value_details ObjectLabelUpdatedValueDetails
     organize_folder_with_tidy_details OrganizeFolderWithTidyDetails
     rewind_folder_details RewindFolderDetails
+    undo_naming_convention_details UndoNamingConventionDetails
+    undo_organize_folder_with_tidy_details UndoOrganizeFolderWithTidyDetails
     user_tags_added_details UserTagsAddedDetails
     user_tags_removed_details UserTagsRemovedDetails
     email_ingest_receive_file_details EmailIngestReceiveFileDetails
@@ -7584,7 +7592,7 @@ struct ApplyNamingConventionType
     description String
 
     example default
-        description = "(file_operations) Applied a Naming Convention rule"
+        description = "(file_operations) Applied naming convention"
 
 struct CreateFolderType
     description String
@@ -7722,13 +7730,25 @@ struct OrganizeFolderWithTidyType
     description String
 
     example default
-        description = "(file_operations) Organized a folder with the Tidy Up action"
+        description = "(file_operations) Organized a folder with multi-file organize"
 
 struct RewindFolderType
     description String
 
     example default
         description = "(file_operations) Rewound a folder"
+
+struct UndoNamingConventionType
+    description String
+
+    example default
+        description = "(file_operations) Reverted naming convention"
+
+struct UndoOrganizeFolderWithTidyType
+    description String
+
+    example default
+        description = "(file_operations) Removed multi-file organize"
 
 struct UserTagsAddedType
     description String
@@ -10149,7 +10169,7 @@ union EventType
     enabled_domain_invites EnabledDomainInvitesType
         "(domains) Enabled domain invites (deprecated, no longer logged)"
     apply_naming_convention ApplyNamingConventionType
-        "(file_operations) Applied a Naming Convention rule"
+        "(file_operations) Applied naming convention"
     create_folder CreateFolderType
         "(file_operations) Created folders (deprecated, no longer logged)"
     file_add FileAddType
@@ -10195,9 +10215,13 @@ union EventType
     object_label_updated_value ObjectLabelUpdatedValueType
         "(file_operations) Updated a label's value"
     organize_folder_with_tidy OrganizeFolderWithTidyType
-        "(file_operations) Organized a folder with the Tidy Up action"
+        "(file_operations) Organized a folder with multi-file organize"
     rewind_folder RewindFolderType
         "(file_operations) Rewound a folder"
+    undo_naming_convention UndoNamingConventionType
+        "(file_operations) Reverted naming convention"
+    undo_organize_folder_with_tidy UndoOrganizeFolderWithTidyType
+        "(file_operations) Removed multi-file organize"
     user_tags_added UserTagsAddedType
         "(file_operations) Tagged a file"
     user_tags_removed UserTagsRemovedType
@@ -11105,7 +11129,7 @@ union EventTypeArg
     enabled_domain_invites
         "(domains) Enabled domain invites (deprecated, no longer logged)"
     apply_naming_convention
-        "(file_operations) Applied a Naming Convention rule"
+        "(file_operations) Applied naming convention"
     create_folder
         "(file_operations) Created folders (deprecated, no longer logged)"
     file_add
@@ -11151,9 +11175,13 @@ union EventTypeArg
     object_label_updated_value
         "(file_operations) Updated a label's value"
     organize_folder_with_tidy
-        "(file_operations) Organized a folder with the Tidy Up action"
+        "(file_operations) Organized a folder with multi-file organize"
     rewind_folder
         "(file_operations) Rewound a folder"
+    undo_naming_convention
+        "(file_operations) Reverted naming convention"
+    undo_organize_folder_with_tidy
+        "(file_operations) Removed multi-file organize"
     user_tags_added
         "(file_operations) Tagged a file"
     user_tags_removed
