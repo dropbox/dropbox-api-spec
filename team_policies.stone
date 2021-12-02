@@ -225,3 +225,5 @@ union ExternalDriveBackupPolicyState
         "External Drive Backup feature is disabled."
     enabled
         "External Drive Backup feature is enabled."
+    default
+        "External Drive Backup default value based on team tier."

@@ -424,6 +424,7 @@ union ExtendedVersionHistoryPolicy
 
 union ExternalDriveBackupPolicy
     "Policy for controlling team access to external drive backup feature"
+    default
     disabled
     enabled
 
@@ -5660,8 +5661,8 @@ struct ExternalDriveBackupPolicyChangedDetails
         "Previous external drive backup policy."
 
     example default
-        new_value = disabled
-        previous_value = disabled
+        new_value = default
+        previous_value = default
 
 struct FileCommentsChangePolicyDetails
     "Enabled/disabled commenting on team files."
