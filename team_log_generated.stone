@@ -6300,6 +6300,12 @@ struct WebSessionsChangeIdleLengthPolicyDetails
         new_value = default
         previous_value = default
 
+struct DataResidencyMigrationRequestSuccessfulDetails
+    "Requested data residency migration for team data."
+
+struct DataResidencyMigrationRequestUnsuccessfulDetails
+    "Request for data residency migration for team data has failed."
+
 struct TeamMergeFromDetails
     "Merged another team into this team."
 
@@ -7116,6 +7122,8 @@ union EventDetails
     web_sessions_change_active_session_limit_details WebSessionsChangeActiveSessionLimitDetails
     web_sessions_change_fixed_length_policy_details WebSessionsChangeFixedLengthPolicyDetails
     web_sessions_change_idle_length_policy_details WebSessionsChangeIdleLengthPolicyDetails
+    data_residency_migration_request_successful_details DataResidencyMigrationRequestSuccessfulDetails
+    data_residency_migration_request_unsuccessful_details DataResidencyMigrationRequestUnsuccessfulDetails
     team_merge_from_details TeamMergeFromDetails
     team_merge_to_details TeamMergeToDetails
     team_profile_add_background_details TeamProfileAddBackgroundDetails
@@ -9773,6 +9781,18 @@ struct WebSessionsChangeIdleLengthPolicyType
     example default
         description = "(team_policies) Changed how long team members can be idle while signed in to Dropbox.com"
 
+struct DataResidencyMigrationRequestSuccessfulType
+    description String
+
+    example default
+        description = "(team_profile) Requested data residency migration for team data"
+
+struct DataResidencyMigrationRequestUnsuccessfulType
+    description String
+
+    example default
+        description = "(team_profile) Request for data residency migration for team data has failed"
+
 struct TeamMergeFromType
     description String
 
@@ -10897,6 +10917,10 @@ union EventType
         "(team_policies) Changed how long members can stay signed in to Dropbox.com"
     web_sessions_change_idle_length_policy WebSessionsChangeIdleLengthPolicyType
         "(team_policies) Changed how long team members can be idle while signed in to Dropbox.com"
+    data_residency_migration_request_successful DataResidencyMigrationRequestSuccessfulType
+        "(team_profile) Requested data residency migration for team data"
+    data_residency_migration_request_unsuccessful DataResidencyMigrationRequestUnsuccessfulType
+        "(team_profile) Request for data residency migration for team data has failed"
     team_merge_from TeamMergeFromType
         "(team_profile) Merged another team into this team"
     team_merge_to TeamMergeToType
@@ -11857,6 +11881,10 @@ union EventTypeArg
         "(team_policies) Changed how long members can stay signed in to Dropbox.com"
     web_sessions_change_idle_length_policy
         "(team_policies) Changed how long team members can be idle while signed in to Dropbox.com"
+    data_residency_migration_request_successful
+        "(team_profile) Requested data residency migration for team data"
+    data_residency_migration_request_unsuccessful
+        "(team_profile) Request for data residency migration for team data has failed"
     team_merge_from
         "(team_profile) Merged another team into this team"
     team_merge_to
