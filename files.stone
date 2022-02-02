@@ -778,6 +778,8 @@ union UploadError
         "Unable to save the uploaded contents to a file."
     properties_error file_properties.InvalidPropertyGroupError
         "The supplied property group is invalid. The file has uploaded without property groups."
+    payload_too_large
+        "The request payload must be at most 150 MB."
 
 struct UploadSessionOffsetError
     correct_offset UInt64
@@ -788,6 +790,8 @@ union UploadSessionStartError
         "Uploading data not allowed when starting concurrent upload session."
     concurrent_session_close_not_allowed
         "Can not start a closed concurrent upload session."
+    payload_too_large
+        "The request payload must be at most 150 MB."
 
 union UploadSessionLookupError
     not_found
@@ -810,6 +814,8 @@ union UploadSessionLookupError
         "For concurrent upload sessions, offset needs to be multiple of 4194304 bytes."
     concurrent_session_invalid_data_size
         "For concurrent upload sessions, only chunks with size multiple of 4194304 bytes can be uploaded."
+    payload_too_large
+        "The request payload must be at most 150 MB."
 
 union UploadSessionFinishError
     lookup_failed UploadSessionLookupError
@@ -832,6 +838,8 @@ union UploadSessionFinishError
         "Concurrent upload sessions need to be closed before finishing."
     concurrent_session_missing_data
         "Not all pieces of data were uploaded before trying to finish the session."
+    payload_too_large
+        "The request payload must be at most 150 MB."
 
 # Req/Resp
 
@@ -1884,10 +1892,16 @@ union RelocationError
         "Can't move the shared folder to the given destination."
     cant_move_into_vault MoveIntoVaultError
         "Some content cannot be moved into Vault under certain circumstances, see detailed error."
+    cant_move_into_family MoveIntoFamilyError
+        "Some content cannot be moved into the Family Room folder under certain circumstances, see detailed error."
 
 union MoveIntoVaultError
     is_shared_folder
         "Moving shared folder into Vault is not allowed."
+
+union MoveIntoFamilyError
+    is_shared_folder
+        "Moving shared folder into Family Room folder is not allowed."
 
 struct RelocationResult extends FileOpsResult
     metadata Metadata

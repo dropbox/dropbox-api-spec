@@ -268,7 +268,7 @@ struct AddFileMemberArgs
         "Message to send to added members in their invitation."
 
     quiet Boolean = false
-        "Whether added members should be notified via device notifications of
+        "Whether added members should be notified via email and device notifications of
         their invitation."
 
     access_level AccessLevel = viewer
