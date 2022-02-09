@@ -780,6 +780,8 @@ union UploadError
         "The supplied property group is invalid. The file has uploaded without property groups."
     payload_too_large
         "The request payload must be at most 150 MB."
+    content_hash_mismatch
+        "The content received by the Dropbox server in this call does not match the provided content hash."
 
 struct UploadSessionOffsetError
     correct_offset UInt64
@@ -792,6 +794,8 @@ union UploadSessionStartError
         "Can not start a closed concurrent upload session."
     payload_too_large
         "The request payload must be at most 150 MB."
+    content_hash_mismatch
+        "The content received by the Dropbox server in this call does not match the provided content hash."
 
 union UploadSessionLookupError
     not_found
@@ -817,6 +821,10 @@ union UploadSessionLookupError
     payload_too_large
         "The request payload must be at most 150 MB."
 
+union UploadSessionAppendError extends UploadSessionLookupError
+    content_hash_mismatch
+        "The content received by the Dropbox server in this call does not match the provided content hash."
+
 union UploadSessionFinishError
     lookup_failed UploadSessionLookupError
         "The session arguments are incorrect; the value explains the reason."
@@ -840,6 +848,8 @@ union UploadSessionFinishError
         "Not all pieces of data were uploaded before trying to finish the session."
     payload_too_large
         "The request payload must be at most 150 MB."
+    content_hash_mismatch
+        "The content received by the Dropbox server in this call does not match the provided content hash."
 
 # Req/Resp
 
@@ -859,6 +869,11 @@ struct UploadSessionStartArg
     session_type UploadSessionType?
         "Type of upload session you want to start. If not specified, default is
         :field:`UploadSessionType.sequential`."
+
+    content_hash Sha256HexHash?
+        "NOT YET SUPPORTED. A hash of the file content uploaded in this call. If provided and the
+        uploaded content does not match this hash, an error will be returned. For more information see our
+        :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example with_close
         close = false
@@ -922,11 +937,15 @@ struct UploadSessionAppendArg
         "If true, the current session will be closed, at which point
         you won't be able to call :route:`upload_session/append:2`
         anymore with the current session."
+    content_hash Sha256HexHash?
+        "NOT YET SUPPORTED. A hash of the file content uploaded in this call. If provided and the
+        uploaded content does not match this hash, an error will be returned. For more information see our
+        :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
         cursor = default
 
-route upload_session/append:2 (UploadSessionAppendArg, Void, UploadSessionLookupError)
+route upload_session/append:2 (UploadSessionAppendArg, Void, UploadSessionAppendError)
     "Append more data to an upload session.
 
     When the parameter close is set, this call will close the session.
@@ -960,7 +979,7 @@ struct UploadSessionCursor
         session_id = "8dd9d57374911153"
         offset = 1073741824
 
-route upload_session/append (UploadSessionCursor, Void, UploadSessionLookupError) deprecated by upload_session/append:2
+route upload_session/append (UploadSessionCursor, Void, UploadSessionAppendError) deprecated by upload_session/append:2
     "Append more data to an upload session.
 
     A single request should not upload more than 150 MB. The maximum size of
@@ -1017,6 +1036,8 @@ union_closed WriteMode
     example with_revision
         update = "a1c10ce0dd78"
 
+# NOTE: If you update this, also update dropbox.api.upload_session_utils.COMMIT_INFO_FIELDS
+# or else tests will fail
 struct CommitInfo
     path WritePathOrId
         "Path in the user's Dropbox to save the file."
@@ -1065,6 +1086,10 @@ struct UploadSessionFinishArg
         "Contains the upload session ID and the offset."
     commit CommitInfo
         "Contains the path and other optional modifiers for the commit."
+    content_hash Sha256HexHash?
+        "NOT YET SUPPORTED. A hash of the file content uploaded in this call. If provided and the
+        uploaded content does not match this hash, an error will be returned. For more information see our
+        :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
         cursor = default
@@ -1096,7 +1121,13 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
         select_admin_mode = "team_admin"
         scope= "files.content.write"
 
-route upload (CommitInfo, FileMetadata, UploadError)
+struct UploadArg extends CommitInfo
+    content_hash Sha256HexHash?
+        "NOT YET SUPPORTED. A hash of the file content uploaded in this call. If provided and the
+        uploaded content does not match this hash, an error will be returned. For more information see our
+        :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+
+route upload (UploadArg, FileMetadata, UploadError)
     "Create a new file with the contents provided in the request.
 
     Do not use this to upload a file larger than 150 MB. Instead, create an
@@ -2854,13 +2885,12 @@ union_closed AlphaGetMetadataError extends GetMetadataError
     properties_error file_properties.LookUpPropertiesError
 
 #
-# Patched /upload that accepts properties
+# Alpha /upload, originally for properties API. Can be used to pilot new functionality.
 #
 
-route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithProperties) deprecated by alpha/upload
-    "Create a new file with the contents provided in the request. Note that this
-    endpoint is part of the properties API alpha and is slightly different from
-    :route:`upload`.
+route alpha/upload (UploadArg, FileMetadata, UploadError) deprecated by upload
+    "Create a new file with the contents provided in the request. Note that the
+    behavior of this alpha endpoint is unstable and subject to change.
 
     Do not use this to upload a file larger than 150 MB. Instead, create an
     upload session with :route:`upload_session/start`."
@@ -2871,15 +2901,6 @@ route alpha/upload (CommitInfoWithProperties, FileMetadata, UploadErrorWithPrope
         is_preview=true
         allow_app_folder_app = true
         scope = "files.content.write"
-
-struct CommitInfoWithProperties extends CommitInfo
-    example default
-        path = "/Homework/math/Matrices.txt"
-        autorename = true
-
-union UploadErrorWithProperties extends UploadError
-    example default
-        properties_error = does_not_fit_template
 
 #
 # Deprecated File Properties routes

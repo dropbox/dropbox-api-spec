@@ -12,6 +12,7 @@ alias Date = Timestamp("%Y-%m-%d")
 
 # Note - "\\." is needed in order to translate to "\."
 
+# Note: If this pattern is changed, we also need to update _parse_json_arg_to_stone_data_type in dropbox/api/v2/substrate/wrapper.py
 alias EmailAddress = String(pattern="^['#&A-Za-z0-9._%+-]+@[A-Za-z0-9-][A-Za-z0-9.-]*\\.[A-Za-z]{2,15}$", max_length=255)
 
 # First name or Last name. NOTE: max_length should be synced with USER_NAME_MAX_LEN
