@@ -871,8 +871,8 @@ struct UploadSessionStartArg
         :field:`UploadSessionType.sequential`."
 
     content_hash Sha256HexHash?
-        "NOT YET SUPPORTED. A hash of the file content uploaded in this call. If provided and the
-        uploaded content does not match this hash, an error will be returned. For more information see our
+        "A hash of the file content uploaded in this call. If provided and the uploaded content
+        does not match this hash, an error will be returned. For more information see our
         :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example with_close
@@ -938,8 +938,8 @@ struct UploadSessionAppendArg
         you won't be able to call :route:`upload_session/append:2`
         anymore with the current session."
     content_hash Sha256HexHash?
-        "NOT YET SUPPORTED. A hash of the file content uploaded in this call. If provided and the
-        uploaded content does not match this hash, an error will be returned. For more information see our
+        "A hash of the file content uploaded in this call. If provided and the uploaded content
+        does not match this hash, an error will be returned. For more information see our
         :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
@@ -1087,8 +1087,8 @@ struct UploadSessionFinishArg
     commit CommitInfo
         "Contains the path and other optional modifiers for the commit."
     content_hash Sha256HexHash?
-        "NOT YET SUPPORTED. A hash of the file content uploaded in this call. If provided and the
-        uploaded content does not match this hash, an error will be returned. For more information see our
+        "A hash of the file content uploaded in this call. If provided and the uploaded content
+        does not match this hash, an error will be returned. For more information see our
         :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
@@ -1123,8 +1123,8 @@ route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSession
 
 struct UploadArg extends CommitInfo
     content_hash Sha256HexHash?
-        "NOT YET SUPPORTED. A hash of the file content uploaded in this call. If provided and the
-        uploaded content does not match this hash, an error will be returned. For more information see our
+        "A hash of the file content uploaded in this call. If provided and the uploaded content
+        does not match this hash, an error will be returned. For more information see our
         :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
 route upload (UploadArg, FileMetadata, UploadError)
