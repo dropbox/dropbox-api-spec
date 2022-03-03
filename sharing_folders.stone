@@ -22,6 +22,9 @@ union AccessLevel
     viewer_no_comment
         "The collaborator can only view the shared folder and does
         not have any access to comments."
+    traverse
+        "The collaborator can only view the shared folder that they have
+        access to."
 
 struct FolderPolicy
     "A set of policies governing membership and privileges for a shared

@@ -407,7 +407,7 @@ union DownloadPolicyType
     disallow
 
 union EmailIngestPolicy
-    "Policy for deciding whether a team can use Email to my Dropbox feature"
+    "Policy for deciding whether a team can use Email to Dropbox feature"
     disabled
     enabled
 
@@ -2934,7 +2934,7 @@ struct UserTagsRemovedDetails
         values = ["abc"]
 
 struct EmailIngestReceiveFileDetails
-    "Received files via Email to my Dropbox."
+    "Received files via Email to Dropbox."
 
     inbox_name String
         "Inbox name."
@@ -4476,7 +4476,7 @@ struct SharedContentAddInviteesDetails
         "A list of invitees."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         invitees = ["john_smith@acmecorp.com"]
 
 struct SharedContentAddLinkExpiryDetails
@@ -4498,7 +4498,7 @@ struct SharedContentAddMemberDetails
         "Shared content access level."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
 
 struct SharedContentChangeDownloadsPolicyDetails
     "Changed whether members can download shared file/folder."
@@ -4523,8 +4523,8 @@ struct SharedContentChangeInviteeRoleDetails
         "The invitee whose role was changed."
 
     example default
-        previous_access_level = viewer_no_comment
-        new_access_level = viewer_no_comment
+        previous_access_level = traverse
+        new_access_level = traverse
         invitee = "john_smith@acmecorp.com"
 
 struct SharedContentChangeLinkAudienceDetails
@@ -4563,8 +4563,8 @@ struct SharedContentChangeMemberRoleDetails
         "New access level."
 
     example default
-        previous_access_level = viewer_no_comment
-        new_access_level = viewer_no_comment
+        previous_access_level = traverse
+        new_access_level = traverse
 
 struct SharedContentChangeViewerInfoPolicyDetails
     "Changed whether members can see who viewed shared file/folder."
@@ -4602,7 +4602,7 @@ struct SharedContentCopyDetails
     example default
         shared_content_link = "abc"
         shared_content_owner = default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         destination_path = "/Contract Work/Product Design"
 
 struct SharedContentDownloadDetails
@@ -4618,7 +4618,7 @@ struct SharedContentDownloadDetails
     example default
         shared_content_link = "abc"
         shared_content_owner = default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
 
 struct SharedContentRelinquishMembershipDetails
     "Left shared file/folder."
@@ -4651,7 +4651,7 @@ struct SharedContentRemoveMemberDetails
         "Shared content access level."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
 
 struct SharedContentRequestAccessDetails
     "Requested access to shared file/folder."
@@ -4671,7 +4671,7 @@ struct SharedContentRestoreInviteesDetails
         "A list of invitees."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         invitees = ["john_smith@acmecorp.com"]
 
 struct SharedContentRestoreMemberDetails
@@ -4681,7 +4681,7 @@ struct SharedContentRestoreMemberDetails
         "Shared content access level."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
 
 struct SharedContentUnshareDetails
     "Unshared file/folder by clearing membership."
@@ -4702,7 +4702,7 @@ struct SharedContentViewDetails
     example default
         shared_content_link = "abc"
         shared_content_owner = default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
 
 struct SharedFolderChangeLinkPolicyDetails
     "Changed who can access shared folder via link."
@@ -4889,7 +4889,7 @@ struct SharedLinkSettingsAddExpirationDetails
         "New shared content link expiration date. Might be missing due to historical data gap."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
         new_value = "2017-01-25T15:51:30Z"
 
@@ -4902,7 +4902,7 @@ struct SharedLinkSettingsAddPasswordDetails
         "Shared content link."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
 
 struct SharedLinkSettingsAllowDownloadDisabledDetails
@@ -4914,7 +4914,7 @@ struct SharedLinkSettingsAllowDownloadDisabledDetails
         "Shared content link."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
 
 struct SharedLinkSettingsAllowDownloadEnabledDetails
@@ -4926,7 +4926,7 @@ struct SharedLinkSettingsAllowDownloadEnabledDetails
         "Shared content link."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
 
 struct SharedLinkSettingsChangeAudienceDetails
@@ -4942,7 +4942,7 @@ struct SharedLinkSettingsChangeAudienceDetails
         "Previous link audience value."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
         new_value = no_one
         previous_value = no_one
@@ -4960,7 +4960,7 @@ struct SharedLinkSettingsChangeExpirationDetails
         "Previous shared content link expiration date. Might be missing due to historical data gap."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
         new_value = "2017-01-25T15:51:30Z"
         previous_value = "2017-01-25T15:51:30Z"
@@ -4974,7 +4974,7 @@ struct SharedLinkSettingsChangePasswordDetails
         "Shared content link."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
 
 struct SharedLinkSettingsRemoveExpirationDetails
@@ -4988,7 +4988,7 @@ struct SharedLinkSettingsRemoveExpirationDetails
         "Previous shared link expiration date. Might be missing due to historical data gap."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
         previous_value = "2017-01-25T15:51:30Z"
 
@@ -5001,7 +5001,7 @@ struct SharedLinkSettingsRemovePasswordDetails
         "Shared content link."
 
     example default
-        shared_content_access_level = viewer_no_comment
+        shared_content_access_level = traverse
         shared_content_link = "abc"
 
 struct SharedLinkShareDetails
@@ -5611,7 +5611,7 @@ struct DirectoryRestrictionsRemoveMembersDetails
     "Removed members from directory restrictions list."
 
 struct EmailIngestPolicyChangedDetails
-    "Changed email to my Dropbox policy for team."
+    "Changed email to Dropbox policy for team."
 
     new_value EmailIngestPolicy
         "To."
@@ -7775,7 +7775,7 @@ struct EmailIngestReceiveFileType
     description String
 
     example default
-        description = "(file_requests) Received files via Email to my Dropbox"
+        description = "(file_requests) Received files via Email to Dropbox"
 
 struct FileRequestChangeType
     description String
@@ -9395,7 +9395,7 @@ struct EmailIngestPolicyChangedType
     description String
 
     example default
-        description = "(team_policies) Changed email to my Dropbox policy for team"
+        description = "(team_policies) Changed email to Dropbox policy for team"
 
 struct EmmAddExceptionType
     description String
@@ -10248,7 +10248,7 @@ union EventType
     user_tags_removed UserTagsRemovedType
         "(file_operations) Removed tags"
     email_ingest_receive_file EmailIngestReceiveFileType
-        "(file_requests) Received files via Email to my Dropbox"
+        "(file_requests) Received files via Email to Dropbox"
     file_request_change FileRequestChangeType
         "(file_requests) Changed file request"
     file_request_close FileRequestCloseType
@@ -10788,7 +10788,7 @@ union EventType
     directory_restrictions_remove_members DirectoryRestrictionsRemoveMembersType
         "(team_policies) Removed members from directory restrictions list"
     email_ingest_policy_changed EmailIngestPolicyChangedType
-        "(team_policies) Changed email to my Dropbox policy for team"
+        "(team_policies) Changed email to Dropbox policy for team"
     emm_add_exception EmmAddExceptionType
         "(team_policies) Added members to EMM exception list"
     emm_change_policy EmmChangePolicyType
@@ -11212,7 +11212,7 @@ union EventTypeArg
     user_tags_removed
         "(file_operations) Removed tags"
     email_ingest_receive_file
-        "(file_requests) Received files via Email to my Dropbox"
+        "(file_requests) Received files via Email to Dropbox"
     file_request_change
         "(file_requests) Changed file request"
     file_request_close
@@ -11752,7 +11752,7 @@ union EventTypeArg
     directory_restrictions_remove_members
         "(team_policies) Removed members from directory restrictions list"
     email_ingest_policy_changed
-        "(team_policies) Changed email to my Dropbox policy for team"
+        "(team_policies) Changed email to Dropbox policy for team"
     emm_add_exception
         "(team_policies) Added members to EMM exception list"
     emm_change_policy
