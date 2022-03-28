@@ -13,7 +13,7 @@ jobs:
         repository: ['dropbox/dropbox-sdk-python', 'dropbox/dropbox-sdk-js', 'dropbox/dropbox-sdk-dotnet', 'dropbox/dropbox-api-v2-explorer']
     steps:
       - name: Dispatch Update
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.SPEC_UPDATE_TOKEN }}
           repository: ${{ matrix.repository }}
