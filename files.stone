@@ -64,6 +64,9 @@ struct Metadata
         "Please use :field:`FileSharingInfo.parent_shared_folder_id`
         or :field:`FolderSharingInfo.parent_shared_folder_id` instead."
 
+    preview_url String?
+        "The preview URL of the file."
+
     example default
         file = default
 
@@ -1553,8 +1556,7 @@ union LookupError
     not_folder
         "We were expecting a folder, but the given path refers to something that isn't a folder."
     restricted_content
-        "The file cannot be transferred because the content is restricted.  For example,
-        sometimes there are legal restrictions due to copyright claims."
+        "The file cannot be transferred because the content is restricted. For example, we might restrict a file due to legal requirements."
     unsupported_content_type
         "This operation is not supported for this content type."
     locked

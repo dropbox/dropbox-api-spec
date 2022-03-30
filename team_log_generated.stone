@@ -406,6 +406,12 @@ union DownloadPolicyType
     allow
     disallow
 
+union DropboxPasswordsPolicy
+    "Policy for deciding whether team users can use Dropbox Passwords"
+    default
+    disabled
+    enabled
+
 union EmailIngestPolicy
     "Policy for deciding whether a team can use Email to Dropbox feature"
     disabled
@@ -5610,6 +5616,18 @@ struct DirectoryRestrictionsAddMembersDetails
 struct DirectoryRestrictionsRemoveMembersDetails
     "Removed members from directory restrictions list."
 
+struct DropboxPasswordsPolicyChangedDetails
+    "Changed Dropbox Passwords policy for team."
+
+    new_value DropboxPasswordsPolicy
+        "To."
+    previous_value DropboxPasswordsPolicy
+        "From."
+
+    example default
+        new_value = default
+        previous_value = default
+
 struct EmailIngestPolicyChangedDetails
     "Changed email to Dropbox policy for team."
 
@@ -7057,6 +7075,7 @@ union EventDetails
     device_approvals_remove_exception_details DeviceApprovalsRemoveExceptionDetails
     directory_restrictions_add_members_details DirectoryRestrictionsAddMembersDetails
     directory_restrictions_remove_members_details DirectoryRestrictionsRemoveMembersDetails
+    dropbox_passwords_policy_changed_details DropboxPasswordsPolicyChangedDetails
     email_ingest_policy_changed_details EmailIngestPolicyChangedDetails
     emm_add_exception_details EmmAddExceptionDetails
     emm_change_policy_details EmmChangePolicyDetails
@@ -9391,6 +9410,12 @@ struct DirectoryRestrictionsRemoveMembersType
     example default
         description = "(team_policies) Removed members from directory restrictions list"
 
+struct DropboxPasswordsPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed Dropbox Passwords policy for team"
+
 struct EmailIngestPolicyChangedType
     description String
 
@@ -10787,6 +10812,8 @@ union EventType
         "(team_policies) Added members to directory restrictions list"
     directory_restrictions_remove_members DirectoryRestrictionsRemoveMembersType
         "(team_policies) Removed members from directory restrictions list"
+    dropbox_passwords_policy_changed DropboxPasswordsPolicyChangedType
+        "(team_policies) Changed Dropbox Passwords policy for team"
     email_ingest_policy_changed EmailIngestPolicyChangedType
         "(team_policies) Changed email to Dropbox policy for team"
     emm_add_exception EmmAddExceptionType
@@ -11751,6 +11778,8 @@ union EventTypeArg
         "(team_policies) Added members to directory restrictions list"
     directory_restrictions_remove_members
         "(team_policies) Removed members from directory restrictions list"
+    dropbox_passwords_policy_changed
+        "(team_policies) Changed Dropbox Passwords policy for team"
     email_ingest_policy_changed
         "(team_policies) Changed email to Dropbox policy for team"
     emm_add_exception
