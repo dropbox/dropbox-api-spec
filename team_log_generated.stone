@@ -428,11 +428,25 @@ union ExtendedVersionHistoryPolicy
     implicitly_limited
     implicitly_unlimited
 
+union ExternalDriveBackupEligibilityStatus
+    "External Drive Backup eligibility status"
+    exceed_license_cap
+    success
+
 union ExternalDriveBackupPolicy
     "Policy for controlling team access to external drive backup feature"
     default
     disabled
     enabled
+
+union ExternalDriveBackupStatus
+    "External Drive Backup status"
+    broken
+    created
+    created_or_broken
+    deleted
+    empty
+    unknown
 
 struct FailureDetailsLogInfo
     "Provides details about a failure"
@@ -2647,6 +2661,36 @@ struct DropboxPasswordsNewDeviceEnrolledDetails
 
 struct EmmRefreshAuthTokenDetails
     "Refreshed auth token used for setting up EMM."
+
+struct ExternalDriveBackupEligibilityStatusCheckedDetails
+    "Checked external drive backup eligibility status."
+
+    desktop_device_session_info DesktopDeviceSessionLogInfo
+        "Device's session logged information."
+    status ExternalDriveBackupEligibilityStatus
+        "Current eligibility status of external drive backup."
+    number_of_external_drive_backup UInt64
+        "Total number of valid external drive backup for all the team members."
+
+    example default
+        desktop_device_session_info = default
+        status = success
+        number_of_external_drive_backup = 3
+
+struct ExternalDriveBackupStatusChangedDetails
+    "Modified external drive backup."
+
+    desktop_device_session_info DesktopDeviceSessionLogInfo
+        "Device's session logged information."
+    previous_value ExternalDriveBackupStatus
+        "Previous status of this external drive backup."
+    new_value ExternalDriveBackupStatus
+        "Next status of this external drive backup."
+
+    example default
+        desktop_device_session_info = default
+        previous_value = empty
+        new_value = empty
 
 struct AccountCaptureChangeAvailabilityDetails
     "Granted/revoked option to enable account capture on team domains."
@@ -6761,6 +6805,8 @@ union EventDetails
     dropbox_passwords_exported_details DropboxPasswordsExportedDetails
     dropbox_passwords_new_device_enrolled_details DropboxPasswordsNewDeviceEnrolledDetails
     emm_refresh_auth_token_details EmmRefreshAuthTokenDetails
+    external_drive_backup_eligibility_status_checked_details ExternalDriveBackupEligibilityStatusCheckedDetails
+    external_drive_backup_status_changed_details ExternalDriveBackupStatusChangedDetails
     account_capture_change_availability_details AccountCaptureChangeAvailabilityDetails
     account_capture_migrate_account_details AccountCaptureMigrateAccountDetails
     account_capture_notification_emails_sent_details AccountCaptureNotificationEmailsSentDetails
@@ -7525,6 +7571,18 @@ struct EmmRefreshAuthTokenType
 
     example default
         description = "(devices) Refreshed auth token used for setting up EMM"
+
+struct ExternalDriveBackupEligibilityStatusCheckedType
+    description String
+
+    example default
+        description = "(devices) Checked external drive backup eligibility status"
+
+struct ExternalDriveBackupStatusChangedType
+    description String
+
+    example default
+        description = "(devices) Modified external drive backup"
 
 struct AccountCaptureChangeAvailabilityType
     description String
@@ -10184,6 +10242,10 @@ union EventType
         "(devices) Enrolled new Dropbox Passwords device"
     emm_refresh_auth_token EmmRefreshAuthTokenType
         "(devices) Refreshed auth token used for setting up EMM"
+    external_drive_backup_eligibility_status_checked ExternalDriveBackupEligibilityStatusCheckedType
+        "(devices) Checked external drive backup eligibility status"
+    external_drive_backup_status_changed ExternalDriveBackupStatusChangedType
+        "(devices) Modified external drive backup"
     account_capture_change_availability AccountCaptureChangeAvailabilityType
         "(domains) Granted/revoked option to enable account capture on team domains"
     account_capture_migrate_account AccountCaptureMigrateAccountType
@@ -11150,6 +11212,10 @@ union EventTypeArg
         "(devices) Enrolled new Dropbox Passwords device"
     emm_refresh_auth_token
         "(devices) Refreshed auth token used for setting up EMM"
+    external_drive_backup_eligibility_status_checked
+        "(devices) Checked external drive backup eligibility status"
+    external_drive_backup_status_changed
+        "(devices) Modified external drive backup"
     account_capture_change_availability
         "(domains) Granted/revoked option to enable account capture on team domains"
     account_capture_migrate_account

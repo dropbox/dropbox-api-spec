@@ -890,6 +890,35 @@ struct UploadSessionStartResult
     example default
         session_id = "1234faaf0678bcde"
 
+route upload_session/start_batch (UploadSessionStartBatchArg, UploadSessionStartBatchResult, Void)
+    "This route starts batch of upload_sessions. Please refer to `upload_session/start` usage."
+
+    attrs
+        style = "rpc"
+        allow_app_folder_app = true
+        select_admin_mode = "team_admin"
+        scope = "files.content.write"
+
+struct UploadSessionStartBatchArg
+    session_type UploadSessionType?
+        "Type of upload session you want to start. If not specified, default is
+        :field:`UploadSessionType.sequential`."
+
+    num_sessions UInt64(min_value=1, max_value=1000)
+        "The number of upload sessions to start."
+
+    example default
+        num_sessions = 1
+
+struct UploadSessionStartBatchResult
+    session_ids List(String)
+        "A List of unique identifiers for the upload session. Pass each session_id to
+        :route:`upload_session/append:2` and
+        :route:`upload_session/finish`."
+
+    example default
+        session_ids = ["1234faaf0678bcde"]
+
 route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, UploadSessionStartError)
     "Upload sessions allow you to upload a single file in one or more
     requests, for example where the size of the file is greater than 150
