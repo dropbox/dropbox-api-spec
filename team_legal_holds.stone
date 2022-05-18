@@ -116,7 +116,7 @@ route legal_holds/create_policy(LegalHoldsPolicyCreateArg, LegalHoldsPolicyCreat
 
     attrs
         auth = "team"
-        scope = "team_data.member"
+        scope = "team_data.governance.write"
 
 #
 # route legal_holds/get_policy
@@ -142,7 +142,7 @@ route legal_holds/get_policy(LegalHoldsGetPolicyArg, LegalHoldsGetPolicyResult, 
 
     attrs
         auth = "team"
-        scope = "team_data.member"
+        scope = "team_data.governance.write"
 
 
 #
@@ -173,7 +173,7 @@ route legal_holds/list_policies(LegalHoldsListPoliciesArg, LegalHoldsListPolicie
 
     attrs
         auth = "team"
-        scope = "team_data.member"
+        scope = "team_data.governance.write"
 
 
 #
@@ -254,7 +254,7 @@ route legal_holds/list_held_revisions(LegalHoldsListHeldRevisionsArg, LegalHolds
 
     attrs
         auth = "team"
-        scope = "team_data.member"
+        scope = "team_data.governance.write"
 
 
 #
@@ -286,7 +286,7 @@ route legal_holds/list_held_revisions_continue(LegalHoldsListHeldRevisionsContin
 
     attrs
         auth = "team"
-        scope = "team_data.member"
+        scope = "team_data.governance.write"
 
 #
 # route legal_holds/update_policy
@@ -334,7 +334,7 @@ route legal_holds/update_policy(LegalHoldsPolicyUpdateArg, LegalHoldsPolicyUpdat
 
     attrs
         auth = "team"
-        scope = "team_data.member"
+        scope = "team_data.governance.write"
 
 #
 # route legal_holds/release_policy
@@ -362,4 +362,4 @@ route legal_holds/release_policy(LegalHoldsPolicyReleaseArg, Void, LegalHoldsPol
 
     attrs
         auth = "team"
-        scope = "team_data.member"
+        scope = "team_data.governance.write"

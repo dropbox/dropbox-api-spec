@@ -93,7 +93,7 @@ route team_folder/create(TeamFolderCreateArg, TeamFolderMetadata, TeamFolderCrea
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.write"
 
 struct TeamFolderCreateArg
     name String
@@ -127,7 +127,7 @@ route team_folder/rename(TeamFolderRenameArg, TeamFolderMetadata, TeamFolderRena
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.write"
 
 struct TeamFolderRenameArg extends TeamFolderIdArg
     name String
@@ -155,7 +155,7 @@ route team_folder/list(TeamFolderListArg, TeamFolderListResult, TeamFolderListEr
     Permission : Team member file access."
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.read"
 
 struct TeamFolderListArg
     limit UInt32(min_value=1, max_value=1000) = 1000
@@ -195,7 +195,7 @@ route team_folder/list/continue(TeamFolderListContinueArg, TeamFolderListResult,
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.read"
 
 struct TeamFolderListContinueArg
     cursor String
@@ -219,7 +219,7 @@ route team_folder/get_info(TeamFolderIdListArg, List(TeamFolderGetInfoItem), Voi
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.read"
 
 union_closed TeamFolderGetInfoItem
     id_not_found String
@@ -239,7 +239,7 @@ route team_folder/activate(TeamFolderIdArg, TeamFolderMetadata, TeamFolderActiva
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.write"
 
 union TeamFolderActivateError extends BaseTeamFolderError
     ""
@@ -256,7 +256,7 @@ route team_folder/archive(TeamFolderArchiveArg, TeamFolderArchiveLaunch, TeamFol
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.write"
 
 struct TeamFolderArchiveArg extends TeamFolderIdArg
     force_async_off Boolean = false
@@ -285,7 +285,7 @@ route team_folder/archive/check(async.PollArg, TeamFolderArchiveJobStatus, async
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.write"
 
 union_closed TeamFolderArchiveJobStatus extends async.PollResultBase
     complete TeamFolderMetadata
@@ -308,7 +308,7 @@ route team_folder/permanently_delete(TeamFolderIdArg, Void, TeamFolderPermanentl
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.write"
 
 union TeamFolderPermanentlyDeleteError extends BaseTeamFolderError
     ""
@@ -338,4 +338,4 @@ route team_folder/update_sync_settings(TeamFolderUpdateSyncSettingsArg, TeamFold
 
     attrs
         auth = "team"
-        scope = "team_data.team_space"
+        scope = "team_data.content.write"

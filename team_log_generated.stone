@@ -221,16 +221,24 @@ struct AdminAlertingAlertConfiguration
         "Sensitivity level."
     recipients_settings RecipientsConfiguration?
         "Recipient settings."
+    text String?
+        "Text."
+    excluded_file_extensions String?
+        "Excluded file extensions."
 
     example default
         alert_state = off
         sensitivity_level = invalid
         recipients_settings = default
+        text = "abc"
+        excluded_file_extensions = "abc"
 
     example default2
         alert_state = off
         sensitivity_level = invalid
         recipients_settings = default2
+        text = "xyz"
+        excluded_file_extensions = "xyz"
 
 struct RecipientsConfiguration
     "Recipients Configuration"
@@ -774,6 +782,7 @@ union PlacementRestriction
     japan_only
     none
     uk_only
+    us_s3_only
 
 union PolicyType
     disposition

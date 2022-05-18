@@ -677,7 +677,9 @@ route download_zip (DownloadZipArg, DownloadZipResult, DownloadZipError)
     "Download a folder from the user's Dropbox, as a zip file. The folder must be less than 20 GB
     in size and any single file within must be less than 4 GB in size. The resulting zip must have
     fewer than 10,000 total file and folder entries, including the top level folder. The input
-    cannot be a single file."
+    cannot be a single file.
+
+    Note: this endpoint does not support HTTP range requests."
 
     attrs
         host = "content"
@@ -1158,6 +1160,10 @@ struct UploadArg extends CommitInfo
         "A hash of the file content uploaded in this call. If provided and the uploaded content
         does not match this hash, an error will be returned. For more information see our
         :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+
+    example default
+        path = "/Homework/math/Matrices.txt"
+        content_hash = null
 
 route upload (UploadArg, FileMetadata, UploadError)
     "Create a new file with the contents provided in the request.
