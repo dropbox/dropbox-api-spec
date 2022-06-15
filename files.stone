@@ -893,7 +893,12 @@ struct UploadSessionStartResult
         session_id = "1234faaf0678bcde"
 
 route upload_session/start_batch (UploadSessionStartBatchArg, UploadSessionStartBatchResult, Void)
-    "This route starts batch of upload_sessions. Please refer to `upload_session/start` usage."
+    "This route starts batch of upload_sessions. Please refer to `upload_session/start` usage.
+
+    Calls to this endpoint will count as data transport calls for any Dropbox
+    Business teams with a limit on the number of data transport calls allowed
+    per month. For more information, see the :link:`Data transport limit page
+    https://www.dropbox.com/developers/reference/data-transport-limit`."
 
     attrs
         style = "rpc"
@@ -1449,6 +1454,9 @@ struct SearchOptions
 
     file_categories List(FileCategory)?
         "Restricts search to only the file categories specified. Only supported for active file search."
+
+    account_id users_common.AccountId?
+        "Restricts results to the given account id."
 
     example default
         path = "/Folder"
