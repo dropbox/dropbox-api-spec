@@ -193,10 +193,17 @@ struct FileMemberActionResult
         "One of specified input members."
     result FileMemberActionIndividualResult
         "The outcome of the action on this member."
+    sckey_sha1 String?
+        "The SHA-1 encrypted shared content key."
+    invitation_signature List(String)?
+        "The sharing sender-recipient invitation signatures for the input member_id.
+        A member_id can be a group and thus have multiple users and multiple invitation signatures."
 
     example default
         member = default
         result = default
+        sckey_sha1 = "32gggb672f987b2d94ef1741616bdf37d565e8c1"
+        invitation_signature = ["32gggb672f987b2d94ef1741616bdf37d565e8c1:c1ce0a9ef6ggg65e6e2f43514082ea5ffefd9cf5"]
 
 union_closed FileMemberActionIndividualResult
     success AccessLevel?
