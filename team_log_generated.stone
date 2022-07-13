@@ -290,6 +290,12 @@ union AdminConsoleAppPolicy
     block
     default
 
+union AdminEmailRemindersPolicy
+    "Policy for deciding whether team admins receive reminder emails for requests to join the team"
+    default
+    disabled
+    enabled
+
 union AdminRole
     billing_admin
     compliance_admin
@@ -5501,6 +5507,18 @@ struct AccountCaptureChangePolicyDetails
         new_value = disabled
         previous_value = disabled
 
+struct AdminEmailRemindersChangedDetails
+    "Changed admin email reminder policy for team requests to join."
+
+    new_value AdminEmailRemindersPolicy
+        "To."
+    previous_value AdminEmailRemindersPolicy
+        "From."
+
+    example default
+        new_value = default
+        previous_value = default
+
 struct AllowDownloadDisabledDetails
     "Disabled downloads."
 
@@ -7112,6 +7130,7 @@ union EventDetails
     team_folder_rename_details TeamFolderRenameDetails
     team_selective_sync_settings_changed_details TeamSelectiveSyncSettingsChangedDetails
     account_capture_change_policy_details AccountCaptureChangePolicyDetails
+    admin_email_reminders_changed_details AdminEmailRemindersChangedDetails
     allow_download_disabled_details AllowDownloadDisabledDetails
     allow_download_enabled_details AllowDownloadEnabledDetails
     app_permissions_changed_details AppPermissionsChangedDetails
@@ -9369,6 +9388,12 @@ struct AccountCaptureChangePolicyType
     example default
         description = "(team_policies) Changed account capture setting on team domain"
 
+struct AdminEmailRemindersChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed admin email reminder policy for team requests to join"
+
 struct AllowDownloadDisabledType
     description String
 
@@ -10847,6 +10872,8 @@ union EventType
         "(team_folders) Changed sync default"
     account_capture_change_policy AccountCaptureChangePolicyType
         "(team_policies) Changed account capture setting on team domain"
+    admin_email_reminders_changed AdminEmailRemindersChangedType
+        "(team_policies) Changed admin email reminder policy for team requests to join"
     allow_download_disabled AllowDownloadDisabledType
         "(team_policies) Disabled downloads (deprecated, no longer logged)"
     allow_download_enabled AllowDownloadEnabledType
@@ -11817,6 +11844,8 @@ union EventTypeArg
         "(team_folders) Changed sync default"
     account_capture_change_policy
         "(team_policies) Changed account capture setting on team domain"
+    admin_email_reminders_changed
+        "(team_policies) Changed admin email reminder policy for team requests to join"
     allow_download_disabled
         "(team_policies) Disabled downloads (deprecated, no longer logged)"
     allow_download_enabled
