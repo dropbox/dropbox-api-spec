@@ -34,11 +34,11 @@ struct AddTagArg
         "Path to the item to be tagged."
 
     tag_text TagText
-        "The value of the tag to add."
+        "The value of the tag to add. Will be automatically converted to lowercase letters."
 
     example default
         path = "/Prime_Numbers.txt"
-        tag_text = "MyTag"
+        tag_text = "my_tag"
 
 union AddTagError extends BaseTagError
     too_many_tags
@@ -62,11 +62,11 @@ struct RemoveTagArg
         "Path to the item to tag."
 
     tag_text TagText
-        "The tag to remove."
+        "The tag to remove. Will be automatically converted to lowercase letters."
 
     example default
         path = "/Prime_Numbers.txt"
-        tag_text = "MyTag"
+        tag_text = "my_tag"
 
 union RemoveTagError extends BaseTagError
     tag_not_present
