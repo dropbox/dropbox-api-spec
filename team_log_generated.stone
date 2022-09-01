@@ -940,6 +940,7 @@ struct TeamLogInfo
 union TeamMembershipType
     free
     full
+    guest
 
 union TeamMergeRequestAcceptedExtraDetails
     "Team merge request acceptance details"
@@ -5508,7 +5509,7 @@ struct AccountCaptureChangePolicyDetails
         previous_value = disabled
 
 struct AdminEmailRemindersChangedDetails
-    "Changed admin email reminder policy for team requests to join."
+    "Changed admin reminder settings for requests to join the team."
 
     new_value AdminEmailRemindersPolicy
         "To."
@@ -5776,6 +5777,18 @@ struct FileLockingPolicyChangedDetails
     example default
         new_value = disabled
         previous_value = disabled
+
+struct FileProviderMigrationPolicyChangedDetails
+    "Changed File Provider Migration policy for team."
+
+    new_value team_policies.FileProviderMigrationPolicyState
+        "To."
+    previous_value team_policies.FileProviderMigrationPolicyState
+        "From."
+
+    example default
+        new_value = default
+        previous_value = default
 
 struct FileRequestsChangePolicyDetails
     "Enabled/disabled file requests."
@@ -7158,6 +7171,7 @@ union EventDetails
     external_drive_backup_policy_changed_details ExternalDriveBackupPolicyChangedDetails
     file_comments_change_policy_details FileCommentsChangePolicyDetails
     file_locking_policy_changed_details FileLockingPolicyChangedDetails
+    file_provider_migration_policy_changed_details FileProviderMigrationPolicyChangedDetails
     file_requests_change_policy_details FileRequestsChangePolicyDetails
     file_requests_emails_enabled_details FileRequestsEmailsEnabledDetails
     file_requests_emails_restricted_to_team_only_details FileRequestsEmailsRestrictedToTeamOnlyDetails
@@ -9392,7 +9406,7 @@ struct AdminEmailRemindersChangedType
     description String
 
     example default
-        description = "(team_policies) Changed admin email reminder policy for team requests to join"
+        description = "(team_policies) Changed admin reminder settings for requests to join the team"
 
 struct AllowDownloadDisabledType
     description String
@@ -9555,6 +9569,12 @@ struct FileLockingPolicyChangedType
 
     example default
         description = "(team_policies) Changed file locking policy for team"
+
+struct FileProviderMigrationPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed File Provider Migration policy for team"
 
 struct FileRequestsChangePolicyType
     description String
@@ -10873,7 +10893,7 @@ union EventType
     account_capture_change_policy AccountCaptureChangePolicyType
         "(team_policies) Changed account capture setting on team domain"
     admin_email_reminders_changed AdminEmailRemindersChangedType
-        "(team_policies) Changed admin email reminder policy for team requests to join"
+        "(team_policies) Changed admin reminder settings for requests to join the team"
     allow_download_disabled AllowDownloadDisabledType
         "(team_policies) Disabled downloads (deprecated, no longer logged)"
     allow_download_enabled AllowDownloadEnabledType
@@ -10928,6 +10948,8 @@ union EventType
         "(team_policies) Enabled/disabled commenting on team files"
     file_locking_policy_changed FileLockingPolicyChangedType
         "(team_policies) Changed file locking policy for team"
+    file_provider_migration_policy_changed FileProviderMigrationPolicyChangedType
+        "(team_policies) Changed File Provider Migration policy for team"
     file_requests_change_policy FileRequestsChangePolicyType
         "(team_policies) Enabled/disabled file requests"
     file_requests_emails_enabled FileRequestsEmailsEnabledType
@@ -11845,7 +11867,7 @@ union EventTypeArg
     account_capture_change_policy
         "(team_policies) Changed account capture setting on team domain"
     admin_email_reminders_changed
-        "(team_policies) Changed admin email reminder policy for team requests to join"
+        "(team_policies) Changed admin reminder settings for requests to join the team"
     allow_download_disabled
         "(team_policies) Disabled downloads (deprecated, no longer logged)"
     allow_download_enabled
@@ -11900,6 +11922,8 @@ union EventTypeArg
         "(team_policies) Enabled/disabled commenting on team files"
     file_locking_policy_changed
         "(team_policies) Changed file locking policy for team"
+    file_provider_migration_policy_changed
+        "(team_policies) Changed File Provider Migration policy for team"
     file_requests_change_policy
         "(team_policies) Enabled/disabled file requests"
     file_requests_emails_enabled
