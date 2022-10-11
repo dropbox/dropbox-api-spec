@@ -4,20 +4,16 @@ namespace openid
 
 import common
 
-union AuthError
-    invalid_token
-    no_openid_auth
+union OpenIdError
+    incorrect_openid_scopes
+        "Missing openid claims for the associated access token."
 
 
-struct UserInfoError
-    err err_union?
-        union
-            auth_error AuthError = invalid_token
-    error_message String = ""
-        "Brief explanation of the error."
+union UserInfoError
+    openid_error OpenIdError = incorrect_openid_scopes
 
 struct UserInfoArgs
-    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+    "No Parameters"
 
 struct UserInfoResult
     family_name String?

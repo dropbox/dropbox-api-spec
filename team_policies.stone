@@ -32,11 +32,14 @@ struct TeamSharingPolicies
         "Which shared folders team members can join."
     shared_link_create_policy SharedLinkCreatePolicy
         "Who can view shared links owned by team members."
+    group_creation_policy GroupCreation
+        "Who can create groups."
 
     example default
         shared_folder_member_policy = team
         shared_folder_join_policy = from_anyone
         shared_link_create_policy = team_only
+        group_creation_policy = admins_only
 
 # NOTE: we do not reuse sharing.MemberPolicy here since we may want to enable folder-specific member
 # policies that work on top of the broader team policies.
