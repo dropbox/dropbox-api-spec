@@ -1,0 +1,141 @@
+namespace team
+
+import common
+
+struct SharingAllowlistAddArgs
+    "Structure representing Approve List entries. Domain and emails are supported.
+    At least one entry of any supported type is required."
+    domains List(String)?
+        "List of domains represented by valid string representation (RFC-1034/5)."
+    emails List(String)?
+        "List of emails represented by valid string representation (RFC-5322/822)."
+
+    example default
+        domains = ["test-domain.com", "subdomain.some.com"]
+        emails = ["adam@test-domain.com", "john@some.com"]
+
+struct SharingAllowlistAddResponse
+    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+
+union SharingAllowlistAddError
+    malformed_entry String
+        "One of provided values is not valid."
+    no_entries_provided
+        "Neither single domain nor email provided."
+    too_many_entries_provided
+        "Too many entries provided within one call."
+    team_limit_reached
+        "Team entries limit reached."
+    unknown_error
+        "Unknown error."
+    entries_already_exist String
+        "Entries already exists."
+
+
+struct SharingAllowlistListArg
+    limit UInt32(max_value=1000, min_value=1) = 1000
+        "The number of entries to fetch at one time."
+
+    example default
+        limit = 100
+
+struct SharingAllowlistListContinueArg
+    cursor String
+        "The cursor returned from a previous call to :route:`sharing_allowlist/list` or :route:`sharing_allowlist/list/continue`."
+
+    example default
+        cursor = "dGVzdF9jdXJzb3IK"
+
+struct SharingAllowlistListError
+    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+
+struct SharingAllowlistListResponse
+    domains List(String)
+        "List of domains represented by valid string representation (RFC-1034/5)."
+    emails List(String)
+        "List of emails represented by valid string representation (RFC-5322/822)."
+    cursor String = ""
+        "If this is nonempty, there are more entries that can be fetched with :route:`sharing_allowlist/list/continue`."
+    has_more Boolean = false
+        "if true indicates that more entries can be fetched with :route:`sharing_allowlist/list/continue`."
+
+    example default
+        domains = ["test-domain.com", "subdomain.some.com"]
+        emails = ["adam@test-domain.com", "john@some.com"]
+        cursor = "dGVzdF9jdXJzb3IK"
+        has_more = true
+
+union SharingAllowlistListContinueError
+    invalid_cursor
+        "Provided cursor is not valid."
+
+struct SharingAllowlistRemoveArgs
+    domains List(String)?
+        "List of domains represented by valid string representation (RFC-1034/5)."
+    emails List(String)?
+        "List of emails represented by valid string representation (RFC-5322/822)."
+
+    example default
+        domains = ["test-domain.com", "subdomain.some.com"]
+        emails = ["adam@test-domain.com", "john@some.com"]
+
+
+struct SharingAllowlistRemoveResponse
+    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+
+union SharingAllowlistRemoveError
+    malformed_entry String
+        "One of provided values is not valid."
+    entries_do_not_exist String
+        "One or more provided values do not exist."
+    no_entries_provided
+        "Neither single domain nor email provided."
+    too_many_entries_provided
+        "Too many entries provided within one call."
+    unknown_error
+        "Unknown error."
+
+
+route sharing_allowlist/add (SharingAllowlistAddArgs, SharingAllowlistAddResponse, SharingAllowlistAddError)
+    "Endpoint adds Approve List entries. Changes are effective immediately.
+    Changes are committed in transaction. In case of single validation error - all entries are rejected.
+    Valid domains (RFC-1034/5) and emails (RFC-5322/822) are accepted.
+    Added entries cannot overflow limit of 10000 entries per team.
+    Maximum 100 entries per call is allowed."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_info.write"
+
+route sharing_allowlist/list (SharingAllowlistListArg, SharingAllowlistListResponse, SharingAllowlistListError)
+    "Lists Approve List entries for given team, from newest to oldest, returning
+    up to `limit` entries at a time. If there are more than `limit` entries
+    associated with the current team, more can be fetched by passing the
+    returned `cursor` to :route:`sharing_allowlist/list/continue`."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_info.read"
+
+route sharing_allowlist/list/continue (SharingAllowlistListContinueArg, SharingAllowlistListResponse, SharingAllowlistListContinueError)
+    "Lists entries associated with given team, starting from a the cursor. See :route:`sharing_allowlist/list`."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_info.read"
+
+route sharing_allowlist/remove (SharingAllowlistRemoveArgs, SharingAllowlistRemoveResponse, SharingAllowlistRemoveError)
+    "Endpoint removes Approve List entries. Changes are effective immediately.
+    Changes are committed in transaction. In case of single validation error - all entries are rejected.
+    Valid domains (RFC-1034/5) and emails (RFC-5322/822) are accepted.
+    Entries being removed have to be present on the list.
+    Maximum 1000 entries per call is allowed."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_info.write"
+
