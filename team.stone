@@ -159,6 +159,9 @@ struct TeamGetInfoResult
     num_provisioned_users UInt32
         "The number of accounts that have been invited or are already active members of the team."
 
+    num_used_licenses UInt32
+        "The number of licenses used on the team."
+
     policies team_policies.TeamMemberPolicies
 
     example default
@@ -166,6 +169,7 @@ struct TeamGetInfoResult
         team_id="dbtid:1234abcd"
         num_licensed_users=5
         num_provisioned_users=2
+        num_used_licenses=1
         policies=default
 
 route get_info(Void, TeamGetInfoResult, Void)

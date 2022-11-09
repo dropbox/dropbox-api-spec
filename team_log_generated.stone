@@ -632,6 +632,11 @@ union FileTransfersPolicy
     disabled
     enabled
 
+union FolderLinkRestrictionPolicy
+    "Policy for deciding whether applying link restrictions on all team owned folders"
+    disabled
+    enabled
+
 struct GeoLocationLogInfo
     "Geographic location details."
 
@@ -5820,6 +5825,18 @@ struct FileTransfersPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct FolderLinkRestrictionPolicyChangedDetails
+    "Changed folder link restrictions policy for team."
+
+    new_value FolderLinkRestrictionPolicy
+        "To."
+    previous_value FolderLinkRestrictionPolicy
+        "From."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
 struct GoogleSsoChangePolicyDetails
     "Enabled/disabled Google single sign-on for team."
 
@@ -7176,6 +7193,7 @@ union EventDetails
     file_requests_emails_enabled_details FileRequestsEmailsEnabledDetails
     file_requests_emails_restricted_to_team_only_details FileRequestsEmailsRestrictedToTeamOnlyDetails
     file_transfers_policy_changed_details FileTransfersPolicyChangedDetails
+    folder_link_restriction_policy_changed_details FolderLinkRestrictionPolicyChangedDetails
     google_sso_change_policy_details GoogleSsoChangePolicyDetails
     group_user_management_change_policy_details GroupUserManagementChangePolicyDetails
     integration_policy_changed_details IntegrationPolicyChangedDetails
@@ -9600,6 +9618,12 @@ struct FileTransfersPolicyChangedType
     example default
         description = "(team_policies) Changed file transfers policy for team"
 
+struct FolderLinkRestrictionPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed folder link restrictions policy for team"
+
 struct GoogleSsoChangePolicyType
     description String
 
@@ -10958,6 +10982,8 @@ union EventType
         "(team_policies) Enabled file request emails for team (deprecated, no longer logged)"
     file_transfers_policy_changed FileTransfersPolicyChangedType
         "(team_policies) Changed file transfers policy for team"
+    folder_link_restriction_policy_changed FolderLinkRestrictionPolicyChangedType
+        "(team_policies) Changed folder link restrictions policy for team"
     google_sso_change_policy GoogleSsoChangePolicyType
         "(team_policies) Enabled/disabled Google single sign-on for team"
     group_user_management_change_policy GroupUserManagementChangePolicyType
@@ -11932,6 +11958,8 @@ union EventTypeArg
         "(team_policies) Enabled file request emails for team (deprecated, no longer logged)"
     file_transfers_policy_changed
         "(team_policies) Changed file transfers policy for team"
+    folder_link_restriction_policy_changed
+        "(team_policies) Changed folder link restrictions policy for team"
     google_sso_change_policy
         "(team_policies) Enabled/disabled Google single sign-on for team"
     group_user_management_change_policy
