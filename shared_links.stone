@@ -384,6 +384,8 @@ union RequestedLinkAccessLevel
         Note not all file types support edit links yet."
     max
         "Request for the maximum access level you can set the link to."
+    default
+        "Request for the default access level the user has set."
 
 struct ModifySharedLinkSettingsArgs
     url String
