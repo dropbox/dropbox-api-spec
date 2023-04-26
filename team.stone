@@ -159,7 +159,7 @@ struct TeamGetInfoResult
     num_provisioned_users UInt32
         "The number of accounts that have been invited or are already active members of the team."
 
-    num_used_licenses UInt32
+    num_used_licenses UInt32 = 0
         "The number of licenses used on the team."
 
     policies team_policies.TeamMemberPolicies

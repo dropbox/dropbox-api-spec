@@ -3,7 +3,7 @@ namespace files
 import common
 import async
 
-alias TagText = String(min_length=1, max_length=32, pattern="[A-Za-z0-9\_]+")
+alias TagText = String(min_length=1, max_length=32, pattern="[\\w]+")
 
 union Tag
     "Tag that can be added in multiple ways."

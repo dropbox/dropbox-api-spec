@@ -1783,7 +1783,7 @@ union DeleteError
         "There are too many files in one request. Please retry with fewer files."
 
 struct DeleteBatchArg
-    entries List(DeleteArg)
+    entries List(DeleteArg, max_items=1000)
 
     example default
         entries = [delete]
@@ -1987,7 +1987,7 @@ struct RelocationResult extends FileOpsResult
         metadata = default
 
 struct RelocationBatchArgBase
-    entries List(RelocationPath, min_items=1)
+    entries List(RelocationPath, min_items=1, max_items=1000)
         "List of entries to be moved or copied. Each entry is :type:`RelocationPath`."
     autorename Boolean = false
         "If there's a conflict with any file, have the Dropbox server try to
@@ -2864,7 +2864,7 @@ union SaveUrlError
 route save_url(SaveUrlArg, SaveUrlResult, SaveUrlError)
     "Save the data from a specified URL into a file in user's Dropbox.
 
-    Note that the transfer from the URL must complete within 5 minutes, or the
+    Note that the transfer from the URL must complete within 15 minutes, or the
     operation will time out and the job will fail.
 
     If the given path already exists, the file will be renamed to avoid the
