@@ -75,6 +75,7 @@ union AccountCapturePolicy
     all_users
     disabled
     invited_users
+    prevent_personal_creation
 
 union AccountState
     locked
@@ -699,6 +700,7 @@ union LoginMethod
     apple_oauth
     first_party_token_exchange
     google_oauth
+    lenovo_oauth
     password
     qr_code
     saml
@@ -1914,6 +1916,8 @@ union EventCategory
         "Events that apply to linked devices on mobile, desktop and Web platforms."
     domains
         "Events that involve domain management feature: domain verification, invite enforcement and account capture."
+    encryption
+        "Events that involve encryption."
     file_operations
         "Events that have to do with filesystem operations on files and folders: copy, move, delete, etc."
     file_requests
@@ -2010,6 +2014,30 @@ struct AdminAlertingTriggeredAlertDetails
         alert_severity = na
         alert_category = na
         alert_instance_id = "pid_admin_alert:AAgAAOVHYCEuavqE0v3Jj9VDogV4wG9q8F-XZKwYpuYTVBm5"
+
+struct RansomwareRestoreProcessCompletedDetails
+    "Completed ransomware restore process."
+
+    status String
+        "The status of the restore process."
+    restored_files_count Int64
+        "Restored files count."
+    restored_files_failed_count Int64
+        "Restored files failed count."
+
+    example default
+        status = "abc"
+        restored_files_count = 3
+        restored_files_failed_count = 3
+
+struct RansomwareRestoreProcessStartedDetails
+    "Started ransomware restore process."
+
+    extension String
+        "Ransomware filename extension."
+
+    example default
+        extension = "abc"
 
 struct AppBlockedByPermissionsDetails
     "Failed to connect app for member."
@@ -2821,6 +2849,48 @@ struct DomainVerificationRemoveDomainDetails
 struct EnabledDomainInvitesDetails
     "Enabled domain invites."
 
+struct TeamEncryptionKeyCancelKeyDeletionDetails
+    "Canceled team encryption key deletion."
+
+
+    example default
+
+struct TeamEncryptionKeyCreateKeyDetails
+    "Created team encryption key."
+
+
+    example default
+
+struct TeamEncryptionKeyDeleteKeyDetails
+    "Deleted team encryption key."
+
+
+    example default
+
+struct TeamEncryptionKeyDisableKeyDetails
+    "Disabled team encryption key."
+
+
+    example default
+
+struct TeamEncryptionKeyEnableKeyDetails
+    "Enabled team encryption key."
+
+
+    example default
+
+struct TeamEncryptionKeyRotateKeyDetails
+    "Rotated team encryption key."
+
+
+    example default
+
+struct TeamEncryptionKeyScheduleKeyDeletionDetails
+    "Scheduled encryption key deletion."
+
+
+    example default
+
 struct ApplyNamingConventionDetails
     "Applied naming convention."
 
@@ -2829,6 +2899,9 @@ struct CreateFolderDetails
 
 struct FileAddDetails
     "Added files and/or folders."
+
+struct FileAddFromAutomationDetails
+    "Added files and/or folders from automation."
 
 struct FileCopyDetails
     "Copied files and/or folders."
@@ -2970,6 +3043,9 @@ struct ObjectLabelUpdatedValueDetails
 
 struct OrganizeFolderWithTidyDetails
     "Organized a folder with multi-file organize."
+
+struct ReplayFileDeleteDetails
+    "Deleted files in Replay."
 
 struct RewindFolderDetails
     "Rewound a folder."
@@ -3312,6 +3388,12 @@ struct SsoErrorDetails
 
     example default
         error_details = default
+
+struct BackupAdminInvitationSentDetails
+    "Invited members to activate Backup."
+
+struct BackupInvitationOpenedDetails
+    "Opened Backup invite."
 
 struct CreateTeamInviteLinkDetails
     "Created team invite link."
@@ -4250,6 +4332,18 @@ struct OutdatedLinkViewReportFailedDetails
 struct PaperAdminExportStartDetails
     "Exported all team Paper docs."
 
+struct RansomwareAlertCreateReportDetails
+    "Created ransomware report."
+
+struct RansomwareAlertCreateReportFailedDetails
+    "Couldn't generate ransomware report."
+
+    failure_reason team.TeamReportFailureReason
+        "Failure reason."
+
+    example default
+        failure_reason = temporary_error
+
 struct SmartSyncCreateAdminPrivilegeReportDetails
     "Created Smart Sync non-admin devices report."
 
@@ -4345,6 +4439,18 @@ struct NoteShareReceiveDetails
 
 struct OpenNoteSharedDetails
     "Opened shared Paper doc."
+
+struct ReplayFileSharedLinkCreatedDetails
+    "Created shared link in Replay."
+
+struct ReplayFileSharedLinkModifiedDetails
+    "Modified shared link in Replay."
+
+struct ReplayProjectTeamAddDetails
+    "Added member to Replay Project."
+
+struct ReplayProjectTeamDeleteDetails
+    "Removed member from Replay Project."
 
 struct SfAddGroupDetails
     "Added team to shared folder."
@@ -6810,6 +6916,8 @@ union EventDetails
     admin_alerting_alert_state_changed_details AdminAlertingAlertStateChangedDetails
     admin_alerting_changed_alert_config_details AdminAlertingChangedAlertConfigDetails
     admin_alerting_triggered_alert_details AdminAlertingTriggeredAlertDetails
+    ransomware_restore_process_completed_details RansomwareRestoreProcessCompletedDetails
+    ransomware_restore_process_started_details RansomwareRestoreProcessStartedDetails
     app_blocked_by_permissions_details AppBlockedByPermissionsDetails
     app_link_team_details AppLinkTeamDetails
     app_link_user_details AppLinkUserDetails
@@ -6879,9 +6987,17 @@ union EventDetails
     domain_verification_add_domain_success_details DomainVerificationAddDomainSuccessDetails
     domain_verification_remove_domain_details DomainVerificationRemoveDomainDetails
     enabled_domain_invites_details EnabledDomainInvitesDetails
+    team_encryption_key_cancel_key_deletion_details TeamEncryptionKeyCancelKeyDeletionDetails
+    team_encryption_key_create_key_details TeamEncryptionKeyCreateKeyDetails
+    team_encryption_key_delete_key_details TeamEncryptionKeyDeleteKeyDetails
+    team_encryption_key_disable_key_details TeamEncryptionKeyDisableKeyDetails
+    team_encryption_key_enable_key_details TeamEncryptionKeyEnableKeyDetails
+    team_encryption_key_rotate_key_details TeamEncryptionKeyRotateKeyDetails
+    team_encryption_key_schedule_key_deletion_details TeamEncryptionKeyScheduleKeyDeletionDetails
     apply_naming_convention_details ApplyNamingConventionDetails
     create_folder_details CreateFolderDetails
     file_add_details FileAddDetails
+    file_add_from_automation_details FileAddFromAutomationDetails
     file_copy_details FileCopyDetails
     file_delete_details FileDeleteDetails
     file_download_details FileDownloadDetails
@@ -6903,6 +7019,7 @@ union EventDetails
     object_label_removed_details ObjectLabelRemovedDetails
     object_label_updated_value_details ObjectLabelUpdatedValueDetails
     organize_folder_with_tidy_details OrganizeFolderWithTidyDetails
+    replay_file_delete_details ReplayFileDeleteDetails
     rewind_folder_details RewindFolderDetails
     undo_naming_convention_details UndoNamingConventionDetails
     undo_organize_folder_with_tidy_details UndoOrganizeFolderWithTidyDetails
@@ -6939,6 +7056,8 @@ union EventDetails
     sign_in_as_session_end_details SignInAsSessionEndDetails
     sign_in_as_session_start_details SignInAsSessionStartDetails
     sso_error_details SsoErrorDetails
+    backup_admin_invitation_sent_details BackupAdminInvitationSentDetails
+    backup_invitation_opened_details BackupInvitationOpenedDetails
     create_team_invite_link_details CreateTeamInviteLinkDetails
     delete_team_invite_link_details DeleteTeamInviteLinkDetails
     member_add_external_id_details MemberAddExternalIdDetails
@@ -7034,6 +7153,8 @@ union EventDetails
     outdated_link_view_create_report_details OutdatedLinkViewCreateReportDetails
     outdated_link_view_report_failed_details OutdatedLinkViewReportFailedDetails
     paper_admin_export_start_details PaperAdminExportStartDetails
+    ransomware_alert_create_report_details RansomwareAlertCreateReportDetails
+    ransomware_alert_create_report_failed_details RansomwareAlertCreateReportFailedDetails
     smart_sync_create_admin_privilege_report_details SmartSyncCreateAdminPrivilegeReportDetails
     team_activity_create_report_details TeamActivityCreateReportDetails
     team_activity_create_report_fail_details TeamActivityCreateReportFailDetails
@@ -7049,6 +7170,10 @@ union EventDetails
     note_shared_details NoteSharedDetails
     note_share_receive_details NoteShareReceiveDetails
     open_note_shared_details OpenNoteSharedDetails
+    replay_file_shared_link_created_details ReplayFileSharedLinkCreatedDetails
+    replay_file_shared_link_modified_details ReplayFileSharedLinkModifiedDetails
+    replay_project_team_add_details ReplayProjectTeamAddDetails
+    replay_project_team_delete_details ReplayProjectTeamDeleteDetails
     sf_add_group_details SfAddGroupDetails
     sf_allow_non_members_to_view_shared_links_details SfAllowNonMembersToViewSharedLinksDetails
     sf_external_invite_warn_details SfExternalInviteWarnDetails
@@ -7319,6 +7444,18 @@ struct AdminAlertingTriggeredAlertType
 
     example default
         description = "(admin_alerting) Triggered security alert"
+
+struct RansomwareRestoreProcessCompletedType
+    description String
+
+    example default
+        description = "(admin_alerting) Completed ransomware restore process"
+
+struct RansomwareRestoreProcessStartedType
+    description String
+
+    example default
+        description = "(admin_alerting) Started ransomware restore process"
 
 struct AppBlockedByPermissionsType
     description String
@@ -7734,6 +7871,48 @@ struct EnabledDomainInvitesType
     example default
         description = "(domains) Enabled domain invites (deprecated, no longer logged)"
 
+struct TeamEncryptionKeyCancelKeyDeletionType
+    description String
+
+    example default
+        description = "(encryption) Canceled team encryption key deletion"
+
+struct TeamEncryptionKeyCreateKeyType
+    description String
+
+    example default
+        description = "(encryption) Created team encryption key"
+
+struct TeamEncryptionKeyDeleteKeyType
+    description String
+
+    example default
+        description = "(encryption) Deleted team encryption key"
+
+struct TeamEncryptionKeyDisableKeyType
+    description String
+
+    example default
+        description = "(encryption) Disabled team encryption key"
+
+struct TeamEncryptionKeyEnableKeyType
+    description String
+
+    example default
+        description = "(encryption) Enabled team encryption key"
+
+struct TeamEncryptionKeyRotateKeyType
+    description String
+
+    example default
+        description = "(encryption) Rotated team encryption key (deprecated, no longer logged)"
+
+struct TeamEncryptionKeyScheduleKeyDeletionType
+    description String
+
+    example default
+        description = "(encryption) Scheduled encryption key deletion"
+
 struct ApplyNamingConventionType
     description String
 
@@ -7751,6 +7930,12 @@ struct FileAddType
 
     example default
         description = "(file_operations) Added files and/or folders"
+
+struct FileAddFromAutomationType
+    description String
+
+    example default
+        description = "(file_operations) Added files and/or folders from automation"
 
 struct FileCopyType
     description String
@@ -7877,6 +8062,12 @@ struct OrganizeFolderWithTidyType
 
     example default
         description = "(file_operations) Organized a folder with multi-file organize"
+
+struct ReplayFileDeleteType
+    description String
+
+    example default
+        description = "(file_operations) Deleted files in Replay"
 
 struct RewindFolderType
     description String
@@ -8093,6 +8284,18 @@ struct SsoErrorType
 
     example default
         description = "(logins) Failed to sign in via SSO (deprecated, replaced by 'Failed to sign in')"
+
+struct BackupAdminInvitationSentType
+    description String
+
+    example default
+        description = "(members) Invited members to activate Backup"
+
+struct BackupInvitationOpenedType
+    description String
+
+    example default
+        description = "(members) Opened Backup invite"
 
 struct CreateTeamInviteLinkType
     description String
@@ -8664,6 +8867,18 @@ struct PaperAdminExportStartType
     example default
         description = "(reports) Exported all team Paper docs"
 
+struct RansomwareAlertCreateReportType
+    description String
+
+    example default
+        description = "(reports) Created ransomware report"
+
+struct RansomwareAlertCreateReportFailedType
+    description String
+
+    example default
+        description = "(reports) Couldn't generate ransomware report"
+
 struct SmartSyncCreateAdminPrivilegeReportType
     description String
 
@@ -8753,6 +8968,30 @@ struct OpenNoteSharedType
 
     example default
         description = "(sharing) Opened shared Paper doc (deprecated, no longer logged)"
+
+struct ReplayFileSharedLinkCreatedType
+    description String
+
+    example default
+        description = "(sharing) Created shared link in Replay"
+
+struct ReplayFileSharedLinkModifiedType
+    description String
+
+    example default
+        description = "(sharing) Modified shared link in Replay"
+
+struct ReplayProjectTeamAddType
+    description String
+
+    example default
+        description = "(sharing) Added member to Replay Project"
+
+struct ReplayProjectTeamDeleteType
+    description String
+
+    example default
+        description = "(sharing) Removed member from Replay Project"
 
 struct SfAddGroupType
     description String
@@ -10216,6 +10455,10 @@ union EventType
         "(admin_alerting) Changed an alert setting"
     admin_alerting_triggered_alert AdminAlertingTriggeredAlertType
         "(admin_alerting) Triggered security alert"
+    ransomware_restore_process_completed RansomwareRestoreProcessCompletedType
+        "(admin_alerting) Completed ransomware restore process"
+    ransomware_restore_process_started RansomwareRestoreProcessStartedType
+        "(admin_alerting) Started ransomware restore process"
     app_blocked_by_permissions AppBlockedByPermissionsType
         "(apps) Failed to connect app for member"
     app_link_team AppLinkTeamType
@@ -10354,12 +10597,28 @@ union EventType
         "(domains) Removed domain from list of verified team domains"
     enabled_domain_invites EnabledDomainInvitesType
         "(domains) Enabled domain invites (deprecated, no longer logged)"
+    team_encryption_key_cancel_key_deletion TeamEncryptionKeyCancelKeyDeletionType
+        "(encryption) Canceled team encryption key deletion"
+    team_encryption_key_create_key TeamEncryptionKeyCreateKeyType
+        "(encryption) Created team encryption key"
+    team_encryption_key_delete_key TeamEncryptionKeyDeleteKeyType
+        "(encryption) Deleted team encryption key"
+    team_encryption_key_disable_key TeamEncryptionKeyDisableKeyType
+        "(encryption) Disabled team encryption key"
+    team_encryption_key_enable_key TeamEncryptionKeyEnableKeyType
+        "(encryption) Enabled team encryption key"
+    team_encryption_key_rotate_key TeamEncryptionKeyRotateKeyType
+        "(encryption) Rotated team encryption key (deprecated, no longer logged)"
+    team_encryption_key_schedule_key_deletion TeamEncryptionKeyScheduleKeyDeletionType
+        "(encryption) Scheduled encryption key deletion"
     apply_naming_convention ApplyNamingConventionType
         "(file_operations) Applied naming convention"
     create_folder CreateFolderType
         "(file_operations) Created folders (deprecated, no longer logged)"
     file_add FileAddType
         "(file_operations) Added files and/or folders"
+    file_add_from_automation FileAddFromAutomationType
+        "(file_operations) Added files and/or folders from automation"
     file_copy FileCopyType
         "(file_operations) Copied files and/or folders"
     file_delete FileDeleteType
@@ -10402,6 +10661,8 @@ union EventType
         "(file_operations) Updated a label's value"
     organize_folder_with_tidy OrganizeFolderWithTidyType
         "(file_operations) Organized a folder with multi-file organize"
+    replay_file_delete ReplayFileDeleteType
+        "(file_operations) Deleted files in Replay"
     rewind_folder RewindFolderType
         "(file_operations) Rewound a folder"
     undo_naming_convention UndoNamingConventionType
@@ -10474,6 +10735,10 @@ union EventType
         "(logins) Started admin sign-in-as session"
     sso_error SsoErrorType
         "(logins) Failed to sign in via SSO (deprecated, replaced by 'Failed to sign in')"
+    backup_admin_invitation_sent BackupAdminInvitationSentType
+        "(members) Invited members to activate Backup"
+    backup_invitation_opened BackupInvitationOpenedType
+        "(members) Opened Backup invite"
     create_team_invite_link CreateTeamInviteLinkType
         "(members) Created team invite link"
     delete_team_invite_link DeleteTeamInviteLinkType
@@ -10664,6 +10929,10 @@ union EventType
         "(reports) Couldn't create report: Views of old links"
     paper_admin_export_start PaperAdminExportStartType
         "(reports) Exported all team Paper docs"
+    ransomware_alert_create_report RansomwareAlertCreateReportType
+        "(reports) Created ransomware report"
+    ransomware_alert_create_report_failed RansomwareAlertCreateReportFailedType
+        "(reports) Couldn't generate ransomware report"
     smart_sync_create_admin_privilege_report SmartSyncCreateAdminPrivilegeReportType
         "(reports) Created Smart Sync non-admin devices report"
     team_activity_create_report TeamActivityCreateReportType
@@ -10694,6 +10963,14 @@ union EventType
         "(sharing) Shared received Paper doc (deprecated, no longer logged)"
     open_note_shared OpenNoteSharedType
         "(sharing) Opened shared Paper doc (deprecated, no longer logged)"
+    replay_file_shared_link_created ReplayFileSharedLinkCreatedType
+        "(sharing) Created shared link in Replay"
+    replay_file_shared_link_modified ReplayFileSharedLinkModifiedType
+        "(sharing) Modified shared link in Replay"
+    replay_project_team_add ReplayProjectTeamAddType
+        "(sharing) Added member to Replay Project"
+    replay_project_team_delete ReplayProjectTeamDeleteType
+        "(sharing) Removed member from Replay Project"
     sf_add_group SfAddGroupType
         "(sharing) Added team to shared folder (deprecated, no longer logged)"
     sf_allow_non_members_to_view_shared_links SfAllowNonMembersToViewSharedLinksType
@@ -11192,6 +11469,10 @@ union EventTypeArg
         "(admin_alerting) Changed an alert setting"
     admin_alerting_triggered_alert
         "(admin_alerting) Triggered security alert"
+    ransomware_restore_process_completed
+        "(admin_alerting) Completed ransomware restore process"
+    ransomware_restore_process_started
+        "(admin_alerting) Started ransomware restore process"
     app_blocked_by_permissions
         "(apps) Failed to connect app for member"
     app_link_team
@@ -11330,12 +11611,28 @@ union EventTypeArg
         "(domains) Removed domain from list of verified team domains"
     enabled_domain_invites
         "(domains) Enabled domain invites (deprecated, no longer logged)"
+    team_encryption_key_cancel_key_deletion
+        "(encryption) Canceled team encryption key deletion"
+    team_encryption_key_create_key
+        "(encryption) Created team encryption key"
+    team_encryption_key_delete_key
+        "(encryption) Deleted team encryption key"
+    team_encryption_key_disable_key
+        "(encryption) Disabled team encryption key"
+    team_encryption_key_enable_key
+        "(encryption) Enabled team encryption key"
+    team_encryption_key_rotate_key
+        "(encryption) Rotated team encryption key (deprecated, no longer logged)"
+    team_encryption_key_schedule_key_deletion
+        "(encryption) Scheduled encryption key deletion"
     apply_naming_convention
         "(file_operations) Applied naming convention"
     create_folder
         "(file_operations) Created folders (deprecated, no longer logged)"
     file_add
         "(file_operations) Added files and/or folders"
+    file_add_from_automation
+        "(file_operations) Added files and/or folders from automation"
     file_copy
         "(file_operations) Copied files and/or folders"
     file_delete
@@ -11378,6 +11675,8 @@ union EventTypeArg
         "(file_operations) Updated a label's value"
     organize_folder_with_tidy
         "(file_operations) Organized a folder with multi-file organize"
+    replay_file_delete
+        "(file_operations) Deleted files in Replay"
     rewind_folder
         "(file_operations) Rewound a folder"
     undo_naming_convention
@@ -11450,6 +11749,10 @@ union EventTypeArg
         "(logins) Started admin sign-in-as session"
     sso_error
         "(logins) Failed to sign in via SSO (deprecated, replaced by 'Failed to sign in')"
+    backup_admin_invitation_sent
+        "(members) Invited members to activate Backup"
+    backup_invitation_opened
+        "(members) Opened Backup invite"
     create_team_invite_link
         "(members) Created team invite link"
     delete_team_invite_link
@@ -11640,6 +11943,10 @@ union EventTypeArg
         "(reports) Couldn't create report: Views of old links"
     paper_admin_export_start
         "(reports) Exported all team Paper docs"
+    ransomware_alert_create_report
+        "(reports) Created ransomware report"
+    ransomware_alert_create_report_failed
+        "(reports) Couldn't generate ransomware report"
     smart_sync_create_admin_privilege_report
         "(reports) Created Smart Sync non-admin devices report"
     team_activity_create_report
@@ -11670,6 +11977,14 @@ union EventTypeArg
         "(sharing) Shared received Paper doc (deprecated, no longer logged)"
     open_note_shared
         "(sharing) Opened shared Paper doc (deprecated, no longer logged)"
+    replay_file_shared_link_created
+        "(sharing) Created shared link in Replay"
+    replay_file_shared_link_modified
+        "(sharing) Modified shared link in Replay"
+    replay_project_team_add
+        "(sharing) Added member to Replay Project"
+    replay_project_team_delete
+        "(sharing) Removed member from Replay Project"
     sf_add_group
         "(sharing) Added team to shared folder (deprecated, no longer logged)"
     sf_allow_non_members_to_view_shared_links

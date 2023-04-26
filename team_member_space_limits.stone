@@ -71,7 +71,9 @@ union RemoveCustomQuotaResult
 
 route member_space_limits/set_custom_quota(SetCustomQuotaArg, List(CustomQuotaResult), SetCustomQuotaError)
     "Set users custom quota. Custom quota has to be at least 15GB.
-    A maximum of 1000 members can be specified in a single call."
+    A maximum of 1000 members can be specified in a single call.
+    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
+    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
 
     attrs
         auth = "team"
@@ -80,7 +82,9 @@ route member_space_limits/set_custom_quota(SetCustomQuotaArg, List(CustomQuotaRe
 
 route member_space_limits/remove_custom_quota(CustomQuotaUsersArg, List(RemoveCustomQuotaResult), CustomQuotaError)
     "Remove users custom quota.
-    A maximum of 1000 members can be specified in a single call."
+    A maximum of 1000 members can be specified in a single call.
+    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
+    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
 
     attrs
         auth = "team"
@@ -88,8 +92,10 @@ route member_space_limits/remove_custom_quota(CustomQuotaUsersArg, List(RemoveCu
 
 
 route member_space_limits/get_custom_quota(CustomQuotaUsersArg, List(CustomQuotaResult), CustomQuotaError)
-    "Get users custom quota. Returns none as the custom quota if none was set.
-    A maximum of 1000 members can be specified in a single call."
+    "Get users custom quota.
+    A maximum of 1000 members can be specified in a single call.
+    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
+    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
 
     attrs
         auth = "team"

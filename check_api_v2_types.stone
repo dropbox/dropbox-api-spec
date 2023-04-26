@@ -5,7 +5,7 @@ namespace check
 import common
 
 struct EchoArg
-    "EchoArg contains the arguments to be sent to the Dropbox servers."
+    "Contains the arguments to be sent to the Dropbox servers."
     query String(max_length=500) = ""
         "The string that you'd like to be echoed back to you."
 

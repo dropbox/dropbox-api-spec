@@ -34,12 +34,15 @@ struct TeamSharingPolicies
         "Who can view shared links owned by team members."
     group_creation_policy GroupCreation
         "Who can create groups."
+    shared_folder_link_restriction_policy SharedFolderBlanketLinkRestrictionPolicy
+        "Who can view links to content in shared folders."
 
     example default
         shared_folder_member_policy = team
         shared_folder_join_policy = from_anyone
         shared_link_create_policy = team_only
         group_creation_policy = admins_only
+        shared_folder_link_restriction_policy = anyone
 
 # NOTE: we do not reuse sharing.MemberPolicy here since we may want to enable folder-specific member
 # policies that work on top of the broader team policies.
@@ -75,6 +78,14 @@ union SharedLinkCreatePolicy
     default_no_one
         "Only people invited can access newly created links.
         Login will be required to access the shared links unless overridden."
+
+union SharedFolderBlanketLinkRestrictionPolicy
+    "Policy governing whether shared folder membership is required to access shared links."
+
+    members
+        "Only members of shared folders can access folder content via shared link."
+    anyone
+        "Anyone can access folder content via shared link."
 
 union EmmState
     disabled

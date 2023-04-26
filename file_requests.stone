@@ -135,7 +135,6 @@ route list:2(ListFileRequestsArg, ListFileRequestsV2Result, ListFileRequestsErro
 
     attrs
         allow_app_folder_app = true
-        is_preview = true
         scope = "file_requests.read"
 
 struct ListFileRequestsArg
@@ -172,7 +171,6 @@ route list/continue(ListFileRequestsContinueArg, ListFileRequestsV2Result, ListF
     :route:`list/continue`."
     attrs
         allow_app_folder_app = true
-        is_preview = true
         scope = "file_requests.read"
 
 struct ListFileRequestsContinueArg

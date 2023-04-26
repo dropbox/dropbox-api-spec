@@ -78,7 +78,7 @@ union TokenFromOAuth1Error
     app_id_mismatch
         "The authorized app does not match the app associated with the supplied access token."
 
-route token/from_oauth1(TokenFromOAuth1Arg, TokenFromOAuth1Result, TokenFromOAuth1Error)
+route token/from_oauth1(TokenFromOAuth1Arg, TokenFromOAuth1Result, TokenFromOAuth1Error) deprecated
     "Creates an OAuth 2.0 access token from the supplied OAuth 1.0 access token."
     attrs
         auth = "app"

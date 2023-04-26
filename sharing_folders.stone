@@ -25,6 +25,12 @@ union AccessLevel
     traverse
         "The collaborator can only view the shared folder that they have
         access to."
+    no_access
+        "If there is a Righteous Link on the folder which grants access
+        and the user has visited such link, they are allowed to perform
+        certain action (i.e. add themselves to the folder) via the link
+        access even though the user themselves are not a member on the
+        shared folder yet."
 
 struct FolderPolicy
     "A set of policies governing membership and privileges for a shared
@@ -349,6 +355,9 @@ struct SharedFolderMetadataBase
         "The ID of the parent shared folder. This field is present only if the
         folder is contained within another shared folder."
 
+    path_display String?
+        "The full path of this shared folder. Absent for unmounted folders."
+
     path_lower String?
         "The lower-cased full path of this shared folder. Absent for unmounted folders."
 
@@ -425,6 +434,8 @@ union SharedFolderAccessError
     not_a_member
         "The user is not a member of the shared folder
         thus cannot access it."
+    invalid_member
+        "The user does not exist or their account is disabled."
     email_unverified
         "Never set."
     unmounted
@@ -666,9 +677,9 @@ struct ShareFolderArgBase
     member_policy MemberPolicy?
         "Who can be a member of this shared folder. Only applicable if the
         current user is on a team."
-    path files.WritePath
-        "The path to the folder to share. If it does not exist, then a new one
-        is created."
+    path files.WritePathOrId
+        "The path or the file id to the folder to share. If it does not exist,
+        then a new one is created."
     shared_link_policy SharedLinkPolicy?
         "The policy to apply to shared links created for content inside this
         shared folder.  The current user must be on a team to set this policy to
