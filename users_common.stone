@@ -1,13 +1,13 @@
 namespace users_common
     "This namespace contains common data types used within the users namespace."
 
+import account_id
 import common
 
-alias AccountId = String(min_length=40, max_length=40)
+alias AccountId = String(max_length=40, min_length=40)
 
 union_closed AccountType
     "What type of account this user has."
-
     basic
         "The basic account type."
     pro
@@ -17,6 +17,6 @@ union_closed AccountType
 
     example default
         basic = null
-
     example business
         business = null
+

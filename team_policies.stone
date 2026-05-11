@@ -2,7 +2,6 @@ namespace team_policies
 
 struct TeamMemberPolicies
     "Policies governing team members."
-
     sharing TeamSharingPolicies
         "Policies governing sharing."
     emm_state EmmState
@@ -16,16 +15,18 @@ struct TeamMemberPolicies
         "The admin policy around the Dropbox Office Add-In for this team."
     suggest_members_policy SuggestMembersPolicy
         "The team policy on if teammembers are allowed to suggest users for admins to invite to the team."
+    top_level_content_policy TopLevelContentPolicy
+        "Policy for deciding whether members can edit team folders at the top level of the team space."
 
     example default
         sharing = default
         emm_state = disabled
         office_addin = disabled
         suggest_members_policy = enabled
+        top_level_content_policy = admin_only
 
 struct TeamSharingPolicies
     "Policies governing sharing within and outside of the team."
-
     shared_folder_member_policy SharedFolderMemberPolicy
         "Who can join folders shared by team members."
     shared_folder_join_policy SharedFolderJoinPolicy
@@ -36,6 +37,12 @@ struct TeamSharingPolicies
         "Who can create groups."
     shared_folder_link_restriction_policy SharedFolderBlanketLinkRestrictionPolicy
         "Who can view links to content in shared folders."
+    enforce_link_password_policy EnforceLinkPasswordPolicy
+        "If passwords are required for new links shared outside the team."
+    default_link_expiration_days_policy DefaultLinkExpirationDaysPolicy
+        "Default expiration date for new links shared outside the team."
+    shared_link_default_permissions_policy SharedLinkDefaultPermissionsPolicy
+        "Default access level for new links shared by team members."
 
     example default
         shared_folder_member_policy = team
@@ -43,20 +50,21 @@ struct TeamSharingPolicies
         shared_link_create_policy = team_only
         group_creation_policy = admins_only
         shared_folder_link_restriction_policy = anyone
+        enforce_link_password_policy = optional
+        default_link_expiration_days_policy = none
+        shared_link_default_permissions_policy = default
 
-# NOTE: we do not reuse sharing.MemberPolicy here since we may want to enable folder-specific member
-# policies that work on top of the broader team policies.
 union SharedFolderMemberPolicy
     "Policy governing who can be a member of a folder shared by a team member."
-
     team
         "Only a teammate can be a member of a folder shared by a team member."
     anyone
         "Anyone can be a member of a folder shared by a team member."
+    team_and_approved
+        "Only a teammate and approved people can be a member of a folder shared by a team member."
 
 union SharedFolderJoinPolicy
     "Policy governing which shared folders a team member can join."
-
     from_team_only
         "Team members can only join folders shared by teammates."
     from_anyone
@@ -65,7 +73,6 @@ union SharedFolderJoinPolicy
 union SharedLinkCreatePolicy
     "Policy governing the visibility of shared links. This policy can apply to newly created shared
     links, or all shared links."
-
     default_public
         "By default, anyone can access newly created shared links.
         No login will be required to access the shared links unless overridden."
@@ -81,11 +88,36 @@ union SharedLinkCreatePolicy
 
 union SharedFolderBlanketLinkRestrictionPolicy
     "Policy governing whether shared folder membership is required to access shared links."
-
     members
         "Only members of shared folders can access folder content via shared link."
     anyone
         "Anyone can access folder content via shared link."
+
+union EnforceLinkPasswordPolicy
+    "Policy governing whether new links shared outside the team require passwords."
+    optional
+        "New links shared outside the team do not require passwords."
+    required
+        "New links shared outside the team require passwords."
+
+union DefaultLinkExpirationDaysPolicy
+    "Policy governing default expiration date for new links shared outside the team."
+    none
+        "New links shared outside the team default to no expiration date."
+    day_1
+        "New links shared outside the team default to expire in one day."
+    day_3
+        "New links shared outside the team default to expire in three days."
+    day_7
+        "New links shared outside the team default to expire in seven days."
+    day_30
+        "New links shared outside the team default to expire in 30 days."
+    day_90
+        "New links shared outside the team default to expire in 90 days."
+    day_180
+        "New links shared outside the team default to expire in 180 days."
+    year_1
+        "New links shared outside the team default to expire in 365 days."
 
 union EmmState
     disabled
@@ -100,6 +132,12 @@ union OfficeAddInPolicy
         "Office Add-In is disabled."
     enabled
         "Office Add-In is enabled."
+
+union TopLevelContentPolicy
+    admin_only
+        "Only admins can edit team folders at the top level of the team space."
+    everyone
+        "Everyone on the team can edit team folders at the top level of the team space."
 
 union SsoPolicy
     disabled
@@ -140,11 +178,15 @@ union PasswordControlMode
 
 union PasswordStrengthPolicy
     minimal_requirements
-        "User passwords will adhere to the minimal password strength policy."
+        "User passwords will not adhere to a password strength policy."
     moderate_password
-        "User passwords will adhere to the moderate password strength policy."
+        "User passwords will adhere to the strong password strength policy. Note that product
+        surfaces refer to this as the strong policy but the value must be kept as is for
+        backwards compatability."
     strong_password
-        "User passwords will adhere to the very strong password strength policy."
+        "User passwords will adhere to the very strong password strength policy. Note that product
+        surfaces refer to this as the very strong policy but the value must be kept as is for
+        backwards compatability."
 
 union TwoStepVerificationPolicy
     require_tfa_enable
@@ -249,3 +291,14 @@ union FileProviderMigrationPolicyState
         "Team admin has not opted out of File Provider Migration for team members."
     default
         "Team admin has default value based on team tier."
+    immediate
+        "Team admin has chosen to do File Provider Migration immediately for the team."
+
+union SharedLinkDefaultPermissionsPolicy
+    default
+        "No team default. Member defaults used instead."
+    edit
+        "Default to edit when creating new sharing links"
+    view
+        "Default to view-only when creating new sharing links"
+

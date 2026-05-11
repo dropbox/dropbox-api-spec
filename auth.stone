@@ -2,13 +2,8 @@ namespace auth
 
 import common
 
-struct TokenScopeError
-    required_scope String
-        "The required scope to access the route."
-
 union AuthError
     "Errors occurred during authentication."
-
     invalid_access_token
         "The access token is invalid."
     invalid_select_user
@@ -24,53 +19,11 @@ union AuthError
     route_access_denied
         "The route is not available to public."
 
-route token/revoke(Void, Void, Void)
-    "Disables the access token used to authenticate the call.
-    If there is a corresponding refresh token for the access token,
-    this disables that refresh token, as well as any other access tokens for that refresh token."
-
-    attrs
-        allow_app_folder_app = true
-
 union RateLimitReason
     too_many_requests
         "You are making too many requests in the past few minutes."
     too_many_write_operations
         "There are currently too many write operations happening in the user's Dropbox."
-
-struct RateLimitError
-    "Error occurred because the app is being rate limited."
-
-    reason RateLimitReason
-        "The reason why the app is being rate limited."
-
-    retry_after UInt64 = 1
-        "The number of seconds that the app should wait
-        before making another request."
-
-#
-# OAuth 1.0 token conversion
-#
-
-struct TokenFromOAuth1Arg
-
-    oauth1_token String(min_length=1)
-        "The supplied OAuth 1.0 access token."
-
-    oauth1_token_secret String(min_length=1)
-        "The token secret associated with the supplied access token."
-
-    example default
-        oauth1_token = "qievr8hamyg6ndck"
-        oauth1_token_secret = "qomoftv0472git7"
-
-struct TokenFromOAuth1Result
-
-    oauth2_token String(min_length=1)
-        "The OAuth 2.0 token generated from the supplied OAuth 1.0 token."
-
-    example default
-        oauth2_token = "9mCrkS7BIdAAAAAAAAAAHHS0TsSnpYvKQVtKdBnN5IuzhYOGblSgTcHgBFKFMmFn"
 
 union TokenFromOAuth1Error
     invalid_oauth1_token_info
@@ -78,20 +31,16 @@ union TokenFromOAuth1Error
     app_id_mismatch
         "The authorized app does not match the app associated with the supplied access token."
 
-route token/from_oauth1(TokenFromOAuth1Arg, TokenFromOAuth1Result, TokenFromOAuth1Error) deprecated
-    "Creates an OAuth 2.0 access token from the supplied OAuth 1.0 access token."
-    attrs
-        auth = "app"
-        allow_app_folder_app = true
-
 union AccessError
     "Error occurred because the account doesn't have permission to access the resource."
-
     invalid_account_type InvalidAccountTypeError
         "Current account type cannot access the resource."
-
     paper_access_denied PaperAccessError
         "Current account cannot access Paper."
+    team_access_denied
+        "Team doesn't have permission to access."
+    no_permission NoPermissionError
+        "Caller does not have permission to access the resource."
 
 union PaperAccessError
     paper_disabled
@@ -104,3 +53,57 @@ union InvalidAccountTypeError
         "Current account type doesn't have permission to access this route endpoint."
     feature
         "Current account type doesn't have permission to access this feature."
+
+union NoPermissionError
+    unauthorized_account_id_usage UnauthorizedAccountIdUsageError
+        "Current caller does not have permission to access the account information for one or more of the specified account IDs."
+
+struct TokenScopeError
+    required_scope String
+        "The required scope to access the route."
+
+struct RateLimitError
+    "Error occurred because the app is being rate limited."
+    reason RateLimitReason
+        "The reason why the app is being rate limited."
+    retry_after UInt64 = 1
+        "The number of seconds that the app should wait
+        before making another request."
+
+struct TokenFromOAuth1Arg
+    oauth1_token String(min_length=1)
+        "The supplied OAuth 1.0 access token."
+    oauth1_token_secret String(min_length=1)
+        "The token secret associated with the supplied access token."
+
+    example default
+        oauth1_token = "qievr8hamyg6ndck"
+        oauth1_token_secret = "qomoftv0472git7"
+
+struct TokenFromOAuth1Result
+    oauth2_token String(min_length=1)
+        "The OAuth 2.0 token generated from the supplied OAuth 1.0 token."
+
+    example default
+        oauth2_token = "9mCrkS7BIdAAAAAAAAAAHHS0TsSnpYvKQVtKdBnN5IuzhYOGblSgTcHgBFKFMmFn"
+
+struct UnauthorizedAccountIdUsageError
+    unauthorized_account_ids List(String)
+        "The account IDs that the caller does not have permission to use."
+
+route token/revoke (Void, Void, Void)
+    "Disables the access token used to authenticate the call.
+    If there is a corresponding refresh token for the access token,
+    this disables that refresh token, as well as any other access tokens for that refresh token."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+
+route token/from_oauth1 (TokenFromOAuth1Arg, TokenFromOAuth1Result, TokenFromOAuth1Error) deprecated
+    "Creates an OAuth 2.0 access token from the supplied OAuth 1.0 access token."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "app"
+

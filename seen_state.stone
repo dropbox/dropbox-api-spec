@@ -16,3 +16,4 @@ union PlatformType
         "The content was viewed on an unknown platform."
     mobile
         "The content was viewed on a mobile client. DEPRECATED: Use mobile_ios or mobile_android instead."
+
