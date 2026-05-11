@@ -1,0 +1,127 @@
+namespace riviera
+
+import async
+import common
+
+union ErrorCode
+    unknown_error
+    bad_request
+        "400"
+    api_error
+        "409"
+    access_error
+        "403"
+    ratelimit_error
+        "429"
+    unavailable
+        "503"
+
+
+union TimestampLevel
+    unknown
+    sentence
+    word
+
+
+struct MediaDurationError
+    limit Int32 = 0
+
+union ContentApiV2Error
+    server_error String = ""
+    user_error String = ""
+    media_duration_error MediaDurationError
+    no_audio_error
+    link_download_disabled_error
+    shared_link_password_protected
+    limit_exceeded_error
+
+struct GetTranscriptAsyncError
+    error_code ErrorCode = unknown_error
+    error_details ContentApiV2Error?
+
+union FileIdOrUrl
+    file_id String = ""
+    url String = ""
+    path String = ""
+
+struct GetTranscriptArgs
+    "Arguments for the asynchronous `get_transcript_async` route.
+    Exactly one of `file_id`, `path`, or `url` must be supplied via
+    `file_id_or_url` to identify the audio or video asset to transcribe."
+    file_id_or_url FileIdOrUrl?
+        "Identifier of the media asset to transcribe. Callers must set exactly
+        one of the oneof variants:
+        - file_id: a Dropbox-issued file id (format: \"id:<id>\") for a file the
+        authenticated user has access to.
+        - path: an absolute Dropbox path, e.g. \"/folder/recording.mp4\".
+        - url: either a Dropbox shared link (www.dropbox.com) or an external
+        HTTPS URL pointing to a supported audio/video file.
+        - Dropbox shared links are resolved internally using the caller's
+        authenticated identity and the link's visibility / download
+        settings. They therefore require an authenticated user context
+        (anonymous `url` requests against Dropbox links are rejected with
+        an `ACCESS_ERROR`). Links protected by a password are rejected
+        with `shared_link_password_protected`; links with downloads
+        disabled are rejected with `link_download_disabled_error`.
+        - External URLs are fetched over HTTPS through the backend's
+        egress proxy and must point at a supported audio/video file
+        extension.
+        The referenced asset must be an audio or video file in a supported
+        format; requests against files with no audio track return a
+        `no_audio_error`."
+    timestamp_level TimestampLevel = unknown
+        "Granularity of the time offsets returned for each transcript segment.
+        Defaults to `SENTENCE.
+        - SENTENCE: one segment per spoken sentence (recommended).
+        - WORD: one segment per word, useful for fine-grained alignment such
+        as captioning or highlight-as-you-listen experiences."
+    included_special_words String = ""
+        "Comma-delimited list of non-lexical filler words to preserve in the
+        transcript output, e.g. `\"uh, ah, uhm\"`. By default these fillers are
+        stripped. Unrecognized tokens are ignored. Leave empty to use the
+        default filtering behavior."
+    audio_language String = ""
+        "Optional BCP-47 language tag hinting the spoken language of the source
+        audio (e.g. \"en-US\", \"ja-JP\"). When empty, the service auto-detects the
+        language; supplying a hint improves accuracy and latency for short or
+        ambiguous clips. Unsupported languages fall back to auto-detection."
+
+struct ApiTranscriptSegment
+    "Transcript segment for APIv2"
+    text String = ""
+    start_time Float64 = 0
+    end_time Float64 = 0
+
+struct ApiStructuredTranscript
+    "Structured transcript for APIv2"
+    segments List(ApiTranscriptSegment)?
+    transcript_locale String = ""
+
+struct GetTranscriptResult
+    structured_transcript ApiStructuredTranscript?
+        "The structured transcript produced for the requested media asset, with
+        per-segment text, start/end offsets (in seconds from the beginning of
+        the media), and the detected or caller-supplied locale."
+
+union GetTranscriptAsyncCheckResult
+    "Result type for EventBus async check - must end in \"CheckResult\""
+    in_progress
+    complete GetTranscriptResult
+    failed GetTranscriptAsyncError
+
+route get_transcript_async (GetTranscriptArgs, async.LaunchResultBase, Void)
+    "Asynchronous transcript generation for audio and video files."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+route get_transcript_async/check (async.PollArg, GetTranscriptAsyncCheckResult, async.PollError)
+    "Returns the status or result of specified get_transcript_async task."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+

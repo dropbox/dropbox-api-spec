@@ -1,10 +1,19 @@
 namespace account
 
+import account_id
 import common
 
-#
-# Route set_profile_photo
-#
+route get_photo (AccountPhotoGetArg, AccountPhotoGetResult, AccountPhotoGetError)
+    "This lovely endpoint gets the account photo of a given user."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "account_info.read"
+        select_admin_mode = "whole_team"
+        style = "download"
+
 
 union PhotoSourceArg
     base64_data String
@@ -12,23 +21,6 @@ union PhotoSourceArg
 
     example default
         base64_data = "SW1hZ2UgZGF0YSBpbiBiYXNlNjQtZW5jb2RlZCBieXRlcy4gTm90IGEgdmFsaWQgZXhhbXBsZS4="
-
-
-struct SetProfilePhotoArg
-    photo PhotoSourceArg
-        "Image to set as the user's new profile photo."
-
-    example default
-        photo = default
-
-
-struct SetProfilePhotoResult
-    profile_photo_url String
-        "URL for the photo representing the user, if one is set."
-
-    example default
-        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
-
 
 union SetProfilePhotoError
     file_type_error
@@ -42,8 +34,61 @@ union SetProfilePhotoError
     transient_error
         "Temporary infrastructure failure, please retry."
 
-route set_profile_photo(SetProfilePhotoArg, SetProfilePhotoResult, SetProfilePhotoError)
+struct SetProfilePhotoArg
+    photo PhotoSourceArg
+        "Image to set as the user's new profile photo."
+
+    example default
+        photo = default
+
+struct SetProfilePhotoResult
+    profile_photo_url String
+        "URL for the photo representing the user, if one is set."
+
+    example default
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
+
+struct AccountPhotoGetArg
+    dbx_account_id String
+        "Encoded ID of the user. Must start either with 'dbid:' or 'dbaphid:'."
+    size String
+        "A string representing the size of the photo."
+    circle_crop Boolean
+        "True if the photo should be cropped and false otherwise."
+    expect_account_photo Boolean
+        "True if we expect account photo to exist."
+
+    example default
+        dbx_account_id = "dbid:s0meEnc0ded1d"
+        size = "16x16"
+        circle_crop = false
+        expect_account_photo = true
+
+union ThumbnailError
+    permanent_failure
+        "Indicates permanent infrastructural failure."
+    temporary_failure
+        "Indicates temporary infrastructural failure."
+
+union AccountPhotoGetError
+    thumbnail_error ThumbnailError
+        "Indicates infrastructural failure."
+    account_photo_missing
+        "Account photo is missing (but we did not expect it to exist)."
+    expected_account_photo_missing
+        "Account photo was expected to exist, but it's missing."
+
+struct AccountPhotoGetResult
+    content_type String
+        "The data returned by get_photo."
+
+    example default
+        content_type = "image/jpeg"
+
+route set_profile_photo (SetProfilePhotoArg, SetProfilePhotoResult, SetProfilePhotoError)
     "Sets a user's profile photo."
 
     attrs
+        auth = "user"
         scope = "account_info.write"
+

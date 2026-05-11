@@ -2,7 +2,7 @@ namespace stone_cfg
 
 struct Route
 
-    auth String(pattern="^(user|team|app|noauth|app, user)$") = "user"
+    auth String(pattern="^(user|team|app|noauth|app,\\s*user|app,\\s*team)$") = "user"
         "The auth type for the route. In case of multiple values it should be sorted allphabetically"
     host String(pattern="^(api|content|notify)$") = "api"
         "The server to make the request to. "
