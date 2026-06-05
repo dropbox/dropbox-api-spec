@@ -766,6 +766,18 @@ union TeamExtensionsPolicy
     disabled
     enabled
 
+union TeamFolderNotificationTarget
+    "Team folder space limit notification target"
+    admins
+    both
+    editors
+    silent
+
+union TeamFolderSpaceCapsType
+    "Team folder space limit enforcement type"
+    off
+    soft
+
 union TeamMemberStorageRequestPolicy
     "Policy for deciding whether team members can request increased storage limits from admins"
     default
@@ -836,7 +848,7 @@ union ActionDetails
 
     example default
         team_join_details = default
-    
+
     example default2
         team_join_details = default2
 
@@ -855,7 +867,7 @@ union AssetLogInfo
 
     example default
         file = default
-    
+
     example default2
         file = default2
 
@@ -868,7 +880,7 @@ union FedExtraDetails
 
     example default
         team = default
-    
+
     example default2
         team = default2
 
@@ -883,7 +895,7 @@ union FederationStatusChangeAdditionalInfo
 
     example default
         connected_team_name = default
-    
+
     example default2
         connected_team_name = default2
 
@@ -900,7 +912,7 @@ union LinkedDeviceLogInfo
 
     example default
         mobile_device_session = default
-    
+
     example default2
         mobile_device_session = default2
 
@@ -913,7 +925,7 @@ union ParticipantLogInfo
 
     example default
         user = default
-    
+
     example default2
         user = default2
 
@@ -926,7 +938,7 @@ union TeamMergeRequestAcceptedExtraDetails
 
     example default
         primary_team = default
-    
+
     example default2
         primary_team = default2
 
@@ -939,7 +951,7 @@ union TeamMergeRequestCanceledExtraDetails
 
     example default
         primary_team = default
-    
+
     example default2
         primary_team = default2
 
@@ -952,7 +964,7 @@ union TeamMergeRequestExpiredExtraDetails
 
     example default
         primary_team = default
-    
+
     example default2
         primary_team = default2
 
@@ -965,7 +977,7 @@ union TeamMergeRequestReminderExtraDetails
 
     example default
         primary_team = default
-    
+
     example default2
         primary_team = default2
 
@@ -978,7 +990,7 @@ union WebSessionsFixedLengthPolicy
 
     example default
         defined = default
-    
+
     example default2
         defined = default2
 
@@ -991,7 +1003,7 @@ union WebSessionsIdleLengthPolicy
 
     example default
         defined = default
-    
+
     example default2
         defined = default2
 
@@ -1002,7 +1014,7 @@ struct AddonLogInfo
 
     example default
         addon_name = "abc"
-    
+
     example default2
         addon_name = "xyz"
 
@@ -1028,7 +1040,7 @@ struct AdminAlertingAlertConfiguration
         text = "abc"
         excluded_file_extensions = "abc"
         malware_exclusion_state = default
-    
+
     example default2
         alert_state = off
         sensitivity_level = invalid
@@ -1050,7 +1062,7 @@ struct AppLogInfo
 
     example default
         team_linked_app = default
-    
+
     example default2
         team_linked_app = default2
 
@@ -1079,7 +1091,7 @@ struct Certificate
         serial_number = "abc"
         sha1_fingerprint = "abc"
         common_name = "abc"
-    
+
     example default2
         subject = "xyz"
         issuer = "xyz"
@@ -1096,7 +1108,7 @@ struct ConnectedTeamName
 
     example default
         team = "My Team"
-    
+
     example default2
         team = "My Team"
 
@@ -1125,7 +1137,7 @@ struct DesktopDeviceSessionLogInfo extends DeviceSessionLogInfo
         client_version = "abc"
         platform = "abc"
         is_delete_on_unlink_supported = true
-    
+
     example default2
         ip_address = "45.56.78.100"
         created = "2017-01-25T15:51:30Z"
@@ -1142,7 +1154,7 @@ struct DesktopSessionLogInfo extends SessionLogInfo
 
     example default
         session_id = "dbwsid:123456789012345678901234567890123456789"
-    
+
     example default2
         session_id = "dbwsid:abcd5678901234567890123456789012345abcd"
 
@@ -1162,7 +1174,7 @@ struct DeviceSessionLogInfo
 
     example default
         desktop_device_session = default
-    
+
     example default2
         desktop_device_session = default2
 
@@ -1176,7 +1188,7 @@ struct DurationLogInfo
     example default
         unit = milliseconds
         amount = 3
-    
+
     example default2
         unit = milliseconds
         amount = 4
@@ -1191,7 +1203,7 @@ struct ExternalUserLogInfo
     example default
         user_identifier = "david@example.com"
         identifier_type = email
-    
+
     example default2
         user_identifier = "david@example.com"
         identifier_type = email
@@ -1206,7 +1218,7 @@ struct FailureDetailsLogInfo
     example default
         user_friendly_message = "abc"
         technical_error_message = "abc"
-    
+
     example default2
         user_friendly_message = "xyz"
         technical_error_message = "xyz"
@@ -1219,7 +1231,7 @@ struct FileLogInfo extends FileOrFolderLogInfo
         display_name = "reports.xls"
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
         file_size = 3
-    
+
     example default2
         path = default2
         display_name = "reports.xls"
@@ -1236,7 +1248,7 @@ struct FileRequestDeadline
     example default
         deadline = "2017-01-25T15:51:30Z"
         allow_late_uploads = "one_day"
-    
+
     example default2
         deadline = "2017-01-25T15:51:30Z"
         allow_late_uploads = "one_day"
@@ -1254,7 +1266,7 @@ struct FileRequestDetails
         asset_index = 3
         deadline = default
         has_password = true
-    
+
     example default2
         asset_index = 4
         deadline = default2
@@ -1271,7 +1283,7 @@ struct FolderLogInfo extends FileOrFolderLogInfo
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
         file_size = 3
         file_count = 3
-    
+
     example default2
         path = default2
         display_name = "reports.xls"
@@ -1292,7 +1304,7 @@ struct GroupLogInfo
         group_id = "g:e2db7665347abcd600000000001a2b3c"
         display_name = "abc"
         external_id = "some group id"
-    
+
     example default2
         group_id = "g:hujn7665347abcd600000000001a2b3d"
         display_name = "xyz"
@@ -1301,16 +1313,22 @@ struct GroupLogInfo
 struct JoinTeamDetails
     "Additional information relevant when a new member joins the team."
     linked_apps List(UserLinkedAppLogInfo)
+        @common.Deprecated
         "Linked applications. (Deprecated) Please use has_linked_apps boolean field instead."
     linked_devices List(LinkedDeviceLogInfo)
+        @common.Deprecated
         "Linked devices. (Deprecated) Please use has_linked_devices boolean field instead."
     linked_shared_folders List(FolderLogInfo)
+        @common.Deprecated
         "Linked shared folders. (Deprecated) Please use has_linked_shared_folders boolean field instead."
     was_linked_apps_truncated Boolean?
+        @common.Deprecated
         "(Deprecated) True if the linked_apps list was truncated to the maximum supported length (50)."
     was_linked_devices_truncated Boolean?
+        @common.Deprecated
         "(Deprecated) True if the linked_devices list was truncated to the maximum supported length (50)."
     was_linked_shared_folders_truncated Boolean?
+        @common.Deprecated
         "(Deprecated) True if the linked_shared_folders list was truncated to the maximum supported length (50)."
     has_linked_apps Boolean?
         "True if the user had linked apps at event time."
@@ -1329,7 +1347,7 @@ struct JoinTeamDetails
         has_linked_apps = true
         has_linked_devices = true
         has_linked_shared_folders = true
-    
+
     example default2
         linked_apps = [default2]
         linked_devices = [default2]
@@ -1375,7 +1393,7 @@ struct LegacyDeviceSessionLogInfo extends DeviceSessionLogInfo
         device_type = "abc"
         client_version = "abc"
         legacy_uniq_id = "abc"
-    
+
     example default2
         ip_address = "45.56.78.100"
         created = "2017-01-25T15:51:30Z"
@@ -1412,7 +1430,7 @@ struct LinkSettingsLogInfo
         expire_at = "2017-01-25T15:51:30Z"
         password_required = true
         url = "abc"
-    
+
     example default2
         name = "xyz"
         require_email = false
@@ -1434,7 +1452,7 @@ struct MalwareExclusionState
         excluded_file_hashes_count = 3
         file_path_from_last_exclusion = "abc"
         file_path_from_last_inclusion = "abc"
-    
+
     example default2
         excluded_file_hashes_count = 4
         file_path_from_last_exclusion = "xyz"
@@ -1450,7 +1468,7 @@ struct MemberTransferredInternalFields
     example default
         source_team_id = "dbtid:AAE3tIYgVuVT1gZork5wQJbXbmlrkBMq26c"
         target_team_id = "dbtid:AAE3tIYgVuVT1gZork5wQJbXbmlrkBMq26c"
-    
+
     example default2
         source_team_id = "dbtid:AAFAqKNLrx_W9MFkS2gWftX0QfTZpo03WsE"
         target_team_id = "dbtid:AAFAqKNLrx_W9MFkS2gWftX0QfTZpo03WsE"
@@ -1480,7 +1498,7 @@ struct MobileDeviceSessionLogInfo extends DeviceSessionLogInfo
         client_version = "abc"
         os_version = "abc"
         last_carrier = "abc"
-    
+
     example default2
         ip_address = "45.56.78.100"
         created = "2017-01-25T15:51:30Z"
@@ -1497,7 +1515,7 @@ struct MobileSessionLogInfo extends SessionLogInfo
 
     example default
         session_id = "dbwsid:123456789012345678901234567890123456789"
-    
+
     example default2
         session_id = "dbwsid:abcd5678901234567890123456789012345abcd"
 
@@ -1514,7 +1532,7 @@ struct NamespaceRelativePathLogInfo
         ns_id = "1234"
         relative_path = "/Contract Work/Product Design"
         is_shared_namespace = true
-    
+
     example default2
         ns_id = "1234"
         relative_path = "/Contract Work/Draft"
@@ -1527,7 +1545,7 @@ struct NonTeamMemberLogInfo extends UserLogInfo
         account_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
         display_name = "John Smith"
         email = "john_smith@acmecorp.com"
-    
+
     example default2
         account_id = "dbid:AAGx4oiLtHdvRdNxUpvvJBXYgR4BS19c9kw"
         display_name = "Jane Smith"
@@ -1540,7 +1558,7 @@ struct NonTrustedTeamDetails
 
     example default
         team = "abc"
-    
+
     example default2
         team = "xyz"
 
@@ -1551,7 +1569,7 @@ struct OrganizationDetails
 
     example default
         organization = "My Organization"
-    
+
     example default2
         organization = "My Organization"
 
@@ -1562,7 +1580,7 @@ struct OrganizationName
 
     example default
         organization = "My Organization"
-    
+
     example default2
         organization = "My Organization"
 
@@ -1576,7 +1594,7 @@ struct PaperDocumentLogInfo
     example default
         doc_id = "abc"
         doc_title = "abc"
-    
+
     example default2
         doc_id = "xyz"
         doc_title = "xyz"
@@ -1591,7 +1609,7 @@ struct PaperFolderLogInfo
     example default
         folder_id = "abc"
         folder_name = "abc"
-    
+
     example default2
         folder_id = "xyz"
         folder_name = "xyz"
@@ -1606,7 +1624,7 @@ struct PathLogInfo
     example default
         contextual = "/Contract Work/Product Design"
         namespace_relative = default
-    
+
     example default2
         contextual = "/Contract Work/Draft"
         namespace_relative = default2
@@ -1621,7 +1639,7 @@ struct PrimaryTeamRequestAcceptedDetails
     example default
         secondary_team = "IT Department"
         sent_by = "Dan Eveninglily"
-    
+
     example default2
         secondary_team = "IT Department"
         sent_by = "Dan Eveninglily"
@@ -1636,7 +1654,7 @@ struct PrimaryTeamRequestCanceledDetails
     example default
         secondary_team = "IT Department"
         sent_by = "Dan Eveninglily"
-    
+
     example default2
         secondary_team = "IT Department"
         sent_by = "Dan Eveninglily"
@@ -1651,7 +1669,7 @@ struct PrimaryTeamRequestExpiredDetails
     example default
         secondary_team = "IT Department"
         sent_by = "Dan Eveninglily"
-    
+
     example default2
         secondary_team = "IT Department"
         sent_by = "Dan Eveninglily"
@@ -1666,7 +1684,7 @@ struct PrimaryTeamRequestReminderDetails
     example default
         secondary_team = "IT Department"
         sent_to = "Dan Eveninglily"
-    
+
     example default2
         secondary_team = "IT Department"
         sent_to = "Dan Eveninglily"
@@ -1678,7 +1696,7 @@ struct ProductLogInfo
 
     example default
         product_name = "abc"
-    
+
     example default2
         product_name = "xyz"
 
@@ -1695,7 +1713,7 @@ struct RecipientsConfiguration
         recipient_setting_type = invalid
         emails = ["john_smith@acmecorp.com"]
         groups = ["abc"]
-    
+
     example default2
         recipient_setting_type = invalid
         emails = ["jane_smith@acmecorp.com"]
@@ -1711,7 +1729,7 @@ struct RelocateAssetReferencesLogInfo
     example default
         src_asset_index = 3
         dest_asset_index = 3
-    
+
     example default2
         src_asset_index = 4
         dest_asset_index = 4
@@ -1726,7 +1744,7 @@ struct SecondaryTeamRequestAcceptedDetails
     example default
         primary_team = "IT Department"
         sent_by = "Dan Eveninglily"
-    
+
     example default2
         primary_team = "IT Department"
         sent_by = "Dan Eveninglily"
@@ -1741,7 +1759,7 @@ struct SecondaryTeamRequestCanceledDetails
     example default
         sent_to = "admin@it_department.com"
         sent_by = "Dan Eveninglily"
-    
+
     example default2
         sent_to = "admin@it_department.com"
         sent_by = "Dan Eveninglily"
@@ -1753,7 +1771,7 @@ struct SecondaryTeamRequestExpiredDetails
 
     example default
         sent_to = "admin@it_department.com"
-    
+
     example default2
         sent_to = "admin@it_department.com"
 
@@ -1764,7 +1782,7 @@ struct SecondaryTeamRequestReminderDetails
 
     example default
         sent_to = "admin@it_department.com"
-    
+
     example default2
         sent_to = "admin@it_department.com"
 
@@ -1779,7 +1797,7 @@ struct SessionLogInfo
 
     example default
         desktop = default
-    
+
     example default2
         desktop = default2
 
@@ -1793,7 +1811,7 @@ struct ShowcaseDocumentLogInfo
     example default
         showcase_id = "fvti8SoWq5tdyM1YMXl5z"
         showcase_title = "Sample Showcase Proposal"
-    
+
     example default2
         showcase_id = "fvti8SoWq5tdyM1YMXl5z"
         showcase_title = "Sample Showcase Proposal"
@@ -1805,7 +1823,7 @@ struct TeamDetails
 
     example default
         team = "My Team"
-    
+
     example default2
         team = "My Team"
 
@@ -1819,7 +1837,7 @@ struct TeamInviteDetails
     example default
         invite_method = invite_link
         additional_license_purchase = true
-    
+
     example default2
         invite_method = invite_link
         additional_license_purchase = false
@@ -1830,7 +1848,7 @@ struct TeamLinkedAppLogInfo extends AppLogInfo
     example default
         app_id = "dbaid:AAFhvuxku2OYumUaV17x6ExFhr6OPrwjTKs"
         display_name = "abc"
-    
+
     example default2
         app_id = "dbaid:AAG1NxJeBtby__IZENPAvDGeOssreFpPALE"
         display_name = "xyz"
@@ -1842,7 +1860,7 @@ struct TeamLogInfo
 
     example default
         display_name = "A Team"
-    
+
     example default2
         display_name = "A Team"
 
@@ -1862,7 +1880,7 @@ struct TeamMemberLogInfo extends UserLogInfo
         team_member_id = "dbmid:AAFoi-tmvRuQR0jU-3fN4B-9nZo6nHcDO9Q"
         member_external_id = "ADSYNC S-1-5-21-1004296348-1135238915-682003432-1224"
         team = default
-    
+
     example default2
         account_id = "dbid:AAGx4oiLtHdvRdNxUpvvJBXYgR4BS19c9kw"
         display_name = "Jane Smith"
@@ -1881,7 +1899,7 @@ struct TeamName
     example default
         team_display_name = "abc"
         team_legal_name = "abc"
-    
+
     example default2
         team_display_name = "xyz"
         team_legal_name = "xyz"
@@ -1899,7 +1917,7 @@ struct TrustedNonTeamMemberLogInfo extends UserLogInfo
         email = "john_smith@acmecorp.com"
         trusted_non_team_member_type = multi_instance_admin
         team = default
-    
+
     example default2
         account_id = "dbid:AAGx4oiLtHdvRdNxUpvvJBXYgR4BS19c9kw"
         display_name = "Jane Smith"
@@ -1913,7 +1931,7 @@ struct UserLinkedAppLogInfo extends AppLogInfo
     example default
         app_id = "dbaid:AAFhvuxku2OYumUaV17x6ExFhr6OPrwjTKs"
         display_name = "abc"
-    
+
     example default2
         app_id = "dbaid:AAG1NxJeBtby__IZENPAvDGeOssreFpPALE"
         display_name = "xyz"
@@ -1933,7 +1951,7 @@ struct UserLogInfo
 
     example default
         non_team_member = default
-    
+
     example default2
         non_team_member = default2
 
@@ -1950,7 +1968,7 @@ struct UserNameLogInfo
         given_name = "abc"
         surname = "abc"
         locale = "abc"
-    
+
     example default2
         given_name = "xyz"
         surname = "xyz"
@@ -1962,7 +1980,7 @@ struct UserOrTeamLinkedAppLogInfo extends AppLogInfo
     example default
         app_id = "dbaid:AAFhvuxku2OYumUaV17x6ExFhr6OPrwjTKs"
         display_name = "abc"
-    
+
     example default2
         app_id = "dbaid:AAG1NxJeBtby__IZENPAvDGeOssreFpPALE"
         display_name = "xyz"
@@ -1986,7 +2004,7 @@ struct WebDeviceSessionLogInfo extends DeviceSessionLogInfo
         user_agent = "abc"
         os = "abc"
         browser = "abc"
-    
+
     example default2
         ip_address = "45.56.78.100"
         created = "2017-01-25T15:51:30Z"
@@ -2001,7 +2019,7 @@ struct WebSessionLogInfo extends SessionLogInfo
 
     example default
         session_id = "dbwsid:123456789012345678901234567890123456789"
-    
+
     example default2
         session_id = "dbwsid:abcd5678901234567890123456789012345abcd"
 
@@ -2012,7 +2030,7 @@ struct ApiSessionLogInfo
 
     example default
         request_id = "dbarid:f451ce673cc5da6818aed4c160a3ebaa"
-    
+
     example default2
         request_id = "dbarid:f451ce673cc5da6818aed4c160a3ebaa"
 
@@ -2032,7 +2050,7 @@ struct FileOrFolderLogInfo
         display_name = "reports.xls"
         file_id = "id:jQKLsZFQImAAAAAAEZAAQt"
         file_size = 3
-    
+
     example default2
         path = default2
         display_name = "reports.xls"
@@ -2055,7 +2073,7 @@ struct GeoLocationLogInfo
         region = "California"
         country = "US"
         ip_address = "45.56.78.100"
-    
+
     example default2
         city = "San Francisco"
         region = "California"
@@ -2077,7 +2095,7 @@ struct OriginLogInfo
     example default
         geo_location = default
         access_method = default
-    
+
     example default2
         geo_location = default2
         access_method = default2
@@ -2092,7 +2110,7 @@ struct ResellerLogInfo
     example default
         reseller_name = "abc"
         reseller_email = "john_smith@acmecorp.com"
-    
+
     example default2
         reseller_name = "xyz"
         reseller_email = "jane_smith@acmecorp.com"
@@ -2114,7 +2132,7 @@ union AccessMethodLogInfo
 
     example default
         end_user = default
-    
+
     example default2
         end_user = default2
 
@@ -2135,7 +2153,7 @@ union ActorLogInfo
 
     example default
         user = default
-    
+
     example default2
         user = default2
 
@@ -2156,7 +2174,7 @@ union ContextLogInfo
 
     example default
         team_member = default
-    
+
     example default2
         team_member = default2
 
@@ -6315,6 +6333,39 @@ struct TeamFolderRenameDetails
         previous_folder_name = "abc"
         new_folder_name = "abc"
 
+struct TeamFolderSpaceLimitsChangeCapsTypeDetails
+    "Changed team folder space limit enforcement type."
+    previous_caps_type TeamFolderSpaceCapsType?
+        "Previous enforcement type."
+    new_caps_type TeamFolderSpaceCapsType
+        "New enforcement type."
+
+    example default
+        previous_caps_type = off
+        new_caps_type = off
+
+struct TeamFolderSpaceLimitsChangeLimitDetails
+    "Changed team folder space limit."
+    previous_limit_bytes Int64?
+        "Previous limit in bytes."
+    new_limit_bytes Int64
+        "New limit in bytes."
+
+    example default
+        previous_limit_bytes = 3
+        new_limit_bytes = 3
+
+struct TeamFolderSpaceLimitsChangeNotificationTargetDetails
+    "Changed team folder space limit notification target."
+    previous_target TeamFolderNotificationTarget?
+        "Previous notification target."
+    new_target TeamFolderNotificationTarget
+        "New notification target."
+
+    example default
+        previous_target = admins
+        new_target = admins
+
 struct TeamSelectiveSyncSettingsChangedDetails
     "Changed sync default."
     previous_value files.SyncSetting
@@ -8195,6 +8246,9 @@ union EventDetails
     team_folder_downgrade_details TeamFolderDowngradeDetails
     team_folder_permanently_delete_details TeamFolderPermanentlyDeleteDetails
     team_folder_rename_details TeamFolderRenameDetails
+    team_folder_space_limits_change_caps_type_details TeamFolderSpaceLimitsChangeCapsTypeDetails
+    team_folder_space_limits_change_limit_details TeamFolderSpaceLimitsChangeLimitDetails
+    team_folder_space_limits_change_notification_target_details TeamFolderSpaceLimitsChangeNotificationTargetDetails
     team_selective_sync_settings_changed_details TeamSelectiveSyncSettingsChangedDetails
     account_capture_change_policy_details AccountCaptureChangePolicyDetails
     admin_email_reminders_changed_details AdminEmailRemindersChangedDetails
@@ -11043,6 +11097,24 @@ struct TeamFolderRenameType
     example default
         description = "(team_folders) Renamed active/archived team folder"
 
+struct TeamFolderSpaceLimitsChangeCapsTypeType
+    description String
+
+    example default
+        description = "(team_folders) Changed team folder space limit enforcement type"
+
+struct TeamFolderSpaceLimitsChangeLimitType
+    description String
+
+    example default
+        description = "(team_folders) Changed team folder space limit"
+
+struct TeamFolderSpaceLimitsChangeNotificationTargetType
+    description String
+
+    example default
+        description = "(team_folders) Changed team folder space limit notification target"
+
 struct TeamSelectiveSyncSettingsChangedType
     description String
 
@@ -12865,6 +12937,12 @@ union EventType
         "(team_folders) Permanently deleted archived team folder"
     team_folder_rename TeamFolderRenameType
         "(team_folders) Renamed active/archived team folder"
+    team_folder_space_limits_change_caps_type TeamFolderSpaceLimitsChangeCapsTypeType
+        "(team_folders) Changed team folder space limit enforcement type"
+    team_folder_space_limits_change_limit TeamFolderSpaceLimitsChangeLimitType
+        "(team_folders) Changed team folder space limit"
+    team_folder_space_limits_change_notification_target TeamFolderSpaceLimitsChangeNotificationTargetType
+        "(team_folders) Changed team folder space limit notification target"
     team_selective_sync_settings_changed TeamSelectiveSyncSettingsChangedType
         "(team_folders) Changed sync default"
     account_capture_change_policy AccountCaptureChangePolicyType
@@ -14075,6 +14153,12 @@ union EventTypeArg
         "(team_folders) Permanently deleted archived team folder"
     team_folder_rename
         "(team_folders) Renamed active/archived team folder"
+    team_folder_space_limits_change_caps_type
+        "(team_folders) Changed team folder space limit enforcement type"
+    team_folder_space_limits_change_limit
+        "(team_folders) Changed team folder space limit"
+    team_folder_space_limits_change_notification_target
+        "(team_folders) Changed team folder space limit notification target"
     team_selective_sync_settings_changed
         "(team_folders) Changed sync default"
     account_capture_change_policy

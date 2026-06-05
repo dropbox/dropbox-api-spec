@@ -25,7 +25,7 @@ union_closed LaunchEmptyResult extends LaunchResultBase
 
     example complete
         complete = null
-    
+
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
@@ -54,7 +54,7 @@ union_closed PollEmptyResult extends PollResultBase
 
     example complete
         complete = null
-    
+
     example in_progress
         in_progress = null
 

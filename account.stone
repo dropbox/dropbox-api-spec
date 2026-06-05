@@ -3,16 +3,8 @@ namespace account
 import account_id
 import common
 
-route get_photo (AccountPhotoGetArg, AccountPhotoGetResult, AccountPhotoGetError)
-    "This lovely endpoint gets the account photo of a given user."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "account_info.read"
-        select_admin_mode = "whole_team"
-        style = "download"
+union DeleteProfilePhotoError
+    "This union is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
 
 
 union PhotoSourceArg
@@ -85,10 +77,35 @@ struct AccountPhotoGetResult
     example default
         content_type = "image/jpeg"
 
+struct DeleteProfilePhotoArg
+    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+
+struct DeleteProfilePhotoResult
+    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+
 route set_profile_photo (SetProfilePhotoArg, SetProfilePhotoResult, SetProfilePhotoError)
     "Sets a user's profile photo."
 
     attrs
         auth = "user"
         scope = "account_info.write"
+
+route delete_profile_photo (DeleteProfilePhotoArg, DeleteProfilePhotoResult, DeleteProfilePhotoError)
+    "Deletes the current user's profile photo."
+
+    attrs
+        auth = "user"
+        scope = "account_info.write"
+
+
+route get_photo (AccountPhotoGetArg, AccountPhotoGetResult, AccountPhotoGetError)
+    "This lovely endpoint gets the account photo of a given user."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "account_info.read"
+        select_admin_mode = "whole_team"
+        style = "download"
 

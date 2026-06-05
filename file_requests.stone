@@ -121,7 +121,7 @@ struct FileRequestDeadline
 
     example deadline
         deadline = "2020-10-12T17:00:00Z"
-    
+
     example deadline_with_grace_period
         deadline = "2020-10-12T17:00:00Z"
         allow_late_uploads = seven_days
@@ -165,7 +165,7 @@ struct FileRequest
         is_open = true
         file_count = 3
         description = "Please submit your homework here."
-    
+
     example with_deadline
         id = "BAJ7IrRGicQKGToykQdB"
         url = "https://www.dropbox.com/request/BAJ7IrRGjcQKGToykQdB"
@@ -175,7 +175,7 @@ struct FileRequest
         deadline = deadline
         is_open = true
         file_count = 105
-    
+
     example with_no_deadline
         id = "rxwMPvK3ATTa0VxOJu5T"
         url = "https://www.dropbox.com/request/rxwMPvK3ATTa0VxOJu5T"

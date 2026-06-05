@@ -11,1508 +11,108 @@ import team_policies
 import users
 import users_common
 
-union NamespaceType
-    app_folder
-        "App sandbox folder."
-    shared_folder
-        "Shared folder."
-    team_folder
-        "Top-level team-owned folder."
-    team_member_folder
-        "Team member's home folder."
-    team_member_root
-        "Team member's root folder."
+union_closed TeamMembershipType
+    full
+        "User uses a license and has full access to team resources like the shared quota."
+    limited
+        @common.Deprecated
+        "User does not have access to the shared quota and team admins have restricted administrative control."
 
-union TeamNamespacesListContinueError extends TeamNamespacesListError
-    invalid_cursor
-        "The cursor is invalid."
+struct RemovedStatus
+    is_recoverable Boolean
+        "True if the removed team member is recoverable."
+    is_disconnected Boolean
+        "True if the team member's account was converted to individual account."
 
-union TeamNamespacesListError
-    invalid_arg
-        "Argument passed in is invalid."
+    example default
+        is_recoverable = false
+        is_disconnected = false
 
-struct NamespaceMetadata
-    "Properties of a namespace."
-    name String
-        "The name of this namespace."
-    namespace_id common.SharedFolderId
-        "The ID of this namespace."
-    namespace_type NamespaceType
-        "The type of this namespace."
-    team_member_id team_common.TeamMemberId?
-        "If this is a team member or app folder, the ID of the owning team member.
-        Otherwise, this field is not present."
+union_closed TeamMemberStatus
+    "The user's status as a member of a specific team."
+    active
+        "User has successfully joined the team."
+    invited
+        "User has been invited to a team, but has not joined the team yet."
+    suspended
+        "User is no longer a member of the team, but the account can be un-suspended,
+        re-establishing the user as a team member."
+    removed RemovedStatus
+        "User is no longer a member of the team.
+        Removed users are only listed when include_removed is true in members/list."
 
-    example shared_folder
-        name = "Marketing"
-        namespace_id = "123456789"
-        namespace_type = shared_folder
-    
-    example team_member_folder
-        name = "Franz Ferdinand"
-        namespace_id = "123456789"
-        namespace_type = team_member_folder
+struct MemberProfile
+    "Basic member profile."
+    team_member_id team_common.TeamMemberId
+        "ID of user as a member of a team."
+    external_id String?
+        "External ID that a team can attach to the user.
+        An application using the API may find it easier to use their
+        own IDs instead of Dropbox IDs like account_id or team_member_id."
+    account_id users_common.AccountId?
+        "A user's account identifier."
+    email String
+        "Email address of user."
+    email_verified Boolean
+        "Is true if the user's email is verified to be owned by the user."
+    secondary_emails List(secondary_emails.SecondaryEmail)?
+        "Secondary emails of a user."
+    status TeamMemberStatus
+        "The user's status as a member of a specific team."
+    name users.Name
+        "Representations for a person's name."
+    membership_type TeamMembershipType
+        "The user's membership type: full (normal team member) vs limited (does not use a license; no access to the team's shared quota)."
+    invited_on common.DropboxTimestamp?
+        "The date and time the user was invited to the team (contains value only when the member's status matches :field:`TeamMemberStatus.invited`)."
+    joined_on common.DropboxTimestamp?
+        "The date and time the user joined as a member of a specific team."
+    suspended_on common.DropboxTimestamp?
+        "The date and time the user was suspended from the team (contains value only when the member's status matches :field:`TeamMemberStatus.suspended`)."
+    persistent_id String?
+        "Persistent ID that a team can attach to the user.
+        The persistent ID is unique ID to be used for SAML authentication."
+    is_directory_restricted Boolean?
+        "Whether the user is a directory restricted user."
+    profile_photo_url String?
+        "URL for the photo representing the user, if one is set."
+
+    example default
         team_member_id = "dbmid:1234567"
-
-struct TeamNamespacesListResult
-    "Result for :route:`namespaces/list`."
-    namespaces List(NamespaceMetadata)
-        "List of all namespaces the team can access."
-    cursor String
-        "Pass the cursor into :route:`namespaces/list/continue` to obtain
-        additional namespaces. Note that duplicate namespaces may be returned."
-    has_more Boolean
-        "Is true if there are additional namespaces that have not been returned yet."
-
-    example default
-        namespaces = [shared_folder, team_member_folder]
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-        has_more = false
-
-struct TeamNamespacesListArg
-    limit UInt32(max_value=1000, min_value=1) = 1000
-        "Specifying a value here has no effect."
-
-    example default
-        limit = 1
-    
-    example with_filter
-        limit = 1
-
-struct TeamNamespacesListContinueArg
-    cursor String
-        "Indicates from what point to get the next set of team-accessible namespaces."
-
-    example default
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-    
-    example with_filter
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-
-route namespaces/list (TeamNamespacesListArg, TeamNamespacesListResult, TeamNamespacesListError)
-    "Returns a list of all team-accessible namespaces. This list includes team folders,
-    shared folders containing team members, team members' home namespaces, and team members'
-    app folders. Home namespaces and app folders are always owned by this team or members of the
-    team, but shared folders may be owned by other users or other teams. Duplicates may occur in the
-    list."
-
-    attrs
-        auth = "team"
-        scope = "team_data.member"
-
-route namespaces/list/continue (TeamNamespacesListContinueArg, TeamNamespacesListResult, TeamNamespacesListContinueError)
-    "Once a cursor has been retrieved from :route:`namespaces/list`, use this to paginate
-    through all team-accessible namespaces. Duplicates may occur in the list."
-
-    attrs
-        auth = "team"
-        scope = "team_data.member"
-
-
-alias GroupsGetInfoResult = List(GroupsGetInfoItem)
-
-union_closed GroupAccessType
-    "Role of a user in group."
-    member
-        "User is a member of the group, but has no special permissions."
-    owner
-        "User can rename the group, and add/remove members."
-
-    example default
-        member = null
-
-union_closed GroupSelector
-    "Argument for selecting a single group, either by group_id or by external group ID."
-    group_id team_common.GroupId
-        "Group ID."
-    group_external_id team_common.GroupExternalId
-        "External ID of the group."
-
-    example default
-        group_id = "g:e2db7665347abcd600000000001a2b3c"
-
-union GroupSelectorError
-    "Error that can be raised when :type:`GroupSelector` is used."
-    group_not_found
-        "No matching group found. No groups match the specified group ID."
-
-union GroupSelectorWithTeamGroupError extends GroupSelectorError
-    "Error that can be raised when :type:`GroupSelector` is used and team groups are disallowed from
-    being used."
-    system_managed_group_disallowed
-        "This operation is not supported on system-managed groups."
-
-union_closed GroupsSelector
-    "Argument for selecting a list of groups, either by group_ids, or external group IDs."
-    group_ids List(team_common.GroupId)
-        "List of group IDs."
-    group_external_ids List(String)
-        "List of external IDs of groups."
-
-    example default
-        group_ids = ["g:e2db7665347abcd600000000001a2b3c", "g:111111147abcd6000000000222222c"]
-
-union GroupMemberSelectorError extends GroupSelectorWithTeamGroupError
-    "Error that can be raised when :type:`GroupMemberSelector` is used, and the user
-    is required to be a member of the specified group."
-    member_not_in_group
-        "The specified user is not a member of this group."
-
-union GroupMembersSelectorError extends GroupSelectorWithTeamGroupError
-    "Error that can be raised when :type:`GroupMembersSelector` is used, and the users
-    are required to be members of the specified group."
-    member_not_in_group
-        "At least one of the specified users is not a member of the group."
-
-union GroupsListContinueError
-    invalid_cursor
-        "The cursor is invalid."
-
-union_closed GroupsGetInfoItem
-    id_not_found String = ""
-        "An ID that was provided as a parameter to :route:`groups/get_info`, and
-        did not match a corresponding group. The ID can be a group ID, or an external ID,
-        depending on how the method was called."
-    group_info GroupFullInfo
-        "Info about a group."
-
-    example default
-        group_info = default
-
-union GroupsGetInfoError
-    group_not_on_team
-        "The group is not on your team."
-
-union GroupCreateError
-    group_name_already_used
-        "The requested group name is already being used by another group."
-    group_name_invalid
-        "Group name is empty or has invalid characters."
-    external_id_already_in_use
-        "The requested external ID is already being used by another group."
-    system_managed_group_disallowed
-        "System-managed group cannot be manually created."
-
-union GroupDeleteError extends GroupSelectorWithTeamGroupError
-    group_already_deleted
-        "This group has already been deleted."
-
-union GroupUpdateError extends GroupSelectorWithTeamGroupError
-    group_name_already_used
-        "The requested group name is already being used by another group."
-    group_name_invalid
-        "Group name is empty or has invalid characters."
-    external_id_already_in_use
-        "The requested external ID is already being used by another group."
-
-union GroupMembersAddError extends GroupSelectorWithTeamGroupError
-    duplicate_user
-        "You cannot add duplicate users. One or more of the members
-        you are trying to add is already a member of the group."
-    group_not_in_team
-        "Group is not in this team. You cannot add members to a
-        group that is outside of your team."
-    members_not_in_team List(String)
-        "These members are not part of your team. Currently, you cannot add members
-        to a group if they are not part of your team, though this
-        may change in a subsequent version. To add new members to your Dropbox
-        Business team, use the :route:`members/add` endpoint."
-    users_not_found List(String)
-        "These users were not found in Dropbox."
-    user_must_be_active_to_be_owner
-        "A suspended user cannot be added to a group as :field:`GroupAccessType.owner`."
-    user_cannot_be_manager_of_company_managed_group List(String)
-        "A company-managed group cannot be managed by a user."
-
-union GroupMembersRemoveError extends GroupMembersSelectorError
-    group_not_in_team
-        "Group is not in this team. You cannot remove members from a group
-        that is outside of your team."
-    members_not_in_team List(String)
-        "These members are not part of your team."
-    users_not_found List(String)
-        "These users were not found in Dropbox."
-
-union GroupMemberSetAccessTypeError extends GroupMemberSelectorError
-    user_cannot_be_manager_of_company_managed_group
-        "A company managed group cannot be managed by a user."
-
-union GroupsMembersListContinueError
-    invalid_cursor
-        "The cursor is invalid."
-
-union GroupsPollError extends async.PollError
-    access_denied
-        "You are not allowed to poll this job."
-
-struct GroupMemberSelector
-    "Argument for selecting a group and a single user."
-    group GroupSelector
-        "Specify a group."
-    user UserSelectorArg
-        "Identity of a user that is a member of :field:`group`."
-
-    example default
-        group = default
-        user = default
-
-struct GroupMembersSelector
-    "Argument for selecting a group and a list of users."
-    group GroupSelector
-        "Specify a group."
-    users UsersSelectorArg
-        "A list of users that are members of :field:`group`."
-
-struct IncludeMembersArg
-    return_members Boolean = true
-        "Whether to return the list of members in the group.
-        Note that the default value will cause all the group members
-        to be returned in the response. This may take a long time for large groups."
-
-struct GroupMemberInfo
-    "Profile of group member, and role in group."
-    profile MemberProfile
-        "Profile of group member."
-    access_type GroupAccessType
-        "The role that the user has in the group."
-
-    example default
-        profile = default
-        access_type = default
-
-struct GroupFullInfo extends team_common.GroupSummary
-    "Full description of a group."
-    members List(GroupMemberInfo)?
-        "List of group members."
-    created UInt64
-        "The group creation time as a UTC timestamp in milliseconds since the Unix epoch."
-
-    example default
-        group_name = "project launch"
-        group_id = "g:e2db7665347abcd600000000001a2b3c"
-        member_count = 5
-        group_management_type = user_managed
-        members = [default]
-        created = 1447255518000
-
-struct GroupsListArg
-    limit UInt32(max_value=1000, min_value=1) = 1000
-        "Number of results to return per call."
-
-    example default
-        limit = 100
-
-struct GroupsListResult
-    groups List(team_common.GroupSummary)
-    cursor String
-        "Pass the cursor into :route:`groups/list/continue` to obtain the additional groups."
-    has_more Boolean
-        "Is true if there are additional groups that have not been returned
-        yet. An additional call to :route:`groups/list/continue` can retrieve them."
-
-    example default
-        groups = [default]
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-        has_more = false
-
-struct GroupsListContinueArg
-    cursor String
-        "Indicates from what point to get the next set of groups."
-
-    example default
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-
-struct GroupCreateArg
-    group_name String
-        "Group name."
-    add_creator_as_owner Boolean = false
-        "Automatically add the creator of the group."
-    group_external_id team_common.GroupExternalId?
-        "The creator of a team can associate an arbitrary external ID to the group."
-    group_management_type team_common.GroupManagementType?
-        "Whether the team can be managed by selected users, or only by team admins."
-
-    example default
-        group_name = "Europe sales"
-        group_external_id = "group-134"
-
-struct GroupUpdateArgs extends IncludeMembersArg
-    group GroupSelector
-        "Specify a group."
-    new_group_name String?
-        "Optional argument. Set group name to this if provided."
-    new_group_external_id team_common.GroupExternalId?
-        "Optional argument. New group external ID.
-        If the argument is None, the group's external_id won't be updated.
-        If the argument is empty string, the group's external id will be cleared."
-    new_group_management_type team_common.GroupManagementType?
-        "Set new group management type, if provided."
-
-    example default
-        group = default
-        new_group_name = "Europe west sales"
-        new_group_external_id = "sales-234"
-        new_group_management_type = company_managed
-
-struct GroupMembersChangeResult
-    "Result returned by :route:`groups/members/add` and :route:`groups/members/remove`."
-    group_info GroupFullInfo
-        "The group info after member change operation has been performed."
-    async_job_id async.AsyncJobId
-        "For legacy purposes async_job_id will always return one space ' '. Formerly, it was an ID that was used to obtain the status of granting/revoking group-owned resources. It's no longer necessary because the async processing now happens automatically."
-
-    example default
-        group_info = default
-        async_job_id = "99988877733388"
-
-struct MemberAccess
-    "Specify access type a member should have when joined to a group."
-    user UserSelectorArg
-        "Identity of a user."
-    access_type GroupAccessType
-        "Access type."
-
-    example default
-        user = default
-        access_type = default
-
-struct GroupMembersAddArg extends IncludeMembersArg
-    group GroupSelector
-        "Group to which users will be added."
-    members List(MemberAccess)
-        "List of users to be added to the group."
-
-    example default
-        group = default
-        members = [default]
-
-struct GroupMembersRemoveArg extends IncludeMembersArg
-    group GroupSelector
-        "Group from which users will be removed."
-    users List(UserSelectorArg)
-        "List of users to be removed from the group."
-
-    example default
-        group = default
-        users = [default]
-
-struct GroupMembersSetAccessTypeArg extends GroupMemberSelector
-    access_type GroupAccessType
-        "New group access type the user will have."
-    return_members Boolean = true
-        "Whether to return the list of members in the group.
-        Note that the default value will cause all the group members
-        to be returned in the response. This may take a long time for large groups."
-
-    example default
-        group = default
-        user = default
-        access_type = default
-
-struct GroupsMembersListArg
-    group GroupSelector
-        "The group whose members are to be listed."
-    limit UInt32(max_value=1000, min_value=1) = 1000
-        "Number of results to return per call."
-
-    example default
-        group = default
-        limit = 100
-
-struct GroupsMembersListResult
-    members List(GroupMemberInfo)
-    cursor String
-        "Pass the cursor into :route:`groups/members/list/continue` to obtain additional group members."
-    has_more Boolean
-        "Is true if there are additional group members that have not been returned
-        yet. An additional call to :route:`groups/members/list/continue` can retrieve them."
-
-    example default
-        members = []
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-        has_more = false
-
-struct GroupsMembersListContinueArg
-    cursor String
-        "Indicates from what point to get the next set of groups."
-
-    example default
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-
-route groups/list (GroupsListArg, GroupsListResult, Void)
-    "Lists groups on a team.
-    Permission : Team Information."
-
-    attrs
-        auth = "team"
-        scope = "groups.read"
-
-route groups/list/continue (GroupsListContinueArg, GroupsListResult, GroupsListContinueError)
-    "Once a cursor has been retrieved from :route:`groups/list`, use this to paginate
-    through all groups.
-    Permission : Team Information."
-
-    attrs
-        auth = "team"
-        scope = "groups.read"
-
-route groups/get_info (GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
-    "Retrieves information about one or more groups. Note that the optional field
-    :field:`GroupFullInfo.members` is not returned for system-managed groups.
-    Permission : Team Information."
-
-    attrs
-        auth = "team"
-        scope = "groups.read"
-
-route groups/create (GroupCreateArg, GroupFullInfo, GroupCreateError)
-    "Creates a new, empty group, with a requested name.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "groups.write"
-
-route groups/delete (GroupSelector, async.LaunchEmptyResult, GroupDeleteError)
-    "Deletes a group.
-    The group is deleted immediately. However the revoking of group-owned resources
-    may take additional time.
-    Use the :route:`groups/job_status/get` to determine whether this process has completed.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "groups.write"
-
-route groups/update (GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
-    "Updates a group's name and/or external ID.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "groups.write"
-
-route groups/members/add (GroupMembersAddArg, GroupMembersChangeResult, GroupMembersAddError)
-    "Adds members to a group.
-    The members are added immediately. However the granting of group-owned resources
-    may take additional time.
-    Use the :route:`groups/job_status/get` to determine whether this process has completed.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "groups.write"
-
-route groups/members/remove (GroupMembersRemoveArg, GroupMembersChangeResult, GroupMembersRemoveError)
-    "Removes members from a group.
-    The members are removed immediately. However the revoking of group-owned resources
-    may take additional time.
-    Use the :route:`groups/job_status/get` to determine whether this process has completed.
-    This method permits removing the only owner of a group, even in cases where this is not
-    possible via the web client.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "groups.write"
-
-route groups/members/set_access_type (GroupMembersSetAccessTypeArg, GroupsGetInfoResult, GroupMemberSetAccessTypeError)
-    "Sets a member's access type in a group.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "groups.write"
-
-route groups/members/list (GroupsMembersListArg, GroupsMembersListResult, GroupSelectorError)
-    "Lists members of a group.
-    Permission : Team Information."
-
-    attrs
-        auth = "team"
-        scope = "groups.read"
-
-route groups/members/list/continue (GroupsMembersListContinueArg, GroupsMembersListResult, GroupsMembersListContinueError)
-    "Once a cursor has been retrieved from :route:`groups/members/list`, use this to paginate
-    through all members of the group.
-    Permission : Team information."
-
-    attrs
-        auth = "team"
-        scope = "groups.read"
-
-route groups/job_status/get (async.PollArg, async.PollEmptyResult, GroupsPollError)
-    "Once an async_job_id is returned from :route:`groups/delete`,
-    :route:`groups/members/add` , or :route:`groups/members/remove`
-    use this method to poll the status of granting/revoking
-    group members' access to group-owned resources.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "groups.write"
-
-
-union ListMemberAppsError
-    "Error returned by :route:`linked_apps/list_member_linked_apps`."
-    member_not_found
-        "Member not found."
-
-union ListMembersAppsError
-    "Error returned by :route:`linked_apps/list_members_linked_apps`."
-    reset
-        "Indicates that the cursor has been invalidated. Call
-        :route:`linked_apps/list_members_linked_apps` again with an empty cursor to obtain a new cursor."
-
-union RevokeLinkedAppError
-    "Error returned by :route:`linked_apps/revoke_linked_app`."
-    app_not_found
-        "Application not found."
-    member_not_found
-        "Member not found."
-    app_folder_removal_not_supported
-        "App folder removal is not supported."
-
-union RevokeLinkedAppBatchError
-    "Error returned by :route:`linked_apps/revoke_linked_app_batch`."
-
-union ListTeamAppsError
-    "Error returned by :route:`linked_apps/list_team_linked_apps`."
-    reset
-        "Indicates that the cursor has been invalidated. Call
-        :route:`linked_apps/list_team_linked_apps` again with an empty cursor to obtain a new cursor."
-
-struct ListMemberAppsArg
-    team_member_id String
-        "The team member id."
-
-    example default
-        team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
-
-struct ApiApp
-    "Information on linked third party applications."
-    app_id String
-        "The application unique id."
-    app_name String
-        "The application name."
-    publisher String?
-        "The application publisher name."
-    publisher_url String?
-        "The publisher's URL."
-    linked common.DropboxTimestamp?
-        "The time this application was linked."
-    is_app_folder Boolean
-        "Whether the linked application uses a dedicated folder."
-
-    example default
-        app_id = "dbaid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
-        app_name = "Notes"
-        publisher = "Notes company"
-        publisher_url = "http://company.com"
-        linked = "2015-05-12T15:50:38Z"
-        is_app_folder = true
-
-struct ListMemberAppsResult
-    linked_api_apps List(ApiApp)
-        "List of third party applications linked by this team member."
-
-    example default
-        linked_api_apps = [default]
-
-struct ListMembersAppsArg
-    "Arguments for :route:`linked_apps/list_members_linked_apps`."
-    cursor String?
-        "At the first call to the :route:`linked_apps/list_members_linked_apps` the cursor shouldn't be
-        passed. Then, if the result of the call includes a cursor, the following requests should
-        include the received cursors in order to receive the next sub list of the team applications."
-
-    example default
-        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
-
-struct MemberLinkedApps
-    "Information on linked applications of a team member."
-    team_member_id String
-        "The member unique Id."
-    linked_api_apps List(ApiApp)
-        "List of third party applications linked by this team member."
-
-    example default
-        team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
-        linked_api_apps = [default]
-
-struct ListMembersAppsResult
-    "Information returned by :route:`linked_apps/list_members_linked_apps`."
-    apps List(MemberLinkedApps)
-        "The linked applications of each member of the team."
-    has_more Boolean
-        "If true, then there are more apps available. Pass the
-        cursor to :route:`linked_apps/list_members_linked_apps` to retrieve the rest."
-    cursor String?
-        "Pass the cursor into :route:`linked_apps/list_members_linked_apps` to receive the next
-        sub list of team's applications."
-
-    example default
-        apps = [default]
-        has_more = true
-        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
-
-struct RevokeLinkedApiAppArg
-    app_id String
-        "The application's unique id."
-    team_member_id String
-        "The unique id of the member owning the device."
-    keep_app_folder Boolean = true
-        "This flag is not longer supported, the application dedicated folder (in case the application uses
-        one) will be kept."
-
-    example default
-        app_id = "dbaid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
-        team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
-
-struct RevokeLinkedApiAppBatchArg
-    revoke_linked_app List(RevokeLinkedApiAppArg)
-
-    example default
-        revoke_linked_app = [default]
-
-struct RevokeLinkedAppStatus
-    success Boolean
-        "Result of the revoking request."
-    error_type RevokeLinkedAppError?
-        "The error cause in case of a failure."
-
-    example default
-        success = false
-        error_type = app_not_found
-
-struct RevokeLinkedAppBatchResult
-    revoke_linked_app_status List(RevokeLinkedAppStatus)
-
-    example default
-        revoke_linked_app_status = [default]
-
-struct ListTeamAppsArg
-    "Arguments for :route:`linked_apps/list_team_linked_apps`."
-    cursor String?
-        "At the first call to the :route:`linked_apps/list_team_linked_apps` the cursor shouldn't be
-        passed. Then, if the result of the call includes a cursor, the following requests should
-        include the received cursors in order to receive the next sub list of the team applications."
-
-    example default
-        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
-
-struct ListTeamAppsResult
-    "Information returned by :route:`linked_apps/list_team_linked_apps`."
-    apps List(MemberLinkedApps)
-        "The linked applications of each member of the team."
-    has_more Boolean
-        "If true, then there are more apps available. Pass the
-        cursor to :route:`linked_apps/list_team_linked_apps` to retrieve the rest."
-    cursor String?
-        "Pass the cursor into :route:`linked_apps/list_team_linked_apps` to receive the next
-        sub list of team's applications."
-
-    example default
-        apps = [default]
-        has_more = true
-        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
-
-route linked_apps/list_member_linked_apps (ListMemberAppsArg, ListMemberAppsResult, ListMemberAppsError)
-    "List all linked applications of the team member.
-    Note, this endpoint does not list any team-linked applications."
-
-    attrs
-        auth = "team"
-        scope = "sessions.list"
-
-route linked_apps/list_members_linked_apps (ListMembersAppsArg, ListMembersAppsResult, ListMembersAppsError)
-    "List all applications linked to the team members' accounts.
-    Note, this endpoint does not list any team-linked applications."
-
-    attrs
-        auth = "team"
-        scope = "sessions.list"
-
-route linked_apps/revoke_linked_app (RevokeLinkedApiAppArg, Void, RevokeLinkedAppError)
-    "Revoke a linked application of the team member."
-
-    attrs
-        auth = "team"
-        scope = "sessions.modify"
-
-route linked_apps/revoke_linked_app_batch (RevokeLinkedApiAppBatchArg, RevokeLinkedAppBatchResult, RevokeLinkedAppBatchError)
-    "Revoke a list of linked applications of the team members."
-
-    attrs
-        auth = "team"
-        scope = "sessions.modify"
-
-route linked_apps/list_team_linked_apps (ListTeamAppsArg, ListTeamAppsResult, ListTeamAppsError) deprecated
-    "List all applications linked to the team members' accounts.
-    Note, this endpoint doesn't list any team-linked applications."
-
-    attrs
-        auth = "team"
-        scope = "sessions.list"
-
-
-route token/get_authenticated_admin (Void, TokenGetAuthenticatedAdminResult, TokenGetAuthenticatedAdminError)
-    "Returns the member profile of the admin who generated the team access token used to make the call."
-
-    attrs
-        auth = "team"
-        scope = "team_info.read"
-
-
-route get_info (Void, TeamGetInfoResult, Void)
-    "Retrieves information about a team."
-
-    attrs
-        auth = "team"
-        scope = "team_info.read"
-
-
-union SharingAllowlistAddError
-    malformed_entry String = ""
-        "One of provided values is not valid."
-    no_entries_provided
-        "Neither single domain nor email provided."
-    too_many_entries_provided
-        "Too many entries provided within one call."
-    team_limit_reached
-        "Team entries limit reached."
-    unknown_error
-        "Unknown error."
-    entries_already_exist String = ""
-        "Entries already exists."
-
-union SharingAllowlistListContinueError
-    invalid_cursor
-        "Provided cursor is not valid."
-
-union SharingAllowlistRemoveError
-    malformed_entry String = ""
-        "One of provided values is not valid."
-    entries_do_not_exist String = ""
-        "One or more provided values do not exist."
-    no_entries_provided
-        "Neither single domain nor email provided."
-    too_many_entries_provided
-        "Too many entries provided within one call."
-    unknown_error
-        "Unknown error."
-
-struct SharingAllowlistAddArgs
-    "Structure representing Approve List entries. Domain and emails are supported.
-    At least one entry of any supported type is required."
-    domains List(String)?
-        "List of domains represented by valid string representation (RFC-1034/5)."
-    emails List(String)?
-        "List of emails represented by valid string representation (RFC-5322/822)."
-
-    example default
-        domains = ["test-domain.com", "subdomain.some.com"]
-        emails = ["adam@test-domain.com", "john@some.com"]
-
-struct SharingAllowlistAddResponse
-    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
-
-struct SharingAllowlistListArg
-    limit UInt32(max_value=1000, min_value=1) = 1000
-        "The number of entries to fetch at one time."
-
-    example default
-        limit = 100
-
-struct SharingAllowlistListContinueArg
-    cursor String
-        "The cursor returned from a previous call to :route:`sharing_allowlist/list` or :route:`sharing_allowlist/list/continue`."
-
-    example default
-        cursor = "dGVzdF9jdXJzb3IK"
-
-struct SharingAllowlistListError
-    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
-
-struct SharingAllowlistListResponse
-    domains List(String)
-        "List of domains represented by valid string representation (RFC-1034/5)."
-    emails List(String)
-        "List of emails represented by valid string representation (RFC-5322/822)."
-    cursor String = ""
-        "If this is nonempty, there are more entries that can be fetched with :route:`sharing_allowlist/list/continue`."
-    has_more Boolean = false
-        "if true indicates that more entries can be fetched with :route:`sharing_allowlist/list/continue`."
-
-    example default
-        domains = ["test-domain.com", "subdomain.some.com"]
-        emails = ["adam@test-domain.com", "john@some.com"]
-        cursor = "dGVzdF9jdXJzb3IK"
-        has_more = true
-
-struct SharingAllowlistRemoveArgs
-    domains List(String)?
-        "List of domains represented by valid string representation (RFC-1034/5)."
-    emails List(String)?
-        "List of emails represented by valid string representation (RFC-5322/822)."
-
-    example default
-        domains = ["test-domain.com", "subdomain.some.com"]
-        emails = ["adam@test-domain.com", "john@some.com"]
-
-struct SharingAllowlistRemoveResponse
-    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
-
-route sharing_allowlist/add (SharingAllowlistAddArgs, SharingAllowlistAddResponse, SharingAllowlistAddError)
-    "Endpoint adds Approve List entries. Changes are effective immediately.
-    Changes are committed in transaction. In case of single validation error - all entries are rejected.
-    Valid domains (RFC-1034/5) and emails (RFC-5322/822) are accepted.
-    Added entries cannot overflow limit of 10000 entries per team.
-    Maximum 100 entries per call is allowed."
-
-    attrs
-        auth = "team"
-        is_preview = true
-        scope = "team_info.write"
-
-route sharing_allowlist/list (SharingAllowlistListArg, SharingAllowlistListResponse, SharingAllowlistListError)
-    "Lists Approve List entries for given team, from newest to oldest, returning
-    up to `limit` entries at a time. If there are more than `limit` entries
-    associated with the current team, more can be fetched by passing the
-    returned `cursor` to :route:`sharing_allowlist/list/continue`."
-
-    attrs
-        auth = "team"
-        is_preview = true
-        scope = "team_info.read"
-
-route sharing_allowlist/list/continue (SharingAllowlistListContinueArg, SharingAllowlistListResponse, SharingAllowlistListContinueError)
-    "Lists entries associated with given team, starting from a the cursor. See :route:`sharing_allowlist/list`."
-
-    attrs
-        auth = "team"
-        is_preview = true
-        scope = "team_info.read"
-
-route sharing_allowlist/remove (SharingAllowlistRemoveArgs, SharingAllowlistRemoveResponse, SharingAllowlistRemoveError)
-    "Endpoint removes Approve List entries. Changes are effective immediately.
-    Changes are committed in transaction. In case of single validation error - all entries are rejected.
-    Valid domains (RFC-1034/5) and emails (RFC-5322/822) are accepted.
-    Entries being removed have to be present on the list.
-    Maximum 1000 entries per call is allowed."
-
-    attrs
-        auth = "team"
-        is_preview = true
-        scope = "team_info.write"
-
-
-route features/get_values (FeaturesGetValuesBatchArg, FeaturesGetValuesBatchResult, FeaturesGetValuesBatchError)
-    "Get the values for one or more features. This route allows you to check your account's
-    capability for what feature you can access or what value you have for certain features.
-    Permission : Team information."
-
-    attrs
-        auth = "team"
-        scope = "team_info.read"
-
-
-alias UserQuota = UInt32(min_value=2)
-
-struct UserCustomQuotaArg
-    "User and their required custom quota in GB (1 TB = 1024 GB)."
-    user UserSelectorArg
-    quota_gb UserQuota
-
-    example default
-        user = default
-        quota_gb = 30
-
-struct UserCustomQuotaResult
-    "User and their custom quota in GB (1 TB = 1024 GB).
-    No quota returns if the user has no custom quota set."
-    user UserSelectorArg
-    quota_gb UserQuota?
-
-struct SetCustomQuotaArg
-    users_and_quotas List(UserCustomQuotaArg)
-        "List of users and their custom quotas."
-
-    example default
-        users_and_quotas = [default]
-
-union CustomQuotaError
-    "Error returned when getting member custom quota."
-    too_many_users
-        "A maximum of 1000 users can be set for a single call."
-
-union SetCustomQuotaError extends CustomQuotaError
-    "Error returned when setting member custom quota."
-    some_users_are_excluded
-        "Some of the users are on the excluded users list and can't have custom quota set."
-
-union CustomQuotaResult
-    "User custom quota."
-    success UserCustomQuotaResult
-        "User's custom quota."
-    invalid_user UserSelectorArg
-        "Invalid user (not in team)."
-
-struct CustomQuotaUsersArg
-    users List(UserSelectorArg)
-        "List of users."
-
-    example default
-        users = [default]
-
-union RemoveCustomQuotaResult
-    "User result for setting member custom quota."
-    success UserSelectorArg
-        "Successfully removed user."
-    invalid_user UserSelectorArg
-        "Invalid user (not in team)."
-
-struct ExcludedUsersUpdateArg
-    "Argument of excluded users update operation.
-    Should include a list of users to add/remove (according to endpoint),
-    Maximum size of the list is 1000 users."
-    users List(UserSelectorArg)?
-        "List of users to be added/removed."
-
-    example default
-        users = [default]
-
-union ExcludedUsersUpdateError
-    "Excluded users update error."
-    users_not_in_team
-        "At least one of the users is not part of your team."
-    too_many_users
-        "A maximum of 1000 users for each of addition/removal can be supplied."
-
-struct ExcludedUsersListArg
-    "Excluded users list argument."
-    limit UInt32(max_value=1000, min_value=1) = 1000
-        "Number of results to return per call."
-
-    example default
-        limit = 100
-
-struct ExcludedUsersListContinueArg
-    "Excluded users list continue argument."
-    cursor String
-        "Indicates from what point to get the next set of users."
-
-    example default
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-
-struct ExcludedUsersListResult
-    "Excluded users list result."
-    users List(MemberProfile)
-    cursor String?
-        "Pass the cursor into :route:`member_space_limits/excluded_users/list/continue` to obtain
-        additional excluded users."
-    has_more Boolean
-        "Is true if there are additional excluded users that have not been returned
-        yet. An additional call to :route:`member_space_limits/excluded_users/list/continue` can
-        retrieve them."
-
-    example default
-        users = []
-        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
-        has_more = false
-
-union ExcludedUsersUpdateStatus
-    "Excluded users update operation status."
-    success
-        "Update successful."
-
-struct ExcludedUsersUpdateResult
-    "Excluded users update result."
-    status ExcludedUsersUpdateStatus
-        "Update status."
-
-    example default
-        status = success
-
-union ExcludedUsersListError
-    "Excluded users list error."
-    list_error
-        "An error occurred."
-
-union ExcludedUsersListContinueError
-    "Excluded users list continue error."
-    invalid_cursor
-        "The cursor is invalid."
-
-route member_space_limits/set_custom_quota (SetCustomQuotaArg, List(CustomQuotaResult), SetCustomQuotaError)
-    "Set users custom quota. Custom quota has to be at least 2GB.
-    A maximum of 1000 members can be specified in a single call.
-    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
-    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
-
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-route member_space_limits/remove_custom_quota (CustomQuotaUsersArg, List(RemoveCustomQuotaResult), CustomQuotaError)
-    "Remove users custom quota.
-    A maximum of 1000 members can be specified in a single call.
-    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
-    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route member_space_limits/get_custom_quota (CustomQuotaUsersArg, List(CustomQuotaResult), CustomQuotaError)
-    "Get users custom quota.
-    A maximum of 1000 members can be specified in a single call.
-    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
-    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
-
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-route member_space_limits/excluded_users/add (ExcludedUsersUpdateArg, ExcludedUsersUpdateResult, ExcludedUsersUpdateError)
-    "Add users to member space limits excluded users list."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route member_space_limits/excluded_users/remove (ExcludedUsersUpdateArg, ExcludedUsersUpdateResult, ExcludedUsersUpdateError)
-    "Remove users from member space limits excluded users list."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route member_space_limits/excluded_users/list (ExcludedUsersListArg, ExcludedUsersListResult, ExcludedUsersListError)
-    "List member space limits excluded users."
-
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-route member_space_limits/excluded_users/list/continue (ExcludedUsersListContinueArg, ExcludedUsersListResult, ExcludedUsersListContinueError)
-    "Continue listing member space limits excluded users."
-
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-
-route properties/template/add (file_properties.AddTemplateArg, file_properties.AddTemplateResult, file_properties.ModifyTemplateError) deprecated
-    "Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "files.team_metadata.write"
-
-route properties/template/get (file_properties.GetTemplateArg, file_properties.GetTemplateResult, file_properties.TemplateError) deprecated
-    "Permission : Team member file access. The scope for the route is files.team_metadata.write."
-
-    attrs
-        auth = "team"
-        scope = "files.team_metadata.write"
-
-
-union AddSecondaryEmailResult
-    "Result of trying to add a secondary email to a user.
-    'success' is the only value indicating that a secondary email was successfully added to a user.
-    The other values explain the type of error that occurred, and include the email for which the error occurred."
-    success secondary_emails.SecondaryEmail
-        "Describes a secondary email that was successfully added to a user."
-    unavailable common.EmailAddress
-        "Secondary email is not available to be claimed by the user."
-    already_pending common.EmailAddress
-        "Secondary email is already a pending email for the user."
-    already_owned_by_user common.EmailAddress
-        "Secondary email is already a verified email for the user."
-    reached_limit common.EmailAddress
-        "User already has the maximum number of secondary emails allowed."
-    transient_error common.EmailAddress
-        "A transient error occurred. Please try again later."
-    too_many_updates common.EmailAddress
-        "An error occurred due to conflicting updates. Please try again later."
-    unknown_error common.EmailAddress
-        "An unknown error occurred."
-    rate_limited common.EmailAddress
-        "Too many emails are being sent to this email address. Please try again later."
-
-    example default
-        success = default
-    
-    example unavailable
-        unavailable = "alice@example.com"
-
-union UserAddResult
-    "Result of trying to add secondary emails to a user.
-    'success' is the only value indicating that a user was successfully retrieved for adding secondary emails.
-    The other values explain the type of error that occurred, and include the user for which the error occurred."
-    success UserSecondaryEmailsResult
-        "Describes a user and the results for each attempt to add a secondary email."
-    invalid_user UserSelectorArg
-        "Specified user is not a valid target for adding secondary emails."
-    unverified UserSelectorArg
-        "Secondary emails can only be added to verified users."
-    placeholder_user UserSelectorArg
-        "Secondary emails cannot be added to placeholder users."
-
-    example default
-        success = default
-    
-    example invalid
-        invalid_user = default
-
-union AddSecondaryEmailsError
-    "Error returned when adding secondary emails fails."
-    secondary_emails_disabled
-        "Secondary emails are disabled for the team."
-    too_many_emails
-        "A maximum of 20 secondary emails can be added in a single call."
-
-union ResendSecondaryEmailResult
-    "Result of trying to resend verification email to a secondary email address.
-    'success' is the only value indicating that a verification email was successfully sent.
-    The other values explain the type of error that occurred, and include the email for which the error occurred."
-    success common.EmailAddress
-        "A verification email was successfully sent to the secondary email address."
-    not_pending common.EmailAddress
-        "This secondary email address is not pending for the user."
-    rate_limited common.EmailAddress
-        "Too many emails are being sent to this email address. Please try again later."
-
-    example default
-        success = "alice@example.com"
-
-union UserResendResult
-    "Result of trying to resend verification emails to a user.
-    'success' is the only value indicating that a user was successfully retrieved for sending verification emails.
-    The other values explain the type of error that occurred, and include the user for which the error occurred."
-    success UserResendEmailsResult
-        "Describes a user and the results for each attempt to resend verification emails."
-    invalid_user UserSelectorArg
-        "Specified user is not a valid target for resending verification emails."
-
-    example default
-        success = default
-    
-    example invalid
-        invalid_user = default
-
-union DeleteSecondaryEmailResult
-    "Result of trying to delete a secondary email address.
-    'success' is the only value indicating that a secondary email was successfully deleted.
-    The other values explain the type of error that occurred, and include the email for which the error occurred."
-    success common.EmailAddress
-        "The secondary email was successfully deleted."
-    not_found common.EmailAddress
-        "The email address was not found for the user."
-    cannot_remove_primary common.EmailAddress
-        "The email address is the primary email address of the user, and cannot be removed."
-
-    example default
-        success = "alice@example.com"
-    
-    example not_found
-        not_found = "alic@example.com"
-
-union UserDeleteResult
-    "Result of trying to delete a user's secondary emails.
-    'success' is the only value indicating that a user was successfully retrieved for deleting secondary emails.
-    The other values explain the type of error that occurred, and include the user for which the error occurred."
-    success UserDeleteEmailsResult
-        "Describes a user and the results for each attempt to delete a secondary email."
-    invalid_user UserSelectorArg
-        "Specified user is not a valid target for deleting secondary emails."
-
-    example default
-        success = default
-    
-    example invalid_user
-        invalid_user = default
-
-struct UserSecondaryEmailsArg
-    "User and a list of secondary emails."
-    user UserSelectorArg
-    secondary_emails List(common.EmailAddress)
-
-    example default
-        user = default
-        secondary_emails = ["bob2@hotmail.com", "bob@inst.gov"]
-
-struct UserSecondaryEmailsResult
-    user UserSelectorArg
-    results List(AddSecondaryEmailResult)
-
-    example default
-        user = default
-        results = [default, unavailable]
-
-struct AddSecondaryEmailsArg
-    new_secondary_emails List(UserSecondaryEmailsArg)
-        "List of users and secondary emails to add."
-
-    example default
-        new_secondary_emails = [default]
-
-struct AddSecondaryEmailsResult
-    results List(UserAddResult)
-        "List of users and secondary email results."
-
-    example default
-        results = [default, invalid]
-
-struct ResendVerificationEmailArg
-    emails_to_resend List(UserSecondaryEmailsArg)
-        "List of users and secondary emails to resend verification emails to."
-
-    example default
-        emails_to_resend = [default]
-
-struct UserResendEmailsResult
-    user UserSelectorArg
-    results List(ResendSecondaryEmailResult)
-
-    example default
-        user = default
-        results = [default]
-
-struct ResendVerificationEmailResult
-    "List of users and resend results."
-    results List(UserResendResult)
-
-    example default
-        results = [default]
-
-struct DeleteSecondaryEmailsArg
-    emails_to_delete List(UserSecondaryEmailsArg)
-        "List of users and their secondary emails to delete."
-
-    example default
-        emails_to_delete = [default]
-
-struct UserDeleteEmailsResult
-    user UserSelectorArg
-    results List(DeleteSecondaryEmailResult)
-
-    example default
-        user = default
-        results = [default, not_found]
-
-struct DeleteSecondaryEmailsResult
-    results List(UserDeleteResult)
-
-    example default
-        results = [default]
-
-route members/secondary_emails/add (AddSecondaryEmailsArg, AddSecondaryEmailsResult, AddSecondaryEmailsError)
-    "Add secondary emails to users.
-    Permission : Team member management.
-    Emails that are on verified domains will be verified automatically.
-    For each email address not on a verified domain a verification email will be sent."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/secondary_emails/resend_verification_emails (ResendVerificationEmailArg, ResendVerificationEmailResult, Void)
-    "Resend secondary email verification emails.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/secondary_emails/delete (DeleteSecondaryEmailsArg, DeleteSecondaryEmailsResult, Void)
-    "Delete secondary emails from users
-    Permission : Team member management.
-    Users will be notified of deletions of verified secondary emails at both the secondary email and their primary email."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-
-alias NumberPerDay = List(UInt64?)
-
-union TeamReportFailureReason
-    temporary_error
-        "We couldn't create the report, but we think this was a fluke. Everything should work if you try it again."
-    many_reports_at_once
-        "Too many other reports are being created right now. Try creating this report again once the others finish."
-    too_much_data
-        "We couldn't create the report. Try creating the report again with less data."
-
-    example default
-        many_reports_at_once = null
-
-union DateRangeError
-    "Errors that can originate from problems in input arguments to reports."
-
-struct DateRange
-    "Input arguments that can be provided for most reports."
-    start_date common.Date?
-        "Optional starting date (inclusive). If start_date is None or too long ago, this field will
-        be set to 6 months ago."
-    end_date common.Date?
-        "Optional ending date (exclusive)."
-
-struct StorageBucket
-    "Describes the number of users in a specific storage bucket."
-    bucket String
-        "The name of the storage bucket.
-        For example, '1G' is a bucket of users with storage size up to 1 Giga."
-    users UInt64
-        "The number of people whose storage is in the range of this storage bucket."
-
-    example default
-        bucket = "1G"
-        users = 21
-
-struct BaseDfbReport
-    "Base report structure."
-    start_date String
-        "First date present in the results as 'YYYY-MM-DD' or None."
-
-struct GetStorageReport extends BaseDfbReport
-    "Storage Report Result.
-    Each of the items in the storage report is an array of values, one value per day.
-    If there is no data for a day, then the value will be None."
-    total_usage NumberPerDay
-        "Sum of the shared, unshared, and datastore usages, for each day."
-    shared_usage NumberPerDay
-        "Array of the combined size (bytes) of team members' shared folders, for each day."
-    unshared_usage NumberPerDay
-        "Array of the combined size (bytes) of team members' root namespaces, for each day."
-    shared_folders NumberPerDay
-        "Array of the number of shared folders owned by team members, for each day."
-    member_storage_map List(List(StorageBucket))
-        "Array of storage summaries of team members' account sizes.
-        Each storage summary is an array of key, value pairs, where each pair describes
-        a storage bucket.
-        The key indicates the upper bound of the bucket and the value is the
-        number of users in that bucket. There is one such summary per day.
-        If there is no data for a day, the storage summary will be empty."
-
-struct GetActivityReport extends BaseDfbReport
-    "Activity Report Result.
-    Each of the items in the storage report is an array of values, one value per day.
-    If there is no data for a day, then the value will be None."
-    adds NumberPerDay
-        "Array of total number of adds by team members."
-    edits NumberPerDay
-        "Array of number of edits by team members.
-        If the same user edits the same file multiple times this is counted as a single edit."
-    deletes NumberPerDay
-        "Array of total number of deletes by team members."
-    active_users_28_day NumberPerDay
-        "Array of the number of users who have been active in the last 28 days."
-    active_users_7_day NumberPerDay
-        "Array of the number of users who have been active in the last week."
-    active_users_1_day NumberPerDay
-        "Array of the number of users who have been active in the last day."
-    active_shared_folders_28_day NumberPerDay
-        "Array of the number of shared folders with some activity in the last 28 days."
-    active_shared_folders_7_day NumberPerDay
-        "Array of the number of shared folders with some activity in the last week."
-    active_shared_folders_1_day NumberPerDay
-        "Array of the number of shared folders with some activity in the last day."
-    shared_links_created NumberPerDay
-        "Array of the number of shared links created."
-    shared_links_viewed_by_team NumberPerDay
-        "Array of the number of views by team users to shared links created by the team."
-    shared_links_viewed_by_outside_user NumberPerDay
-        "Array of the number of views by users outside of the team to shared links created by the team."
-    shared_links_viewed_by_not_logged_in NumberPerDay
-        "Array of the number of views by non-logged-in users to shared links created by the team."
-    shared_links_viewed_total NumberPerDay
-        "Array of the total number of views to shared links created by the team."
-
-struct GetMembershipReport extends BaseDfbReport
-    "Membership Report Result.
-    Each of the items in the storage report is an array of values, one value per day.
-    If there is no data for a day, then the value will be None."
-    team_size NumberPerDay
-        "Team size, for each day."
-    pending_invites NumberPerDay
-        "The number of pending invites to the team, for each day."
-    members_joined NumberPerDay
-        "The number of members that joined the team, for each day."
-    suspended_members NumberPerDay
-        "The number of suspended team members, for each day."
-    licenses NumberPerDay
-        "The total number of licenses the team has, for each day."
-
-struct DevicesActive
-    "Each of the items is an array of values, one value per day.
-    The value is the number of devices active within a time window, ending with that day.
-    If there is no data for a day, then the value will be None."
-    windows NumberPerDay
-        "Array of number of linked windows (desktop) clients with activity."
-    macos NumberPerDay
-        "Array of number of linked mac (desktop) clients with activity."
-    linux NumberPerDay
-        "Array of number of linked linus (desktop) clients with activity."
-    ios NumberPerDay
-        "Array of number of linked ios devices with activity."
-    android NumberPerDay
-        "Array of number of linked android devices with activity."
-    other NumberPerDay
-        "Array of number of other linked devices (blackberry, windows phone, etc)
-        with activity."
-    total NumberPerDay
-        "Array of total number of linked clients with activity."
-
-struct GetDevicesReport extends BaseDfbReport
-    "Devices Report Result. Contains subsections for different time ranges of activity.
-    Each of the items in each subsection of the storage report is an array of values,
-    one value per day.
-    If there is no data for a day, then the value will be None."
-    active_1_day DevicesActive
-        "Report of the number of devices active in the last day."
-    active_7_day DevicesActive
-        "Report of the number of devices active in the last 7 days."
-    active_28_day DevicesActive
-        "Report of the number of devices active in the last 28 days."
-
-
-route reports/get_storage (DateRange, GetStorageReport, DateRangeError) deprecated
-    "Retrieves reporting data about a team's storage usage.
-    Deprecated: Will be removed on July 1st 2021."
-
-    attrs
-        auth = "team"
-        scope = "team_info.read"
-
-
-route reports/get_activity (DateRange, GetActivityReport, DateRangeError) deprecated
-    "Retrieves reporting data about a team's user activity.
-    Deprecated: Will be removed on July 1st 2021."
-
-    attrs
-        auth = "team"
-        scope = "team_info.read"
-
-
-route reports/get_membership (DateRange, GetMembershipReport, DateRangeError) deprecated
-    "Retrieves reporting data about a team's membership.
-    Deprecated: Will be removed on July 1st 2021."
-
-    attrs
-        auth = "team"
-        scope = "team_info.read"
-
-
-route reports/get_devices (DateRange, GetDevicesReport, DateRangeError) deprecated
-    "Retrieves reporting data about a team's linked devices.
-    Deprecated: Will be removed on July 1st 2021."
-
-    attrs
-        auth = "team"
-        scope = "team_info.read"
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+        email = "mary@lamb.com"
+        email_verified = true
+        secondary_emails = [default, second_sec_email, third_sec_email]
+        status = active
+        name = default
+        membership_type = full
+        joined_on = "2015-05-12T15:50:38Z"
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
+
+struct TeamMemberProfile extends MemberProfile
+    "Profile of a user as a member of a team."
+    groups List(team_common.GroupId)
+        "List of group IDs of groups that the user belongs to."
+    member_folder_id common.NamespaceId
+        "The namespace id of the user's member folder."
+    root_folder_id common.NamespaceId
+        "The namespace id of the user's root folder."
+
+    example default
+        team_member_id = "dbmid:FDFSVF-DFSDF"
+        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
+        external_id = "244423"
+        email = "tami@seagull.com"
+        email_verified = false
+        secondary_emails = [third_sec_email, default]
+        status = active
+        name = default
+        groups = ["g:e2db7665347abcd600000000001a2b3c"]
+        membership_type = full
+        joined_on = "2015-05-12T15:50:38Z"
+        member_folder_id = "20"
+        root_folder_id = "30"
+        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
 
 
 union DesktopPlatform
@@ -1983,7 +583,7 @@ union_closed TeamFolderArchiveLaunch extends async.LaunchResultBase
 
     example default
         complete = default
-    
+
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
@@ -2116,6 +716,537 @@ route team_folder/update_sync_settings (TeamFolderUpdateSyncSettingsArg, TeamFol
         scope = "team_data.content.write"
 
 
+alias LegalHoldId = String(pattern="^pid_dbhid:.+")
+
+alias LegalHoldPolicyName = String(max_length=140)
+
+alias LegalHoldPolicyDescription = String(max_length=501)
+
+alias Path = String(pattern="(/(.|[\\r\\n])*)?")
+
+alias LegalHoldsPolicyCreateResult = LegalHoldPolicy
+
+alias LegalHoldsGetPolicyResult = LegalHoldPolicy
+
+alias ListHeldRevisionCursor = String(min_length=1)
+
+alias LegalHoldsPolicyUpdateResult = LegalHoldPolicy
+
+union LegalHoldStatus
+    active
+        "The legal hold policy is active."
+    released
+        "The legal hold policy was released."
+    activating
+        "The legal hold policy is activating."
+    updating
+        "The legal hold policy is updating."
+    exporting
+        "The legal hold policy is exporting."
+    releasing
+        "The legal hold policy is releasing."
+
+union LegalHoldsError
+    unknown_legal_hold_error
+        "There has been an unknown legal hold error."
+    insufficient_permissions
+        "You don't have permissions to perform this action."
+
+union LegalHoldsPolicyCreateError extends LegalHoldsError
+    start_date_is_later_than_end_date
+        "Start date must be earlier than end date."
+    empty_members_list
+        "The users list must have at least one user."
+    invalid_members
+        "Some members in the members list are not valid to be placed under legal hold."
+    number_of_users_on_hold_is_greater_than_hold_limitation
+        "You cannot add more than 5 users in a legal hold."
+    transient_error
+        "Temporary infrastructure failure, please retry."
+    name_must_be_unique
+        "The name provided is already in use by another legal hold."
+    team_exceeded_legal_hold_quota
+        "Team exceeded legal hold quota."
+    invalid_date
+        "The provided date is invalid."
+
+union LegalHoldsGetPolicyError extends LegalHoldsError
+    legal_hold_policy_not_found
+        "Legal hold policy does not exist for :field:`LegalHoldsGetPolicyArg.id`."
+
+union LegalHoldsListPoliciesError extends LegalHoldsError
+    transient_error
+        "Temporary infrastructure failure, please retry."
+
+union LegalHoldsListHeldRevisionsError extends LegalHoldsError
+    transient_error
+        "Temporary infrastructure failure, please retry."
+    legal_hold_still_empty
+        "The legal hold is not holding any revisions yet."
+    inactive_legal_hold
+        "Trying to list revisions for an inactive legal hold."
+
+union LegalHoldsListHeldRevisionsContinueError
+    unknown_legal_hold_error
+        "There has been an unknown legal hold error."
+    transient_error
+        "Temporary infrastructure failure, please retry."
+    reset
+        "Indicates that the cursor has been invalidated. Call
+        :route:`legal_holds/list_held_revisions_continue` again with an empty cursor to obtain a new cursor."
+
+union LegalHoldsPolicyUpdateError extends LegalHoldsError
+    transient_error
+        "Temporary infrastructure failure, please retry."
+    inactive_legal_hold
+        "Trying to release an inactive legal hold."
+    legal_hold_performing_another_operation
+        "Legal hold is currently performing another operation."
+    invalid_members
+        "Some members in the members list are not valid to be placed under legal hold."
+    number_of_users_on_hold_is_greater_than_hold_limitation
+        "You cannot add more than 5 users in a legal hold."
+    empty_members_list
+        "The users list must have at least one user."
+    name_must_be_unique
+        "The name provided is already in use by another legal hold."
+    legal_hold_policy_not_found
+        "Legal hold policy does not exist for :field:`LegalHoldsPolicyUpdateArg.id`."
+
+union LegalHoldsPolicyReleaseError extends LegalHoldsError
+    legal_hold_performing_another_operation
+        "Legal hold is currently performing another operation."
+    legal_hold_already_releasing
+        "Legal hold is currently performing a release or is already released."
+    legal_hold_policy_not_found
+        "Legal hold policy does not exist for :field:`LegalHoldsPolicyReleaseArg.id`."
+
+struct MembersInfo
+    team_member_ids List(team_common.TeamMemberId)
+        "Team member IDs of the users under this hold."
+    permanently_deleted_users UInt64
+        "The number of permanently deleted users that were under this hold."
+
+    example default
+        team_member_ids = ["dbmid:efgh5678"]
+        permanently_deleted_users = 2
+
+struct LegalHoldPolicy
+    id LegalHoldId
+        "The legal hold id."
+    name LegalHoldPolicyName
+        "Policy name."
+    description LegalHoldPolicyDescription?
+        "A description of the legal hold policy."
+    activation_time common.DropboxTimestamp?
+        "The time at which the legal hold was activated."
+    members MembersInfo
+        "Team members IDs and number of permanently deleted members under hold."
+    status LegalHoldStatus
+        "The current state of the hold."
+    start_date common.DropboxTimestamp
+        "Start date of the legal hold policy."
+    end_date common.DropboxTimestamp?
+        "End date of the legal hold policy."
+
+    example default
+        id = "pid_dbhid:abcd1234"
+        name = "acme cfo policy"
+        activation_time = "2016-01-20T00:00:10Z"
+        members = default
+        status = active
+        start_date = "2016-01-01T00:00:00Z"
+        end_date = "2017-12-31T00:00:00Z"
+
+struct LegalHoldsPolicyCreateArg
+    name LegalHoldPolicyName
+        "Policy name."
+    description LegalHoldPolicyDescription?
+        "A description of the legal hold policy."
+    members List(team_common.TeamMemberId)
+        "List of team member IDs added to the hold."
+    start_date common.DropboxTimestamp?
+        "start date of the legal hold policy."
+    end_date common.DropboxTimestamp?
+        "end date of the legal hold policy."
+
+    example default
+        name = "acme cfo policy"
+        members = ["dbmid:FDFSVF-DFSDF"]
+        start_date = "2016-01-01T00:00:00Z"
+        end_date = "2017-12-31T00:00:00Z"
+
+struct LegalHoldsGetPolicyArg
+    id LegalHoldId
+        "The legal hold Id."
+
+    example default
+        id = "pid_dbhid:abcd1234"
+
+struct LegalHoldsListPoliciesArg
+    include_released Boolean = false
+        "Whether to return holds that were released."
+
+    example default
+        include_released = false
+
+struct LegalHoldsListPoliciesResult
+    policies List(LegalHoldPolicy)
+
+    example default
+        policies = [default]
+
+struct LegalHoldsListHeldRevisionsArg
+    id LegalHoldId
+        "The legal hold Id."
+
+    example default
+        id = "pid_dbhid:abcd1234"
+
+struct LegalHoldHeldRevisionMetadata
+    new_filename String
+        "The held revision filename."
+    original_revision_id files.Rev
+        "The id of the held revision."
+    original_file_path Path
+        "The original path of the held revision."
+    server_modified common.DropboxTimestamp
+        "The last time the file was modified on Dropbox."
+    author_member_id team_common.TeamMemberId
+        "The member id of the revision's author."
+    author_member_status TeamMemberStatus
+        "The member status of the revision's author."
+    author_email common.EmailAddress
+        "The email address of the held revision author."
+    file_type String
+        "The type of the held revision's file."
+    size UInt64
+        "The file size in bytes."
+    content_hash files.Sha256HexHash
+        "A hash of the file content. This field can be used to verify data integrity. For more
+        information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+
+    example default
+        new_filename = "111_222.pdf"
+        original_revision_id = "ab2rij4i5ojgfd"
+        original_file_path = "/a.pdf"
+        server_modified = "2019-08-12T12:08:52Z"
+        author_member_id = "dbmid:abcd1234abcd1234abcd1234abcd1234a23"
+        author_member_status = active
+        author_email = "a@a.com"
+        file_type = "Document"
+        size = 3
+        content_hash = "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
+
+struct LegalHoldsListHeldRevisionResult
+    entries List(LegalHoldHeldRevisionMetadata)
+        "List of file entries that under the hold."
+    cursor ListHeldRevisionCursor?
+        "The cursor idicates where to continue reading file metadata entries for the next API call. When there are no more entries, the cursor will return none.
+        Pass the cursor into
+        /2/team/legal_holds/list_held_revisions/continue."
+    has_more Boolean
+        "True if there are more file entries that haven't been returned. You can retrieve them with a call to /legal_holds/list_held_revisions_continue."
+
+    example default
+        entries = [default]
+        has_more = false
+
+struct LegalHoldsListHeldRevisionsContinueArg
+    id LegalHoldId
+        "The legal hold Id."
+    cursor ListHeldRevisionCursor?
+        "The cursor idicates where to continue reading file metadata entries for the next API call. When there are no more entries, the cursor will return none."
+
+    example default
+        id = "pid_dbhid:abcd1234"
+
+struct LegalHoldsPolicyUpdateArg
+    id LegalHoldId
+        "The legal hold Id."
+    name LegalHoldPolicyName?
+        "Policy new name."
+    description LegalHoldPolicyDescription?
+        "Policy new description."
+    members List(team_common.TeamMemberId)?
+        "List of team member IDs to apply the policy on."
+
+    example default
+        id = "pid_dbhid:abcd1234"
+        members = ["dbmid:FDFSVF-DFSDF"]
+
+struct LegalHoldsPolicyReleaseArg
+    id LegalHoldId
+        "The legal hold Id."
+
+    example default
+        id = "pid_dbhid:abcd1234"
+
+route legal_holds/create_policy (LegalHoldsPolicyCreateArg, LegalHoldsPolicyCreateResult, LegalHoldsPolicyCreateError)
+    "Creates new legal hold policy.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
+    Permission : Team member file access."
+
+    attrs
+        auth = "team"
+        scope = "team_data.governance.write"
+
+route legal_holds/get_policy (LegalHoldsGetPolicyArg, LegalHoldsGetPolicyResult, LegalHoldsGetPolicyError)
+    "Gets a legal hold by Id.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
+    Permission : Team member file access."
+
+    attrs
+        auth = "team"
+        scope = "team_data.governance.write"
+
+route legal_holds/list_policies (LegalHoldsListPoliciesArg, LegalHoldsListPoliciesResult, LegalHoldsListPoliciesError)
+    "Lists legal holds on a team.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
+    Permission : Team member file access."
+
+    attrs
+        auth = "team"
+        scope = "team_data.governance.write"
+
+route legal_holds/list_held_revisions (LegalHoldsListHeldRevisionsArg, LegalHoldsListHeldRevisionResult, LegalHoldsListHeldRevisionsError)
+    "List the file metadata that's under the hold.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
+    Permission : Team member file access."
+
+    attrs
+        auth = "team"
+        scope = "team_data.governance.write"
+
+route legal_holds/list_held_revisions_continue (LegalHoldsListHeldRevisionsContinueArg, LegalHoldsListHeldRevisionResult, LegalHoldsListHeldRevisionsError)
+    "Continue listing the file metadata that's under the hold.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
+    Permission : Team member file access."
+
+    attrs
+        auth = "team"
+        scope = "team_data.governance.write"
+
+route legal_holds/update_policy (LegalHoldsPolicyUpdateArg, LegalHoldsPolicyUpdateResult, LegalHoldsPolicyUpdateError)
+    "Updates a legal hold.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
+    Permission : Team member file access."
+
+    attrs
+        auth = "team"
+        scope = "team_data.governance.write"
+
+route legal_holds/release_policy (LegalHoldsPolicyReleaseArg, Void, LegalHoldsPolicyReleaseError)
+    "Releases a legal hold by Id.
+    Note: Legal Holds is a paid add-on. Not all teams have the feature.
+    Permission : Team member file access."
+
+    attrs
+        auth = "team"
+        scope = "team_data.governance.write"
+
+
+route members/delete_former_member_files (MembersFormerMemberArg, Void, MembersDeleteFormerMemberFilesError)
+    "Permanently delete the files of a user who has been removed from the team. After permanent
+    deletion, those files will not be available to be transferred to another team member.
+    Permission : Team member management
+    Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/get_available_team_member_roles (Void, MembersGetAvailableTeamMemberRolesResult, Void)
+    "Get available TeamMemberRoles for the connected team. To be used with :route:`members/set_admin_permissions:2`.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route members/get_info (MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoError)
+    "Returns information about multiple team members.
+    Permission : Team information
+    This endpoint will return :field:`MembersGetInfoItem.id_not_found`,
+    for IDs (or emails) that cannot be matched to a valid team member."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route members/get_info:2 (MembersGetInfoV2Arg, MembersGetInfoV2Result, MembersGetInfoError)
+    "Returns information about multiple team members.
+    Permission : Team information
+    This endpoint will return :field:`MembersGetInfoItem.id_not_found`,
+    for IDs (or emails) that cannot be matched to a valid team member."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route members/list (MembersListArg, MembersListResult, MembersListError)
+    "Lists members of a team.
+    Permission : Team information."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route members/list/continue (MembersListContinueArg, MembersListResult, MembersListContinueError)
+    "Once a cursor has been retrieved from :route:`members/list`, use this to paginate
+    through all team members.
+    Permission : Team information."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route members/list/continue:2 (MembersListContinueArg, MembersListV2Result, MembersListContinueError)
+    "Once a cursor has been retrieved from :route:`members/list:2`, use this to paginate
+    through all team members.
+    Permission : Team information."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route members/list:2 (MembersListArg, MembersListV2Result, MembersListError)
+    "Lists members of a team.
+    Permission : Team information."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route members/move_former_member_files (MembersDataTransferArg, async.LaunchEmptyResult, MembersTransferFormerMembersFilesError)
+    "Moves removed member's files to a different member. This endpoint initiates an asynchronous job. To obtain the final result
+    of the job, the client should periodically poll :route:`members/move_former_member_files/job_status/check`.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/move_former_member_files/job_status/check (async.PollArg, async.PollEmptyResult, async.PollError)
+    "Once an async_job_id is returned from :route:`members/move_former_member_files` ,
+    use this to poll the status of the asynchronous request.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/remove (MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveError)
+    "Removes a member from a team.
+    Permission : Team member management
+    Exactly one of team_member_id, email, or external_id must be provided to identify the user account.
+    Accounts can be recovered via :route:`members/recover` for a 7 day period
+    or until the account has been permanently deleted or transferred to another account
+    (whichever comes first). Calling :route:`members/add` while a user is still recoverable
+    on your team will return with :field:`MemberAddResult.user_already_on_team`.
+    Accounts can have their files transferred via the admin console for a limited time, based on the version history
+    length associated with the team (180 days for most teams).
+    Accounts can have their stacks transferred through the admin console. This only transfers stacks that they have created.
+    This endpoint may initiate an asynchronous job. To obtain the final result
+    of the job, the client should periodically poll :route:`members/remove/job_status/get`."
+
+    attrs
+        auth = "team"
+        scope = "members.delete"
+
+route members/remove/job_status/get (async.PollArg, async.PollEmptyResult, async.PollError)
+    "Once an async_job_id is returned from :route:`members/remove` ,
+    use this to poll the status of the asynchronous request.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.delete"
+
+route members/set_admin_permissions (MembersSetPermissionsArg, MembersSetPermissionsResult, MembersSetPermissionsError)
+    "Updates a team member's permissions.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/set_admin_permissions:2 (MembersSetPermissions2Arg, MembersSetPermissions2Result, MembersSetPermissions2Error)
+    "Updates a team member's permissions.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/suspend (MembersDeactivateArg, Void, MembersSuspendError)
+    "Suspend a member from a team.
+    Permission : Team member management
+    Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/unsuspend (MembersUnsuspendArg, Void, MembersUnsuspendError)
+    "Unsuspend a member from a team.
+    Permission : Team member management
+    Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+
+route members/delete_profile_photo (MembersDeleteProfilePhotoArg, TeamMemberInfo, MembersDeleteProfilePhotoError)
+    "Deletes a team member's profile photo.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/delete_profile_photo:2 (MembersDeleteProfilePhotoArg, TeamMemberInfoV2Result, MembersDeleteProfilePhotoError)
+    "Deletes a team member's profile photo.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/set_profile (MembersSetProfileArg, TeamMemberInfo, MembersSetProfileError)
+    "Updates a team member's profile.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/set_profile:2 (MembersSetProfileArg, TeamMemberInfoV2Result, MembersSetProfileError)
+    "Updates a team member's profile.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/set_profile_photo (MembersSetProfilePhotoArg, TeamMemberInfo, MembersSetProfilePhotoError)
+    "Updates a team member's profile photo.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/set_profile_photo:2 (MembersSetProfilePhotoArg, TeamMemberInfoV2Result, MembersSetProfilePhotoError)
+    "Updates a team member's profile photo.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+
 route members/recover (MembersRecoverArg, Void, MembersRecoverError)
     "Recover a deleted member.
     Permission : Team member management
@@ -2124,6 +1255,66 @@ route members/recover (MembersRecoverArg, Void, MembersRecoverError)
     attrs
         auth = "team"
         scope = "members.delete"
+
+
+route members/add (MembersAddArg, MembersAddLaunch, Void)
+    "Adds members to a team.
+    Permission : Team member management
+    A maximum of 20 members can be specified in a single call.
+    If no Dropbox account exists with the email address specified, a new Dropbox account will
+    be created with the given email address, and that account will be invited to the team.
+    If a personal Dropbox account exists with the email address specified in the call,
+    this call will create a placeholder Dropbox account for the user on the team and send an
+    email inviting the user to migrate their existing personal account onto the team.
+    Team member management apps are required to set an initial given_name and surname for a
+    user to use in the team invitation and for 'Perform as team member' actions taken on
+    the user before they become 'active'."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/add/job_status/get (async.PollArg, MembersAddJobStatus, async.PollError)
+    "Once an async_job_id is returned from :route:`members/add` ,
+    use this to poll the status of the asynchronous request.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/add/job_status/get:2 (async.PollArg, MembersAddJobStatusV2Result, async.PollError)
+    "Once an async_job_id is returned from :route:`members/add:2` ,
+    use this to poll the status of the asynchronous request.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/add:2 (MembersAddV2Arg, MembersAddLaunchV2Result, Void)
+    "Adds members to a team.
+    Permission : Team member management
+    A maximum of 20 members can be specified in a single call.
+    If no Dropbox account exists with the email address specified, a new Dropbox account will
+    be created with the given email address, and that account will be invited to the team.
+    If a personal Dropbox account exists with the email address specified in the call,
+    this call will create a placeholder Dropbox account for the user on the team and send an
+    email inviting the user to migrate their existing personal account onto the team."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/send_welcome_email (UserSelectorArg, Void, MembersSendWelcomeError)
+    "Sends welcome email to pending team member.
+    Permission : Team member management
+    Exactly one of team_member_id, email, or external_id must be provided to identify the user account.
+    No-op if team member is not pending."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
 
 
 alias MembersGetInfoResult = List(MembersGetInfoItem)
@@ -2753,81 +1944,21 @@ struct TeamMemberRole
         role_id = "pid_dbtmr:2345"
         name = "Team admin"
         description = "User can do most user provisioning, de-provisioning and management."
-    
+
     example team_member_role_user_management
         role_id = "pid_dbtmr:3456"
         name = "User management admin"
         description = "Add, remove, and manage member accounts."
-    
+
     example team_member_role_support
         role_id = "pid_dbtmr:4567"
         name = "Support admin"
         description = "Help members with limited tasks, including password reset."
-    
+
     example team_member_role_billing
         role_id = "pid_dbtmr:5678"
         name = "Billing admin"
         description = "Make payments and renew contracts."
-
-
-route members/add (MembersAddArg, MembersAddLaunch, Void)
-    "Adds members to a team.
-    Permission : Team member management
-    A maximum of 20 members can be specified in a single call.
-    If no Dropbox account exists with the email address specified, a new Dropbox account will
-    be created with the given email address, and that account will be invited to the team.
-    If a personal Dropbox account exists with the email address specified in the call,
-    this call will create a placeholder Dropbox account for the user on the team and send an
-    email inviting the user to migrate their existing personal account onto the team.
-    Team member management apps are required to set an initial given_name and surname for a
-    user to use in the team invitation and for 'Perform as team member' actions taken on
-    the user before they become 'active'."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/add/job_status/get (async.PollArg, MembersAddJobStatus, async.PollError)
-    "Once an async_job_id is returned from :route:`members/add` ,
-    use this to poll the status of the asynchronous request.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/add/job_status/get:2 (async.PollArg, MembersAddJobStatusV2Result, async.PollError)
-    "Once an async_job_id is returned from :route:`members/add:2` ,
-    use this to poll the status of the asynchronous request.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/add:2 (MembersAddV2Arg, MembersAddLaunchV2Result, Void)
-    "Adds members to a team.
-    Permission : Team member management
-    A maximum of 20 members can be specified in a single call.
-    If no Dropbox account exists with the email address specified, a new Dropbox account will
-    be created with the given email address, and that account will be invited to the team.
-    If a personal Dropbox account exists with the email address specified in the call,
-    this call will create a placeholder Dropbox account for the user on the team and send an
-    email inviting the user to migrate their existing personal account onto the team."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/send_welcome_email (UserSelectorArg, Void, MembersSendWelcomeError)
-    "Sends welcome email to pending team member.
-    Permission : Team member management
-    Exactly one of team_member_id, email, or external_id must be provided to identify the user account.
-    No-op if team member is not pending."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
 
 
 union Feature
@@ -2854,16 +1985,16 @@ union FeatureValue
 
     example uploadRateLimited
         upload_api_rate_limit = limited
-    
+
     example hasTeamSharedDropbox
         has_team_shared_dropbox = default
-    
+
     example hasTeamFileEvents
         has_team_file_events = ex_no_file_events
-    
+
     example HasTeamSelectiveSync
         has_team_selective_sync = default
-    
+
     example hasDistinctMemberHomes
         has_distinct_member_homes = default
 
@@ -2933,7 +2064,7 @@ union_closed UserSelectorArg
 
     example default
         team_member_id = "dbmid:efgh5678"
-    
+
     example email
         email = "dan@hotmail.com"
 
@@ -2995,636 +2126,1514 @@ struct TokenGetAuthenticatedAdminResult
         admin_profile = default
 
 
-route members/delete_profile_photo (MembersDeleteProfilePhotoArg, TeamMemberInfo, MembersDeleteProfilePhotoError)
-    "Deletes a team member's profile photo.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/delete_profile_photo:2 (MembersDeleteProfilePhotoArg, TeamMemberInfoV2Result, MembersDeleteProfilePhotoError)
-    "Deletes a team member's profile photo.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/set_profile (MembersSetProfileArg, TeamMemberInfo, MembersSetProfileError)
-    "Updates a team member's profile.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/set_profile:2 (MembersSetProfileArg, TeamMemberInfoV2Result, MembersSetProfileError)
-    "Updates a team member's profile.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/set_profile_photo (MembersSetProfilePhotoArg, TeamMemberInfo, MembersSetProfilePhotoError)
-    "Updates a team member's profile photo.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/set_profile_photo:2 (MembersSetProfilePhotoArg, TeamMemberInfoV2Result, MembersSetProfilePhotoError)
-    "Updates a team member's profile photo.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-
-route members/delete_former_member_files (MembersFormerMemberArg, Void, MembersDeleteFormerMemberFilesError)
-    "Permanently delete the files of a user who has been removed from the team. After permanent
-    deletion, those files will not be available to be transferred to another team member.
-    Permission : Team member management
-    Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/get_available_team_member_roles (Void, MembersGetAvailableTeamMemberRolesResult, Void)
-    "Get available TeamMemberRoles for the connected team. To be used with :route:`members/set_admin_permissions:2`.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-route members/get_info (MembersGetInfoArgs, MembersGetInfoResult, MembersGetInfoError)
-    "Returns information about multiple team members.
-    Permission : Team information
-    This endpoint will return :field:`MembersGetInfoItem.id_not_found`,
-    for IDs (or emails) that cannot be matched to a valid team member."
-
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-route members/get_info:2 (MembersGetInfoV2Arg, MembersGetInfoV2Result, MembersGetInfoError)
-    "Returns information about multiple team members.
-    Permission : Team information
-    This endpoint will return :field:`MembersGetInfoItem.id_not_found`,
-    for IDs (or emails) that cannot be matched to a valid team member."
-
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-route members/list (MembersListArg, MembersListResult, MembersListError)
-    "Lists members of a team.
+route features/get_values (FeaturesGetValuesBatchArg, FeaturesGetValuesBatchResult, FeaturesGetValuesBatchError)
+    "Get the values for one or more features. This route allows you to check your account's
+    capability for what feature you can access or what value you have for certain features.
     Permission : Team information."
 
     attrs
         auth = "team"
-        scope = "members.read"
+        scope = "team_info.read"
 
-route members/list/continue (MembersListContinueArg, MembersListResult, MembersListContinueError)
-    "Once a cursor has been retrieved from :route:`members/list`, use this to paginate
-    through all team members.
-    Permission : Team information."
 
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-route members/list/continue:2 (MembersListContinueArg, MembersListV2Result, MembersListContinueError)
-    "Once a cursor has been retrieved from :route:`members/list:2`, use this to paginate
-    through all team members.
-    Permission : Team information."
+route get_info (Void, TeamGetInfoResult, Void)
+    "Retrieves information about a team."
 
     attrs
         auth = "team"
-        scope = "members.read"
+        scope = "team_info.read"
 
-route members/list:2 (MembersListArg, MembersListV2Result, MembersListError)
-    "Lists members of a team.
-    Permission : Team information."
 
-    attrs
-        auth = "team"
-        scope = "members.read"
-
-route members/move_former_member_files (MembersDataTransferArg, async.LaunchEmptyResult, MembersTransferFormerMembersFilesError)
-    "Moves removed member's files to a different member. This endpoint initiates an asynchronous job. To obtain the final result
-    of the job, the client should periodically poll :route:`members/move_former_member_files/job_status/check`.
-    Permission : Team member management."
+route token/get_authenticated_admin (Void, TokenGetAuthenticatedAdminResult, TokenGetAuthenticatedAdminError)
+    "Returns the member profile of the admin who generated the team access token used to make the call."
 
     attrs
         auth = "team"
-        scope = "members.write"
+        scope = "team_info.read"
 
-route members/move_former_member_files/job_status/check (async.PollArg, async.PollEmptyResult, async.PollError)
-    "Once an async_job_id is returned from :route:`members/move_former_member_files` ,
-    use this to poll the status of the asynchronous request.
-    Permission : Team member management."
 
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/remove (MembersRemoveArg, async.LaunchEmptyResult, MembersRemoveError)
-    "Removes a member from a team.
-    Permission : Team member management
-    Exactly one of team_member_id, email, or external_id must be provided to identify the user account.
-    Accounts can be recovered via :route:`members/recover` for a 7 day period
-    or until the account has been permanently deleted or transferred to another account
-    (whichever comes first). Calling :route:`members/add` while a user is still recoverable
-    on your team will return with :field:`MemberAddResult.user_already_on_team`.
-    Accounts can have their files transferred via the admin console for a limited time, based on the version history
-    length associated with the team (180 days for most teams).
-    Accounts can have their stacks transferred through the admin console. This only transfers stacks that they have created.
-    This endpoint may initiate an asynchronous job. To obtain the final result
-    of the job, the client should periodically poll :route:`members/remove/job_status/get`."
+route properties/template/add (file_properties.AddTemplateArg, file_properties.AddTemplateResult, file_properties.ModifyTemplateError) deprecated
+    "Permission : Team member file access."
 
     attrs
         auth = "team"
-        scope = "members.delete"
+        scope = "files.team_metadata.write"
 
-route members/remove/job_status/get (async.PollArg, async.PollEmptyResult, async.PollError)
-    "Once an async_job_id is returned from :route:`members/remove` ,
-    use this to poll the status of the asynchronous request.
-    Permission : Team member management."
+route properties/template/get (file_properties.GetTemplateArg, file_properties.GetTemplateResult, file_properties.TemplateError) deprecated
+    "Permission : Team member file access. The scope for the route is files.team_metadata.write."
 
     attrs
         auth = "team"
-        scope = "members.delete"
-
-route members/set_admin_permissions (MembersSetPermissionsArg, MembersSetPermissionsResult, MembersSetPermissionsError)
-    "Updates a team member's permissions.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/set_admin_permissions:2 (MembersSetPermissions2Arg, MembersSetPermissions2Result, MembersSetPermissions2Error)
-    "Updates a team member's permissions.
-    Permission : Team member management."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/suspend (MembersDeactivateArg, Void, MembersSuspendError)
-    "Suspend a member from a team.
-    Permission : Team member management
-    Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
-
-route members/unsuspend (MembersUnsuspendArg, Void, MembersUnsuspendError)
-    "Unsuspend a member from a team.
-    Permission : Team member management
-    Exactly one of team_member_id, email, or external_id must be provided to identify the user account."
-
-    attrs
-        auth = "team"
-        scope = "members.write"
+        scope = "files.team_metadata.write"
 
 
-alias LegalHoldId = String(pattern="^pid_dbhid:.+")
+alias GroupsGetInfoResult = List(GroupsGetInfoItem)
 
-alias LegalHoldPolicyName = String(max_length=140)
-
-alias LegalHoldPolicyDescription = String(max_length=501)
-
-alias Path = String(pattern="(/(.|[\\r\\n])*)?")
-
-alias LegalHoldsPolicyCreateResult = LegalHoldPolicy
-
-alias LegalHoldsGetPolicyResult = LegalHoldPolicy
-
-alias ListHeldRevisionCursor = String(min_length=1)
-
-alias LegalHoldsPolicyUpdateResult = LegalHoldPolicy
-
-union LegalHoldStatus
-    active
-        "The legal hold policy is active."
-    released
-        "The legal hold policy was released."
-    activating
-        "The legal hold policy is activating."
-    updating
-        "The legal hold policy is updating."
-    exporting
-        "The legal hold policy is exporting."
-    releasing
-        "The legal hold policy is releasing."
-
-union LegalHoldsError
-    unknown_legal_hold_error
-        "There has been an unknown legal hold error."
-    insufficient_permissions
-        "You don't have permissions to perform this action."
-
-union LegalHoldsPolicyCreateError extends LegalHoldsError
-    start_date_is_later_than_end_date
-        "Start date must be earlier than end date."
-    empty_members_list
-        "The users list must have at least one user."
-    invalid_members
-        "Some members in the members list are not valid to be placed under legal hold."
-    number_of_users_on_hold_is_greater_than_hold_limitation
-        "You cannot add more than 5 users in a legal hold."
-    transient_error
-        "Temporary infrastructure failure, please retry."
-    name_must_be_unique
-        "The name provided is already in use by another legal hold."
-    team_exceeded_legal_hold_quota
-        "Team exceeded legal hold quota."
-    invalid_date
-        "The provided date is invalid."
-
-union LegalHoldsGetPolicyError extends LegalHoldsError
-    legal_hold_policy_not_found
-        "Legal hold policy does not exist for :field:`LegalHoldsGetPolicyArg.id`."
-
-union LegalHoldsListPoliciesError extends LegalHoldsError
-    transient_error
-        "Temporary infrastructure failure, please retry."
-
-union LegalHoldsListHeldRevisionsError extends LegalHoldsError
-    transient_error
-        "Temporary infrastructure failure, please retry."
-    legal_hold_still_empty
-        "The legal hold is not holding any revisions yet."
-    inactive_legal_hold
-        "Trying to list revisions for an inactive legal hold."
-
-union LegalHoldsListHeldRevisionsContinueError
-    unknown_legal_hold_error
-        "There has been an unknown legal hold error."
-    transient_error
-        "Temporary infrastructure failure, please retry."
-    reset
-        "Indicates that the cursor has been invalidated. Call
-        :route:`legal_holds/list_held_revisions_continue` again with an empty cursor to obtain a new cursor."
-
-union LegalHoldsPolicyUpdateError extends LegalHoldsError
-    transient_error
-        "Temporary infrastructure failure, please retry."
-    inactive_legal_hold
-        "Trying to release an inactive legal hold."
-    legal_hold_performing_another_operation
-        "Legal hold is currently performing another operation."
-    invalid_members
-        "Some members in the members list are not valid to be placed under legal hold."
-    number_of_users_on_hold_is_greater_than_hold_limitation
-        "You cannot add more than 5 users in a legal hold."
-    empty_members_list
-        "The users list must have at least one user."
-    name_must_be_unique
-        "The name provided is already in use by another legal hold."
-    legal_hold_policy_not_found
-        "Legal hold policy does not exist for :field:`LegalHoldsPolicyUpdateArg.id`."
-
-union LegalHoldsPolicyReleaseError extends LegalHoldsError
-    legal_hold_performing_another_operation
-        "Legal hold is currently performing another operation."
-    legal_hold_already_releasing
-        "Legal hold is currently performing a release or is already released."
-    legal_hold_policy_not_found
-        "Legal hold policy does not exist for :field:`LegalHoldsPolicyReleaseArg.id`."
-
-struct MembersInfo
-    team_member_ids List(team_common.TeamMemberId)
-        "Team member IDs of the users under this hold."
-    permanently_deleted_users UInt64
-        "The number of permanently deleted users that were under this hold."
+union_closed GroupAccessType
+    "Role of a user in group."
+    member
+        "User is a member of the group, but has no special permissions."
+    owner
+        "User can rename the group, and add/remove members."
 
     example default
-        team_member_ids = ["dbmid:efgh5678"]
-        permanently_deleted_users = 2
+        member = null
 
-struct LegalHoldPolicy
-    id LegalHoldId
-        "The legal hold id."
-    name LegalHoldPolicyName
-        "Policy name."
-    description LegalHoldPolicyDescription?
-        "A description of the legal hold policy."
-    activation_time common.DropboxTimestamp?
-        "The time at which the legal hold was activated."
-    members MembersInfo
-        "Team members IDs and number of permanently deleted members under hold."
-    status LegalHoldStatus
-        "The current state of the hold."
-    start_date common.DropboxTimestamp
-        "Start date of the legal hold policy."
-    end_date common.DropboxTimestamp?
-        "End date of the legal hold policy."
+union_closed GroupSelector
+    "Argument for selecting a single group, either by group_id or by external group ID."
+    group_id team_common.GroupId
+        "Group ID."
+    group_external_id team_common.GroupExternalId
+        "External ID of the group."
 
     example default
-        id = "pid_dbhid:abcd1234"
-        name = "acme cfo policy"
-        activation_time = "2016-01-20T00:00:10Z"
-        members = default
-        status = active
-        start_date = "2016-01-01T00:00:00Z"
-        end_date = "2017-12-31T00:00:00Z"
+        group_id = "g:e2db7665347abcd600000000001a2b3c"
 
-struct LegalHoldsPolicyCreateArg
-    name LegalHoldPolicyName
-        "Policy name."
-    description LegalHoldPolicyDescription?
-        "A description of the legal hold policy."
-    members List(team_common.TeamMemberId)
-        "List of team member IDs added to the hold."
-    start_date common.DropboxTimestamp?
-        "start date of the legal hold policy."
-    end_date common.DropboxTimestamp?
-        "end date of the legal hold policy."
+union GroupSelectorError
+    "Error that can be raised when :type:`GroupSelector` is used."
+    group_not_found
+        "No matching group found. No groups match the specified group ID."
 
-    example default
-        name = "acme cfo policy"
-        members = ["dbmid:FDFSVF-DFSDF"]
-        start_date = "2016-01-01T00:00:00Z"
-        end_date = "2017-12-31T00:00:00Z"
+union GroupSelectorWithTeamGroupError extends GroupSelectorError
+    "Error that can be raised when :type:`GroupSelector` is used and team groups are disallowed from
+    being used."
+    system_managed_group_disallowed
+        "This operation is not supported on system-managed groups."
 
-struct LegalHoldsGetPolicyArg
-    id LegalHoldId
-        "The legal hold Id."
+union_closed GroupsSelector
+    "Argument for selecting a list of groups, either by group_ids, or external group IDs."
+    group_ids List(team_common.GroupId)
+        "List of group IDs."
+    group_external_ids List(String)
+        "List of external IDs of groups."
 
     example default
-        id = "pid_dbhid:abcd1234"
+        group_ids = ["g:e2db7665347abcd600000000001a2b3c", "g:111111147abcd6000000000222222c"]
 
-struct LegalHoldsListPoliciesArg
-    include_released Boolean = false
-        "Whether to return holds that were released."
+union GroupMemberSelectorError extends GroupSelectorWithTeamGroupError
+    "Error that can be raised when :type:`GroupMemberSelector` is used, and the user
+    is required to be a member of the specified group."
+    member_not_in_group
+        "The specified user is not a member of this group."
 
-    example default
-        include_released = false
+union GroupMembersSelectorError extends GroupSelectorWithTeamGroupError
+    "Error that can be raised when :type:`GroupMembersSelector` is used, and the users
+    are required to be members of the specified group."
+    member_not_in_group
+        "At least one of the specified users is not a member of the group."
 
-struct LegalHoldsListPoliciesResult
-    policies List(LegalHoldPolicy)
+union GroupsListContinueError
+    invalid_cursor
+        "The cursor is invalid."
 
-    example default
-        policies = [default]
-
-struct LegalHoldsListHeldRevisionsArg
-    id LegalHoldId
-        "The legal hold Id."
-
-    example default
-        id = "pid_dbhid:abcd1234"
-
-struct LegalHoldHeldRevisionMetadata
-    new_filename String
-        "The held revision filename."
-    original_revision_id files.Rev
-        "The id of the held revision."
-    original_file_path Path
-        "The original path of the held revision."
-    server_modified common.DropboxTimestamp
-        "The last time the file was modified on Dropbox."
-    author_member_id team_common.TeamMemberId
-        "The member id of the revision's author."
-    author_member_status TeamMemberStatus
-        "The member status of the revision's author."
-    author_email common.EmailAddress
-        "The email address of the held revision author."
-    file_type String
-        "The type of the held revision's file."
-    size UInt64
-        "The file size in bytes."
-    content_hash files.Sha256HexHash
-        "A hash of the file content. This field can be used to verify data integrity. For more
-        information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+union_closed GroupsGetInfoItem
+    id_not_found String = ""
+        "An ID that was provided as a parameter to :route:`groups/get_info`, and
+        did not match a corresponding group. The ID can be a group ID, or an external ID,
+        depending on how the method was called."
+    group_info GroupFullInfo
+        "Info about a group."
 
     example default
-        new_filename = "111_222.pdf"
-        original_revision_id = "ab2rij4i5ojgfd"
-        original_file_path = "/a.pdf"
-        server_modified = "2019-08-12T12:08:52Z"
-        author_member_id = "dbmid:abcd1234abcd1234abcd1234abcd1234a23"
-        author_member_status = active
-        author_email = "a@a.com"
-        file_type = "Document"
-        size = 3
-        content_hash = "abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
+        group_info = default
 
-struct LegalHoldsListHeldRevisionResult
-    entries List(LegalHoldHeldRevisionMetadata)
-        "List of file entries that under the hold."
-    cursor ListHeldRevisionCursor?
-        "The cursor idicates where to continue reading file metadata entries for the next API call. When there are no more entries, the cursor will return none.
-        Pass the cursor into
-        /2/team/legal_holds/list_held_revisions/continue."
+union GroupsGetInfoError
+    group_not_on_team
+        "The group is not on your team."
+
+union GroupCreateError
+    group_name_already_used
+        "The requested group name is already being used by another group."
+    group_name_invalid
+        "Group name is empty or has invalid characters."
+    external_id_already_in_use
+        "The requested external ID is already being used by another group."
+    system_managed_group_disallowed
+        "System-managed group cannot be manually created."
+
+union GroupDeleteError extends GroupSelectorWithTeamGroupError
+    group_already_deleted
+        "This group has already been deleted."
+
+union GroupUpdateError extends GroupSelectorWithTeamGroupError
+    group_name_already_used
+        "The requested group name is already being used by another group."
+    group_name_invalid
+        "Group name is empty or has invalid characters."
+    external_id_already_in_use
+        "The requested external ID is already being used by another group."
+
+union GroupMembersAddError extends GroupSelectorWithTeamGroupError
+    duplicate_user
+        "You cannot add duplicate users. One or more of the members
+        you are trying to add is already a member of the group."
+    group_not_in_team
+        "Group is not in this team. You cannot add members to a
+        group that is outside of your team."
+    members_not_in_team List(String)
+        "These members are not part of your team. Currently, you cannot add members
+        to a group if they are not part of your team, though this
+        may change in a subsequent version. To add new members to your Dropbox
+        Business team, use the :route:`members/add` endpoint."
+    users_not_found List(String)
+        "These users were not found in Dropbox."
+    user_must_be_active_to_be_owner
+        "A suspended user cannot be added to a group as :field:`GroupAccessType.owner`."
+    user_cannot_be_manager_of_company_managed_group List(String)
+        "A company-managed group cannot be managed by a user."
+
+union GroupMembersRemoveError extends GroupMembersSelectorError
+    group_not_in_team
+        "Group is not in this team. You cannot remove members from a group
+        that is outside of your team."
+    members_not_in_team List(String)
+        "These members are not part of your team."
+    users_not_found List(String)
+        "These users were not found in Dropbox."
+
+union GroupMemberSetAccessTypeError extends GroupMemberSelectorError
+    user_cannot_be_manager_of_company_managed_group
+        "A company managed group cannot be managed by a user."
+
+union GroupsMembersListContinueError
+    invalid_cursor
+        "The cursor is invalid."
+
+union GroupsPollError extends async.PollError
+    access_denied
+        "You are not allowed to poll this job."
+
+struct GroupMemberSelector
+    "Argument for selecting a group and a single user."
+    group GroupSelector
+        "Specify a group."
+    user UserSelectorArg
+        "Identity of a user that is a member of :field:`group`."
+
+    example default
+        group = default
+        user = default
+
+struct GroupMembersSelector
+    "Argument for selecting a group and a list of users."
+    group GroupSelector
+        "Specify a group."
+    users UsersSelectorArg
+        "A list of users that are members of :field:`group`."
+
+struct IncludeMembersArg
+    return_members Boolean = true
+        "Whether to return the list of members in the group.
+        Note that the default value will cause all the group members
+        to be returned in the response. This may take a long time for large groups."
+
+struct GroupMemberInfo
+    "Profile of group member, and role in group."
+    profile MemberProfile
+        "Profile of group member."
+    access_type GroupAccessType
+        "The role that the user has in the group."
+
+    example default
+        profile = default
+        access_type = default
+
+struct GroupFullInfo extends team_common.GroupSummary
+    "Full description of a group."
+    members List(GroupMemberInfo)?
+        "List of group members."
+    created UInt64
+        "The group creation time as a UTC timestamp in milliseconds since the Unix epoch."
+
+    example default
+        group_name = "project launch"
+        group_id = "g:e2db7665347abcd600000000001a2b3c"
+        member_count = 5
+        group_management_type = user_managed
+        members = [default]
+        created = 1447255518000
+
+struct GroupsListArg
+    limit UInt32(max_value=1000, min_value=1) = 1000
+        "Number of results to return per call."
+
+    example default
+        limit = 100
+
+struct GroupsListResult
+    groups List(team_common.GroupSummary)
+    cursor String
+        "Pass the cursor into :route:`groups/list/continue` to obtain the additional groups."
     has_more Boolean
-        "True if there are more file entries that haven't been returned. You can retrieve them with a call to /legal_holds/list_held_revisions_continue."
+        "Is true if there are additional groups that have not been returned
+        yet. An additional call to :route:`groups/list/continue` can retrieve them."
 
     example default
-        entries = [default]
+        groups = [default]
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
         has_more = false
 
-struct LegalHoldsListHeldRevisionsContinueArg
-    id LegalHoldId
-        "The legal hold Id."
-    cursor ListHeldRevisionCursor?
-        "The cursor idicates where to continue reading file metadata entries for the next API call. When there are no more entries, the cursor will return none."
+struct GroupsListContinueArg
+    cursor String
+        "Indicates from what point to get the next set of groups."
 
     example default
-        id = "pid_dbhid:abcd1234"
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
 
-struct LegalHoldsPolicyUpdateArg
-    id LegalHoldId
-        "The legal hold Id."
-    name LegalHoldPolicyName?
-        "Policy new name."
-    description LegalHoldPolicyDescription?
-        "Policy new description."
-    members List(team_common.TeamMemberId)?
-        "List of team member IDs to apply the policy on."
-
-    example default
-        id = "pid_dbhid:abcd1234"
-        members = ["dbmid:FDFSVF-DFSDF"]
-
-struct LegalHoldsPolicyReleaseArg
-    id LegalHoldId
-        "The legal hold Id."
+struct GroupCreateArg
+    group_name String
+        "Group name."
+    add_creator_as_owner Boolean = false
+        "Automatically add the creator of the group."
+    group_external_id team_common.GroupExternalId?
+        "The creator of a team can associate an arbitrary external ID to the group."
+    group_management_type team_common.GroupManagementType?
+        "Whether the team can be managed by selected users, or only by team admins."
 
     example default
-        id = "pid_dbhid:abcd1234"
+        group_name = "Europe sales"
+        group_external_id = "group-134"
 
-route legal_holds/create_policy (LegalHoldsPolicyCreateArg, LegalHoldsPolicyCreateResult, LegalHoldsPolicyCreateError)
-    "Creates new legal hold policy.
-    Note: Legal Holds is a paid add-on. Not all teams have the feature.
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.governance.write"
-
-route legal_holds/get_policy (LegalHoldsGetPolicyArg, LegalHoldsGetPolicyResult, LegalHoldsGetPolicyError)
-    "Gets a legal hold by Id.
-    Note: Legal Holds is a paid add-on. Not all teams have the feature.
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.governance.write"
-
-route legal_holds/list_policies (LegalHoldsListPoliciesArg, LegalHoldsListPoliciesResult, LegalHoldsListPoliciesError)
-    "Lists legal holds on a team.
-    Note: Legal Holds is a paid add-on. Not all teams have the feature.
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.governance.write"
-
-route legal_holds/list_held_revisions (LegalHoldsListHeldRevisionsArg, LegalHoldsListHeldRevisionResult, LegalHoldsListHeldRevisionsError)
-    "List the file metadata that's under the hold.
-    Note: Legal Holds is a paid add-on. Not all teams have the feature.
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.governance.write"
-
-route legal_holds/list_held_revisions_continue (LegalHoldsListHeldRevisionsContinueArg, LegalHoldsListHeldRevisionResult, LegalHoldsListHeldRevisionsError)
-    "Continue listing the file metadata that's under the hold.
-    Note: Legal Holds is a paid add-on. Not all teams have the feature.
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.governance.write"
-
-route legal_holds/update_policy (LegalHoldsPolicyUpdateArg, LegalHoldsPolicyUpdateResult, LegalHoldsPolicyUpdateError)
-    "Updates a legal hold.
-    Note: Legal Holds is a paid add-on. Not all teams have the feature.
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.governance.write"
-
-route legal_holds/release_policy (LegalHoldsPolicyReleaseArg, Void, LegalHoldsPolicyReleaseError)
-    "Releases a legal hold by Id.
-    Note: Legal Holds is a paid add-on. Not all teams have the feature.
-    Permission : Team member file access."
-
-    attrs
-        auth = "team"
-        scope = "team_data.governance.write"
-
-
-union_closed TeamMembershipType
-    full
-        "User uses a license and has full access to team resources like the shared quota."
-    limited
-        "User does not have access to the shared quota and team admins have restricted administrative control."
-
-struct RemovedStatus
-    is_recoverable Boolean
-        "True if the removed team member is recoverable."
-    is_disconnected Boolean
-        "True if the team member's account was converted to individual account."
+struct GroupUpdateArgs extends IncludeMembersArg
+    group GroupSelector
+        "Specify a group."
+    new_group_name String?
+        "Optional argument. Set group name to this if provided."
+    new_group_external_id team_common.GroupExternalId?
+        "Optional argument. New group external ID.
+        If the argument is None, the group's external_id won't be updated.
+        If the argument is empty string, the group's external id will be cleared."
+    new_group_management_type team_common.GroupManagementType?
+        "Set new group management type, if provided."
 
     example default
-        is_recoverable = false
-        is_disconnected = false
+        group = default
+        new_group_name = "Europe west sales"
+        new_group_external_id = "sales-234"
+        new_group_management_type = company_managed
 
-union_closed TeamMemberStatus
-    "The user's status as a member of a specific team."
-    active
-        "User has successfully joined the team."
-    invited
-        "User has been invited to a team, but has not joined the team yet."
-    suspended
-        "User is no longer a member of the team, but the account can be un-suspended,
-        re-establishing the user as a team member."
-    removed RemovedStatus
-        "User is no longer a member of the team.
-        Removed users are only listed when include_removed is true in members/list."
-
-struct MemberProfile
-    "Basic member profile."
-    team_member_id team_common.TeamMemberId
-        "ID of user as a member of a team."
-    external_id String?
-        "External ID that a team can attach to the user.
-        An application using the API may find it easier to use their
-        own IDs instead of Dropbox IDs like account_id or team_member_id."
-    account_id users_common.AccountId?
-        "A user's account identifier."
-    email String
-        "Email address of user."
-    email_verified Boolean
-        "Is true if the user's email is verified to be owned by the user."
-    secondary_emails List(secondary_emails.SecondaryEmail)?
-        "Secondary emails of a user."
-    status TeamMemberStatus
-        "The user's status as a member of a specific team."
-    name users.Name
-        "Representations for a person's name."
-    membership_type TeamMembershipType
-        "The user's membership type: full (normal team member) vs limited (does not use a license; no access to the team's shared quota)."
-    invited_on common.DropboxTimestamp?
-        "The date and time the user was invited to the team (contains value only when the member's status matches :field:`TeamMemberStatus.invited`)."
-    joined_on common.DropboxTimestamp?
-        "The date and time the user joined as a member of a specific team."
-    suspended_on common.DropboxTimestamp?
-        "The date and time the user was suspended from the team (contains value only when the member's status matches :field:`TeamMemberStatus.suspended`)."
-    persistent_id String?
-        "Persistent ID that a team can attach to the user.
-        The persistent ID is unique ID to be used for SAML authentication."
-    is_directory_restricted Boolean?
-        "Whether the user is a directory restricted user."
-    profile_photo_url String?
-        "URL for the photo representing the user, if one is set."
+struct GroupMembersChangeResult
+    "Result returned by :route:`groups/members/add` and :route:`groups/members/remove`."
+    group_info GroupFullInfo
+        "The group info after member change operation has been performed."
+    async_job_id async.AsyncJobId
+        @common.Deprecated
+        "For legacy purposes async_job_id will always return one space ' '. Formerly, it was an ID that was used to obtain the status of granting/revoking group-owned resources. It's no longer necessary because the async processing now happens automatically."
 
     example default
+        group_info = default
+        async_job_id = "99988877733388"
+
+struct MemberAccess
+    "Specify access type a member should have when joined to a group."
+    user UserSelectorArg
+        "Identity of a user."
+    access_type GroupAccessType
+        "Access type."
+
+    example default
+        user = default
+        access_type = default
+
+struct GroupMembersAddArg extends IncludeMembersArg
+    group GroupSelector
+        "Group to which users will be added."
+    members List(MemberAccess)
+        "List of users to be added to the group."
+
+    example default
+        group = default
+        members = [default]
+
+struct GroupMembersRemoveArg extends IncludeMembersArg
+    group GroupSelector
+        "Group from which users will be removed."
+    users List(UserSelectorArg)
+        "List of users to be removed from the group."
+
+    example default
+        group = default
+        users = [default]
+
+struct GroupMembersSetAccessTypeArg extends GroupMemberSelector
+    access_type GroupAccessType
+        "New group access type the user will have."
+    return_members Boolean = true
+        "Whether to return the list of members in the group.
+        Note that the default value will cause all the group members
+        to be returned in the response. This may take a long time for large groups."
+
+    example default
+        group = default
+        user = default
+        access_type = default
+
+struct GroupsMembersListArg
+    group GroupSelector
+        "The group whose members are to be listed."
+    limit UInt32(max_value=1000, min_value=1) = 1000
+        "Number of results to return per call."
+
+    example default
+        group = default
+        limit = 100
+
+struct GroupsMembersListResult
+    members List(GroupMemberInfo)
+    cursor String
+        "Pass the cursor into :route:`groups/members/list/continue` to obtain additional group members."
+    has_more Boolean
+        "Is true if there are additional group members that have not been returned
+        yet. An additional call to :route:`groups/members/list/continue` can retrieve them."
+
+    example default
+        members = []
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+        has_more = false
+
+struct GroupsMembersListContinueArg
+    cursor String
+        "Indicates from what point to get the next set of groups."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+route groups/list (GroupsListArg, GroupsListResult, Void)
+    "Lists groups on a team.
+    Permission : Team Information."
+
+    attrs
+        auth = "team"
+        scope = "groups.read"
+
+route groups/list/continue (GroupsListContinueArg, GroupsListResult, GroupsListContinueError)
+    "Once a cursor has been retrieved from :route:`groups/list`, use this to paginate
+    through all groups.
+    Permission : Team Information."
+
+    attrs
+        auth = "team"
+        scope = "groups.read"
+
+route groups/get_info (GroupsSelector, GroupsGetInfoResult, GroupsGetInfoError)
+    "Retrieves information about one or more groups. Note that the optional field
+    :field:`GroupFullInfo.members` is not returned for system-managed groups.
+    Permission : Team Information."
+
+    attrs
+        auth = "team"
+        scope = "groups.read"
+
+route groups/create (GroupCreateArg, GroupFullInfo, GroupCreateError)
+    "Creates a new, empty group, with a requested name.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "groups.write"
+
+route groups/delete (GroupSelector, async.LaunchEmptyResult, GroupDeleteError)
+    "Deletes a group.
+    The group is deleted immediately. However the revoking of group-owned resources
+    may take additional time.
+    Use the :route:`groups/job_status/get` to determine whether this process has completed.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "groups.write"
+
+route groups/update (GroupUpdateArgs, GroupFullInfo, GroupUpdateError)
+    "Updates a group's name and/or external ID.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "groups.write"
+
+route groups/members/add (GroupMembersAddArg, GroupMembersChangeResult, GroupMembersAddError)
+    "Adds members to a group.
+    The members are added immediately. However the granting of group-owned resources
+    may take additional time.
+    Use the :route:`groups/job_status/get` to determine whether this process has completed.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "groups.write"
+
+route groups/members/remove (GroupMembersRemoveArg, GroupMembersChangeResult, GroupMembersRemoveError)
+    "Removes members from a group.
+    The members are removed immediately. However the revoking of group-owned resources
+    may take additional time.
+    Use the :route:`groups/job_status/get` to determine whether this process has completed.
+    This method permits removing the only owner of a group, even in cases where this is not
+    possible via the web client.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "groups.write"
+
+route groups/members/set_access_type (GroupMembersSetAccessTypeArg, GroupsGetInfoResult, GroupMemberSetAccessTypeError)
+    "Sets a member's access type in a group.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "groups.write"
+
+route groups/members/list (GroupsMembersListArg, GroupsMembersListResult, GroupSelectorError)
+    "Lists members of a group.
+    Permission : Team Information."
+
+    attrs
+        auth = "team"
+        scope = "groups.read"
+
+route groups/members/list/continue (GroupsMembersListContinueArg, GroupsMembersListResult, GroupsMembersListContinueError)
+    "Once a cursor has been retrieved from :route:`groups/members/list`, use this to paginate
+    through all members of the group.
+    Permission : Team information."
+
+    attrs
+        auth = "team"
+        scope = "groups.read"
+
+route groups/job_status/get (async.PollArg, async.PollEmptyResult, GroupsPollError)
+    "Once an async_job_id is returned from :route:`groups/delete`,
+    :route:`groups/members/add` , or :route:`groups/members/remove`
+    use this method to poll the status of granting/revoking
+    group members' access to group-owned resources.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "groups.write"
+
+
+union ListMemberAppsError
+    "Error returned by :route:`linked_apps/list_member_linked_apps`."
+    member_not_found
+        "Member not found."
+
+union ListMembersAppsError
+    "Error returned by :route:`linked_apps/list_members_linked_apps`."
+    reset
+        "Indicates that the cursor has been invalidated. Call
+        :route:`linked_apps/list_members_linked_apps` again with an empty cursor to obtain a new cursor."
+
+union RevokeLinkedAppError
+    "Error returned by :route:`linked_apps/revoke_linked_app`."
+    app_not_found
+        "Application not found."
+    member_not_found
+        "Member not found."
+    app_folder_removal_not_supported
+        "App folder removal is not supported."
+
+union RevokeLinkedAppBatchError
+    "Error returned by :route:`linked_apps/revoke_linked_app_batch`."
+
+union ListTeamAppsError
+    "Error returned by :route:`linked_apps/list_team_linked_apps`."
+    reset
+        "Indicates that the cursor has been invalidated. Call
+        :route:`linked_apps/list_team_linked_apps` again with an empty cursor to obtain a new cursor."
+
+struct ListMemberAppsArg
+    team_member_id String
+        "The team member id."
+
+    example default
+        team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+
+struct ApiApp
+    "Information on linked third party applications."
+    app_id String
+        "The application unique id."
+    app_name String
+        "The application name."
+    publisher String?
+        "The application publisher name."
+    publisher_url String?
+        "The publisher's URL."
+    linked common.DropboxTimestamp?
+        "The time this application was linked."
+    is_app_folder Boolean
+        "Whether the linked application uses a dedicated folder."
+
+    example default
+        app_id = "dbaid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+        app_name = "Notes"
+        publisher = "Notes company"
+        publisher_url = "http://company.com"
+        linked = "2015-05-12T15:50:38Z"
+        is_app_folder = true
+
+struct ListMemberAppsResult
+    linked_api_apps List(ApiApp)
+        "List of third party applications linked by this team member."
+
+    example default
+        linked_api_apps = [default]
+
+struct ListMembersAppsArg
+    "Arguments for :route:`linked_apps/list_members_linked_apps`."
+    cursor String?
+        "At the first call to the :route:`linked_apps/list_members_linked_apps` the cursor shouldn't be
+        passed. Then, if the result of the call includes a cursor, the following requests should
+        include the received cursors in order to receive the next sub list of the team applications."
+
+    example default
+        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
+
+struct MemberLinkedApps
+    "Information on linked applications of a team member."
+    team_member_id String
+        "The member unique Id."
+    linked_api_apps List(ApiApp)
+        "List of third party applications linked by this team member."
+
+    example default
+        team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+        linked_api_apps = [default]
+
+struct ListMembersAppsResult
+    "Information returned by :route:`linked_apps/list_members_linked_apps`."
+    apps List(MemberLinkedApps)
+        "The linked applications of each member of the team."
+    has_more Boolean
+        "If true, then there are more apps available. Pass the
+        cursor to :route:`linked_apps/list_members_linked_apps` to retrieve the rest."
+    cursor String?
+        "Pass the cursor into :route:`linked_apps/list_members_linked_apps` to receive the next
+        sub list of team's applications."
+
+    example default
+        apps = [default]
+        has_more = true
+        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
+
+struct RevokeLinkedApiAppArg
+    app_id String
+        "The application's unique id."
+    team_member_id String
+        "The unique id of the member owning the device."
+    keep_app_folder Boolean = true
+        @common.Deprecated
+        "This flag is not longer supported, the application dedicated folder (in case the application uses
+        one) will be kept."
+
+    example default
+        app_id = "dbaid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+        team_member_id = "dbmid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I"
+
+struct RevokeLinkedApiAppBatchArg
+    revoke_linked_app List(RevokeLinkedApiAppArg)
+
+    example default
+        revoke_linked_app = [default]
+
+struct RevokeLinkedAppStatus
+    success Boolean
+        "Result of the revoking request."
+    error_type RevokeLinkedAppError?
+        "The error cause in case of a failure."
+
+    example default
+        success = false
+        error_type = app_not_found
+
+struct RevokeLinkedAppBatchResult
+    revoke_linked_app_status List(RevokeLinkedAppStatus)
+
+    example default
+        revoke_linked_app_status = [default]
+
+struct ListTeamAppsArg
+    "Arguments for :route:`linked_apps/list_team_linked_apps`."
+    cursor String?
+        "At the first call to the :route:`linked_apps/list_team_linked_apps` the cursor shouldn't be
+        passed. Then, if the result of the call includes a cursor, the following requests should
+        include the received cursors in order to receive the next sub list of the team applications."
+
+    example default
+        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
+
+struct ListTeamAppsResult
+    "Information returned by :route:`linked_apps/list_team_linked_apps`."
+    apps List(MemberLinkedApps)
+        "The linked applications of each member of the team."
+    has_more Boolean
+        "If true, then there are more apps available. Pass the
+        cursor to :route:`linked_apps/list_team_linked_apps` to retrieve the rest."
+    cursor String?
+        "Pass the cursor into :route:`linked_apps/list_team_linked_apps` to receive the next
+        sub list of team's applications."
+
+    example default
+        apps = [default]
+        has_more = true
+        cursor = "AADAQO8ZWKvBkSMXb1J9dAYVvwZ0wcvfyzIBo2e1H-_N-67pfrYKTb4oN_3LG9_ilWjblZXuiR8ubjjiQQkHq-MvDjbe_6bkcJgjnTpowrRaQA"
+
+route linked_apps/list_member_linked_apps (ListMemberAppsArg, ListMemberAppsResult, ListMemberAppsError)
+    "List all linked applications of the team member.
+    Note, this endpoint does not list any team-linked applications."
+
+    attrs
+        auth = "team"
+        scope = "sessions.list"
+
+route linked_apps/list_members_linked_apps (ListMembersAppsArg, ListMembersAppsResult, ListMembersAppsError)
+    "List all applications linked to the team members' accounts.
+    Note, this endpoint does not list any team-linked applications."
+
+    attrs
+        auth = "team"
+        scope = "sessions.list"
+
+route linked_apps/revoke_linked_app (RevokeLinkedApiAppArg, Void, RevokeLinkedAppError)
+    "Revoke a linked application of the team member."
+
+    attrs
+        auth = "team"
+        scope = "sessions.modify"
+
+route linked_apps/revoke_linked_app_batch (RevokeLinkedApiAppBatchArg, RevokeLinkedAppBatchResult, RevokeLinkedAppBatchError)
+    "Revoke a list of linked applications of the team members."
+
+    attrs
+        auth = "team"
+        scope = "sessions.modify"
+
+route linked_apps/list_team_linked_apps (ListTeamAppsArg, ListTeamAppsResult, ListTeamAppsError) deprecated
+    "List all applications linked to the team members' accounts.
+    Note, this endpoint doesn't list any team-linked applications."
+
+    attrs
+        auth = "team"
+        scope = "sessions.list"
+
+
+alias UserQuota = UInt32(min_value=2)
+
+struct UserCustomQuotaArg
+    "User and their required custom quota in GB (1 TB = 1024 GB)."
+    user UserSelectorArg
+    quota_gb UserQuota
+
+    example default
+        user = default
+        quota_gb = 30
+
+struct UserCustomQuotaResult
+    "User and their custom quota in GB (1 TB = 1024 GB).
+    No quota returns if the user has no custom quota set."
+    user UserSelectorArg
+    quota_gb UserQuota?
+
+struct SetCustomQuotaArg
+    users_and_quotas List(UserCustomQuotaArg)
+        "List of users and their custom quotas."
+
+    example default
+        users_and_quotas = [default]
+
+union CustomQuotaError
+    "Error returned when getting member custom quota."
+    too_many_users
+        "A maximum of 1000 users can be set for a single call."
+
+union SetCustomQuotaError extends CustomQuotaError
+    "Error returned when setting member custom quota."
+    some_users_are_excluded
+        "Some of the users are on the excluded users list and can't have custom quota set."
+
+union CustomQuotaResult
+    "User custom quota."
+    success UserCustomQuotaResult
+        "User's custom quota."
+    invalid_user UserSelectorArg
+        "Invalid user (not in team)."
+
+struct CustomQuotaUsersArg
+    users List(UserSelectorArg)
+        "List of users."
+
+    example default
+        users = [default]
+
+union RemoveCustomQuotaResult
+    "User result for setting member custom quota."
+    success UserSelectorArg
+        "Successfully removed user."
+    invalid_user UserSelectorArg
+        "Invalid user (not in team)."
+
+struct ExcludedUsersUpdateArg
+    "Argument of excluded users update operation.
+    Should include a list of users to add/remove (according to endpoint),
+    Maximum size of the list is 1000 users."
+    users List(UserSelectorArg)?
+        "List of users to be added/removed."
+
+    example default
+        users = [default]
+
+union ExcludedUsersUpdateError
+    "Excluded users update error."
+    users_not_in_team
+        "At least one of the users is not part of your team."
+    too_many_users
+        "A maximum of 1000 users for each of addition/removal can be supplied."
+
+struct ExcludedUsersListArg
+    "Excluded users list argument."
+    limit UInt32(max_value=1000, min_value=1) = 1000
+        "Number of results to return per call."
+
+    example default
+        limit = 100
+
+struct ExcludedUsersListContinueArg
+    "Excluded users list continue argument."
+    cursor String
+        "Indicates from what point to get the next set of users."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+struct ExcludedUsersListResult
+    "Excluded users list result."
+    users List(MemberProfile)
+    cursor String?
+        "Pass the cursor into :route:`member_space_limits/excluded_users/list/continue` to obtain
+        additional excluded users."
+    has_more Boolean
+        "Is true if there are additional excluded users that have not been returned
+        yet. An additional call to :route:`member_space_limits/excluded_users/list/continue` can
+        retrieve them."
+
+    example default
+        users = []
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+        has_more = false
+
+union ExcludedUsersUpdateStatus
+    "Excluded users update operation status."
+    success
+        "Update successful."
+
+struct ExcludedUsersUpdateResult
+    "Excluded users update result."
+    status ExcludedUsersUpdateStatus
+        "Update status."
+
+    example default
+        status = success
+
+union ExcludedUsersListError
+    "Excluded users list error."
+    list_error
+        "An error occurred."
+
+union ExcludedUsersListContinueError
+    "Excluded users list continue error."
+    invalid_cursor
+        "The cursor is invalid."
+
+route member_space_limits/set_custom_quota (SetCustomQuotaArg, List(CustomQuotaResult), SetCustomQuotaError)
+    "Set users custom quota. Custom quota has to be at least 2GB.
+    A maximum of 1000 members can be specified in a single call.
+    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
+    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route member_space_limits/remove_custom_quota (CustomQuotaUsersArg, List(RemoveCustomQuotaResult), CustomQuotaError)
+    "Remove users custom quota.
+    A maximum of 1000 members can be specified in a single call.
+    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
+    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route member_space_limits/get_custom_quota (CustomQuotaUsersArg, List(CustomQuotaResult), CustomQuotaError)
+    "Get users custom quota.
+    A maximum of 1000 members can be specified in a single call.
+    Note: to apply a custom space limit, a team admin needs to set a member space limit for the team first.
+    (the team admin can check the settings here: https://www.dropbox.com/team/admin/settings/space)."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route member_space_limits/excluded_users/add (ExcludedUsersUpdateArg, ExcludedUsersUpdateResult, ExcludedUsersUpdateError)
+    "Add users to member space limits excluded users list."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route member_space_limits/excluded_users/remove (ExcludedUsersUpdateArg, ExcludedUsersUpdateResult, ExcludedUsersUpdateError)
+    "Remove users from member space limits excluded users list."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route member_space_limits/excluded_users/list (ExcludedUsersListArg, ExcludedUsersListResult, ExcludedUsersListError)
+    "List member space limits excluded users."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+route member_space_limits/excluded_users/list/continue (ExcludedUsersListContinueArg, ExcludedUsersListResult, ExcludedUsersListContinueError)
+    "Continue listing member space limits excluded users."
+
+    attrs
+        auth = "team"
+        scope = "members.read"
+
+
+union AddSecondaryEmailResult
+    "Result of trying to add a secondary email to a user.
+    'success' is the only value indicating that a secondary email was successfully added to a user.
+    The other values explain the type of error that occurred, and include the email for which the error occurred."
+    success secondary_emails.SecondaryEmail
+        "Describes a secondary email that was successfully added to a user."
+    unavailable common.EmailAddress
+        "Secondary email is not available to be claimed by the user."
+    already_pending common.EmailAddress
+        "Secondary email is already a pending email for the user."
+    already_owned_by_user common.EmailAddress
+        "Secondary email is already a verified email for the user."
+    reached_limit common.EmailAddress
+        "User already has the maximum number of secondary emails allowed."
+    transient_error common.EmailAddress
+        @common.Deprecated
+        "A transient error occurred. Please try again later."
+    too_many_updates common.EmailAddress
+        "An error occurred due to conflicting updates. Please try again later."
+    unknown_error common.EmailAddress
+        "An unknown error occurred."
+    rate_limited common.EmailAddress
+        "Too many emails are being sent to this email address. Please try again later."
+
+    example default
+        success = default
+
+    example unavailable
+        unavailable = "alice@example.com"
+
+union UserAddResult
+    "Result of trying to add secondary emails to a user.
+    'success' is the only value indicating that a user was successfully retrieved for adding secondary emails.
+    The other values explain the type of error that occurred, and include the user for which the error occurred."
+    success UserSecondaryEmailsResult
+        "Describes a user and the results for each attempt to add a secondary email."
+    invalid_user UserSelectorArg
+        "Specified user is not a valid target for adding secondary emails."
+    unverified UserSelectorArg
+        "Secondary emails can only be added to verified users."
+    placeholder_user UserSelectorArg
+        "Secondary emails cannot be added to placeholder users."
+
+    example default
+        success = default
+
+    example invalid
+        invalid_user = default
+
+union AddSecondaryEmailsError
+    "Error returned when adding secondary emails fails."
+    secondary_emails_disabled
+        "Secondary emails are disabled for the team."
+    too_many_emails
+        "A maximum of 20 secondary emails can be added in a single call."
+
+union ResendSecondaryEmailResult
+    "Result of trying to resend verification email to a secondary email address.
+    'success' is the only value indicating that a verification email was successfully sent.
+    The other values explain the type of error that occurred, and include the email for which the error occurred."
+    success common.EmailAddress
+        "A verification email was successfully sent to the secondary email address."
+    not_pending common.EmailAddress
+        "This secondary email address is not pending for the user."
+    rate_limited common.EmailAddress
+        "Too many emails are being sent to this email address. Please try again later."
+
+    example default
+        success = "alice@example.com"
+
+union UserResendResult
+    "Result of trying to resend verification emails to a user.
+    'success' is the only value indicating that a user was successfully retrieved for sending verification emails.
+    The other values explain the type of error that occurred, and include the user for which the error occurred."
+    success UserResendEmailsResult
+        "Describes a user and the results for each attempt to resend verification emails."
+    invalid_user UserSelectorArg
+        "Specified user is not a valid target for resending verification emails."
+
+    example default
+        success = default
+
+    example invalid
+        invalid_user = default
+
+union DeleteSecondaryEmailResult
+    "Result of trying to delete a secondary email address.
+    'success' is the only value indicating that a secondary email was successfully deleted.
+    The other values explain the type of error that occurred, and include the email for which the error occurred."
+    success common.EmailAddress
+        "The secondary email was successfully deleted."
+    not_found common.EmailAddress
+        "The email address was not found for the user."
+    cannot_remove_primary common.EmailAddress
+        "The email address is the primary email address of the user, and cannot be removed."
+
+    example default
+        success = "alice@example.com"
+
+    example not_found
+        not_found = "alic@example.com"
+
+union UserDeleteResult
+    "Result of trying to delete a user's secondary emails.
+    'success' is the only value indicating that a user was successfully retrieved for deleting secondary emails.
+    The other values explain the type of error that occurred, and include the user for which the error occurred."
+    success UserDeleteEmailsResult
+        "Describes a user and the results for each attempt to delete a secondary email."
+    invalid_user UserSelectorArg
+        "Specified user is not a valid target for deleting secondary emails."
+
+    example default
+        success = default
+
+    example invalid_user
+        invalid_user = default
+
+struct UserSecondaryEmailsArg
+    "User and a list of secondary emails."
+    user UserSelectorArg
+    secondary_emails List(common.EmailAddress)
+
+    example default
+        user = default
+        secondary_emails = ["bob2@hotmail.com", "bob@inst.gov"]
+
+struct UserSecondaryEmailsResult
+    user UserSelectorArg
+    results List(AddSecondaryEmailResult)
+
+    example default
+        user = default
+        results = [default, unavailable]
+
+struct AddSecondaryEmailsArg
+    new_secondary_emails List(UserSecondaryEmailsArg)
+        "List of users and secondary emails to add."
+
+    example default
+        new_secondary_emails = [default]
+
+struct AddSecondaryEmailsResult
+    results List(UserAddResult)
+        "List of users and secondary email results."
+
+    example default
+        results = [default, invalid]
+
+struct ResendVerificationEmailArg
+    emails_to_resend List(UserSecondaryEmailsArg)
+        "List of users and secondary emails to resend verification emails to."
+
+    example default
+        emails_to_resend = [default]
+
+struct UserResendEmailsResult
+    user UserSelectorArg
+    results List(ResendSecondaryEmailResult)
+
+    example default
+        user = default
+        results = [default]
+
+struct ResendVerificationEmailResult
+    "List of users and resend results."
+    results List(UserResendResult)
+
+    example default
+        results = [default]
+
+struct DeleteSecondaryEmailsArg
+    emails_to_delete List(UserSecondaryEmailsArg)
+        "List of users and their secondary emails to delete."
+
+    example default
+        emails_to_delete = [default]
+
+struct UserDeleteEmailsResult
+    user UserSelectorArg
+    results List(DeleteSecondaryEmailResult)
+
+    example default
+        user = default
+        results = [default, not_found]
+
+struct DeleteSecondaryEmailsResult
+    results List(UserDeleteResult)
+
+    example default
+        results = [default]
+
+route members/secondary_emails/add (AddSecondaryEmailsArg, AddSecondaryEmailsResult, AddSecondaryEmailsError)
+    "Add secondary emails to users.
+    Permission : Team member management.
+    Emails that are on verified domains will be verified automatically.
+    For each email address not on a verified domain a verification email will be sent."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/secondary_emails/resend_verification_emails (ResendVerificationEmailArg, ResendVerificationEmailResult, Void)
+    "Resend secondary email verification emails.
+    Permission : Team member management."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/secondary_emails/delete (DeleteSecondaryEmailsArg, DeleteSecondaryEmailsResult, Void)
+    "Delete secondary emails from users
+    Permission : Team member management.
+    Users will be notified of deletions of verified secondary emails at both the secondary email and their primary email."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+
+union SharingAllowlistAddError
+    malformed_entry String = ""
+        "One of provided values is not valid."
+    no_entries_provided
+        "Neither single domain nor email provided."
+    too_many_entries_provided
+        "Too many entries provided within one call."
+    team_limit_reached
+        "Team entries limit reached."
+    unknown_error
+        "Unknown error."
+    entries_already_exist String = ""
+        "Entries already exists."
+
+union SharingAllowlistListContinueError
+    invalid_cursor
+        "Provided cursor is not valid."
+
+union SharingAllowlistRemoveError
+    malformed_entry String = ""
+        "One of provided values is not valid."
+    entries_do_not_exist String = ""
+        "One or more provided values do not exist."
+    no_entries_provided
+        "Neither single domain nor email provided."
+    too_many_entries_provided
+        "Too many entries provided within one call."
+    unknown_error
+        "Unknown error."
+
+struct SharingAllowlistAddArgs
+    "Structure representing Approve List entries. Domain and emails are supported.
+    At least one entry of any supported type is required."
+    domains List(String)?
+        "List of domains represented by valid string representation (RFC-1034/5)."
+    emails List(String)?
+        "List of emails represented by valid string representation (RFC-5322/822)."
+
+    example default
+        domains = ["test-domain.com", "subdomain.some.com"]
+        emails = ["adam@test-domain.com", "john@some.com"]
+
+struct SharingAllowlistAddResponse
+    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+
+struct SharingAllowlistListArg
+    limit UInt32(max_value=1000, min_value=1) = 1000
+        "The number of entries to fetch at one time."
+
+    example default
+        limit = 100
+
+struct SharingAllowlistListContinueArg
+    cursor String
+        "The cursor returned from a previous call to :route:`sharing_allowlist/list` or :route:`sharing_allowlist/list/continue`."
+
+    example default
+        cursor = "dGVzdF9jdXJzb3IK"
+
+struct SharingAllowlistListError
+    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+
+struct SharingAllowlistListResponse
+    domains List(String)
+        "List of domains represented by valid string representation (RFC-1034/5)."
+    emails List(String)
+        "List of emails represented by valid string representation (RFC-5322/822)."
+    cursor String = ""
+        "If this is nonempty, there are more entries that can be fetched with :route:`sharing_allowlist/list/continue`."
+    has_more Boolean = false
+        "if true indicates that more entries can be fetched with :route:`sharing_allowlist/list/continue`."
+
+    example default
+        domains = ["test-domain.com", "subdomain.some.com"]
+        emails = ["adam@test-domain.com", "john@some.com"]
+        cursor = "dGVzdF9jdXJzb3IK"
+        has_more = true
+
+struct SharingAllowlistRemoveArgs
+    domains List(String)?
+        "List of domains represented by valid string representation (RFC-1034/5)."
+    emails List(String)?
+        "List of emails represented by valid string representation (RFC-5322/822)."
+
+    example default
+        domains = ["test-domain.com", "subdomain.some.com"]
+        emails = ["adam@test-domain.com", "john@some.com"]
+
+struct SharingAllowlistRemoveResponse
+    "This struct is empty. The comment here is intentionally emitted to avoid indentation issues with Stone."
+
+route sharing_allowlist/add (SharingAllowlistAddArgs, SharingAllowlistAddResponse, SharingAllowlistAddError)
+    "Endpoint adds Approve List entries. Changes are effective immediately.
+    Changes are committed in transaction. In case of single validation error - all entries are rejected.
+    Valid domains (RFC-1034/5) and emails (RFC-5322/822) are accepted.
+    Added entries cannot overflow limit of 10000 entries per team.
+    Maximum 100 entries per call is allowed."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_info.write"
+
+route sharing_allowlist/list (SharingAllowlistListArg, SharingAllowlistListResponse, SharingAllowlistListError)
+    "Lists Approve List entries for given team, from newest to oldest, returning
+    up to `limit` entries at a time. If there are more than `limit` entries
+    associated with the current team, more can be fetched by passing the
+    returned `cursor` to :route:`sharing_allowlist/list/continue`."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_info.read"
+
+route sharing_allowlist/list/continue (SharingAllowlistListContinueArg, SharingAllowlistListResponse, SharingAllowlistListContinueError)
+    "Lists entries associated with given team, starting from a the cursor. See :route:`sharing_allowlist/list`."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_info.read"
+
+route sharing_allowlist/remove (SharingAllowlistRemoveArgs, SharingAllowlistRemoveResponse, SharingAllowlistRemoveError)
+    "Endpoint removes Approve List entries. Changes are effective immediately.
+    Changes are committed in transaction. In case of single validation error - all entries are rejected.
+    Valid domains (RFC-1034/5) and emails (RFC-5322/822) are accepted.
+    Entries being removed have to be present on the list.
+    Maximum 1000 entries per call is allowed."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_info.write"
+
+
+union NamespaceType
+    app_folder
+        "App sandbox folder."
+    shared_folder
+        "Shared folder."
+    team_folder
+        "Top-level team-owned folder."
+    team_member_folder
+        "Team member's home folder."
+    team_member_root
+        "Team member's root folder."
+
+union TeamNamespacesListContinueError extends TeamNamespacesListError
+    invalid_cursor
+        "The cursor is invalid."
+
+union TeamNamespacesListError
+    invalid_arg
+        "Argument passed in is invalid."
+
+struct NamespaceMetadata
+    "Properties of a namespace."
+    name String
+        "The name of this namespace."
+    namespace_id common.SharedFolderId
+        "The ID of this namespace."
+    namespace_type NamespaceType
+        "The type of this namespace."
+    team_member_id team_common.TeamMemberId?
+        "If this is a team member or app folder, the ID of the owning team member.
+        Otherwise, this field is not present."
+    quota_limit Int64 = 0
+        "The quota limit in bytes for this namespace tree. Only applicable to team folders."
+
+    example shared_folder
+        name = "Marketing"
+        namespace_id = "123456789"
+        namespace_type = shared_folder
+        quota_limit = 0
+
+    example team_member_folder
+        name = "Franz Ferdinand"
+        namespace_id = "123456789"
+        namespace_type = team_member_folder
         team_member_id = "dbmid:1234567"
-        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
-        email = "mary@lamb.com"
-        email_verified = true
-        secondary_emails = [default, second_sec_email, third_sec_email]
-        status = active
-        name = default
-        membership_type = full
-        joined_on = "2015-05-12T15:50:38Z"
-        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
+        quota_limit = 0
 
-struct TeamMemberProfile extends MemberProfile
-    "Profile of a user as a member of a team."
-    groups List(team_common.GroupId)
-        "List of group IDs of groups that the user belongs to."
-    member_folder_id common.NamespaceId
-        "The namespace id of the user's member folder."
-    root_folder_id common.NamespaceId
-        "The namespace id of the user's root folder."
+struct TeamNamespacesListResult
+    "Result for :route:`namespaces/list`."
+    namespaces List(NamespaceMetadata)
+        "List of all namespaces the team can access."
+    cursor String
+        "Pass the cursor into :route:`namespaces/list/continue` to obtain
+        additional namespaces. Note that duplicate namespaces may be returned."
+    has_more Boolean
+        "Is true if there are additional namespaces that have not been returned yet."
 
     example default
-        team_member_id = "dbmid:FDFSVF-DFSDF"
-        account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
-        external_id = "244423"
-        email = "tami@seagull.com"
-        email_verified = false
-        secondary_emails = [third_sec_email, default]
-        status = active
-        name = default
-        groups = ["g:e2db7665347abcd600000000001a2b3c"]
-        membership_type = full
-        joined_on = "2015-05-12T15:50:38Z"
-        member_folder_id = "20"
-        root_folder_id = "30"
-        profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
+        namespaces = [shared_folder, team_member_folder]
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+        has_more = false
+
+struct TeamNamespacesListArg
+    limit UInt32(max_value=1000, min_value=1) = 1000
+        @common.Deprecated
+        "Specifying a value here has no effect."
+
+    example default
+        limit = 1
+
+    example with_filter
+        limit = 1
+
+struct TeamNamespacesListContinueArg
+    cursor String
+        "Indicates from what point to get the next set of team-accessible namespaces."
+
+    example default
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+    example with_filter
+        cursor = "ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu"
+
+route namespaces/list (TeamNamespacesListArg, TeamNamespacesListResult, TeamNamespacesListError)
+    "Returns a list of all team-accessible namespaces. This list includes team folders,
+    shared folders containing team members, team members' home namespaces, and team members'
+    app folders. Home namespaces and app folders are always owned by this team or members of the
+    team, but shared folders may be owned by other users or other teams. Duplicates may occur in the
+    list."
+
+    attrs
+        auth = "team"
+        scope = "team_data.member"
+
+route namespaces/list/continue (TeamNamespacesListContinueArg, TeamNamespacesListResult, TeamNamespacesListContinueError)
+    "Once a cursor has been retrieved from :route:`namespaces/list`, use this to paginate
+    through all team-accessible namespaces. Duplicates may occur in the list."
+
+    attrs
+        auth = "team"
+        scope = "team_data.member"
+
+
+route reports/get_activity (DateRange, GetActivityReport, DateRangeError) deprecated
+    "Retrieves reporting data about a team's user activity.
+    Deprecated: Will be removed on July 1st 2021."
+
+    attrs
+        auth = "team"
+        scope = "team_info.read"
+
+
+route reports/get_storage (DateRange, GetStorageReport, DateRangeError) deprecated
+    "Retrieves reporting data about a team's storage usage.
+    Deprecated: Will be removed on July 1st 2021."
+
+    attrs
+        auth = "team"
+        scope = "team_info.read"
+
+
+route reports/get_devices (DateRange, GetDevicesReport, DateRangeError) deprecated
+    "Retrieves reporting data about a team's linked devices.
+    Deprecated: Will be removed on July 1st 2021."
+
+    attrs
+        auth = "team"
+        scope = "team_info.read"
+
+
+route reports/get_membership (DateRange, GetMembershipReport, DateRangeError) deprecated
+    "Retrieves reporting data about a team's membership.
+    Deprecated: Will be removed on July 1st 2021."
+
+    attrs
+        auth = "team"
+        scope = "team_info.read"
+
+
+alias NumberPerDay = List(UInt64?)
+
+union TeamReportFailureReason
+    temporary_error
+        "We couldn't create the report, but we think this was a fluke. Everything should work if you try it again."
+    many_reports_at_once
+        "Too many other reports are being created right now. Try creating this report again once the others finish."
+    too_much_data
+        "We couldn't create the report. Try creating the report again with less data."
+
+    example default
+        many_reports_at_once = null
+
+union DateRangeError
+    "Errors that can originate from problems in input arguments to reports."
+
+struct DateRange
+    "Input arguments that can be provided for most reports."
+    start_date common.Date?
+        "Optional starting date (inclusive). If start_date is None or too long ago, this field will
+        be set to 6 months ago."
+    end_date common.Date?
+        "Optional ending date (exclusive)."
+
+struct StorageBucket
+    "Describes the number of users in a specific storage bucket."
+    bucket String
+        "The name of the storage bucket.
+        For example, '1G' is a bucket of users with storage size up to 1 Giga."
+    users UInt64
+        "The number of people whose storage is in the range of this storage bucket."
+
+    example default
+        bucket = "1G"
+        users = 21
+
+struct BaseDfbReport
+    "Base report structure."
+    start_date String
+        "First date present in the results as 'YYYY-MM-DD' or None."
+
+struct GetStorageReport extends BaseDfbReport
+    "Storage Report Result.
+    Each of the items in the storage report is an array of values, one value per day.
+    If there is no data for a day, then the value will be None."
+    total_usage NumberPerDay
+        "Sum of the shared, unshared, and datastore usages, for each day."
+    shared_usage NumberPerDay
+        "Array of the combined size (bytes) of team members' shared folders, for each day."
+    unshared_usage NumberPerDay
+        "Array of the combined size (bytes) of team members' root namespaces, for each day."
+    shared_folders NumberPerDay
+        "Array of the number of shared folders owned by team members, for each day."
+    member_storage_map List(List(StorageBucket))
+        "Array of storage summaries of team members' account sizes.
+        Each storage summary is an array of key, value pairs, where each pair describes
+        a storage bucket.
+        The key indicates the upper bound of the bucket and the value is the
+        number of users in that bucket. There is one such summary per day.
+        If there is no data for a day, the storage summary will be empty."
+
+struct GetActivityReport extends BaseDfbReport
+    "Activity Report Result.
+    Each of the items in the storage report is an array of values, one value per day.
+    If there is no data for a day, then the value will be None."
+    adds NumberPerDay
+        "Array of total number of adds by team members."
+    edits NumberPerDay
+        "Array of number of edits by team members.
+        If the same user edits the same file multiple times this is counted as a single edit."
+    deletes NumberPerDay
+        "Array of total number of deletes by team members."
+    active_users_28_day NumberPerDay
+        "Array of the number of users who have been active in the last 28 days."
+    active_users_7_day NumberPerDay
+        "Array of the number of users who have been active in the last week."
+    active_users_1_day NumberPerDay
+        "Array of the number of users who have been active in the last day."
+    active_shared_folders_28_day NumberPerDay
+        "Array of the number of shared folders with some activity in the last 28 days."
+    active_shared_folders_7_day NumberPerDay
+        "Array of the number of shared folders with some activity in the last week."
+    active_shared_folders_1_day NumberPerDay
+        "Array of the number of shared folders with some activity in the last day."
+    shared_links_created NumberPerDay
+        "Array of the number of shared links created."
+    shared_links_viewed_by_team NumberPerDay
+        "Array of the number of views by team users to shared links created by the team."
+    shared_links_viewed_by_outside_user NumberPerDay
+        "Array of the number of views by users outside of the team to shared links created by the team."
+    shared_links_viewed_by_not_logged_in NumberPerDay
+        "Array of the number of views by non-logged-in users to shared links created by the team."
+    shared_links_viewed_total NumberPerDay
+        "Array of the total number of views to shared links created by the team."
+
+struct GetMembershipReport extends BaseDfbReport
+    "Membership Report Result.
+    Each of the items in the storage report is an array of values, one value per day.
+    If there is no data for a day, then the value will be None."
+    team_size NumberPerDay
+        "Team size, for each day."
+    pending_invites NumberPerDay
+        "The number of pending invites to the team, for each day."
+    members_joined NumberPerDay
+        "The number of members that joined the team, for each day."
+    suspended_members NumberPerDay
+        "The number of suspended team members, for each day."
+    licenses NumberPerDay
+        "The total number of licenses the team has, for each day."
+
+struct DevicesActive
+    "Each of the items is an array of values, one value per day.
+    The value is the number of devices active within a time window, ending with that day.
+    If there is no data for a day, then the value will be None."
+    windows NumberPerDay
+        "Array of number of linked windows (desktop) clients with activity."
+    macos NumberPerDay
+        "Array of number of linked mac (desktop) clients with activity."
+    linux NumberPerDay
+        "Array of number of linked linus (desktop) clients with activity."
+    ios NumberPerDay
+        "Array of number of linked ios devices with activity."
+    android NumberPerDay
+        "Array of number of linked android devices with activity."
+    other NumberPerDay
+        "Array of number of other linked devices (blackberry, windows phone, etc)
+        with activity."
+    total NumberPerDay
+        "Array of total number of linked clients with activity."
+
+struct GetDevicesReport extends BaseDfbReport
+    "Devices Report Result. Contains subsections for different time ranges of activity.
+    Each of the items in each subsection of the storage report is an array of values,
+    one value per day.
+    If there is no data for a day, then the value will be None."
+    active_1_day DevicesActive
+        "Report of the number of devices active in the last day."
+    active_7_day DevicesActive
+        "Report of the number of devices active in the last 7 days."
+    active_28_day DevicesActive
+        "Report of the number of devices active in the last 28 days."
 

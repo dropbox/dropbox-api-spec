@@ -6,41 +6,33 @@ import common
 import file_properties
 import users_common
 
-route search (SearchArg, SearchResult, SearchError) deprecated by search:2
-    "Searches for files and folders.
-
-    Note: Recent changes will be reflected in search results within a few seconds
-    and older revisions of existing files may still match your query for up to a few days."
-
-    attrs
-        allow_app_folder_app = true
-        scope = "files.metadata.read"
-
 route search:2 (SearchV2Arg, SearchV2Result, SearchError)
     "Searches for files and folders.
-
     Note: :route:`search:2` along with :route:`search/continue:2` can only be used to
     retrieve a maximum of 10,000 matches.
-
     Recent changes may not immediately be reflected in search results due to a short delay in indexing.
     Duplicate results may be returned across pages. Some results may not be returned."
 
     attrs
         allow_app_folder_app = true
+        auth = "app, user"
         scope = "files.metadata.read"
 
 route search/continue:2 (SearchV2ContinueArg, SearchV2Result, SearchError)
     "Fetches the next page of search results returned from :route:`search:2`.
-
     Note: :route:`search:2` along with :route:`search/continue:2` can only be used to
     retrieve a maximum of 10,000 matches.
-
     Recent changes may not immediately be reflected in search results due to a short delay in indexing.
     Duplicate results may be returned across pages. Some results may not be returned."
 
     attrs
         allow_app_folder_app = true
+        auth = "app, user"
         scope = "files.metadata.read"
+
+
+alias TagText = String(max_length=32, min_length=1, pattern="[\\w]+")
+
 
 union Tag
     "Tag that can be added in multiple ways."
@@ -134,785 +126,6 @@ route tags/get (GetTagsArg, GetTagsResult, BaseTagError)
         auth = "user"
         is_preview = true
         scope = "files.metadata.read"
-
-
-alias TagText = String(max_length=32, min_length=1, pattern="[\\w]+")
-
-
-route upload_session/start_batch (UploadSessionStartBatchArg, UploadSessionStartBatchResult, Void)
-    "Start a batch of upload sessions. See :route:`upload_session/start`. Calls to this endpoint will count
-    as data transport calls for any Dropbox Business teams with a limit on the number of data
-    transport calls allowed per month. For more information, see the Data transport limit page
-    https://www.dropbox.com/developers/reference/data-transport-limit."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-
-route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) deprecated
-    "Create a folder at a given path."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route create_folder:2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
-    "Create a folder at a given path."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route delete (DeleteArg, Metadata, DeleteError) deprecated
-    "Delete the file or folder at a given path. If the path is a folder, all its contents will be
-    deleted too. A successful response indicates that the file or folder was deleted. The returned
-    metadata will be the corresponding FileMetadata or FolderMetadata for the item at time of
-    deletion, and not a DeletedMetadata object."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route delete:2 (DeleteArg, DeleteResult, DeleteError)
-    "Delete the file or folder at a given path. If the path is a folder, all its contents will be
-    deleted too. A successful response indicates that the file or folder was deleted. The returned
-    metadata will be the corresponding FileMetadata or FolderMetadata for the item at time of
-    deletion, and not a DeletedMetadata object."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route move (RelocationArg, Metadata, RelocationError) deprecated
-    "Move a file or folder to a different location in the user's Dropbox. If the source path is
-    a folder all its contents will be moved."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route move:2 (RelocationArg, RelocationResult, RelocationError)
-    "Move a file or folder to a different location in the user's Dropbox. If the source path is
-    a folder all its contents will be moved. Note that we do not currently support case-only
-    renaming."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-
-route export (ExportArg, ExportResult, ExportError)
-    "Export a file from a user's Dropbox. This route only supports exporting files that cannot be
-    downloaded directly and whose ExportResult.file_metadata has ExportInfo.export_as populated."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        is_preview = true
-        scope = "files.content.read"
-        select_admin_mode = "whole_team"
-        style = "download"
-
-
-route paper/create (PaperCreateArg, PaperCreateResult, PaperCreateError)
-    "Creates a new Paper doc with the provided content."
-
-    attrs
-        auth = "user"
-        is_preview = true
-        scope = "files.content.write"
-        style = "upload"
-
-route paper/update (PaperUpdateArg, PaperUpdateResult, PaperUpdateError)
-    "Updates an existing Paper doc with the provided content."
-
-    attrs
-        auth = "user"
-        is_preview = true
-        scope = "files.content.write"
-        style = "upload"
-
-
-route download (DownloadArg, FileMetadata, DownloadError)
-    "Download a file from a user's Dropbox."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.read"
-        select_admin_mode = "whole_team"
-        style = "download"
-
-
-route copy_reference/get (GetCopyReferenceArg, GetCopyReferenceResult, GetCopyReferenceError)
-    "Get a copy reference to a file or folder. This reference string can be used to save that
-    file or folder to another user's Dropbox by passing it to :route:`copy_reference/save`."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-
-route copy_reference/save (SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCopyReferenceError)
-    "Save a copy reference returned by :route:`copy_reference/get` to the user's Dropbox."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-
-
-route download_zip (DownloadZipArg, DownloadZipResult, DownloadZipError)
-    "Download a folder from the user's Dropbox, as a zip file. The folder must be less than 20 GB
-    in size and any single file within must be less than 4 GB in size. The resulting zip must have
-    fewer than 10,000 total file and folder entries, including the top level folder. The input
-    cannot be a single file. Note: this endpoint does not support HTTP range requests."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.read"
-        style = "download"
-
-
-route get_preview (PreviewArg, FileMetadata, PreviewError)
-    "Get a preview for a file. Currently, PDF previews are generated for files with the following
-    extensions: .ai, .doc, .docm, .docx, .eps, .gdoc, .gslides, .odp, .odt, .pps, .ppsm, .ppsx,
-    .ppt, .pptm, .pptx, .rtf. HTML previews are generated for .csv, .ods, .xls, .xlsm, .gsheet,
-    .xlsx. Other formats will return an unsupported extension error."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.read"
-        select_admin_mode = "whole_team"
-        style = "download"
-
-route get_thumbnail (ThumbnailArg, FileMetadata, ThumbnailError)
-    "Get a thumbnail for an image. This method currently supports files with the following file
-    extensions: jpg, jpeg, png, tiff, tif, gif, webp, ppm and bmp. Photos that are larger than
-    20MB in size won't be converted to a thumbnail."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.read"
-        select_admin_mode = "whole_team"
-        style = "download"
-
-route get_thumbnail_batch (GetThumbnailBatchArg, GetThumbnailBatchResult, GetThumbnailBatchError)
-    "Get thumbnails for a list of images. We allow up to 25 thumbnails in a single batch. This
-    method currently supports files with the following file extensions: jpg, jpeg, png, tiff, tif,
-    gif, webp, ppm and bmp. Photos that are larger than 20MB in size won't be converted to a
-    thumbnail."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.read"
-        select_admin_mode = "whole_team"
-
-route get_thumbnail:2 (ThumbnailV2Arg, PreviewResult, ThumbnailV2Error)
-    "Get a thumbnail for an image. This method currently supports files with the following file
-    extensions: jpg, jpeg, png, tiff, tif, gif, webp, ppm and bmp. Photos that are larger than
-    20MB in size won't be converted to a thumbnail."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "app, user"
-        host = "content"
-        scope = "files.content.read"
-        select_admin_mode = "whole_team"
-        style = "download"
-
-
-route create_folder_batch (CreateFolderBatchArg, CreateFolderBatchLaunch, Void)
-    "Create multiple folders at once. This route is asynchronous for large batches, which returns
-    a job ID immediately and runs the create folder batch asynchronously. Otherwise, creates
-    the folders and returns the result synchronously for smaller inputs. You can force asynchronous
-    behaviour by using the CreateFolderBatchArg.force_async flag.  Use
-    :route:`create_folder_batch/check` to check the job status."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route create_folder_batch/check (async.PollArg, CreateFolderBatchJobStatus, async.PollError)
-    "Returns the status of an asynchronous job for :route:`create_folder_batch`. If success, it
-    returns list of result for each entry."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
-    "Delete multiple files/folders at once. This route is asynchronous, which returns a job ID
-    immediately and runs the delete batch asynchronously. Use :route:`delete_batch/check` to
-    check the job status."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
-    "Returns the status of an asynchronous job for :route:`delete_batch`. If success, it returns
-    list of result for each entry."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route permanently_delete (DeleteArg, Void, DeleteError)
-    "Permanently delete the file or folder at a given path (see
-    https://www.dropbox.com/en/help/40). If the given file or folder is not yet deleted, this
-    route will first delete it. It is possible for this route to successfully delete, then fail
-    to permanently delete. Note: This endpoint is only available for Dropbox Business apps."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.permanent_delete"
-        select_admin_mode = "team_admin"
-
-route copy (RelocationArg, Metadata, RelocationError) deprecated
-    "Copy a file or folder to a different location in the user's Dropbox.
-    If the source path is a folder all its contents will be copied."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route copy:2 (RelocationArg, RelocationResult, RelocationError)
-    "Copy a file or folder to a different location in the user's Dropbox.
-    If the source path is a folder all its contents will be copied."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated
-    "Copy multiple files or folders to different locations at once in the user's Dropbox.
-    This route will return job ID immediately and do the async copy job in background.
-    Please use :route:`copy_batch/check` to check the job status."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route copy_batch:2 (CopyBatchArg, RelocationBatchV2Launch, Void)
-    "Copy multiple files or folders to different locations at once in the user's Dropbox.
-    This route will replace :route:`copy_batch`. The main difference is this route will return
-    status for each entry, while :route:`copy_batch` raises failure if any entry fails. This
-    route will either finish synchronously, or return a job ID and do the async copy job in
-    background. Please use :route:`copy_batch/check:2` to check the job status."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route copy_batch/check (async.PollArg, RelocationBatchJobStatus, async.PollError) deprecated
-    "Returns the status of an asynchronous job for :route:`copy_batch:1`. If success, it returns
-    list of results for each entry."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route copy_batch/check:2 (async.PollArg, RelocationBatchV2JobStatus, async.PollError)
-    "Returns the status of an asynchronous job for :route:`copy_batch:2`. It returns list of
-    results for each entry."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated
-    "Move multiple files or folders to different locations at once in the user's Dropbox.
-    This route will return job ID immediately and do the async moving job in background.
-    Please use :route:`move_batch/check` to check the job status."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route move_batch:2 (MoveBatchArg, RelocationBatchV2Launch, Void)
-    "Move multiple files or folders to different locations at once in the user's Dropbox.
-    Note that we do not currently support case-only renaming. This route will replace
-    :route:`move_batch`. The main difference is this route will return status for each entry,
-    while :route:`move_batch` raises failure if any entry fails. This route will either finish
-    synchronously, or return a job ID and do the async move job in background. Please use
-    :route:`move_batch/check:2` to check the job status."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route move_batch/check (async.PollArg, RelocationBatchJobStatus, async.PollError) deprecated
-    "Returns the status of an asynchronous job for :route:`move_batch:1`. If success, it returns
-    list of results for each entry."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route move_batch/check:2 (async.PollArg, RelocationBatchV2JobStatus, async.PollError)
-    "Returns the status of an asynchronous job for :route:`move_batch:2`. It returns list of
-    results for each entry."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-
-route list_revisions (ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
-    "Returns revisions for files based on a file path or a file id. The file path or file id is
-    identified from the latest file entry at the given file path or id. This end point allows
-    your app to query either by file path or file id by setting the mode parameter appropriately.
-    In the ListRevisionsMode.path (default) mode, all revisions at the same file path as the
-    latest file entry are returned. If revisions with the same file id are desired, then mode
-    must be set to ListRevisionsMode.id. The ListRevisionsMode.id mode is useful to retrieve
-    revisions for a given file across moves or renames."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.metadata.read"
-        select_admin_mode = "whole_team"
-
-route restore (RestoreArg, FileMetadata, RestoreError)
-    "Restore a specific revision of a file to the given path."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-
-route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
-    "Returns the metadata for a file or folder.
-    Note: Metadata for the root folder is unsupported."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.metadata.read"
-        select_admin_mode = "whole_team"
-
-route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
-    "Starts returning the contents of a folder. If the result's :field:`ListFolderResult.has_more`
-    field is true, call :route:`list_folder/continue` with the returned ListFolderResult.cursor to
-    retrieve more entries. If you're using ListFolderArg.recursive set to true to keep a local
-    cache of the contents of a Dropbox account, iterate through each entry in order and process
-    them as follows to keep your local state in sync: For each FileMetadata, store the new entry
-    at the given path in your local state. If the required parent folders don't exist yet, create
-    them. If there's already something else at the given path, replace it and remove all its
-    children. For each FolderMetadata, store the new entry at the given path in your local state.
-    If the required parent folders don't exist yet, create them. If there's already something else
-    at the given path, replace it but leave the children as they are. Check the new entry's
-    FolderSharingInfo.read_only and set all its children's read-only statuses to match. For each
-    DeletedMetadata, if your local state has something at the given path, remove it and all its
-    children. If there's nothing at the given path, ignore this entry. Note: auth.RateLimitError
-    may be returned if multiple :route:`list_folder` or :route:`list_folder/continue` calls with same parameters
-    are made simultaneously by same API app for same user. If your app implements retry logic,
-    please hold off the retry until the previous request finishes."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "app, user"
-        scope = "files.metadata.read"
-        select_admin_mode = "whole_team"
-
-route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderContinueError)
-    "Once a cursor has been retrieved from :route:`list_folder`, use this to paginate through all
-    files and retrieve updates to the folder, following the same rules as documented for
-    :route:`list_folder`."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "app, user"
-        scope = "files.metadata.read"
-        select_admin_mode = "whole_team"
-
-route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorResult, ListFolderError)
-    "A way to quickly get a cursor for the folder's state. Unlike :route:`list_folder`,
-    :route:`list_folder/get_latest_cursor` doesn't return any entries. This endpoint is for app which
-    only needs to know about new files and modifications and doesn't need to know about files
-    that already exist in Dropbox."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.metadata.read"
-        select_admin_mode = "whole_team"
-
-route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, ListFolderLongpollError)
-    "A longpoll endpoint to wait for changes on an account. In conjunction with :route:`list_folder/continue`,
-    this call gives you a low-latency way to monitor an account for file changes. The connection
-    will block until there are changes available or a timeout occurs. This endpoint is useful
-    mostly for client-side apps."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "noauth"
-        host = "notify"
-        scope = "files.metadata.read"
-        select_admin_mode = "whole_team"
-
-route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError) deprecated
-    "Returns the metadata for a file or folder. This is an alpha endpoint compatible
-    with the properties API. Note: Metadata for the root folder is unsupported."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        is_preview = true
-        scope = "files.metadata.read"
-
-
-route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFinishBatchLaunch, Void) deprecated
-    "This route helps you commit many files at once into a user's Dropbox. Use :route:`upload_session/start`
-    and :route:`upload_session/append:2` to upload file contents. We recommend uploading many files in
-    parallel to increase throughput. Once the file contents have been uploaded, rather than
-    calling :route:`upload_session/finish`, use this route to finish all your upload sessions in a single
-    request. :field:`UploadSessionStartArg.close` or :field:`UploadSessionAppendArg.close` needs to be true for
-    the last :route:`upload_session/start` or :route:`upload_session/append:2` call. The maximum size of a file
-    one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248) bytes. This route will
-    return a job_id immediately and do the async commit job in background. Use
-    :route:`upload_session/finish_batch/check` to check the job status. For the same account, this route
-    should be executed serially. That means you should not start the next job before current job
-    finishes. We allow up to 1000 entries in a single request. Calls to this endpoint will count
-    as data transport calls for any Dropbox Business teams with a limit on the number of data
-    transport calls allowed per month. For more information, see the Data transport limit page
-    https://www.dropbox.com/developers/reference/data-transport-limit."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route upload_session/finish_batch:2 (UploadSessionFinishBatchArg, UploadSessionFinishBatchResult, Void)
-    "This route helps you commit many files at once into a user's Dropbox. Use :route:`upload_session/start`
-    and :route:`upload_session/append:2` to upload file contents. We recommend uploading many files in
-    parallel to increase throughput. Once the file contents have been uploaded, rather than
-    calling :route:`upload_session/finish`, use this route to finish all your upload sessions in a single
-    request. :field:`UploadSessionStartArg.close` or :field:`UploadSessionAppendArg.close` needs to be true for
-    the last :route:`upload_session/start` or :route:`upload_session/append:2` call of each upload session. The
-    maximum size of a file one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248)
-    bytes. We allow up to 1000 entries in a single request. Calls to this endpoint will count
-    as data transport calls for any Dropbox Business teams with a limit on the number of data
-    transport calls allowed per month. For more information, see the Data transport limit page
-    https://www.dropbox.com/developers/reference/data-transport-limit."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-route upload_session/finish_batch/check (async.PollArg, UploadSessionFinishBatchJobStatus, async.PollError)
-    "Returns the status of an asynchronous job for :route:`upload_session/finish_batch`. If success, it
-    returns list of result for each entry."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-
-
-route get_temporary_link (GetTemporaryLinkArg, GetTemporaryLinkResult, GetTemporaryLinkError)
-    "Get a temporary link to stream content of a file. This link will expire in four hours and
-    afterwards you will get 410 Gone. This URL should not be used to display content directly
-    in the browser. The Content-Type of the link is determined automatically by the file's mime type."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.read"
-
-
-route properties/add (file_properties.AddPropertiesArg, Void, file_properties.AddPropertiesError) deprecated
-    "Add property groups to a Dropbox file. See templates/add_for_user or
-    templates/add_for_team to create new templates."
-
-    attrs
-        auth = "user"
-        scope = "files.metadata.write"
-
-route properties/update (file_properties.UpdatePropertiesArg, Void, file_properties.UpdatePropertiesError) deprecated
-    "Add, update or remove properties associated with the supplied file and templates.
-    This endpoint should be used instead of properties/overwrite when property groups
-    are being updated via a \"delta\" instead of overwriting all properties of a file."
-
-    attrs
-        auth = "user"
-        scope = "files.metadata.write"
-
-route properties/overwrite (file_properties.OverwritePropertyGroupArg, Void, file_properties.InvalidPropertyGroupError) deprecated
-    "Overwrite property groups associated with a file. This endpoint should be used
-    instead of properties/update when property groups are being overwritten rather
-    than updated via a \"delta\"."
-
-    attrs
-        auth = "user"
-        scope = "files.metadata.write"
-
-
-route save_url (SaveUrlArg, SaveUrlResult, SaveUrlError)
-    "Save the data from a specified URL into a file in user's Dropbox.
-    Note that the transfer from the URL must complete within 15 minutes, or the
-    operation will time out and the job will fail."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-
-route save_url/check_job_status (async.PollArg, SaveUrlJobStatus, async.PollError)
-    "Check the status of a :route:`save_url` job."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-
-
-route upload (UploadArg, FileMetadata, UploadError)
-    "Create a new file with the contents provided in the request. Do not use this to upload a
-    file larger than 150 MiB. Instead, create an upload session with :route:`upload_session/start`.
-    Calls to this endpoint will count as data transport calls for any Dropbox Business teams
-    with a limit on the number of data transport calls allowed per month. For more information,
-    see the Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-        style = "upload"
-
-route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, UploadSessionStartError)
-    "Upload sessions allow you to upload a single file in one or more requests, for example where
-    the size of the file is greater than 150 MiB. This call starts a new upload session with the
-    given data. You can then use :route:`upload_session/append:2` or :route:`upload_session/append_batch` to add
-    more data, then :route:`upload_session/finish` or :route:`upload_session/finish_batch:2` to save all the data to
-    a file in Dropbox. A single request should not upload more than 150 MiB. The maximum size of
-    a file one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248) bytes.
-    An upload session can be used for a maximum of 7 days. Attempting to use a
-    :field:`UploadSessionStartResult.session_id` with :route:`upload_session/append:2` or other upload session
-    routes more than 7 days after its creation will return :field:`UploadSessionLookupError.not_found`.
-    Calls to this endpoint will count as data transport calls for any Dropbox Business teams with a
-    limit on the number of data transport calls allowed per month. For more information, see the
-    Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit.
-    By default, upload sessions require you to send content of the file in sequential order via
-    consecutive :route:`upload_session/start`, :route:`upload_session/append:2`, and :route:`upload_session/finish` calls
-    (or their batch variants). For better performance, you can optionally set
-    :field:`UploadSessionStartArg.session_type` to :field:`UploadSessionType.concurrent` to start a concurrent
-    upload session. Concurrent upload sessions may upload file data in concurrent
-    :route:`upload_session/append:2` requests, with a few caveats. After all of the requests are complete,
-    finish the session with :route:`upload_session/finish` as normal. You can not send data in a
-    :route:`upload_session/start` or :route:`upload_session/finish` call, only with :route:`upload_session/append:2` or
-    :route:`upload_session/append_batch`. Also, the length of the uploaded data in a call to
-    :route:`upload_session/append:2` or :route:`upload_session/append_batch` must be a multiple of 2^22 (4,194,304)
-    bytes, except for the final append request with :field:`UploadSessionAppendArg.close` or
-    :field:`UploadSessionAppendBatchArgEntry.close` set to true that may contain any remaining data."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-        style = "upload"
-
-route upload_session/append (UploadSessionCursor, Void, UploadSessionAppendError) deprecated
-    "Append more data to an upload session. A single request should not upload more than 150 MiB.
-    The maximum size of a file one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248) bytes.
-    Calls to this endpoint will count as data transport calls for any Dropbox Business teams with a
-    limit on the number of data transport calls allowed per month. For more information, see the
-    Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-        style = "upload"
-
-route upload_session/append:2 (UploadSessionAppendArg, Void, UploadSessionAppendError)
-    "Append more data to an upload session. When the parameter close is set, this call will close
-    the session. A single request should not upload more than 150 MiB. The maximum size of a file
-    one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248) bytes. Calls to this
-    endpoint will count as data transport calls for any Dropbox Business teams with a limit on the
-    number of data transport calls allowed per month. For more information, see the Data transport
-    limit page https://www.dropbox.com/developers/reference/data-transport-limit."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-        style = "upload"
-
-route upload_session/append_batch (UploadSessionAppendBatchArg, UploadSessionAppendBatchResult, UploadSessionAppendBatchError)
-    "Append more data to multiple upload sessions. Each piece of file content to append to each
-    upload session should be concatenated in the request body, in the order delineated by
-    :field:`UploadSessionAppendBatchArg.entries` and their individual lengths indicated by
-    :field:`UploadSessionAppendBatchArgEntry.length`. A single request should not upload more than 150 MiB.
-    The maximum size of a file one can upload to an upload session is
-    2^41 - 2^22 (2,199,019,061,248) bytes. Calls to this endpoint will count as data transport
-    calls for any Dropbox Business teams with a limit on the number of data transport calls allowed
-    per month. For more information, see the Data transport limit page
-    https://www.dropbox.com/developers/reference/data-transport-limit."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-        style = "upload"
-
-route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSessionFinishError)
-    "Finish an upload session and save the uploaded data to the given file path. A single request
-    should not upload more than 150 MiB. The maximum size of a file one can upload to an upload
-    session is 2^41 - 2^22 (2,199,019,061,248) bytes. Calls to this endpoint will count as data
-    transport calls for any Dropbox Business teams with a limit on the number of data transport
-    calls allowed per month. For more information, see the Data transport limit page
-    https://www.dropbox.com/developers/reference/data-transport-limit."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        scope = "files.content.write"
-        select_admin_mode = "team_admin"
-        style = "upload"
-
-route alpha/upload (UploadArg, FileMetadata, UploadError) deprecated
-    "Create a new file with the contents provided in the request. Note that the behavior of this
-    alpha endpoint is unstable and subject to change. Do not use this to upload a file larger
-    than 150 MiB. Instead, create an upload session with :route:`upload_session/start`."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        host = "content"
-        is_preview = true
-        scope = "files.content.write"
-        style = "upload"
-
-
-route get_temporary_upload_link (GetTemporaryUploadLinkArg, GetTemporaryUploadLinkResult, Void)
-    "Get a one-time use temporary upload link to upload a file to a Dropbox location.  This
-    endpoint acts as a delayed upload(). The returned temporary upload link may be used to make
-    a POST request with the data to be uploaded. The upload will then be perfomed with the
-    CommitInfo previously provided to getTemporaryUploadLink() but evaluated only upon consumption.
-    Hence, errors stemming from invalid CommitInfo with respect to the state of the user's Dropbox
-    will only be communicated at consumption time. Additionally, these errors are surfaced as
-    generic HTTP 409 Conflict responses, potentially hiding issue details. The maximum temporary
-    upload link duration is 4 hours. Upon consumption or expiration, a new link will have to be
-    generated. Multiple links may exist for a specific upload path at any given time.  The POST
-    request on the temporary upload link must have its Content-Type set to
-    \"application/octet-stream\".  Example temporary upload link consumption request:  curl -X POST
-    https://content.dropboxapi.com/apitul/1/bNi2uIYF51cVBND --header
-    \"Content-Type: application/octet-stream\" --data-binary @local_file.txt  A successful temporary
-    upload link consumption request returns the content hash of the uploaded data in JSON format.
-    Example successful temporary upload link consumption response: {\"content-hash\":
-    \"599d71033d700ac892a0e48fa61b125d2f5994\"}  An unsuccessful temporary upload link consumption
-    request returns any of the following status codes:  HTTP 400 Bad Request: Content-Type is not
-    one of application/octet-stream and text/plain or request is invalid. HTTP 409 Conflict: The
-    temporary upload link does not exist or is currently unavailable, the upload failed, or
-    another error happened. HTTP 410 Gone: The temporary upload link is expired or consumed.
-    Example unsuccessful temporary upload link consumption response: Temporary upload link has
-    been recently consumed."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "files.content.write"
-
-
-route lock_file_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
-    "Lock the files at the given paths. A locked file will be writable only by the lock holder.
-    A successful response indicates that the file has been locked. Returns a list of the locked
-    file paths and their metadata after this operation."
-
-    attrs
-        auth = "user"
-        scope = "files.content.write"
-
-route unlock_file_batch (UnlockFileBatchArg, LockFileBatchResult, LockFileError)
-    "Unlock the files at the given paths. A locked file can only be unlocked by the lock holder
-    or, if a business account, a team admin. A successful response indicates that the file has
-    been unlocked. Returns a list of the unlocked file paths and their metadata after this
-    operation."
-
-    attrs
-        auth = "user"
-        scope = "files.content.write"
-        select_admin_mode = "whole_team"
-
-route get_file_lock_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
-    "Return the lock metadata for the given list of paths."
-
-    attrs
-        auth = "user"
-        scope = "files.content.read"
 
 
 alias CopyBatchArg = RelocationBatchArgBase
@@ -1065,6 +278,7 @@ union UploadSessionFinishError
     properties_error file_properties.InvalidPropertyGroupError
         "The supplied property group is invalid. The file has uploaded without property groups."
     too_many_shared_folder_targets
+        @common.Deprecated
         "The batch request commits files into too many different shared folders.
         Please limit your batch request to files contained in a single shared folder."
     too_many_write_operations
@@ -1235,10 +449,10 @@ union_closed WriteMode
 
     example default
         add = null
-    
+
     example overwriting
         overwrite = null
-    
+
     example with_revision
         update = "a1c10ce0dd78"
 
@@ -1274,11 +488,11 @@ struct CommitInfo
     example default
         path = "/Homework/math/Matrices.txt"
         autorename = true
-    
+
     example another
         path = "/Homework/math/Vectors.txt"
         autorename = true
-    
+
     example update
         path = "/Homework/math/Matrices.txt"
         mode = with_revision
@@ -1295,7 +509,7 @@ struct UploadSessionCursor
     example default
         session_id = "pid_upload_session:h-NtwvAdw3XDqqHmb0J2t0XfIaSnQw2Eor59pfZI9D_ZGNJ4Ew"
         offset = 0
-    
+
     example another
         session_id = "pid_upload_session:6MvrpirpGzvgtxdyRkiYzL4bpnd_xOuqWBBCdYBUiM7uQe2fPw"
         offset = 1073741824
@@ -1313,11 +527,11 @@ struct UploadSessionFinishArg
     example default
         cursor = default
         commit = default
-    
+
     example another
         cursor = another
         commit = another
-    
+
     example update
         cursor = default
         commit = update
@@ -1414,6 +628,7 @@ struct LockFileResult
     metadata Metadata
         "Metadata of the file."
     lock FileLock
+        @common.Deprecated
         "The file lock state after the operation."
 
     example default
@@ -1459,7 +674,7 @@ struct FolderSharingInfo extends SharingInfo
     example default
         read_only = false
         parent_shared_folder_id = "84528192421"
-    
+
     example shared_folder
         read_only = true
         shared_folder_id = "84528192421"
@@ -1559,6 +774,7 @@ struct Metadata
         to only the casing of paths won't be returned by :route:`list_folder/continue`. This field
         will be null if the file or folder is not mounted."
     parent_shared_folder_id common.SharedFolderId?
+        @common.Deprecated
         "Please use :field:`FileSharingInfo.parent_shared_folder_id`
         or :field:`FolderSharingInfo.parent_shared_folder_id` instead."
     preview_url String?
@@ -1566,10 +782,10 @@ struct Metadata
 
     example default
         file = default
-    
+
     example folder_metadata
         folder = default
-    
+
     example search_metadata
         file = search_file_metadata
 
@@ -1632,7 +848,7 @@ struct FileMetadata extends Metadata
         has_explicit_shared_members = false
         content_hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         file_lock_info = default
-    
+
     example search_file_metadata
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
         name = "Prime_Numbers.txt"
@@ -1651,6 +867,7 @@ struct FolderMetadata extends Metadata
     id Id
         "A unique identifier for the folder."
     shared_folder_id common.SharedFolderId?
+        @common.Deprecated
         "Please use :field:`sharing_info` instead."
     sharing_info FolderSharingInfo?
         "Set if the folder is contained in a shared folder or is a shared folder mount point."
@@ -1679,16 +896,30 @@ struct PreviewArg
     path ReadPath
         "The path of the file to preview."
     rev Rev?
+        @common.Deprecated
         "Please specify revision in :field:`path` instead."
 
     example default
         path = "/word.docx"
-    
+
     example id
         path = "id:a4ayc_80_OEAAAAAAAAAYa"
-    
+
     example rev
         path = "rev:a1c10ce0dd78"
+
+
+alias Path = String(pattern="/(.|[\\r\\n])*")
+
+struct HighlightSpan
+    highlight_str String
+        "String to be determined whether it should be highlighted or not."
+    is_highlighted Boolean
+        "The string should be highlighted or not."
+
+    example default
+        highlight_str = "test"
+        is_highlighted = false
 
 
 union_closed AlphaGetMetadataError extends GetMetadataError
@@ -1714,7 +945,7 @@ union CreateFolderBatchLaunch extends async.LaunchResultBase
 
     example complete
         complete = default
-    
+
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
@@ -1733,6 +964,7 @@ union_closed CreateFolderError
 
 union DeleteBatchError
     too_many_write_operations
+        @common.Deprecated
         "Use :field:`DeleteError.too_many_write_operations`. :route:`delete_batch` now
         provides smaller granularity about which entry has failed because of this."
 
@@ -1752,7 +984,7 @@ union DeleteBatchLaunch extends async.LaunchResultBase
 
     example complete
         complete = default
-    
+
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
@@ -1982,7 +1214,7 @@ union RelocationBatchLaunch extends async.LaunchResultBase
 
     example complete
         complete = default
-    
+
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
@@ -2009,7 +1241,7 @@ union_closed RelocationBatchV2Launch extends async.LaunchResultBase
 
     example complete
         complete = default
-    
+
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
@@ -2120,10 +1352,10 @@ union_closed SearchMode
 
     example default
         filename_and_content = null
-    
+
     example name_only
         filename = null
-    
+
     example deleted_names
         deleted_filename = null
 
@@ -2227,7 +1459,7 @@ union UploadSessionFinishBatchLaunch extends async.LaunchResultBase
 
     example complete
         complete = default
-    
+
     example async_job_id
         async_job_id = "34g93hh34h04y384084"
 
@@ -2257,16 +1489,17 @@ union UploadSessionType
 
 struct AlphaGetMetadataArg extends GetMetadataArg
     include_property_templates List(file_properties.TemplateId)?
+        @common.Deprecated
         "If set to a valid list of template IDs,
         :field:`FileMetadata.property_groups` is set for files with custom
         properties."
 
     example default
         path = "/Homework/math"
-    
+
     example id
         path = "id:a4ayc_80_OEAAAAAAAAAYa"
-    
+
     example rev
         path = "rev:a1c10ce0dd78"
 
@@ -2371,14 +1604,15 @@ struct DownloadArg
     path ReadPath
         "The path of the file to download."
     rev Rev?
+        @common.Deprecated
         "Please specify revision in :field:`path` instead."
 
     example default
         path = "/Homework/math/Prime_Numbers.txt"
-    
+
     example id
         path = "id:a4ayc_80_OEAAAAAAAAAYa"
-    
+
     example rev
         path = "rev:a1c10ce0dd78"
 
@@ -2388,10 +1622,10 @@ struct DownloadZipArg
 
     example default
         path = "/Homework/math"
-    
+
     example id
         path = "id:a4ayc_80_OEAAAAAAAAAYa"
-    
+
     example rev
         path = "rev:a1c10ce0dd78"
 
@@ -2413,7 +1647,7 @@ struct ExportArg
 
     example default
         path = "/Homework/math/Prime_Numbers.gsheet"
-    
+
     example id
         path = "id:a4ayc_80_OEAAAAAAAAAYa"
 
@@ -2486,10 +1720,10 @@ struct GetMetadataArg
 
     example default
         path = "/Homework/math"
-    
+
     example id
         path = "id:a4ayc_80_OEAAAAAAAAAYa"
-    
+
     example rev
         path = "rev:a1c10ce0dd78"
 
@@ -2563,6 +1797,7 @@ struct ListFolderArg
         performance issues or errors, especially when traversing folder structures with a large number of items.
         A workaround for such cases is to set :field:`ListFolderArg.recursive` to :val:`false` and traverse subfolders one at a time."
     include_media_info Boolean = false
+        @common.Deprecated
         "If true, :field:`FileMetadata.media_info` is set for photo and video. This parameter will no longer have an effect starting December 2, 2019."
     include_deleted Boolean = false
         "If true, the results will include entries for files and folders that used to exist but were deleted."
@@ -2789,6 +2024,7 @@ struct PreviewResult
 
 struct RelocationArg extends RelocationPath
     allow_shared_folder Boolean = false
+        @common.Deprecated
         "This flag has no effect."
     autorename Boolean = false
         "If there's a conflict, have the Dropbox server try to autorename
@@ -2803,6 +2039,7 @@ struct RelocationArg extends RelocationPath
 
 struct RelocationBatchArg extends RelocationBatchArgBase
     allow_shared_folder Boolean = false
+        @common.Deprecated
         "This flag has no effect."
     allow_ownership_transfer Boolean = false
         "Allow moves by owner even if it would result in an ownership transfer
@@ -2972,6 +2209,7 @@ struct SearchV2Arg
     match_field_options SearchMatchFieldOptions?
         "Options for search results match fields."
     include_highlights Boolean?
+        @common.Deprecated
         "Deprecated and moved this option to SearchMatchFieldOptions."
 
     example default
@@ -3021,11 +2259,11 @@ struct ThumbnailArg
     example default
         path = "/image.jpg"
         format = jpeg
-    
+
     example id
         path = "id:a4ayc_80_OEAAAAAAAAAYa"
         format = jpeg
-    
+
     example rev
         path = "rev:a1c10ce0dd78"
         format = jpeg
@@ -3104,7 +2342,7 @@ struct UploadSessionAppendBatchArg
 
     example default
         entries = [default]
-    
+
     example multiple
         entries = [default, another]
 
@@ -3122,7 +2360,7 @@ struct UploadSessionAppendBatchArgEntry
     example default
         cursor = default
         length = 12345
-    
+
     example another
         cursor = another
         length = 67890
@@ -3141,7 +2379,7 @@ struct UploadSessionFinishBatchArg
 
     example default
         entries = [default]
-    
+
     example multiple
         entries = [default, another]
 
@@ -3205,15 +2443,789 @@ struct UploadWriteFailed
         session and this ID may be used to retry the commit with :route:`upload_session/finish`."
 
 
-alias Path = String(pattern="/(.|[\\r\\n])*")
+route create_folder_batch (CreateFolderBatchArg, CreateFolderBatchLaunch, Void)
+    "Create multiple folders at once. This route is asynchronous for large batches, which returns
+    a job ID immediately and runs the create folder batch asynchronously. Otherwise, creates
+    the folders and returns the result synchronously for smaller inputs. You can force asynchronous
+    behaviour by using the CreateFolderBatchArg.force_async flag.  Use
+    :route:`create_folder_batch/check` to check the job status."
 
-struct HighlightSpan
-    highlight_str String
-        "String to be determined whether it should be highlighted or not."
-    is_highlighted Boolean
-        "The string should be highlighted or not."
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
 
-    example default
-        highlight_str = "test"
-        is_highlighted = false
+route create_folder_batch/check (async.PollArg, CreateFolderBatchJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`create_folder_batch`. If success, it
+    returns list of result for each entry."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route delete_batch (DeleteBatchArg, DeleteBatchLaunch, Void)
+    "Delete multiple files/folders at once. This route is asynchronous, which returns a job ID
+    immediately and runs the delete batch asynchronously. Use :route:`delete_batch/check` to
+    check the job status."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route delete_batch/check (async.PollArg, DeleteBatchJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`delete_batch`. If success, it returns
+    list of result for each entry."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route permanently_delete (DeleteArg, Void, DeleteError)
+    "Permanently delete the file or folder at a given path (see
+    https://www.dropbox.com/en/help/40). If the given file or folder is not yet deleted, this
+    route will first delete it. It is possible for this route to successfully delete, then fail
+    to permanently delete. Note: This endpoint is only available for Dropbox Business apps."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.permanent_delete"
+        select_admin_mode = "team_admin"
+
+route copy (RelocationArg, Metadata, RelocationError) deprecated
+    "Copy a file or folder to a different location in the user's Dropbox.
+    If the source path is a folder all its contents will be copied."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route copy:2 (RelocationArg, RelocationResult, RelocationError)
+    "Copy a file or folder to a different location in the user's Dropbox.
+    If the source path is a folder all its contents will be copied."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route copy_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated
+    "Copy multiple files or folders to different locations at once in the user's Dropbox.
+    This route will return job ID immediately and do the async copy job in background.
+    Please use :route:`copy_batch/check` to check the job status."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route copy_batch:2 (CopyBatchArg, RelocationBatchV2Launch, Void)
+    "Copy multiple files or folders to different locations at once in the user's Dropbox.
+    This route will replace :route:`copy_batch`. The main difference is this route will return
+    status for each entry, while :route:`copy_batch` raises failure if any entry fails. This
+    route will either finish synchronously, or return a job ID and do the async copy job in
+    background. Please use :route:`copy_batch/check:2` to check the job status."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route copy_batch/check (async.PollArg, RelocationBatchJobStatus, async.PollError) deprecated
+    "Returns the status of an asynchronous job for :route:`copy_batch:1`. If success, it returns
+    list of results for each entry."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route copy_batch/check:2 (async.PollArg, RelocationBatchV2JobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`copy_batch:2`. It returns list of
+    results for each entry."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route move_batch (RelocationBatchArg, RelocationBatchLaunch, Void) deprecated
+    "Move multiple files or folders to different locations at once in the user's Dropbox.
+    This route will return job ID immediately and do the async moving job in background.
+    Please use :route:`move_batch/check` to check the job status."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route move_batch:2 (MoveBatchArg, RelocationBatchV2Launch, Void)
+    "Move multiple files or folders to different locations at once in the user's Dropbox.
+    Note that we do not currently support case-only renaming. This route will replace
+    :route:`move_batch`. The main difference is this route will return status for each entry,
+    while :route:`move_batch` raises failure if any entry fails. This route will either finish
+    synchronously, or return a job ID and do the async move job in background. Please use
+    :route:`move_batch/check:2` to check the job status."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route move_batch/check (async.PollArg, RelocationBatchJobStatus, async.PollError) deprecated
+    "Returns the status of an asynchronous job for :route:`move_batch:1`. If success, it returns
+    list of results for each entry."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route move_batch/check:2 (async.PollArg, RelocationBatchV2JobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`move_batch:2`. It returns list of
+    results for each entry."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+
+route create_folder (CreateFolderArg, FolderMetadata, CreateFolderError) deprecated
+    "Create a folder at a given path."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route create_folder:2 (CreateFolderArg, CreateFolderResult, CreateFolderError)
+    "Create a folder at a given path."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route delete (DeleteArg, Metadata, DeleteError) deprecated
+    "Delete the file or folder at a given path. If the path is a folder, all its contents will be
+    deleted too. A successful response indicates that the file or folder was deleted. The returned
+    metadata will be the corresponding FileMetadata or FolderMetadata for the item at time of
+    deletion, and not a DeletedMetadata object."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route delete:2 (DeleteArg, DeleteResult, DeleteError)
+    "Delete the file or folder at a given path. If the path is a folder, all its contents will be
+    deleted too. A successful response indicates that the file or folder was deleted. The returned
+    metadata will be the corresponding FileMetadata or FolderMetadata for the item at time of
+    deletion, and not a DeletedMetadata object."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route move (RelocationArg, Metadata, RelocationError) deprecated
+    "Move a file or folder to a different location in the user's Dropbox. If the source path is
+    a folder all its contents will be moved."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route move:2 (RelocationArg, RelocationResult, RelocationError)
+    "Move a file or folder to a different location in the user's Dropbox. If the source path is
+    a folder all its contents will be moved. Note that we do not currently support case-only
+    renaming."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+
+route get_temporary_link (GetTemporaryLinkArg, GetTemporaryLinkResult, GetTemporaryLinkError)
+    "Get a temporary link to stream content of a file. This link will expire in four hours and
+    afterwards you will get 410 Gone. This URL should not be used to display content directly
+    in the browser. The Content-Type of the link is determined automatically by the file's mime type."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.read"
+
+
+route copy_reference/get (GetCopyReferenceArg, GetCopyReferenceResult, GetCopyReferenceError)
+    "Get a copy reference to a file or folder. This reference string can be used to save that
+    file or folder to another user's Dropbox by passing it to :route:`copy_reference/save`."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+
+route copy_reference/save (SaveCopyReferenceArg, SaveCopyReferenceResult, SaveCopyReferenceError)
+    "Save a copy reference returned by :route:`copy_reference/get` to the user's Dropbox."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+
+
+route download (DownloadArg, FileMetadata, DownloadError)
+    "Download a file from a user's Dropbox."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.read"
+        select_admin_mode = "whole_team"
+        style = "download"
+
+
+route download_zip (DownloadZipArg, DownloadZipResult, DownloadZipError)
+    "Download a folder from the user's Dropbox, as a zip file. The folder must be less than 20 GB
+    in size and any single file within must be less than 4 GB in size. The resulting zip must have
+    fewer than 10,000 total file and folder entries, including the top level folder. The input
+    cannot be a single file. Note: this endpoint does not support HTTP range requests."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.read"
+        style = "download"
+
+
+route export (ExportArg, ExportResult, ExportError)
+    "Export a file from a user's Dropbox. This route only supports exporting files that cannot be
+    downloaded directly and whose ExportResult.file_metadata has ExportInfo.export_as populated."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        is_preview = true
+        scope = "files.content.read"
+        select_admin_mode = "whole_team"
+        style = "download"
+
+
+route get_temporary_upload_link (GetTemporaryUploadLinkArg, GetTemporaryUploadLinkResult, Void)
+    "Get a one-time use temporary upload link to upload a file to a Dropbox location.  This
+    endpoint acts as a delayed upload(). The returned temporary upload link may be used to make
+    a POST request with the data to be uploaded. The upload will then be perfomed with the
+    CommitInfo previously provided to getTemporaryUploadLink() but evaluated only upon consumption.
+    Hence, errors stemming from invalid CommitInfo with respect to the state of the user's Dropbox
+    will only be communicated at consumption time. Additionally, these errors are surfaced as
+    generic HTTP 409 Conflict responses, potentially hiding issue details. The maximum temporary
+    upload link duration is 4 hours. Upon consumption or expiration, a new link will have to be
+    generated. Multiple links may exist for a specific upload path at any given time.  The POST
+    request on the temporary upload link must have its Content-Type set to
+    \"application/octet-stream\".  Example temporary upload link consumption request:  curl -X POST
+    https://content.dropboxapi.com/apitul/1/bNi2uIYF51cVBND --header
+    \"Content-Type: application/octet-stream\" --data-binary @local_file.txt  A successful temporary
+    upload link consumption request returns the content hash of the uploaded data in JSON format.
+    Example successful temporary upload link consumption response: {\"content-hash\":
+    \"599d71033d700ac892a0e48fa61b125d2f5994\"}  An unsuccessful temporary upload link consumption
+    request returns any of the following status codes:  HTTP 400 Bad Request: Content-Type is not
+    one of application/octet-stream and text/plain or request is invalid. HTTP 409 Conflict: The
+    temporary upload link does not exist or is currently unavailable, the upload failed, or
+    another error happened. HTTP 410 Gone: The temporary upload link is expired or consumed.
+    Example unsuccessful temporary upload link consumption response: Temporary upload link has
+    been recently consumed."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+
+
+route lock_file_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
+    "Lock the files at the given paths. A locked file will be writable only by the lock holder.
+    A successful response indicates that the file has been locked. Returns a list of the locked
+    file paths and their metadata after this operation."
+
+    attrs
+        auth = "user"
+        scope = "files.content.write"
+
+route unlock_file_batch (UnlockFileBatchArg, LockFileBatchResult, LockFileError)
+    "Unlock the files at the given paths. A locked file can only be unlocked by the lock holder
+    or, if a business account, a team admin. A successful response indicates that the file has
+    been unlocked. Returns a list of the unlocked file paths and their metadata after this
+    operation."
+
+    attrs
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "whole_team"
+
+route get_file_lock_batch (LockFileBatchArg, LockFileBatchResult, LockFileError)
+    "Return the lock metadata for the given list of paths."
+
+    attrs
+        auth = "user"
+        scope = "files.content.read"
+
+
+route get_metadata (GetMetadataArg, Metadata, GetMetadataError)
+    "Returns the metadata for a file or folder.
+    Note: Metadata for the root folder is unsupported."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.metadata.read"
+        select_admin_mode = "whole_team"
+
+route list_folder (ListFolderArg, ListFolderResult, ListFolderError)
+    "Starts returning the contents of a folder. If the result's :field:`ListFolderResult.has_more`
+    field is true, call :route:`list_folder/continue` with the returned ListFolderResult.cursor to
+    retrieve more entries. If you're using ListFolderArg.recursive set to true to keep a local
+    cache of the contents of a Dropbox account, iterate through each entry in order and process
+    them as follows to keep your local state in sync: For each FileMetadata, store the new entry
+    at the given path in your local state. If the required parent folders don't exist yet, create
+    them. If there's already something else at the given path, replace it and remove all its
+    children. For each FolderMetadata, store the new entry at the given path in your local state.
+    If the required parent folders don't exist yet, create them. If there's already something else
+    at the given path, replace it but leave the children as they are. Check the new entry's
+    FolderSharingInfo.read_only and set all its children's read-only statuses to match. For each
+    DeletedMetadata, if your local state has something at the given path, remove it and all its
+    children. If there's nothing at the given path, ignore this entry. Note: auth.RateLimitError
+    may be returned if multiple :route:`list_folder` or :route:`list_folder/continue` calls with same parameters
+    are made simultaneously by same API app for same user. If your app implements retry logic,
+    please hold off the retry until the previous request finishes."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "app, user"
+        scope = "files.metadata.read"
+        select_admin_mode = "whole_team"
+
+route list_folder/continue (ListFolderContinueArg, ListFolderResult, ListFolderContinueError)
+    "Once a cursor has been retrieved from :route:`list_folder`, use this to paginate through all
+    files and retrieve updates to the folder, following the same rules as documented for
+    :route:`list_folder`."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "app, user"
+        scope = "files.metadata.read"
+        select_admin_mode = "whole_team"
+
+route list_folder/get_latest_cursor (ListFolderArg, ListFolderGetLatestCursorResult, ListFolderError)
+    "A way to quickly get a cursor for the folder's state. Unlike :route:`list_folder`,
+    :route:`list_folder/get_latest_cursor` doesn't return any entries. This endpoint is for app which
+    only needs to know about new files and modifications and doesn't need to know about files
+    that already exist in Dropbox."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.metadata.read"
+        select_admin_mode = "whole_team"
+
+route list_folder/longpoll (ListFolderLongpollArg, ListFolderLongpollResult, ListFolderLongpollError)
+    "A longpoll endpoint to wait for changes on an account. In conjunction with :route:`list_folder/continue`,
+    this call gives you a low-latency way to monitor an account for file changes. The connection
+    will block until there are changes available or a timeout occurs. This endpoint is useful
+    mostly for client-side apps."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "noauth"
+        host = "notify"
+        scope = "files.metadata.read"
+        select_admin_mode = "whole_team"
+
+route alpha/get_metadata (AlphaGetMetadataArg, Metadata, AlphaGetMetadataError) deprecated
+    "Returns the metadata for a file or folder. This is an alpha endpoint compatible
+    with the properties API. Note: Metadata for the root folder is unsupported."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        is_preview = true
+        scope = "files.metadata.read"
+
+
+route paper/create (PaperCreateArg, PaperCreateResult, PaperCreateError)
+    "Creates a new Paper doc with the provided content."
+
+    attrs
+        auth = "user"
+        is_preview = true
+        scope = "files.content.write"
+        style = "upload"
+
+route paper/update (PaperUpdateArg, PaperUpdateResult, PaperUpdateError)
+    "Updates an existing Paper doc with the provided content."
+
+    attrs
+        auth = "user"
+        is_preview = true
+        scope = "files.content.write"
+        style = "upload"
+
+
+route get_preview (PreviewArg, FileMetadata, PreviewError)
+    "Get a preview for a file. Currently, PDF previews are generated for files with the following
+    extensions: .ai, .doc, .docm, .docx, .eps, .gdoc, .gslides, .odp, .odt, .pps, .ppsm, .ppsx,
+    .ppt, .pptm, .pptx, .rtf. HTML previews are generated for .csv, .ods, .xls, .xlsm, .gsheet,
+    .xlsx. Other formats will return an unsupported extension error."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.read"
+        select_admin_mode = "whole_team"
+        style = "download"
+
+route get_thumbnail (ThumbnailArg, FileMetadata, ThumbnailError)
+    "Get a thumbnail for an image. This method currently supports files with the following file
+    extensions: jpg, jpeg, png, tiff, tif, gif, webp, ppm and bmp. Photos that are larger than
+    20MB in size won't be converted to a thumbnail."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.read"
+        select_admin_mode = "whole_team"
+        style = "download"
+
+route get_thumbnail_batch (GetThumbnailBatchArg, GetThumbnailBatchResult, GetThumbnailBatchError)
+    "Get thumbnails for a list of images. We allow up to 25 thumbnails in a single batch. This
+    method currently supports files with the following file extensions: jpg, jpeg, png, tiff, tif,
+    gif, webp, ppm and bmp. Photos that are larger than 20MB in size won't be converted to a
+    thumbnail."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.read"
+        select_admin_mode = "whole_team"
+
+route get_thumbnail:2 (ThumbnailV2Arg, PreviewResult, ThumbnailV2Error)
+    "Get a thumbnail for an image. This method currently supports files with the following file
+    extensions: jpg, jpeg, png, tiff, tif, gif, webp, ppm and bmp. Photos that are larger than
+    20MB in size won't be converted to a thumbnail."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "app, user"
+        host = "content"
+        scope = "files.content.read"
+        select_admin_mode = "whole_team"
+        style = "download"
+
+
+route properties/add (file_properties.AddPropertiesArg, Void, file_properties.AddPropertiesError) deprecated
+    "Add property groups to a Dropbox file. See templates/add_for_user or
+    templates/add_for_team to create new templates."
+
+    attrs
+        auth = "user"
+        scope = "files.metadata.write"
+
+route properties/update (file_properties.UpdatePropertiesArg, Void, file_properties.UpdatePropertiesError) deprecated
+    "Add, update or remove properties associated with the supplied file and templates.
+    This endpoint should be used instead of properties/overwrite when property groups
+    are being updated via a \"delta\" instead of overwriting all properties of a file."
+
+    attrs
+        auth = "user"
+        scope = "files.metadata.write"
+
+route properties/overwrite (file_properties.OverwritePropertyGroupArg, Void, file_properties.InvalidPropertyGroupError) deprecated
+    "Overwrite property groups associated with a file. This endpoint should be used
+    instead of properties/update when property groups are being overwritten rather
+    than updated via a \"delta\"."
+
+    attrs
+        auth = "user"
+        scope = "files.metadata.write"
+
+
+route save_url (SaveUrlArg, SaveUrlResult, SaveUrlError)
+    "Save the data from a specified URL into a file in user's Dropbox.
+    Note that the transfer from the URL must complete within 15 minutes, or the
+    operation will time out and the job will fail."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+
+route save_url/check_job_status (async.PollArg, SaveUrlJobStatus, async.PollError)
+    "Check the status of a :route:`save_url` job."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+
+
+route upload (UploadArg, FileMetadata, UploadError)
+    "Create a new file with the contents provided in the request. Do not use this to upload a
+    file larger than 150 MiB. Instead, create an upload session with :route:`upload_session/start`.
+    Calls to this endpoint will count as data transport calls for any Dropbox Business teams
+    with a limit on the number of data transport calls allowed per month. For more information,
+    see the Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+        style = "upload"
+
+route upload_session/start (UploadSessionStartArg, UploadSessionStartResult, UploadSessionStartError)
+    "Upload sessions allow you to upload a single file in one or more requests, for example where
+    the size of the file is greater than 150 MiB. This call starts a new upload session with the
+    given data. You can then use :route:`upload_session/append:2` or :route:`upload_session/append_batch` to add
+    more data, then :route:`upload_session/finish` or :route:`upload_session/finish_batch:2` to save all the data to
+    a file in Dropbox. A single request should not upload more than 150 MiB. The maximum size of
+    a file one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248) bytes.
+    An upload session can be used for a maximum of 7 days. Attempting to use a
+    :field:`UploadSessionStartResult.session_id` with :route:`upload_session/append:2` or other upload session
+    routes more than 7 days after its creation will return :field:`UploadSessionLookupError.not_found`.
+    Calls to this endpoint will count as data transport calls for any Dropbox Business teams with a
+    limit on the number of data transport calls allowed per month. For more information, see the
+    Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit.
+    By default, upload sessions require you to send content of the file in sequential order via
+    consecutive :route:`upload_session/start`, :route:`upload_session/append:2`, and :route:`upload_session/finish` calls
+    (or their batch variants). For better performance, you can optionally set
+    :field:`UploadSessionStartArg.session_type` to :field:`UploadSessionType.concurrent` to start a concurrent
+    upload session. Concurrent upload sessions may upload file data in concurrent
+    :route:`upload_session/append:2` requests, with a few caveats. After all of the requests are complete,
+    finish the session with :route:`upload_session/finish` as normal. You can not send data in a
+    :route:`upload_session/start` or :route:`upload_session/finish` call, only with :route:`upload_session/append:2` or
+    :route:`upload_session/append_batch`. Also, the length of the uploaded data in a call to
+    :route:`upload_session/append:2` or :route:`upload_session/append_batch` must be a multiple of 2^22 (4,194,304)
+    bytes, except for the final append request with :field:`UploadSessionAppendArg.close` or
+    :field:`UploadSessionAppendBatchArgEntry.close` set to true that may contain any remaining data."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+        style = "upload"
+
+route upload_session/append (UploadSessionCursor, Void, UploadSessionAppendError) deprecated
+    "Append more data to an upload session. A single request should not upload more than 150 MiB.
+    The maximum size of a file one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248) bytes.
+    Calls to this endpoint will count as data transport calls for any Dropbox Business teams with a
+    limit on the number of data transport calls allowed per month. For more information, see the
+    Data transport limit page https://www.dropbox.com/developers/reference/data-transport-limit."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+        style = "upload"
+
+route upload_session/append:2 (UploadSessionAppendArg, Void, UploadSessionAppendError)
+    "Append more data to an upload session. When the parameter close is set, this call will close
+    the session. A single request should not upload more than 150 MiB. The maximum size of a file
+    one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248) bytes. Calls to this
+    endpoint will count as data transport calls for any Dropbox Business teams with a limit on the
+    number of data transport calls allowed per month. For more information, see the Data transport
+    limit page https://www.dropbox.com/developers/reference/data-transport-limit."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+        style = "upload"
+
+route upload_session/append_batch (UploadSessionAppendBatchArg, UploadSessionAppendBatchResult, UploadSessionAppendBatchError)
+    "Append more data to multiple upload sessions. Each piece of file content to append to each
+    upload session should be concatenated in the request body, in the order delineated by
+    :field:`UploadSessionAppendBatchArg.entries` and their individual lengths indicated by
+    :field:`UploadSessionAppendBatchArgEntry.length`. A single request should not upload more than 150 MiB.
+    The maximum size of a file one can upload to an upload session is
+    2^41 - 2^22 (2,199,019,061,248) bytes. Calls to this endpoint will count as data transport
+    calls for any Dropbox Business teams with a limit on the number of data transport calls allowed
+    per month. For more information, see the Data transport limit page
+    https://www.dropbox.com/developers/reference/data-transport-limit."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+        style = "upload"
+
+route upload_session/finish (UploadSessionFinishArg, FileMetadata, UploadSessionFinishError)
+    "Finish an upload session and save the uploaded data to the given file path. A single request
+    should not upload more than 150 MiB. The maximum size of a file one can upload to an upload
+    session is 2^41 - 2^22 (2,199,019,061,248) bytes. Calls to this endpoint will count as data
+    transport calls for any Dropbox Business teams with a limit on the number of data transport
+    calls allowed per month. For more information, see the Data transport limit page
+    https://www.dropbox.com/developers/reference/data-transport-limit."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+        style = "upload"
+
+route alpha/upload (UploadArg, FileMetadata, UploadError) deprecated
+    "Create a new file with the contents provided in the request. Note that the behavior of this
+    alpha endpoint is unstable and subject to change. Do not use this to upload a file larger
+    than 150 MiB. Instead, create an upload session with :route:`upload_session/start`."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        host = "content"
+        is_preview = true
+        scope = "files.content.write"
+        style = "upload"
+
+
+route upload_session/start_batch (UploadSessionStartBatchArg, UploadSessionStartBatchResult, Void)
+    "Start a batch of upload sessions. See :route:`upload_session/start`. Calls to this endpoint will count
+    as data transport calls for any Dropbox Business teams with a limit on the number of data
+    transport calls allowed per month. For more information, see the Data transport limit page
+    https://www.dropbox.com/developers/reference/data-transport-limit."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+
+route upload_session/finish_batch (UploadSessionFinishBatchArg, UploadSessionFinishBatchLaunch, Void) deprecated
+    "This route helps you commit many files at once into a user's Dropbox. Use :route:`upload_session/start`
+    and :route:`upload_session/append:2` to upload file contents. We recommend uploading many files in
+    parallel to increase throughput. Once the file contents have been uploaded, rather than
+    calling :route:`upload_session/finish`, use this route to finish all your upload sessions in a single
+    request. :field:`UploadSessionStartArg.close` or :field:`UploadSessionAppendArg.close` needs to be true for
+    the last :route:`upload_session/start` or :route:`upload_session/append:2` call. The maximum size of a file
+    one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248) bytes. This route will
+    return a job_id immediately and do the async commit job in background. Use
+    :route:`upload_session/finish_batch/check` to check the job status. For the same account, this route
+    should be executed serially. That means you should not start the next job before current job
+    finishes. We allow up to 1000 entries in a single request. Calls to this endpoint will count
+    as data transport calls for any Dropbox Business teams with a limit on the number of data
+    transport calls allowed per month. For more information, see the Data transport limit page
+    https://www.dropbox.com/developers/reference/data-transport-limit."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route upload_session/finish_batch:2 (UploadSessionFinishBatchArg, UploadSessionFinishBatchResult, Void)
+    "This route helps you commit many files at once into a user's Dropbox. Use :route:`upload_session/start`
+    and :route:`upload_session/append:2` to upload file contents. We recommend uploading many files in
+    parallel to increase throughput. Once the file contents have been uploaded, rather than
+    calling :route:`upload_session/finish`, use this route to finish all your upload sessions in a single
+    request. :field:`UploadSessionStartArg.close` or :field:`UploadSessionAppendArg.close` needs to be true for
+    the last :route:`upload_session/start` or :route:`upload_session/append:2` call of each upload session. The
+    maximum size of a file one can upload to an upload session is 2^41 - 2^22 (2,199,019,061,248)
+    bytes. We allow up to 1000 entries in a single request. Calls to this endpoint will count
+    as data transport calls for any Dropbox Business teams with a limit on the number of data
+    transport calls allowed per month. For more information, see the Data transport limit page
+    https://www.dropbox.com/developers/reference/data-transport-limit."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+route upload_session/finish_batch/check (async.PollArg, UploadSessionFinishBatchJobStatus, async.PollError)
+    "Returns the status of an asynchronous job for :route:`upload_session/finish_batch`. If success, it
+    returns list of result for each entry."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+
+route list_revisions (ListRevisionsArg, ListRevisionsResult, ListRevisionsError)
+    "Returns revisions for files based on a file path or a file id. The file path or file id is
+    identified from the latest file entry at the given file path or id. This end point allows
+    your app to query either by file path or file id by setting the mode parameter appropriately.
+    In the ListRevisionsMode.path (default) mode, all revisions at the same file path as the
+    latest file entry are returned. If revisions with the same file id are desired, then mode
+    must be set to ListRevisionsMode.id. The ListRevisionsMode.id mode is useful to retrieve
+    revisions for a given file across moves or renames."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.metadata.read"
+        select_admin_mode = "whole_team"
+
+route restore (RestoreArg, FileMetadata, RestoreError)
+    "Restore a specific revision of a file to the given path."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.content.write"
+        select_admin_mode = "team_admin"
+
+
+route search (SearchArg, SearchResult, SearchError) deprecated
+    "Searches for files and folders.
+    Note: Recent changes will be reflected in search results within a few seconds
+    and older revisions of existing files may still match your query for up to a few days."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "files.metadata.read"
 

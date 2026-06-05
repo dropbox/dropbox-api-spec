@@ -1,6 +1,7 @@
 namespace file_properties
     "This namespace contains helpers for property and template metadata endpoints.
 
+
     These endpoints enable you to tag arbitrary key/value data to Dropbox files.
 
 
@@ -27,9 +28,9 @@ namespace file_properties
     when the app is linked with the owner of the template (either a user or team).
 
 
-    User-owned templates are accessed via the user-auth file_properties/templates/*_for_user endpoints, while
-    team-owned templates are accessed via the team-auth file_properties/templates/*_for_team endpoints. Properties
-    associated with either type of template can be accessed via the user-auth properties/* endpoints.
+    User-owned templates are accessed via the user-auth `file_properties/templates/*_for_user` endpoints, while
+    team-owned templates are accessed via the team-auth `file_properties/templates/*_for_team` endpoints. Properties
+    associated with either type of template can be accessed via the user-auth `properties/*` endpoints.
 
 
     Finally, properties can be accessed from a number of endpoints that return metadata, including
