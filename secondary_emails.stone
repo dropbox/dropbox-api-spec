@@ -11,11 +11,11 @@ struct SecondaryEmail
     example default
         email = "apple@orange.com"
         is_verified = true
-    
+
     example second_sec_email
         email = "banana@honeydew.com"
         is_verified = true
-    
+
     example third_sec_email
         email = "grape@strawberry.com"
         is_verified = false

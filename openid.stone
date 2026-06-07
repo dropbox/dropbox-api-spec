@@ -3,6 +3,17 @@ namespace openid
 import account_id
 import common
 
+route userinfo (UserInfoArgs, UserInfoResult, UserInfoError)
+    "This route is used for refreshing the info that is found in the id_token during the OIDC flow.
+    This route doesn't require any arguments and will use the scopes approved for the given access token."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        is_preview = true
+        scope = "openid"
+
+
 union OpenIdError
     incorrect_openid_scopes
         "Missing openid claims for the associated access token."
@@ -28,15 +39,4 @@ struct UserInfoResult
     sub String = ""
         "An identifier for the user. This is the Dropbox account_id, a string
         value such as dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc."
-
-
-route userinfo (UserInfoArgs, UserInfoResult, UserInfoError)
-    "This route is used for refreshing the info that is found in the id_token during the OIDC flow.
-    This route doesn't require any arguments and will use the scopes approved for the given access token."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        is_preview = true
-        scope = "openid"
 

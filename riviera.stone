@@ -125,3 +125,73 @@ route get_transcript_async/check (async.PollArg, GetTranscriptAsyncCheckResult, 
         is_preview = true
         scope = "files.content.read"
 
+
+struct GetMarkdownArgs
+    "Arguments for the asynchronous `get_markdown_async` route.
+    Exactly one of `file_id`, `path`, or `url` must be supplied via
+    `file_id_or_url` to identify the document to convert to markdown."
+    file_id_or_url FileIdOrUrl?
+        "Identifier of the document to convert. Callers must set exactly one of
+        the oneof variants:
+        - file_id: a Dropbox-issued file id (format: \"id:<id>\") for a file the
+        authenticated user has access to.
+        - path: an absolute Dropbox path, e.g. \"/folder/report.docx\".
+        - url: either a Dropbox shared link (www.dropbox.com) or an external
+        HTTPS URL pointing to a supported document file.
+        - Dropbox shared links are resolved internally using the caller's
+        authenticated identity and the link's visibility / download
+        settings. They therefore require an authenticated user context
+        (anonymous `url` requests against Dropbox links are rejected with
+        an `ACCESS_ERROR`). Links protected by a password are rejected
+        with `shared_link_password_protected`; links with downloads
+        disabled are rejected with `link_download_disabled_error`.
+        - External URLs are fetched over HTTPS through the backend's
+        egress proxy and must point at a supported document file
+        extension.
+        The referenced file must be a document in a supported format;
+        requests against unsupported formats return `unsupported_format_error`."
+    enable_ocr Boolean = false
+        "Enable OCR for PDF documents. Processing is slower when enabled."
+    embed_images Boolean = false
+        "When true, embed images as base64 data URIs in the markdown output.
+        This can significantly increase output size."
+
+struct GetMarkdownResult
+    markdown String = ""
+        "The converted markdown content"
+
+union MarkdownConversionApiV2Error
+    server_error String = ""
+    user_error String = ""
+    unsupported_format_error
+    link_download_disabled_error
+    shared_link_password_protected
+    limit_exceeded_error
+    conversion_failure_error
+
+struct GetMarkdownAsyncError
+    error_code ErrorCode = unknown_error
+    error_details MarkdownConversionApiV2Error?
+
+union GetMarkdownAsyncCheckResult
+    "Result type for EventBus async check"
+    in_progress
+    complete GetMarkdownResult
+    failed GetMarkdownAsyncError
+
+route get_markdown_async (GetMarkdownArgs, async.LaunchResultBase, Void)
+    "Asynchronous document-to-markdown conversion for supported file formats."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+route get_markdown_async/check (async.PollArg, GetMarkdownAsyncCheckResult, async.PollError)
+    "Returns the status or result of specified get_markdown_async task."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+

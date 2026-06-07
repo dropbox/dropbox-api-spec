@@ -6,48 +6,35 @@ import team_common
 import team_policies
 import users_common
 
-route get_space_usage (Void, SpaceUsage, Void)
-    "Get the space usage information for the current user's account."
+struct Name
+    "Representations for a person's name to assist with internationalization."
+    given_name String
+        "Also known as a first name."
+    surname String
+        "Also known as a last name or family name."
+    familiar_name String
+        "Locale-dependent name. In the US, a person's familiar name is their
+        :field:`given_name`, but elsewhere, it could be any combination of a
+        person's :field:`given_name` and :field:`surname`."
+    display_name String
+        "A name that can be used directly to represent the name of a user's
+        Dropbox account."
+    abbreviated_name String
+        "An abbreviated form of the person's name. Their initials in most locales."
 
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "account_info.read"
+    example default
+        given_name = "Franz"
+        surname = "Ferdinand"
+        familiar_name = "Franz"
+        display_name = "Franz Ferdinand (Personal)"
+        abbreviated_name = "FF"
 
-
-route get_account (GetAccountArg, BasicAccount, GetAccountError)
-    "Get information about a user's account."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "sharing.read"
-
-route get_account_batch (GetAccountBatchArg, GetAccountBatchResult, GetAccountBatchError)
-    "Get information about multiple user accounts. At most 300 accounts may be queried per request."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "sharing.read"
-
-route get_current_account (Void, FullAccount, Void)
-    "Get information about the current user's account."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "account_info.read"
-        select_admin_mode = "whole_team"
-
-
-route features/get_values (UserFeaturesGetValuesBatchArg, UserFeaturesGetValuesBatchResult, UserFeaturesGetValuesBatchError)
-    "Get a list of feature values that may be configured for the current account."
-
-    attrs
-        allow_app_folder_app = true
-        auth = "user"
-        scope = "account_info.read"
+    example second_name
+        given_name = "Zexy Desperado"
+        surname = "Desperado"
+        familiar_name = "Zexy"
+        display_name = "Zexy Desperado (Personal)"
+        abbreviated_name = "ZD"
 
 
 alias GetAccountBatchResult = List(BasicAccount)
@@ -176,7 +163,7 @@ struct BasicAccount extends Account
         profile_photo_url = "https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128"
         is_teammate = false
         disabled = false
-    
+
     example team
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
@@ -225,7 +212,7 @@ struct FullAccount extends Account
         account_type = business
         disabled = false
         root_info = default
-    
+
     example unpaired
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
@@ -335,33 +322,46 @@ struct UserFeaturesGetValuesBatchResult
         values = [paper_as_files_enabled]
 
 
-struct Name
-    "Representations for a person's name to assist with internationalization."
-    given_name String
-        "Also known as a first name."
-    surname String
-        "Also known as a last name or family name."
-    familiar_name String
-        "Locale-dependent name. In the US, a person's familiar name is their
-        :field:`given_name`, but elsewhere, it could be any combination of a
-        person's :field:`given_name` and :field:`surname`."
-    display_name String
-        "A name that can be used directly to represent the name of a user's
-        Dropbox account."
-    abbreviated_name String
-        "An abbreviated form of the person's name. Their initials in most locales."
+route get_account (GetAccountArg, BasicAccount, GetAccountError)
+    "Get information about a user's account."
 
-    example default
-        given_name = "Franz"
-        surname = "Ferdinand"
-        familiar_name = "Franz"
-        display_name = "Franz Ferdinand (Personal)"
-        abbreviated_name = "FF"
-    
-    example second_name
-        given_name = "Zexy Desperado"
-        surname = "Desperado"
-        familiar_name = "Zexy"
-        display_name = "Zexy Desperado (Personal)"
-        abbreviated_name = "ZD"
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "sharing.read"
+
+route get_account_batch (GetAccountBatchArg, GetAccountBatchResult, GetAccountBatchError)
+    "Get information about multiple user accounts. At most 300 accounts may be queried per request."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "sharing.read"
+
+route get_current_account (Void, FullAccount, Void)
+    "Get information about the current user's account."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "account_info.read"
+        select_admin_mode = "whole_team"
+
+
+route features/get_values (UserFeaturesGetValuesBatchArg, UserFeaturesGetValuesBatchResult, UserFeaturesGetValuesBatchError)
+    "Get a list of feature values that may be configured for the current account."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "account_info.read"
+
+
+route get_space_usage (Void, SpaceUsage, Void)
+    "Get the space usage information for the current user's account."
+
+    attrs
+        allow_app_folder_app = true
+        auth = "user"
+        scope = "account_info.read"
 
