@@ -775,6 +775,7 @@ union TeamFolderNotificationTarget
 
 union TeamFolderSpaceCapsType
     "Team folder space limit enforcement type"
+    hard
     off
     soft
 
@@ -2210,6 +2211,8 @@ union EventCategory
         "Events that apply to Dropbox Paper."
     passwords
         "Events that involve using, changing or resetting passwords."
+    protect
+        "Events that apply to Dropbox Protect"
     reports
         "Events that concern generation of admin reports, including team activity and device usage."
     sharing
@@ -4826,6 +4829,17 @@ struct PasswordResetDetails
 struct PasswordResetAllDetails
     "Reset all team member passwords."
 
+struct ProtectInternalDomainsChangedDetails
+    "Modified Protect internal domains list."
+    domains_added List(String)?
+        "Domains added to the internal domains list."
+    domains_removed List(String)?
+        "Domains removed from the internal domains list."
+
+    example default
+        domains_added = ["abc"]
+        domains_removed = ["abc"]
+
 struct ClassificationCreateReportDetails
     "Created Classification report."
 
@@ -6341,8 +6355,8 @@ struct TeamFolderSpaceLimitsChangeCapsTypeDetails
         "New enforcement type."
 
     example default
-        previous_caps_type = off
-        new_caps_type = off
+        previous_caps_type = hard
+        new_caps_type = hard
 
 struct TeamFolderSpaceLimitsChangeLimitDetails
     "Changed team folder space limit."
@@ -8073,6 +8087,7 @@ union EventDetails
     password_change_details PasswordChangeDetails
     password_reset_details PasswordResetDetails
     password_reset_all_details PasswordResetAllDetails
+    protect_internal_domains_changed_details ProtectInternalDomainsChangedDetails
     classification_create_report_details ClassificationCreateReportDetails
     classification_create_report_fail_details ClassificationCreateReportFailDetails
     emm_create_exceptions_report_details EmmCreateExceptionsReportDetails
@@ -10058,6 +10073,12 @@ struct PasswordResetAllType
 
     example default
         description = "(passwords) Reset all team member passwords"
+
+struct ProtectInternalDomainsChangedType
+    description String
+
+    example default
+        description = "(protect) Modified Protect internal domains list"
 
 struct ClassificationCreateReportType
     description String
@@ -12591,6 +12612,8 @@ union EventType
         "(passwords) Reset password"
     password_reset_all PasswordResetAllType
         "(passwords) Reset all team member passwords"
+    protect_internal_domains_changed ProtectInternalDomainsChangedType
+        "(protect) Modified Protect internal domains list"
     classification_create_report ClassificationCreateReportType
         "(reports) Created Classification report"
     classification_create_report_fail ClassificationCreateReportFailType
@@ -13807,6 +13830,8 @@ union EventTypeArg
         "(passwords) Reset password"
     password_reset_all
         "(passwords) Reset all team member passwords"
+    protect_internal_domains_changed
+        "(protect) Modified Protect internal domains list"
     classification_create_report
         "(reports) Created Classification report"
     classification_create_report_fail

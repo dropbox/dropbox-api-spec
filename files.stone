@@ -15,7 +15,7 @@ route search:2 (SearchV2Arg, SearchV2Result, SearchError)
 
     attrs
         allow_app_folder_app = true
-        auth = "app, user"
+        auth = "user"
         scope = "files.metadata.read"
 
 route search/continue:2 (SearchV2ContinueArg, SearchV2Result, SearchError)
@@ -27,7 +27,7 @@ route search/continue:2 (SearchV2ContinueArg, SearchV2Result, SearchError)
 
     attrs
         allow_app_folder_app = true
-        auth = "app, user"
+        auth = "user"
         scope = "files.metadata.read"
 
 
@@ -832,6 +832,8 @@ struct FileMetadata extends Metadata
         information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
     file_lock_info FileLockMetadata?
         "If present, the metadata associated with the file's current lock."
+    is_restorable Boolean?
+        "If present, indicates whether this file revision can be restored."
 
     example default
         id = "id:a4ayc_80_OEAAAAAAAAAXw"
@@ -886,6 +888,8 @@ struct FolderMetadata extends Metadata
 
 struct DeletedMetadata extends Metadata
     "Indicates that there used to be a file or folder at this path, but it no longer exists."
+    is_restorable Boolean?
+        "If present, indicates whether this deleted entry can be restored."
 
     example default
         path_lower = "/homework/math/pi.txt"
@@ -1820,6 +1824,8 @@ struct ListFolderArg
         listed templates."
     include_non_downloadable_files Boolean = true
         "If true, include files that are not downloadable, i.e. Google Docs."
+    include_restorable_info Boolean = false
+        "If true, each returned deleted entry will include whether that entry can be restored."
 
     example default
         path = "/Homework/math"
@@ -1892,6 +1898,8 @@ struct ListRevisionsArg
     before_rev Rev?
         "If set, ListRevisions will only return revisions prior to before_rev. Can be set using the last revision
         from a previous call to list_revisions to fetch the next page of revisions. Only supported in path mode."
+    include_restorable_info Boolean = false
+        "If true, each returned revision will include whether that revision can be restored."
 
     example default
         path = "/root/word.docx"
