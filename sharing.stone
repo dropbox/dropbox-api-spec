@@ -254,12 +254,12 @@ route create_shared_link (CreateSharedLinkArg, PathLinkMetadata, CreateSharedLin
         select_admin_mode = "team_admin"
 
 route get_shared_links (GetSharedLinksArg, GetSharedLinksResult, GetSharedLinksError) deprecated
-    "Returns a list of :type:`LinkMetadata` objects for this user, including collection links.
+    "DEPRECATED: Use list_shared_links instead. This endpoint will be retired in October 2026.
+    Returns a list of :type:`LinkMetadata` objects for this user, including collection links.
     If no path is given, returns a list of all shared links for the current user,
     including collection links, up to a maximum of 1000 links.
     If a non-empty path is given, returns a list of all shared links that allow access
-    to the given path. Collection links are never returned in this case.
-    DEPRECATED: Use list_shared_links instead."
+    to the given path. Collection links are never returned in this case."
 
     attrs
         allow_app_folder_app = true
