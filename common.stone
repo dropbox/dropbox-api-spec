@@ -76,6 +76,7 @@ union PathRootError
 
 
 # Annotates fields to serialize a subset of total fields, depending on caller type
+annotation InternalOnly = Omitted("internal")
 
 # Annotates fields to redact information before storing in logs
 

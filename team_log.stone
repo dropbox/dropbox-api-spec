@@ -510,6 +510,44 @@ union LoginMethod
     web_session
     microsoft_oauth
 
+union MediaHubAddingPeoplePolicy
+    "Policy for deciding who can be added to Media Hub content"
+    anyone
+    team_only
+
+union MediaHubDownloadPolicy
+    "Policy for deciding whether Media Hub content can be downloaded"
+    disabled
+    enabled
+
+union MediaHubLinkSharingPolicy
+    "Policy for deciding who Media Hub content can be shared with through links"
+    no_one
+    public
+    team_only
+
+union MediaHubProjectRole
+    "Media Hub project role"
+    editor
+    owner
+    reviewer
+
+union MediaHubSharedLinkAudience
+    "Media Hub shared link audience"
+    no_one
+    public
+    team_only
+
+union MediaHubSharedLinkDownloadSetting
+    "Media Hub shared link download setting"
+    disabled
+    enabled
+
+union MediaHubSharedLinkTargetType
+    "Media Hub shared link target type"
+    bundle
+    project
+
 union MemberRemoveActionType
     delete
     leave
@@ -548,6 +586,12 @@ union MicrosoftLoginPolicy
 
 union MicrosoftOfficeAddinPolicy
     "Microsoft Office addin policy"
+    disabled
+    enabled
+
+union MultiTeamIdentityPolicy
+    "Multi-team identity policy"
+    default
     disabled
     enabled
 
@@ -3660,6 +3704,9 @@ struct FolderOverviewItemUnpinnedDetails
         folder_overview_location_asset = 3
         pinned_items_asset_indices = [3]
 
+struct MediaHubFileDownloadedDetails
+    "Downloaded files in Media Hub."
+
 struct ObjectLabelAddedDetails
     "Added a label."
     label_type LabelType
@@ -5082,6 +5129,70 @@ struct FileTransfersTransferViewDetails
 
     example default
         file_transfer_id = "cap_pid_ft:AAAAAF_3NOyGMTCqXRUoBWKWY1IUOnLLzTUxOeC36XKqaLtq3LYDy6A"
+
+struct MediaHubProjectTeamAddDetails
+    "Added member to Media Hub project."
+
+struct MediaHubProjectTeamDeleteDetails
+    "Removed member from Media Hub project."
+
+struct MediaHubProjectTeamRoleChangedDetails
+    "Changed member role in Media Hub project."
+    previous_role MediaHubProjectRole
+        "Previous Media Hub project role."
+    new_role MediaHubProjectRole
+        "New Media Hub project role."
+
+    example default
+        previous_role = owner
+        new_role = owner
+
+struct MediaHubSharedLinkAudienceChangedDetails
+    "Changed Media Hub shared link audience."
+    target_type MediaHubSharedLinkTargetType
+        "Media Hub shared link target type."
+    previous_value MediaHubSharedLinkAudience
+        "Previous Media Hub shared link audience."
+    new_value MediaHubSharedLinkAudience
+        "New Media Hub shared link audience."
+
+    example default
+        target_type = project
+        previous_value = public
+        new_value = public
+
+struct MediaHubSharedLinkCreatedDetails
+    "Created Media Hub shared link."
+    target_type MediaHubSharedLinkTargetType
+        "Media Hub shared link target type."
+    audience MediaHubSharedLinkAudience
+        "Media Hub shared link audience."
+
+    example default
+        target_type = project
+        audience = public
+
+struct MediaHubSharedLinkDownloadSettingChangedDetails
+    "Changed Media Hub shared link download setting."
+    target_type MediaHubSharedLinkTargetType
+        "Media Hub shared link target type."
+    previous_value MediaHubSharedLinkDownloadSetting
+        "Previous Media Hub shared link download setting."
+    new_value MediaHubSharedLinkDownloadSetting
+        "New Media Hub shared link download setting."
+
+    example default
+        target_type = project
+        previous_value = disabled
+        new_value = disabled
+
+struct MediaHubSharedLinkRevokedDetails
+    "Revoked Media Hub shared link."
+    target_type MediaHubSharedLinkTargetType
+        "Media Hub shared link target type."
+
+    example default
+        target_type = project
 
 struct NoteAclInviteOnlyDetails
     "Changed Paper doc to invite-only."
@@ -6821,6 +6932,39 @@ struct InviteAcceptanceEmailPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct MediaHubAddingPeoplePolicyChangedDetails
+    "Changed the policy for adding people to Media Hub content."
+    new_value MediaHubAddingPeoplePolicy
+        "To."
+    previous_value MediaHubAddingPeoplePolicy
+        "From."
+
+    example default
+        new_value = anyone
+        previous_value = anyone
+
+struct MediaHubDownloadPolicyChangedDetails
+    "Changed the policy for downloading Media Hub content."
+    new_value MediaHubDownloadPolicy
+        "To."
+    previous_value MediaHubDownloadPolicy
+        "From."
+
+    example default
+        new_value = disabled
+        previous_value = disabled
+
+struct MediaHubLinkSharingPolicyChangedDetails
+    "Changed the policy for sharing Media Hub content."
+    new_value MediaHubLinkSharingPolicy
+        "To."
+    previous_value MediaHubLinkSharingPolicy
+        "From."
+
+    example default
+        new_value = public
+        previous_value = public
+
 struct MemberRequestsChangePolicyDetails
     "Changed whether users can find team when not invited."
     new_value MemberRequestsPolicy
@@ -6903,6 +7047,17 @@ struct MicrosoftOfficeAddinChangePolicyDetails
     example default
         new_value = disabled
         previous_value = disabled
+
+struct MultiTeamIdentityPolicyChangedDetails
+    "Changed multi-team identity policy for team."
+    new_value MultiTeamIdentityPolicy
+        "New multi-team identity policy."
+    previous_value MultiTeamIdentityPolicy?
+        "Previous multi-team identity policy. Might be missing due to historical data gap."
+
+    example default
+        new_value = default
+        previous_value = default
 
 struct NetworkControlChangePolicyDetails
     "Enabled/disabled network control."
@@ -7958,6 +8113,7 @@ union EventDetails
     folder_overview_description_changed_details FolderOverviewDescriptionChangedDetails
     folder_overview_item_pinned_details FolderOverviewItemPinnedDetails
     folder_overview_item_unpinned_details FolderOverviewItemUnpinnedDetails
+    media_hub_file_downloaded_details MediaHubFileDownloadedDetails
     object_label_added_details ObjectLabelAddedDetails
     object_label_removed_details ObjectLabelRemovedDetails
     object_label_updated_value_details ObjectLabelUpdatedValueDetails
@@ -8124,6 +8280,13 @@ union EventDetails
     file_transfers_transfer_download_details FileTransfersTransferDownloadDetails
     file_transfers_transfer_send_details FileTransfersTransferSendDetails
     file_transfers_transfer_view_details FileTransfersTransferViewDetails
+    media_hub_project_team_add_details MediaHubProjectTeamAddDetails
+    media_hub_project_team_delete_details MediaHubProjectTeamDeleteDetails
+    media_hub_project_team_role_changed_details MediaHubProjectTeamRoleChangedDetails
+    media_hub_shared_link_audience_changed_details MediaHubSharedLinkAudienceChangedDetails
+    media_hub_shared_link_created_details MediaHubSharedLinkCreatedDetails
+    media_hub_shared_link_download_setting_changed_details MediaHubSharedLinkDownloadSettingChangedDetails
+    media_hub_shared_link_revoked_details MediaHubSharedLinkRevokedDetails
     note_acl_invite_only_details NoteAclInviteOnlyDetails
     note_acl_link_details NoteAclLinkDetails
     note_acl_team_link_details NoteAclTeamLinkDetails
@@ -8310,6 +8473,9 @@ union EventDetails
     group_user_management_change_policy_details GroupUserManagementChangePolicyDetails
     integration_policy_changed_details IntegrationPolicyChangedDetails
     invite_acceptance_email_policy_changed_details InviteAcceptanceEmailPolicyChangedDetails
+    media_hub_adding_people_policy_changed_details MediaHubAddingPeoplePolicyChangedDetails
+    media_hub_download_policy_changed_details MediaHubDownloadPolicyChangedDetails
+    media_hub_link_sharing_policy_changed_details MediaHubLinkSharingPolicyChangedDetails
     member_requests_change_policy_details MemberRequestsChangePolicyDetails
     member_send_invite_policy_changed_details MemberSendInvitePolicyChangedDetails
     member_space_limits_add_exception_details MemberSpaceLimitsAddExceptionDetails
@@ -8319,6 +8485,7 @@ union EventDetails
     member_suggestions_change_policy_details MemberSuggestionsChangePolicyDetails
     microsoft_login_change_policy_details MicrosoftLoginChangePolicyDetails
     microsoft_office_addin_change_policy_details MicrosoftOfficeAddinChangePolicyDetails
+    multi_team_identity_policy_changed_details MultiTeamIdentityPolicyChangedDetails
     network_control_change_policy_details NetworkControlChangePolicyDetails
     paper_change_deployment_policy_details PaperChangeDeploymentPolicyDetails
     paper_change_member_link_policy_details PaperChangeMemberLinkPolicyDetails
@@ -9299,6 +9466,12 @@ struct FolderOverviewItemUnpinnedType
 
     example default
         description = "(file_operations) Unpinned item from folder overview"
+
+struct MediaHubFileDownloadedType
+    description String
+
+    example default
+        description = "(file_operations) Downloaded files in Media Hub"
 
 struct ObjectLabelAddedType
     description String
@@ -10295,6 +10468,48 @@ struct FileTransfersTransferViewType
 
     example default
         description = "(sharing) Viewed transfer"
+
+struct MediaHubProjectTeamAddType
+    description String
+
+    example default
+        description = "(sharing) Added member to Media Hub project"
+
+struct MediaHubProjectTeamDeleteType
+    description String
+
+    example default
+        description = "(sharing) Removed member from Media Hub project"
+
+struct MediaHubProjectTeamRoleChangedType
+    description String
+
+    example default
+        description = "(sharing) Changed member role in Media Hub project"
+
+struct MediaHubSharedLinkAudienceChangedType
+    description String
+
+    example default
+        description = "(sharing) Changed Media Hub shared link audience"
+
+struct MediaHubSharedLinkCreatedType
+    description String
+
+    example default
+        description = "(sharing) Created Media Hub shared link"
+
+struct MediaHubSharedLinkDownloadSettingChangedType
+    description String
+
+    example default
+        description = "(sharing) Changed Media Hub shared link download setting"
+
+struct MediaHubSharedLinkRevokedType
+    description String
+
+    example default
+        description = "(sharing) Revoked Media Hub shared link"
 
 struct NoteAclInviteOnlyType
     description String
@@ -11412,6 +11627,24 @@ struct InviteAcceptanceEmailPolicyChangedType
     example default
         description = "(team_policies) Changed invite accept email policy for team"
 
+struct MediaHubAddingPeoplePolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed the policy for adding people to Media Hub content"
+
+struct MediaHubDownloadPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed the policy for downloading Media Hub content"
+
+struct MediaHubLinkSharingPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed the policy for sharing Media Hub content"
+
 struct MemberRequestsChangePolicyType
     description String
 
@@ -11465,6 +11698,12 @@ struct MicrosoftOfficeAddinChangePolicyType
 
     example default
         description = "(team_policies) Enabled/disabled Microsoft Office add-in"
+
+struct MultiTeamIdentityPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed multi-team identity policy for team"
 
 struct NetworkControlChangePolicyType
     description String
@@ -12354,6 +12593,8 @@ union EventType
         "(file_operations) Pinned item to folder overview"
     folder_overview_item_unpinned FolderOverviewItemUnpinnedType
         "(file_operations) Unpinned item from folder overview"
+    media_hub_file_downloaded MediaHubFileDownloadedType
+        "(file_operations) Downloaded files in Media Hub"
     object_label_added ObjectLabelAddedType
         "(file_operations) Added a label"
     object_label_removed ObjectLabelRemovedType
@@ -12686,6 +12927,20 @@ union EventType
         "(sharing) Sent transfer"
     file_transfers_transfer_view FileTransfersTransferViewType
         "(sharing) Viewed transfer"
+    media_hub_project_team_add MediaHubProjectTeamAddType
+        "(sharing) Added member to Media Hub project"
+    media_hub_project_team_delete MediaHubProjectTeamDeleteType
+        "(sharing) Removed member from Media Hub project"
+    media_hub_project_team_role_changed MediaHubProjectTeamRoleChangedType
+        "(sharing) Changed member role in Media Hub project"
+    media_hub_shared_link_audience_changed MediaHubSharedLinkAudienceChangedType
+        "(sharing) Changed Media Hub shared link audience"
+    media_hub_shared_link_created MediaHubSharedLinkCreatedType
+        "(sharing) Created Media Hub shared link"
+    media_hub_shared_link_download_setting_changed MediaHubSharedLinkDownloadSettingChangedType
+        "(sharing) Changed Media Hub shared link download setting"
+    media_hub_shared_link_revoked MediaHubSharedLinkRevokedType
+        "(sharing) Revoked Media Hub shared link"
     note_acl_invite_only NoteAclInviteOnlyType
         "(sharing) Changed Paper doc to invite-only (deprecated, no longer logged)"
     note_acl_link NoteAclLinkType
@@ -13058,6 +13313,12 @@ union EventType
         "(team_policies) Changed integration policy for team"
     invite_acceptance_email_policy_changed InviteAcceptanceEmailPolicyChangedType
         "(team_policies) Changed invite accept email policy for team"
+    media_hub_adding_people_policy_changed MediaHubAddingPeoplePolicyChangedType
+        "(team_policies) Changed the policy for adding people to Media Hub content"
+    media_hub_download_policy_changed MediaHubDownloadPolicyChangedType
+        "(team_policies) Changed the policy for downloading Media Hub content"
+    media_hub_link_sharing_policy_changed MediaHubLinkSharingPolicyChangedType
+        "(team_policies) Changed the policy for sharing Media Hub content"
     member_requests_change_policy MemberRequestsChangePolicyType
         "(team_policies) Changed whether users can find team when not invited"
     member_send_invite_policy_changed MemberSendInvitePolicyChangedType
@@ -13076,6 +13337,8 @@ union EventType
         "(team_policies) Enabled/disabled Microsoft login for team"
     microsoft_office_addin_change_policy MicrosoftOfficeAddinChangePolicyType
         "(team_policies) Enabled/disabled Microsoft Office add-in"
+    multi_team_identity_policy_changed MultiTeamIdentityPolicyChangedType
+        "(team_policies) Changed multi-team identity policy for team"
     network_control_change_policy NetworkControlChangePolicyType
         "(team_policies) Enabled/disabled network control"
     paper_change_deployment_policy PaperChangeDeploymentPolicyType
@@ -13572,6 +13835,8 @@ union EventTypeArg
         "(file_operations) Pinned item to folder overview"
     folder_overview_item_unpinned
         "(file_operations) Unpinned item from folder overview"
+    media_hub_file_downloaded
+        "(file_operations) Downloaded files in Media Hub"
     object_label_added
         "(file_operations) Added a label"
     object_label_removed
@@ -13904,6 +14169,20 @@ union EventTypeArg
         "(sharing) Sent transfer"
     file_transfers_transfer_view
         "(sharing) Viewed transfer"
+    media_hub_project_team_add
+        "(sharing) Added member to Media Hub project"
+    media_hub_project_team_delete
+        "(sharing) Removed member from Media Hub project"
+    media_hub_project_team_role_changed
+        "(sharing) Changed member role in Media Hub project"
+    media_hub_shared_link_audience_changed
+        "(sharing) Changed Media Hub shared link audience"
+    media_hub_shared_link_created
+        "(sharing) Created Media Hub shared link"
+    media_hub_shared_link_download_setting_changed
+        "(sharing) Changed Media Hub shared link download setting"
+    media_hub_shared_link_revoked
+        "(sharing) Revoked Media Hub shared link"
     note_acl_invite_only
         "(sharing) Changed Paper doc to invite-only (deprecated, no longer logged)"
     note_acl_link
@@ -14276,6 +14555,12 @@ union EventTypeArg
         "(team_policies) Changed integration policy for team"
     invite_acceptance_email_policy_changed
         "(team_policies) Changed invite accept email policy for team"
+    media_hub_adding_people_policy_changed
+        "(team_policies) Changed the policy for adding people to Media Hub content"
+    media_hub_download_policy_changed
+        "(team_policies) Changed the policy for downloading Media Hub content"
+    media_hub_link_sharing_policy_changed
+        "(team_policies) Changed the policy for sharing Media Hub content"
     member_requests_change_policy
         "(team_policies) Changed whether users can find team when not invited"
     member_send_invite_policy_changed
@@ -14294,6 +14579,8 @@ union EventTypeArg
         "(team_policies) Enabled/disabled Microsoft login for team"
     microsoft_office_addin_change_policy
         "(team_policies) Enabled/disabled Microsoft Office add-in"
+    multi_team_identity_policy_changed
+        "(team_policies) Changed multi-team identity policy for team"
     network_control_change_policy
         "(team_policies) Enabled/disabled network control"
     paper_change_deployment_policy

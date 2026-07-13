@@ -1319,6 +1319,7 @@ struct AddFileMemberArgs
     add_message_as_comment Boolean = false
         "If the custom message should be added as a comment on the file. Only meant for Paper files."
     fp_sealed_result String?
+        @common.InternalOnly
         "The FingerprintJS Sealed Client Result value"
 
     example default
@@ -2360,6 +2361,7 @@ struct AddFolderMemberArg
     custom_message String(min_length=1)?
         "Optional message to display to added members in their invitation."
     fp_sealed_result String?
+        @common.InternalOnly
         "The FingerprintJS Sealed Client Result value"
 
     example default

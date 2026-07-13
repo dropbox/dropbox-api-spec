@@ -34,6 +34,10 @@ union ContentApiV2Error
     link_download_disabled_error
     shared_link_password_protected
     limit_exceeded_error
+    not_found_error
+        "The referenced file does not exist or is not accessible."
+    is_a_folder_error
+        "The target is a folder, not a file."
 
 struct GetTranscriptAsyncError
     error_code ErrorCode = unknown_error
@@ -81,9 +85,9 @@ struct GetTranscriptArgs
         stripped. Unrecognized tokens are ignored. Leave empty to use the
         default filtering behavior."
     audio_language String = ""
-        "Optional BCP-47 language tag hinting the spoken language of the source
-        audio (e.g. \"en-US\", \"ja-JP\"). When empty, the service auto-detects the
-        language; supplying a hint improves accuracy and latency for short or
+        "Optional ISO 639-1 two-letter language code hinting the spoken language of
+        the source audio (e.g. \"en\", \"ja\"). When empty, the service auto-detects
+        the language; supplying a hint improves accuracy and latency for short or
         ambiguous clips. Unsupported languages fall back to auto-detection."
 
 struct ApiTranscriptSegment
@@ -168,6 +172,10 @@ union MarkdownConversionApiV2Error
     shared_link_password_protected
     limit_exceeded_error
     conversion_failure_error
+    not_found_error
+        "The referenced file does not exist or is not accessible."
+    is_a_folder_error
+        "The target is a folder, not a file."
 
 struct GetMarkdownAsyncError
     error_code ErrorCode = unknown_error
@@ -189,6 +197,200 @@ route get_markdown_async (GetMarkdownArgs, async.LaunchResultBase, Void)
 
 route get_markdown_async/check (async.PollArg, GetMarkdownAsyncCheckResult, async.PollError)
     "Returns the status or result of specified get_markdown_async task."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+
+union OfficeFileType
+    "The kind of MS Office document that produced an `ApiOfficeMetadata` result."
+    office_filetype_unknown
+    office_filetype_word
+    office_filetype_powerpoint
+    office_filetype_excel
+
+
+union MetadataType
+    "Which metadata variant is populated in a `GetMetadataResult`, derived from
+    the file type."
+    metadata_type_unknown
+    metadata_type_exif
+    metadata_type_media
+    metadata_type_pdf
+    metadata_type_office
+
+
+struct GetMetadataArgs
+    "Arguments for the asynchronous `get_metadata_async` route.
+    Exactly one of `file_id`, `path`, or `url` must be supplied via
+    `file_id_or_url` to identify the file whose metadata should be extracted."
+    file_id_or_url FileIdOrUrl?
+        "Identifier of the file to extract metadata from. Callers must set exactly
+        one of the oneof variants:
+        - file_id: a Dropbox-issued file id (format: \"id:<id>\") for a file the
+        authenticated user has access to.
+        - path: an absolute Dropbox path, e.g. \"/folder/photo.jpg\".
+        - url: either a Dropbox shared link (www.dropbox.com) or an external
+        HTTPS URL pointing to a supported file.
+        - Dropbox shared links are resolved internally using the caller's
+        authenticated identity and the link's visibility / download
+        settings. They therefore require an authenticated user context
+        (anonymous `url` requests against Dropbox links are rejected with
+        an `ACCESS_ERROR`). Links protected by a password are rejected
+        with `shared_link_password_protected`; links with downloads
+        disabled are rejected with `link_download_disabled_error`.
+        - External URLs are fetched over HTTPS through the backend's
+        egress proxy and must point at a supported file extension.
+        The kind of metadata returned is determined by the file type: image files
+        return EXIF metadata, audio/video files return media metadata, PDFs return
+        PDF metadata, and MS Office documents (docx, pptx, xlsx) return Office
+        metadata. Requests against unsupported formats return
+        `unsupported_format_error`."
+
+struct ApiExifGpsMetadata
+    "GPS coordinates and related tags extracted from image EXIF data. Fields are
+    populated on a best-effort basis and may be empty when absent from the
+    source file."
+    latitude Float32 = 0
+        "Latitude / longitude in decimal degrees (positive = N/E, negative = S/W)."
+    longitude Float32 = 0
+    altitude String = ""
+        "Altitude in meters, as reported by the source (string to preserve the
+        original representation, which may include a reference direction)."
+    timestamp String = ""
+        "Timestamp / datestamp of the GPS fix, in the EXIF-provided format."
+    datestamp String = ""
+
+struct ApiExifMetadata
+    "Image EXIF metadata. Mirrors the useful subset of the internal
+    `riviera.ExifMetadata` message. Fields are best-effort and may be empty."
+    image_width UInt32 = 0
+    image_height UInt32 = 0
+    camera_make String = ""
+    camera_model String = ""
+    lens_model String = ""
+    date_time_original String = ""
+        "Capture time in the EXIF-provided format (local time of the camera)."
+    offset_time_original String = ""
+        "Timezone offset for `date_time_original`, e.g. \"+09:00\"."
+    orientation UInt32 = 0
+        "EXIF orientation value (1-8). See the EXIF spec; 1 is the normal
+        upright orientation."
+    exposure_time String = ""
+        "fraction in string form, e.g. \"1/250\""
+    aperture_value Float64 = 0
+    iso_speed UInt32 = 0
+    focal_length String = ""
+        "e.g. \"26.0 mm\""
+    megapixels Float64 = 0
+    artist String = ""
+    copyright String = ""
+    gps_metadata ApiExifGpsMetadata?
+
+struct ApiMediaStream
+    "A single audio or video stream within a media file."
+    index UInt32 = 0
+    codec_type String = ""
+        "\"audio\", \"video\", etc."
+    codec_name String = ""
+    bitrate_bps UInt64 = 0
+    duration_s Float64 = 0
+    width UInt32 = 0
+        "Video-specific fields (zero / empty for audio streams)."
+    height UInt32 = 0
+    frames_per_second Float64 = 0
+    rotation Int32 = 0
+    display_aspect_ratio String = ""
+        "e.g. \"16:9\""
+    channels UInt32 = 0
+        "Audio-specific fields (zero / empty for video streams)."
+    channel_layout String = ""
+    sample_rate_s UInt64 = 0
+    language_iso_639 String = ""
+        "ISO 639 language code for the stream, when present."
+
+struct ApiMediaMetadata
+    "Audio/video container and per-stream metadata. Mirrors the useful subset of
+    the internal `riviera.MediaMetadata` message."
+    bitrate_bps UInt64 = 0
+    duration_s Float64 = 0
+    creation_time String = ""
+        "Container-level creation time, when present."
+    streams List(ApiMediaStream)?
+
+struct ApiPdfMetadata
+    "PDF document metadata."
+    pages UInt32 = 0
+    width UInt32 = 0
+        "Width / height of the first page, in PDF points."
+    height UInt32 = 0
+
+struct ApiOfficeMetadata
+    "MS Office document metadata. Mirrors the internal `riviera.OfficeMetadata`
+    message. Some fields apply only to specific document types (e.g. `slides`
+    for PowerPoint, `words`/`pages` for Word)."
+    file_type OfficeFileType = office_filetype_unknown
+    creator String = ""
+    company String = ""
+    title String = ""
+    subject String = ""
+    keywords String = ""
+    description String = ""
+    total_edit_time_minutes UInt32 = 0
+    pages UInt32 = 0
+        "Word only."
+    words UInt32 = 0
+    slides UInt32 = 0
+        "PowerPoint only."
+    revision_number String = ""
+
+struct GetMetadataResult
+    metadata_type MetadataType = metadata_type_unknown
+        "The kind of metadata that was extracted for the requested file. Callers
+        should read the matching field of the `metadata` oneof."
+    metadata metadata_union?
+        union
+            "Exactly one variant is populated, corresponding to `metadata_type`."
+            exif ApiExifMetadata
+            media ApiMediaMetadata
+            pdf ApiPdfMetadata
+            office ApiOfficeMetadata
+
+union MetadataExtractionApiV2Error
+    server_error String = ""
+    user_error String = ""
+    unsupported_format_error
+    link_download_disabled_error
+    shared_link_password_protected
+    limit_exceeded_error
+    conversion_failure_error
+    not_found_error
+        "The referenced file does not exist or is not accessible."
+    is_a_folder_error
+        "The target is a folder, not a file."
+
+struct GetMetadataAsyncError
+    error_code ErrorCode = unknown_error
+    error_details MetadataExtractionApiV2Error?
+
+union GetMetadataAsyncCheckResult
+    "Result type for EventBus async check - must end in \"CheckResult\""
+    in_progress
+    complete GetMetadataResult
+    failed GetMetadataAsyncError
+
+route get_metadata_async (GetMetadataArgs, async.LaunchResultBase, Void)
+    "Asynchronous file metadata extraction for supported file formats."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+route get_metadata_async/check (async.PollArg, GetMetadataAsyncCheckResult, async.PollError)
+    "Returns the status or result of specified get_metadata_async task."
 
     attrs
         auth = "app, user"
