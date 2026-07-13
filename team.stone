@@ -504,6 +504,8 @@ union TeamFolderCreateError
         "The provided name cannot be used because it is reserved."
     sync_settings_error files.SyncSettingsError
         "An error occurred setting the sync settings."
+    folder_count_limit_exceeded
+        "The team has reached the maximum number of team folders allowed by its plan."
 
 struct TeamFolderRenameArg extends TeamFolderIdArg
     name String
