@@ -6,7 +6,9 @@ on:
     branches:
       - main
 
-permissions: {}
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   dispatch:
@@ -20,14 +22,35 @@ jobs:
           - dropbox/dropbox-sdk-python
           - dropbox/dropbox-sdk-js
           - dropbox/dropbox-sdk-dotnet
-          - dropbox/dropbox-api-v2-explorer
 
     steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::082972943155:role/oidc-github-dropbox-dropbox-api-spec-repo
+          aws-region: us-west-2
+
+      - name: Fetch GitHub App credentials from Secrets Manager
+        uses: aws-actions/aws-secretsmanager-get-secrets@v3
+        with:
+          secret-ids: |
+            SDK_UPDATER,sdk-updater-github-app
+          parse-json-secrets: true
+
+      - name: Generate GitHub App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ env.SDK_UPDATER_CLIENT_ID }}
+          private-key: ${{ env.SDK_UPDATER_PRIVATE_KEY }}
+          owner: dropbox
+          repositories: ${{ matrix.repository }}
+
       - name: Dispatch spec update
         uses: peter-evans/repository-dispatch@v4
         with:
-          token: ${{ secrets.SPEC_UPDATE_TOKEN }}
-          repository: ${{ matrix.repository }}
+          token: ${{ steps.app-token.outputs.token }}
+          repository: dropbox/${{ matrix.repository }}
           event-type: spec_update
           client-payload: >-
             {
