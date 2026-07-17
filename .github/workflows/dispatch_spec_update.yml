@@ -19,9 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         repository:
-          - dropbox/dropbox-sdk-python
-          - dropbox/dropbox-sdk-js
-          - dropbox/dropbox-sdk-dotnet
+          - dropbox-sdk-python
+          - dropbox-sdk-js
+          - dropbox-sdk-dotnet
 
     steps:
       - name: Configure AWS credentials
