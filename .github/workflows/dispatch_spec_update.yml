@@ -23,6 +23,7 @@ jobs:
           - dropbox-sdk-js
           - dropbox-sdk-dotnet
           - dropbox-sdk-go-unofficial
+          - dropbox-api-v2-explorer
 
     steps:
       - name: Configure AWS credentials
