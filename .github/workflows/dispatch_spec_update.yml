@@ -23,6 +23,9 @@ jobs:
           - dropbox-sdk-js
           - dropbox-sdk-dotnet
           - dropbox-sdk-go-unofficial
+          - dropbox-sdk-java
+          - dropbox-sdk-obj-c
+          - SwiftyDropbox
           - dropbox-api-v2-explorer
 
     steps:
