@@ -567,10 +567,12 @@ union_closed TeamFolderGetInfoItem
         "Properties of a team folder."
 
 union TeamFolderActivateError extends BaseTeamFolderError
-    ""
+    folder_count_limit_exceeded
+        "The team has reached the maximum number of team folders allowed by its plan."
 
 union TeamFolderRestoreError extends BaseTeamFolderError
-    ""
+    folder_count_limit_exceeded
+        "The team has reached the maximum number of team folders allowed by its plan."
 
 struct TeamFolderArchiveArg extends TeamFolderIdArg
     force_async_off Boolean = false
@@ -3356,6 +3358,79 @@ route sharing_allowlist/remove (SharingAllowlistRemoveArgs, SharingAllowlistRemo
         auth = "team"
         is_preview = true
         scope = "team_info.write"
+
+
+union BulkSuspendReportDeliveryStatus
+    bulk_suspend_report_delivery_status_unspecified
+    bulk_suspend_report_delivery_status_pending
+    bulk_suspend_report_delivery_status_delivered
+    bulk_suspend_report_delivery_status_failed
+
+
+struct BulkSuspendMemberTarget
+    "One member selected for suspension. The opaque client item ID correlates the
+    eventual report row with the caller's input without sending CSV data."
+    client_item_id String
+    suspend_arg MembersDeactivateArg
+
+struct BulkSuspendArg
+    "Launches one action-specific bulk suspend job."
+    members List(BulkSuspendMemberTarget)
+        "Must contain between 1 and 500 targets. The launch handler also rejects
+        duplicate client item IDs and duplicate member selectors."
+
+union BulkSuspendError
+    "A typed launch rejection. Authorization failures continue to use the API v2
+    authentication/permission error surface."
+    invalid_request
+    too_many_members
+    duplicate_client_item_id
+    duplicate_team_member_id
+    acting_admin
+    last_admin
+
+union BulkSuspendRowFailure extends MembersSuspendError
+    "Stable machine-readable reasons used by the terminal row report."
+    protected_acting_admin
+    permission_changed
+    suspend_failed
+
+union BulkSuspendRowOutcome
+    "The terminal outcome for one requested member. Row outcomes are delivered in
+    the report rather than embedded in the status response."
+    suspended
+    failed BulkSuspendRowFailure
+    unknown
+
+struct BulkSuspendComplete
+    requested Int64
+    suspended Int64
+    failed Int64
+    unknown Int64
+    report_delivery BulkSuspendReportDeliveryStatus
+
+union BulkSuspendTaskFailure
+    unusable_result
+
+union BulkSuspendJobStatus extends async.PollResultBase
+    "Coarse job state. Live row progress and report contents are intentionally
+    omitted; callers receive row details in the terminal email report."
+    complete BulkSuspendComplete
+    failed BulkSuspendTaskFailure
+
+route members/bulk_suspend (BulkSuspendArg, async.LaunchResultBase, BulkSuspendError)
+    "Launch a bulk suspend job. The server enforces a maximum of 500 members."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/bulk_suspend/job_status/check (async.PollArg, BulkSuspendJobStatus, async.PollError)
+    "Poll a previously launched bulk suspend job."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
 
 
 union NamespaceType

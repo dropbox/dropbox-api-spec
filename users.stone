@@ -213,6 +213,7 @@ struct FullAccount extends Account
         disabled = false
         root_info = default
 
+
     example unpaired
         account_id = "dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc"
         name = default
