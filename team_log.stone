@@ -1503,6 +1503,21 @@ struct MalwareExclusionState
         file_path_from_last_exclusion = "xyz"
         file_path_from_last_inclusion = "xyz"
 
+struct MediaHubProjectLogInfo
+    "Replay project"
+    project_name String
+        "Replay project name."
+    project_id String?
+        "Replay project ID."
+
+    example default
+        project_name = "abc"
+        project_id = "abc"
+
+    example default2
+        project_name = "xyz"
+        project_id = "xyz"
+
 struct MemberTransferredInternalFields
     "Internal only - fields for target team computations"
     source_team_id team_common.TeamId
@@ -3705,7 +3720,7 @@ struct FolderOverviewItemUnpinnedDetails
         pinned_items_asset_indices = [3]
 
 struct MediaHubFileDownloadedDetails
-    "Downloaded files in Media Hub."
+    "Downloaded files in Replay."
 
 struct ObjectLabelAddedDetails
     "Added a label."
@@ -4242,6 +4257,9 @@ struct MemberDeleteManualContactsDetails
 
 struct MemberDeleteProfilePhotoDetails
     "Deleted team member profile photo."
+
+struct MemberFolderContentsAccessedDetails
+    "Admin browsed a team member's folder contents."
 
 struct MemberPermanentlyDeleteAccountContentsDetails
     "Permanently deleted contents of deleted team member account."
@@ -4876,6 +4894,62 @@ struct PasswordResetDetails
 struct PasswordResetAllDetails
     "Reset all team member passwords."
 
+struct ProtectActionAddCollaboratorDetails
+    "Added collaborators via Dropbox Protect."
+    action_id String
+        "Action ID."
+
+    example default
+        action_id = "abc"
+
+struct ProtectActionAddLinkDetails
+    "Added a link via Dropbox Protect."
+    action_id String
+        "Action ID."
+
+    example default
+        action_id = "abc"
+
+struct ProtectActionDeleteDetails
+    "Deleted content via Dropbox Protect."
+    action_id String
+        "Action ID."
+
+    example default
+        action_id = "abc"
+
+struct ProtectActionExportDetails
+    "Exported content via Dropbox Protect."
+    action_id String
+        "Action ID."
+
+    example default
+        action_id = "abc"
+
+struct ProtectActionRemoveCollaboratorDetails
+    "Removed collaborators via Dropbox Protect."
+    action_id String
+        "Action ID."
+
+    example default
+        action_id = "abc"
+
+struct ProtectActionRemoveLinkDetails
+    "Removed a link via Dropbox Protect."
+    action_id String
+        "Action ID."
+
+    example default
+        action_id = "abc"
+
+struct ProtectActionStopSharingDetails
+    "Stopped sharing content via Dropbox Protect."
+    action_id String
+        "Action ID."
+
+    example default
+        action_id = "abc"
+
 struct ProtectInternalDomainsChangedDetails
     "Modified Protect internal domains list."
     domains_added List(String)?
@@ -5131,68 +5205,93 @@ struct FileTransfersTransferViewDetails
         file_transfer_id = "cap_pid_ft:AAAAAF_3NOyGMTCqXRUoBWKWY1IUOnLLzTUxOeC36XKqaLtq3LYDy6A"
 
 struct MediaHubProjectTeamAddDetails
-    "Added member to Media Hub project."
+    "Added member to Replay project."
+    project MediaHubProjectLogInfo?
+        "Replay project."
+
+    example default
+        project = default
 
 struct MediaHubProjectTeamDeleteDetails
-    "Removed member from Media Hub project."
+    "Removed member from Replay project."
+    project MediaHubProjectLogInfo?
+        "Replay project."
+
+    example default
+        project = default
 
 struct MediaHubProjectTeamRoleChangedDetails
-    "Changed member role in Media Hub project."
+    "Changed member role in Replay project."
     previous_role MediaHubProjectRole
         "Previous Media Hub project role."
     new_role MediaHubProjectRole
         "New Media Hub project role."
+    project MediaHubProjectLogInfo?
+        "Replay project."
 
     example default
         previous_role = owner
         new_role = owner
+        project = default
 
 struct MediaHubSharedLinkAudienceChangedDetails
-    "Changed Media Hub shared link audience."
+    "Changed Replay shared link audience."
     target_type MediaHubSharedLinkTargetType
         "Media Hub shared link target type."
     previous_value MediaHubSharedLinkAudience
         "Previous Media Hub shared link audience."
     new_value MediaHubSharedLinkAudience
         "New Media Hub shared link audience."
+    project MediaHubProjectLogInfo?
+        "Replay project."
 
     example default
         target_type = project
         previous_value = public
         new_value = public
+        project = default
 
 struct MediaHubSharedLinkCreatedDetails
-    "Created Media Hub shared link."
+    "Created Replay shared link."
     target_type MediaHubSharedLinkTargetType
         "Media Hub shared link target type."
     audience MediaHubSharedLinkAudience
         "Media Hub shared link audience."
+    project MediaHubProjectLogInfo?
+        "Replay project."
 
     example default
         target_type = project
         audience = public
+        project = default
 
 struct MediaHubSharedLinkDownloadSettingChangedDetails
-    "Changed Media Hub shared link download setting."
+    "Changed Replay shared link download setting."
     target_type MediaHubSharedLinkTargetType
         "Media Hub shared link target type."
     previous_value MediaHubSharedLinkDownloadSetting
         "Previous Media Hub shared link download setting."
     new_value MediaHubSharedLinkDownloadSetting
         "New Media Hub shared link download setting."
+    project MediaHubProjectLogInfo?
+        "Replay project."
 
     example default
         target_type = project
         previous_value = disabled
         new_value = disabled
+        project = default
 
 struct MediaHubSharedLinkRevokedDetails
-    "Revoked Media Hub shared link."
+    "Revoked Replay shared link."
     target_type MediaHubSharedLinkTargetType
         "Media Hub shared link target type."
+    project MediaHubProjectLogInfo?
+        "Replay project."
 
     example default
         target_type = project
+        project = default
 
 struct NoteAclInviteOnlyDetails
     "Changed Paper doc to invite-only."
@@ -6933,7 +7032,7 @@ struct InviteAcceptanceEmailPolicyChangedDetails
         previous_value = disabled
 
 struct MediaHubAddingPeoplePolicyChangedDetails
-    "Changed the policy for adding people to Media Hub content."
+    "Changed the policy for adding people to Replay content."
     new_value MediaHubAddingPeoplePolicy
         "To."
     previous_value MediaHubAddingPeoplePolicy
@@ -6944,7 +7043,7 @@ struct MediaHubAddingPeoplePolicyChangedDetails
         previous_value = anyone
 
 struct MediaHubDownloadPolicyChangedDetails
-    "Changed the policy for downloading Media Hub content."
+    "Changed the policy for downloading Replay content."
     new_value MediaHubDownloadPolicy
         "To."
     previous_value MediaHubDownloadPolicy
@@ -6955,7 +7054,7 @@ struct MediaHubDownloadPolicyChangedDetails
         previous_value = disabled
 
 struct MediaHubLinkSharingPolicyChangedDetails
-    "Changed the policy for sharing Media Hub content."
+    "Changed the policy for sharing Replay content."
     new_value MediaHubLinkSharingPolicy
         "To."
     previous_value MediaHubLinkSharingPolicy
@@ -8176,6 +8275,7 @@ union EventDetails
     member_change_status_details MemberChangeStatusDetails
     member_delete_manual_contacts_details MemberDeleteManualContactsDetails
     member_delete_profile_photo_details MemberDeleteProfilePhotoDetails
+    member_folder_contents_accessed_details MemberFolderContentsAccessedDetails
     member_permanently_delete_account_contents_details MemberPermanentlyDeleteAccountContentsDetails
     member_remove_external_id_details MemberRemoveExternalIdDetails
     member_set_profile_photo_details MemberSetProfilePhotoDetails
@@ -8243,6 +8343,13 @@ union EventDetails
     password_change_details PasswordChangeDetails
     password_reset_details PasswordResetDetails
     password_reset_all_details PasswordResetAllDetails
+    protect_action_add_collaborator_details ProtectActionAddCollaboratorDetails
+    protect_action_add_link_details ProtectActionAddLinkDetails
+    protect_action_delete_details ProtectActionDeleteDetails
+    protect_action_export_details ProtectActionExportDetails
+    protect_action_remove_collaborator_details ProtectActionRemoveCollaboratorDetails
+    protect_action_remove_link_details ProtectActionRemoveLinkDetails
+    protect_action_stop_sharing_details ProtectActionStopSharingDetails
     protect_internal_domains_changed_details ProtectInternalDomainsChangedDetails
     classification_create_report_details ClassificationCreateReportDetails
     classification_create_report_fail_details ClassificationCreateReportFailDetails
@@ -9471,7 +9578,7 @@ struct MediaHubFileDownloadedType
     description String
 
     example default
-        description = "(file_operations) Downloaded files in Media Hub"
+        description = "(file_operations) Downloaded files in Replay"
 
 struct ObjectLabelAddedType
     description String
@@ -9844,6 +9951,12 @@ struct MemberDeleteProfilePhotoType
 
     example default
         description = "(members) Deleted team member profile photo"
+
+struct MemberFolderContentsAccessedType
+    description String
+
+    example default
+        description = "(members) Admin browsed a team member's folder contents"
 
 struct MemberPermanentlyDeleteAccountContentsType
     description String
@@ -10247,6 +10360,48 @@ struct PasswordResetAllType
     example default
         description = "(passwords) Reset all team member passwords"
 
+struct ProtectActionAddCollaboratorType
+    description String
+
+    example default
+        description = "(protect) Added collaborators via Dropbox Protect"
+
+struct ProtectActionAddLinkType
+    description String
+
+    example default
+        description = "(protect) Added a link via Dropbox Protect"
+
+struct ProtectActionDeleteType
+    description String
+
+    example default
+        description = "(protect) Deleted content via Dropbox Protect"
+
+struct ProtectActionExportType
+    description String
+
+    example default
+        description = "(protect) Exported content via Dropbox Protect"
+
+struct ProtectActionRemoveCollaboratorType
+    description String
+
+    example default
+        description = "(protect) Removed collaborators via Dropbox Protect"
+
+struct ProtectActionRemoveLinkType
+    description String
+
+    example default
+        description = "(protect) Removed a link via Dropbox Protect"
+
+struct ProtectActionStopSharingType
+    description String
+
+    example default
+        description = "(protect) Stopped sharing content via Dropbox Protect"
+
 struct ProtectInternalDomainsChangedType
     description String
 
@@ -10473,43 +10628,43 @@ struct MediaHubProjectTeamAddType
     description String
 
     example default
-        description = "(sharing) Added member to Media Hub project"
+        description = "(sharing) Added member to Replay project"
 
 struct MediaHubProjectTeamDeleteType
     description String
 
     example default
-        description = "(sharing) Removed member from Media Hub project"
+        description = "(sharing) Removed member from Replay project"
 
 struct MediaHubProjectTeamRoleChangedType
     description String
 
     example default
-        description = "(sharing) Changed member role in Media Hub project"
+        description = "(sharing) Changed member role in Replay project"
 
 struct MediaHubSharedLinkAudienceChangedType
     description String
 
     example default
-        description = "(sharing) Changed Media Hub shared link audience"
+        description = "(sharing) Changed Replay shared link audience"
 
 struct MediaHubSharedLinkCreatedType
     description String
 
     example default
-        description = "(sharing) Created Media Hub shared link"
+        description = "(sharing) Created Replay shared link"
 
 struct MediaHubSharedLinkDownloadSettingChangedType
     description String
 
     example default
-        description = "(sharing) Changed Media Hub shared link download setting"
+        description = "(sharing) Changed Replay shared link download setting"
 
 struct MediaHubSharedLinkRevokedType
     description String
 
     example default
-        description = "(sharing) Revoked Media Hub shared link"
+        description = "(sharing) Revoked Replay shared link"
 
 struct NoteAclInviteOnlyType
     description String
@@ -11631,19 +11786,19 @@ struct MediaHubAddingPeoplePolicyChangedType
     description String
 
     example default
-        description = "(team_policies) Changed the policy for adding people to Media Hub content"
+        description = "(team_policies) Changed the policy for adding people to Replay content"
 
 struct MediaHubDownloadPolicyChangedType
     description String
 
     example default
-        description = "(team_policies) Changed the policy for downloading Media Hub content"
+        description = "(team_policies) Changed the policy for downloading Replay content"
 
 struct MediaHubLinkSharingPolicyChangedType
     description String
 
     example default
-        description = "(team_policies) Changed the policy for sharing Media Hub content"
+        description = "(team_policies) Changed the policy for sharing Replay content"
 
 struct MemberRequestsChangePolicyType
     description String
@@ -12594,7 +12749,7 @@ union EventType
     folder_overview_item_unpinned FolderOverviewItemUnpinnedType
         "(file_operations) Unpinned item from folder overview"
     media_hub_file_downloaded MediaHubFileDownloadedType
-        "(file_operations) Downloaded files in Media Hub"
+        "(file_operations) Downloaded files in Replay"
     object_label_added ObjectLabelAddedType
         "(file_operations) Added a label"
     object_label_removed ObjectLabelRemovedType
@@ -12719,6 +12874,8 @@ union EventType
         "(members) Cleared manually added contacts"
     member_delete_profile_photo MemberDeleteProfilePhotoType
         "(members) Deleted team member profile photo"
+    member_folder_contents_accessed MemberFolderContentsAccessedType
+        "(members) Admin browsed a team member's folder contents"
     member_permanently_delete_account_contents MemberPermanentlyDeleteAccountContentsType
         "(members) Permanently deleted contents of deleted team member account"
     member_remove_external_id MemberRemoveExternalIdType
@@ -12853,6 +13010,20 @@ union EventType
         "(passwords) Reset password"
     password_reset_all PasswordResetAllType
         "(passwords) Reset all team member passwords"
+    protect_action_add_collaborator ProtectActionAddCollaboratorType
+        "(protect) Added collaborators via Dropbox Protect"
+    protect_action_add_link ProtectActionAddLinkType
+        "(protect) Added a link via Dropbox Protect"
+    protect_action_delete ProtectActionDeleteType
+        "(protect) Deleted content via Dropbox Protect"
+    protect_action_export ProtectActionExportType
+        "(protect) Exported content via Dropbox Protect"
+    protect_action_remove_collaborator ProtectActionRemoveCollaboratorType
+        "(protect) Removed collaborators via Dropbox Protect"
+    protect_action_remove_link ProtectActionRemoveLinkType
+        "(protect) Removed a link via Dropbox Protect"
+    protect_action_stop_sharing ProtectActionStopSharingType
+        "(protect) Stopped sharing content via Dropbox Protect"
     protect_internal_domains_changed ProtectInternalDomainsChangedType
         "(protect) Modified Protect internal domains list"
     classification_create_report ClassificationCreateReportType
@@ -12928,19 +13099,19 @@ union EventType
     file_transfers_transfer_view FileTransfersTransferViewType
         "(sharing) Viewed transfer"
     media_hub_project_team_add MediaHubProjectTeamAddType
-        "(sharing) Added member to Media Hub project"
+        "(sharing) Added member to Replay project"
     media_hub_project_team_delete MediaHubProjectTeamDeleteType
-        "(sharing) Removed member from Media Hub project"
+        "(sharing) Removed member from Replay project"
     media_hub_project_team_role_changed MediaHubProjectTeamRoleChangedType
-        "(sharing) Changed member role in Media Hub project"
+        "(sharing) Changed member role in Replay project"
     media_hub_shared_link_audience_changed MediaHubSharedLinkAudienceChangedType
-        "(sharing) Changed Media Hub shared link audience"
+        "(sharing) Changed Replay shared link audience"
     media_hub_shared_link_created MediaHubSharedLinkCreatedType
-        "(sharing) Created Media Hub shared link"
+        "(sharing) Created Replay shared link"
     media_hub_shared_link_download_setting_changed MediaHubSharedLinkDownloadSettingChangedType
-        "(sharing) Changed Media Hub shared link download setting"
+        "(sharing) Changed Replay shared link download setting"
     media_hub_shared_link_revoked MediaHubSharedLinkRevokedType
-        "(sharing) Revoked Media Hub shared link"
+        "(sharing) Revoked Replay shared link"
     note_acl_invite_only NoteAclInviteOnlyType
         "(sharing) Changed Paper doc to invite-only (deprecated, no longer logged)"
     note_acl_link NoteAclLinkType
@@ -13314,11 +13485,11 @@ union EventType
     invite_acceptance_email_policy_changed InviteAcceptanceEmailPolicyChangedType
         "(team_policies) Changed invite accept email policy for team"
     media_hub_adding_people_policy_changed MediaHubAddingPeoplePolicyChangedType
-        "(team_policies) Changed the policy for adding people to Media Hub content"
+        "(team_policies) Changed the policy for adding people to Replay content"
     media_hub_download_policy_changed MediaHubDownloadPolicyChangedType
-        "(team_policies) Changed the policy for downloading Media Hub content"
+        "(team_policies) Changed the policy for downloading Replay content"
     media_hub_link_sharing_policy_changed MediaHubLinkSharingPolicyChangedType
-        "(team_policies) Changed the policy for sharing Media Hub content"
+        "(team_policies) Changed the policy for sharing Replay content"
     member_requests_change_policy MemberRequestsChangePolicyType
         "(team_policies) Changed whether users can find team when not invited"
     member_send_invite_policy_changed MemberSendInvitePolicyChangedType
@@ -13836,7 +14007,7 @@ union EventTypeArg
     folder_overview_item_unpinned
         "(file_operations) Unpinned item from folder overview"
     media_hub_file_downloaded
-        "(file_operations) Downloaded files in Media Hub"
+        "(file_operations) Downloaded files in Replay"
     object_label_added
         "(file_operations) Added a label"
     object_label_removed
@@ -13961,6 +14132,8 @@ union EventTypeArg
         "(members) Cleared manually added contacts"
     member_delete_profile_photo
         "(members) Deleted team member profile photo"
+    member_folder_contents_accessed
+        "(members) Admin browsed a team member's folder contents"
     member_permanently_delete_account_contents
         "(members) Permanently deleted contents of deleted team member account"
     member_remove_external_id
@@ -14095,6 +14268,20 @@ union EventTypeArg
         "(passwords) Reset password"
     password_reset_all
         "(passwords) Reset all team member passwords"
+    protect_action_add_collaborator
+        "(protect) Added collaborators via Dropbox Protect"
+    protect_action_add_link
+        "(protect) Added a link via Dropbox Protect"
+    protect_action_delete
+        "(protect) Deleted content via Dropbox Protect"
+    protect_action_export
+        "(protect) Exported content via Dropbox Protect"
+    protect_action_remove_collaborator
+        "(protect) Removed collaborators via Dropbox Protect"
+    protect_action_remove_link
+        "(protect) Removed a link via Dropbox Protect"
+    protect_action_stop_sharing
+        "(protect) Stopped sharing content via Dropbox Protect"
     protect_internal_domains_changed
         "(protect) Modified Protect internal domains list"
     classification_create_report
@@ -14170,19 +14357,19 @@ union EventTypeArg
     file_transfers_transfer_view
         "(sharing) Viewed transfer"
     media_hub_project_team_add
-        "(sharing) Added member to Media Hub project"
+        "(sharing) Added member to Replay project"
     media_hub_project_team_delete
-        "(sharing) Removed member from Media Hub project"
+        "(sharing) Removed member from Replay project"
     media_hub_project_team_role_changed
-        "(sharing) Changed member role in Media Hub project"
+        "(sharing) Changed member role in Replay project"
     media_hub_shared_link_audience_changed
-        "(sharing) Changed Media Hub shared link audience"
+        "(sharing) Changed Replay shared link audience"
     media_hub_shared_link_created
-        "(sharing) Created Media Hub shared link"
+        "(sharing) Created Replay shared link"
     media_hub_shared_link_download_setting_changed
-        "(sharing) Changed Media Hub shared link download setting"
+        "(sharing) Changed Replay shared link download setting"
     media_hub_shared_link_revoked
-        "(sharing) Revoked Media Hub shared link"
+        "(sharing) Revoked Replay shared link"
     note_acl_invite_only
         "(sharing) Changed Paper doc to invite-only (deprecated, no longer logged)"
     note_acl_link
@@ -14556,11 +14743,11 @@ union EventTypeArg
     invite_acceptance_email_policy_changed
         "(team_policies) Changed invite accept email policy for team"
     media_hub_adding_people_policy_changed
-        "(team_policies) Changed the policy for adding people to Media Hub content"
+        "(team_policies) Changed the policy for adding people to Replay content"
     media_hub_download_policy_changed
-        "(team_policies) Changed the policy for downloading Media Hub content"
+        "(team_policies) Changed the policy for downloading Replay content"
     media_hub_link_sharing_policy_changed
-        "(team_policies) Changed the policy for sharing Media Hub content"
+        "(team_policies) Changed the policy for sharing Replay content"
     member_requests_change_policy
         "(team_policies) Changed whether users can find team when not invited"
     member_send_invite_policy_changed
