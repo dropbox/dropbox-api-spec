@@ -4961,6 +4961,30 @@ struct ProtectInternalDomainsChangedDetails
         domains_added = ["abc"]
         domains_removed = ["abc"]
 
+struct ProtectPolicyActivatedDetails
+    "Activated a Dropbox Protect policy."
+    policy_id String
+        "Policy ID."
+
+    example default
+        policy_id = "abc"
+
+struct ProtectPolicyDeactivatedDetails
+    "Deactivated a Dropbox Protect policy."
+    policy_id String
+        "Policy ID."
+
+    example default
+        policy_id = "abc"
+
+struct ProtectPolicyUpdatedDetails
+    "Updated a Dropbox Protect policy."
+    policy_id String
+        "Policy ID."
+
+    example default
+        policy_id = "abc"
+
 struct ClassificationCreateReportDetails
     "Created Classification report."
 
@@ -8351,6 +8375,9 @@ union EventDetails
     protect_action_remove_link_details ProtectActionRemoveLinkDetails
     protect_action_stop_sharing_details ProtectActionStopSharingDetails
     protect_internal_domains_changed_details ProtectInternalDomainsChangedDetails
+    protect_policy_activated_details ProtectPolicyActivatedDetails
+    protect_policy_deactivated_details ProtectPolicyDeactivatedDetails
+    protect_policy_updated_details ProtectPolicyUpdatedDetails
     classification_create_report_details ClassificationCreateReportDetails
     classification_create_report_fail_details ClassificationCreateReportFailDetails
     emm_create_exceptions_report_details EmmCreateExceptionsReportDetails
@@ -10407,6 +10434,24 @@ struct ProtectInternalDomainsChangedType
 
     example default
         description = "(protect) Modified Protect internal domains list"
+
+struct ProtectPolicyActivatedType
+    description String
+
+    example default
+        description = "(protect) Activated a Dropbox Protect policy"
+
+struct ProtectPolicyDeactivatedType
+    description String
+
+    example default
+        description = "(protect) Deactivated a Dropbox Protect policy"
+
+struct ProtectPolicyUpdatedType
+    description String
+
+    example default
+        description = "(protect) Updated a Dropbox Protect policy"
 
 struct ClassificationCreateReportType
     description String
@@ -13026,6 +13071,12 @@ union EventType
         "(protect) Stopped sharing content via Dropbox Protect"
     protect_internal_domains_changed ProtectInternalDomainsChangedType
         "(protect) Modified Protect internal domains list"
+    protect_policy_activated ProtectPolicyActivatedType
+        "(protect) Activated a Dropbox Protect policy"
+    protect_policy_deactivated ProtectPolicyDeactivatedType
+        "(protect) Deactivated a Dropbox Protect policy"
+    protect_policy_updated ProtectPolicyUpdatedType
+        "(protect) Updated a Dropbox Protect policy"
     classification_create_report ClassificationCreateReportType
         "(reports) Created Classification report"
     classification_create_report_fail ClassificationCreateReportFailType
@@ -14284,6 +14335,12 @@ union EventTypeArg
         "(protect) Stopped sharing content via Dropbox Protect"
     protect_internal_domains_changed
         "(protect) Modified Protect internal domains list"
+    protect_policy_activated
+        "(protect) Activated a Dropbox Protect policy"
+    protect_policy_deactivated
+        "(protect) Deactivated a Dropbox Protect policy"
+    protect_policy_updated
+        "(protect) Updated a Dropbox Protect policy"
     classification_create_report
         "(reports) Created Classification report"
     classification_create_report_fail
