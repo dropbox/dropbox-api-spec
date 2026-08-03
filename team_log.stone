@@ -4977,6 +4977,14 @@ struct ProtectPolicyDeactivatedDetails
     example default
         policy_id = "abc"
 
+struct ProtectPolicyScheduledDetails
+    "Scheduled a Dropbox Protect policy."
+    policy_id String
+        "Policy ID."
+
+    example default
+        policy_id = "abc"
+
 struct ProtectPolicyUpdatedDetails
     "Updated a Dropbox Protect policy."
     policy_id String
@@ -8377,6 +8385,7 @@ union EventDetails
     protect_internal_domains_changed_details ProtectInternalDomainsChangedDetails
     protect_policy_activated_details ProtectPolicyActivatedDetails
     protect_policy_deactivated_details ProtectPolicyDeactivatedDetails
+    protect_policy_scheduled_details ProtectPolicyScheduledDetails
     protect_policy_updated_details ProtectPolicyUpdatedDetails
     classification_create_report_details ClassificationCreateReportDetails
     classification_create_report_fail_details ClassificationCreateReportFailDetails
@@ -10446,6 +10455,12 @@ struct ProtectPolicyDeactivatedType
 
     example default
         description = "(protect) Deactivated a Dropbox Protect policy"
+
+struct ProtectPolicyScheduledType
+    description String
+
+    example default
+        description = "(protect) Scheduled a Dropbox Protect policy"
 
 struct ProtectPolicyUpdatedType
     description String
@@ -13075,6 +13090,8 @@ union EventType
         "(protect) Activated a Dropbox Protect policy"
     protect_policy_deactivated ProtectPolicyDeactivatedType
         "(protect) Deactivated a Dropbox Protect policy"
+    protect_policy_scheduled ProtectPolicyScheduledType
+        "(protect) Scheduled a Dropbox Protect policy"
     protect_policy_updated ProtectPolicyUpdatedType
         "(protect) Updated a Dropbox Protect policy"
     classification_create_report ClassificationCreateReportType
@@ -14339,6 +14356,8 @@ union EventTypeArg
         "(protect) Activated a Dropbox Protect policy"
     protect_policy_deactivated
         "(protect) Deactivated a Dropbox Protect policy"
+    protect_policy_scheduled
+        "(protect) Scheduled a Dropbox Protect policy"
     protect_policy_updated
         "(protect) Updated a Dropbox Protect policy"
     classification_create_report
