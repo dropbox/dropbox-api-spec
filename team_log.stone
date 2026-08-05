@@ -657,6 +657,79 @@ union PreviewsAiPolicy
     disabled
     enabled
 
+union ProtectReportCategory
+    "The category that a Dropbox Protect report belongs to"
+    overview
+    stale_access
+
+union ProtectReportMetric
+    "The metric that a Dropbox Protect report corresponds to"
+    external_modified_over_1_year
+    external_modified_over_1_year_company
+    external_modified_over_1_year_outside
+    external_modified_over_1_year_personal
+    external_modified_over_1_year_public
+    external_modified_over_2_years
+    external_modified_over_2_years_company
+    external_modified_over_2_years_outside
+    external_modified_over_2_years_personal
+    external_modified_over_2_years_public
+    external_modified_over_3_years
+    external_modified_over_3_years_company
+    external_modified_over_3_years_outside
+    external_modified_over_3_years_personal
+    external_modified_over_3_years_public
+    external_modified_over_5_years
+    external_modified_over_5_years_company
+    external_modified_over_5_years_outside
+    external_modified_over_5_years_personal
+    external_modified_over_5_years_public
+    folders_company
+    folders_internal
+    folders_outside
+    folders_personal
+    folders_public
+    internal_modified_over_1_year
+    internal_modified_over_1_year_company
+    internal_modified_over_1_year_outside
+    internal_modified_over_1_year_personal
+    internal_modified_over_1_year_public
+    internal_modified_over_2_years
+    internal_modified_over_2_years_company
+    internal_modified_over_2_years_outside
+    internal_modified_over_2_years_personal
+    internal_modified_over_2_years_public
+    internal_modified_over_3_years
+    internal_modified_over_3_years_company
+    internal_modified_over_3_years_outside
+    internal_modified_over_3_years_personal
+    internal_modified_over_3_years_public
+    internal_modified_over_5_years
+    internal_modified_over_5_years_company
+    internal_modified_over_5_years_outside
+    internal_modified_over_5_years_personal
+    internal_modified_over_5_years_public
+    items_all
+    items_company_access
+    items_internally_owned
+    items_modified_over_1_year
+    items_modified_over_3_years
+    items_outside_access
+    items_personal_access
+    items_public_links
+    other_folders
+    other_shared_drives
+    shared_drives_internal
+    shared_drives_outside
+    shared_drives_personal
+
+union ProtectReportSection
+    "The section that a Dropbox Protect report belongs to"
+    items
+    overview_other
+    owned_externally
+    owned_internally
+
 union ReplayAddingPeoplePolicy
     "Policy for deciding who can be added to Replay content"
     anyone
@@ -4993,6 +5066,20 @@ struct ProtectPolicyUpdatedDetails
     example default
         policy_id = "abc"
 
+struct ProtectReportViewDetails
+    "Viewed a Dropbox Protect report."
+    report_category ProtectReportCategory
+        "The category of the report that was viewed."
+    report_section ProtectReportSection?
+        "The section of the report that was viewed."
+    report_metric ProtectReportMetric?
+        "The metric of the report that was viewed."
+
+    example default
+        report_category = overview
+        report_section = items
+        report_metric = items_all
+
 struct ClassificationCreateReportDetails
     "Created Classification report."
 
@@ -8387,6 +8474,7 @@ union EventDetails
     protect_policy_deactivated_details ProtectPolicyDeactivatedDetails
     protect_policy_scheduled_details ProtectPolicyScheduledDetails
     protect_policy_updated_details ProtectPolicyUpdatedDetails
+    protect_report_view_details ProtectReportViewDetails
     classification_create_report_details ClassificationCreateReportDetails
     classification_create_report_fail_details ClassificationCreateReportFailDetails
     emm_create_exceptions_report_details EmmCreateExceptionsReportDetails
@@ -10467,6 +10555,12 @@ struct ProtectPolicyUpdatedType
 
     example default
         description = "(protect) Updated a Dropbox Protect policy"
+
+struct ProtectReportViewType
+    description String
+
+    example default
+        description = "(protect) Viewed a Dropbox Protect report"
 
 struct ClassificationCreateReportType
     description String
@@ -13094,6 +13188,8 @@ union EventType
         "(protect) Scheduled a Dropbox Protect policy"
     protect_policy_updated ProtectPolicyUpdatedType
         "(protect) Updated a Dropbox Protect policy"
+    protect_report_view ProtectReportViewType
+        "(protect) Viewed a Dropbox Protect report"
     classification_create_report ClassificationCreateReportType
         "(reports) Created Classification report"
     classification_create_report_fail ClassificationCreateReportFailType
@@ -14360,6 +14456,8 @@ union EventTypeArg
         "(protect) Scheduled a Dropbox Protect policy"
     protect_policy_updated
         "(protect) Updated a Dropbox Protect policy"
+    protect_report_view
+        "(protect) Viewed a Dropbox Protect report"
     classification_create_report
         "(reports) Created Classification report"
     classification_create_report_fail
