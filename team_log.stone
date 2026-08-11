@@ -536,6 +536,7 @@ union MediaHubSharedLinkAudience
     "Media Hub shared link audience"
     no_one
     public
+    public_logged_in_only
     team_only
 
 union MediaHubSharedLinkDownloadSetting
