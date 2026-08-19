@@ -5328,17 +5328,23 @@ struct MediaHubProjectTeamAddDetails
     "Added member to Replay project."
     project MediaHubProjectLogInfo?
         "Replay project."
+    invitee EmailAddress?
+        "The email address of the Replay project member targeted by the event."
 
     example default
         project = default
+        invitee = "john_smith@acmecorp.com"
 
 struct MediaHubProjectTeamDeleteDetails
     "Removed member from Replay project."
     project MediaHubProjectLogInfo?
         "Replay project."
+    invitee EmailAddress?
+        "The email address of the Replay project member targeted by the event."
 
     example default
         project = default
+        invitee = "john_smith@acmecorp.com"
 
 struct MediaHubProjectTeamRoleChangedDetails
     "Changed member role in Replay project."
@@ -5348,11 +5354,14 @@ struct MediaHubProjectTeamRoleChangedDetails
         "New Media Hub project role."
     project MediaHubProjectLogInfo?
         "Replay project."
+    invitee EmailAddress?
+        "The email address of the Replay project member targeted by the event."
 
     example default
         previous_role = owner
         new_role = owner
         project = default
+        invitee = "john_smith@acmecorp.com"
 
 struct MediaHubSharedLinkAudienceChangedDetails
     "Changed Replay shared link audience."
