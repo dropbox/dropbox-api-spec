@@ -404,6 +404,11 @@ union ExternalDriveBackupStatus
     empty
     unknown
 
+union ExternalSharingControlsActivationState
+    active
+    disabled
+    legacy
+
 union ExternalSharingSetting
     "External sharing setting"
     allow
@@ -7708,6 +7713,34 @@ struct TeamExtensionsPolicyChangedDetails
         new_value = disabled
         previous_value = disabled
 
+struct TeamExternalSharingControlsActivationStateChangedDetails
+    "Changed external sharing controls activation state."
+    previous_activation_state ExternalSharingControlsActivationState
+        "Previous external sharing controls activation state."
+    new_activation_state ExternalSharingControlsActivationState
+        "New external sharing controls activation state."
+
+    example default
+        previous_activation_state = legacy
+        new_activation_state = legacy
+
+struct TeamExternalSharingControlsRecipientListsChangedDetails
+    "Changed approved or blocked entries for external sharing controls."
+    added_approved_entries List(String, min_items=1)?
+        "Added approved external sharing recipient entries."
+    removed_approved_entries List(String, min_items=1)?
+        "Removed approved external sharing recipient entries."
+    added_blocked_entries List(String, min_items=1)?
+        "Added blocked external sharing recipient entries."
+    removed_blocked_entries List(String, min_items=1)?
+        "Removed blocked external sharing recipient entries."
+
+    example default
+        added_approved_entries = ["example.com"]
+        removed_approved_entries = ["example.com"]
+        added_blocked_entries = ["example.com"]
+        removed_blocked_entries = ["example.com"]
+
 struct TeamMemberStorageRequestPolicyChangedDetails
     "Changed team member storage request policy for team."
     new_value TeamMemberStorageRequestPolicy
@@ -8767,6 +8800,8 @@ union EventDetails
     stack_cross_team_access_policy_changed_details StackCrossTeamAccessPolicyChangedDetails
     team_branding_policy_changed_details TeamBrandingPolicyChangedDetails
     team_extensions_policy_changed_details TeamExtensionsPolicyChangedDetails
+    team_external_sharing_controls_activation_state_changed_details TeamExternalSharingControlsActivationStateChangedDetails
+    team_external_sharing_controls_recipient_lists_changed_details TeamExternalSharingControlsRecipientListsChangedDetails
     team_member_storage_request_policy_changed_details TeamMemberStorageRequestPolicyChangedDetails
     team_selective_sync_policy_changed_details TeamSelectiveSyncPolicyChangedDetails
     team_sharing_whitelist_subjects_changed_details TeamSharingWhitelistSubjectsChangedDetails
@@ -12264,6 +12299,18 @@ struct TeamExtensionsPolicyChangedType
     example default
         description = "(team_policies) Changed App Integrations setting for team"
 
+struct TeamExternalSharingControlsActivationStateChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed external sharing controls activation state"
+
+struct TeamExternalSharingControlsRecipientListsChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed approved or blocked entries for external sharing controls"
+
 struct TeamMemberStorageRequestPolicyChangedType
     description String
 
@@ -13764,6 +13811,10 @@ union EventType
         "(team_policies) Changed team branding policy for team"
     team_extensions_policy_changed TeamExtensionsPolicyChangedType
         "(team_policies) Changed App Integrations setting for team"
+    team_external_sharing_controls_activation_state_changed TeamExternalSharingControlsActivationStateChangedType
+        "(team_policies) Changed external sharing controls activation state"
+    team_external_sharing_controls_recipient_lists_changed TeamExternalSharingControlsRecipientListsChangedType
+        "(team_policies) Changed approved or blocked entries for external sharing controls"
     team_member_storage_request_policy_changed TeamMemberStorageRequestPolicyChangedType
         "(team_policies) Changed team member storage request policy for team"
     team_selective_sync_policy_changed TeamSelectiveSyncPolicyChangedType
@@ -15032,6 +15083,10 @@ union EventTypeArg
         "(team_policies) Changed team branding policy for team"
     team_extensions_policy_changed
         "(team_policies) Changed App Integrations setting for team"
+    team_external_sharing_controls_activation_state_changed
+        "(team_policies) Changed external sharing controls activation state"
+    team_external_sharing_controls_recipient_lists_changed
+        "(team_policies) Changed approved or blocked entries for external sharing controls"
     team_member_storage_request_policy_changed
         "(team_policies) Changed team member storage request policy for team"
     team_selective_sync_policy_changed
