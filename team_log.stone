@@ -5013,6 +5013,14 @@ struct ProtectActionRemoveCollaboratorDetails
     example default
         action_id = "abc"
 
+struct ProtectActionRemoveDomainsDetails
+    "Removed domains via Dropbox Protect."
+    action_id String
+        "Action ID."
+
+    example default
+        action_id = "abc"
+
 struct ProtectActionRemoveLinkDetails
     "Removed a link via Dropbox Protect."
     action_id String
@@ -8510,6 +8518,7 @@ union EventDetails
     protect_action_delete_details ProtectActionDeleteDetails
     protect_action_export_details ProtectActionExportDetails
     protect_action_remove_collaborator_details ProtectActionRemoveCollaboratorDetails
+    protect_action_remove_domains_details ProtectActionRemoveDomainsDetails
     protect_action_remove_link_details ProtectActionRemoveLinkDetails
     protect_action_stop_sharing_details ProtectActionStopSharingDetails
     protect_internal_domains_changed_details ProtectInternalDomainsChangedDetails
@@ -10558,6 +10567,12 @@ struct ProtectActionRemoveCollaboratorType
 
     example default
         description = "(protect) Removed collaborators via Dropbox Protect"
+
+struct ProtectActionRemoveDomainsType
+    description String
+
+    example default
+        description = "(protect) Removed domains via Dropbox Protect"
 
 struct ProtectActionRemoveLinkType
     description String
@@ -13231,6 +13246,8 @@ union EventType
         "(protect) Exported content via Dropbox Protect"
     protect_action_remove_collaborator ProtectActionRemoveCollaboratorType
         "(protect) Removed collaborators via Dropbox Protect"
+    protect_action_remove_domains ProtectActionRemoveDomainsType
+        "(protect) Removed domains via Dropbox Protect"
     protect_action_remove_link ProtectActionRemoveLinkType
         "(protect) Removed a link via Dropbox Protect"
     protect_action_stop_sharing ProtectActionStopSharingType
@@ -14503,6 +14520,8 @@ union EventTypeArg
         "(protect) Exported content via Dropbox Protect"
     protect_action_remove_collaborator
         "(protect) Removed collaborators via Dropbox Protect"
+    protect_action_remove_domains
+        "(protect) Removed domains via Dropbox Protect"
     protect_action_remove_link
         "(protect) Removed a link via Dropbox Protect"
     protect_action_stop_sharing
