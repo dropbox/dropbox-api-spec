@@ -202,6 +202,10 @@ union WriteError
         this request."
     access_restricted
         "The user doesn't have permission to perform the action due to restrictions set by a team administrator"
+    team_folder_insufficient_space
+        "The destination team folder has reached its storage limit."
+    member_folder_insufficient_space
+        "The user's member folder has reached its storage limit."
 
 union DeleteError
     path_lookup LookupError
@@ -1281,6 +1285,10 @@ union RelocationError
         "Some content cannot be moved into Vault under certain circumstances, see detailed error."
     cant_move_into_family MoveIntoFamilyError
         "Some content cannot be moved into the Family Room folder under certain circumstances, see detailed error."
+    team_folder_insufficient_quota
+        "The destination team folder has reached its storage limit."
+    member_folder_insufficient_quota
+        "The user's member folder has reached its storage limit."
 
 union RestoreError
     path_lookup LookupError
