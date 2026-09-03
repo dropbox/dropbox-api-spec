@@ -133,6 +133,118 @@ route get_transcript_async/check (async.PollArg, GetTranscriptAsyncCheckResult, 
         scope = "files.content.read"
 
 
+struct GetKeyframesArgs
+    "Arguments for the asynchronous `get_keyframes_async` route.
+    Exactly one of `file_id`, `path`, or `url` must be supplied via
+    `file_id_or_url` to identify the video whose scene-change keyframes should be
+    extracted."
+    file_id_or_url FileIdOrUrl?
+        "Identifier of the video file to extract keyframes from. Callers must set
+        exactly one of the `FileIdOrUrl` variants. Keyframe extraction is supported
+        for video files only; see the route description for the supported formats.
+        Requests against unsupported formats return `unsupported_format_error`."
+    scene_change_threshold Float64 = 0
+        "Sensitivity of scene-change detection. A keyframe is emitted whenever the
+        frame-to-frame scene score crosses this threshold, so a LOWER value yields
+        MORE keyframes. Valid range is (0.0, 1.0]. When omitted (0.0) the service
+        uses a default of 0.3, which is a good starting point for most videos."
+    include_images Boolean = false
+        "When true, each returned keyframe includes the JPEG image bytes,
+        base64-encoded, in `ApiKeyframe.image_base64`. When false, the response
+        contains only per-keyframe metadata (timestamp and scene score) and
+        `image_base64` is left empty -- useful when you only need the scene
+        boundaries and want a small response. NOTE: because the field defaults to
+        false in proto3, callers who want images must set this explicitly to true."
+
+    example default
+        file_id_or_url = default
+        scene_change_threshold = 0.3
+        include_images = true
+
+struct ApiKeyframe
+    "A single extracted scene-change keyframe."
+    timestamp Float64 = 0
+        "Presentation timestamp of the keyframe, in seconds from the start of the
+        video."
+    scene_score Float64 = 0
+        "Scene-change score that triggered this keyframe, in the range [0.0, 1.0].
+        Higher values indicate a more pronounced scene change relative to the
+        preceding frame. The first keyframe of a video is always reported as 1.0:
+        the start of a video is a scene boundary by definition, so that score is
+        not a measured frame-to-frame comparison."
+    image_base64 String = ""
+        "The extracted frame as a base64-encoded JPEG image. Empty when the request
+        set `include_images = false`."
+
+struct GetKeyframesResult
+    frames List(ApiKeyframe)?
+        "The extracted keyframes, ordered by `timestamp`. May be empty when no scene
+        changes are detected in the source."
+
+union KeyframesExtractionApiV2Error
+    "Reason a keyframe extraction job failed. Returned in the `failed` variant of
+    `GetKeyframesAsyncCheckResult`. This is a semantic error union: the HTTP
+    status of the poll request itself is unaffected (a poll that surfaces a
+    failed job is still a normal successful poll response). Callers should branch
+    on the variant."
+    server_error String = ""
+        "An unexpected, typically transient, server-side failure. The string is a
+        human-readable message; retrying with backoff may succeed."
+    user_error String = ""
+        "The request could not be processed as supplied (a problem with the
+        caller's input). The string is a human-readable message; retrying the
+        same request will not help."
+    unsupported_format_error
+    link_download_disabled_error
+    shared_link_password_protected
+    limit_exceeded_error
+        "The request exceeded a service limit -- for example the source video is
+        too large, or the extraction produced more keyframes / more total image
+        data than the response can carry. Lower the resolution, raise
+        `scene_change_threshold`, or set `include_images = false`."
+    conversion_failure_error
+    not_found_error
+        "The referenced file does not exist or is not accessible."
+    is_a_folder_error
+        "The target is a folder, not a file."
+
+union GetKeyframesAsyncCheckResult
+    "Result type for EventBus async check - must end in \"CheckResult\""
+    in_progress
+    complete GetKeyframesResult
+    failed KeyframesExtractionApiV2Error
+
+route get_keyframes_async (GetKeyframesArgs, async.LaunchResultBase, Void)
+    "Asynchronous scene-change keyframe extraction for video files.
+    Detects scene changes in the source video and returns one representative
+    keyframe per detected scene, each tagged with its timestamp (seconds from
+    the start of the video) and scene-change score. Set `include_images = true`
+    to also receive each frame as a base64-encoded JPEG; when the field is
+    omitted the response carries keyframe metadata only.
+    Supported video formats: .3gp, .3gpp, .3gpp2, .asf, .avi, .dv, .flv, .m2t,
+    .m2ts, .m4v, .mkv, .mov, .mp4, .mpeg, .mpg, .mts, .mxf, .oggtheora, .ogv,
+    .rm, .ts, .vob, .webm, .wmv. Unsupported formats return an
+    `unsupported_format_error`.
+    Limits: the source file must be at most 10 GB. To keep responses within
+    service limits the number of keyframes and the total image payload are
+    bounded; requests that would exceed these limits return a
+    `limit_exceeded_error` -- raise `scene_change_threshold` or set
+    `include_images = false` to stay within bounds."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+route get_keyframes_async/check (async.PollArg, GetKeyframesAsyncCheckResult, async.PollError)
+    "Returns the status or result of specified get_keyframes_async task."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+
 struct GetMarkdownArgs
     "Arguments for the asynchronous `get_markdown_async` route.
     Exactly one of `file_id`, `path`, or `url` must be supplied via
