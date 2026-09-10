@@ -525,9 +525,10 @@ struct UploadSessionFinishArg
     commit CommitInfo
         "Contains the path and other optional modifiers for the commit."
     content_hash Sha256HexHash?
-        "A hash of the file content uploaded in this call. If provided and the uploaded content
-        does not match this hash, an error will be returned. For more information see our
-        :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+        "A hash of the file content uploaded in this call.
+        If provided and the uploaded content does not match this hash, an error will be returned.
+        Optional, but recommended to avoid committing data corrupted in transit.
+        For more information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
         cursor = default
@@ -2327,9 +2328,10 @@ struct UnlockFileBatchArg
 
 struct UploadArg extends CommitInfo
     content_hash Sha256HexHash?
-        "A hash of the file content uploaded in this call. If provided and the uploaded content
-        does not match this hash, an error will be returned. For more information see our
-        :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+        "A hash of the file content uploaded in this call.
+        If provided and the uploaded content does not match this hash, an error will be returned.
+        Optional, but recommended to avoid committing data corrupted in transit.
+        For more information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
         path = "/Homework/math/Matrices.txt"
@@ -2343,9 +2345,10 @@ struct UploadSessionAppendArg
         you won't be able to call :route:`upload_session/append:2`
         anymore with the current session."
     content_hash Sha256HexHash?
-        "A hash of the file content uploaded in this call. If provided and the uploaded content
-        does not match this hash, an error will be returned. For more information see our
-        :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+        "A hash of the file content uploaded in this call.
+        If provided and the uploaded content does not match this hash, an error will be returned.
+        Optional, but recommended to avoid committing data corrupted in transit.
+        For more information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
         cursor = default
@@ -2354,9 +2357,9 @@ struct UploadSessionAppendBatchArg
     entries List(UploadSessionAppendBatchArgEntry, max_items=500)
         "Append information for each file in the batch."
     content_hash Sha256HexHash?
-        "A hash of the entire request body which is all the concatenated pieces
-        of file content that were uploaded in this call. If provided and the
-        uploaded content does not match this hash, an error will be returned.
+        "A single hash of all the concatenated file contents uploaded in this call.
+        If provided and the uploaded content does not match this hash, an error will be returned.
+        Optional, but recommended to avoid committing data corrupted in transit.
         For more information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example default
@@ -2419,9 +2422,10 @@ struct UploadSessionStartArg
         "Type of upload session you want to start. If not specified, default is
         :field:`UploadSessionType.sequential`."
     content_hash Sha256HexHash?
-        "A hash of the file content uploaded in this call. If provided and the uploaded content
-        does not match this hash, an error will be returned. For more information see our
-        :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
+        "A hash of the file content uploaded in this call.
+        If provided and the uploaded content does not match this hash, an error will be returned.
+        Optional, but recommended to avoid committing data corrupted in transit.
+        For more information see our :link:`Content hash https://www.dropbox.com/developers/reference/content-hash` page."
 
     example with_close
         close = false
