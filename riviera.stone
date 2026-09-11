@@ -4,19 +4,25 @@ import async
 import common
 
 union TimestampLevel
+    "Granularity of the time offsets returned for each transcript segment."
     sentence
+        "One segment per spoken sentence (recommended). This is the default when
+        :field:`GetTranscriptArgs.timestamp_level` is omitted."
     word
+        "One segment per word, useful for fine-grained alignment such as captioning
+        or highlight-as-you-listen experiences."
 
 
 struct MediaDurationError
     limit Int32 = 0
+        "The maximum supported duration, in seconds, of the audio to transcribe."
 
 union ContentApiV2Error
-    "Reason a transcript job failed. Returned in the `failed` variant of
-    `GetTranscriptAsyncCheckResult`. This is a semantic error union: the HTTP
-    status of the poll request itself is unaffected (a poll that surfaces a
-    failed job is still a normal successful poll response). Callers should
-    branch on the variant."
+    "Reason a transcript job failed. Returned in the
+    :field:`GetTranscriptAsyncCheckResult.failed` variant. This is a semantic
+    error union: the HTTP status of the poll request itself is unaffected (a poll
+    that surfaces a failed job is still a normal successful poll response).
+    Callers should branch on the variant."
     server_error String = ""
         "An unexpected, typically transient, server-side failure. The string is a
         human-readable message; retrying with backoff may succeed."
@@ -25,10 +31,19 @@ union ContentApiV2Error
         caller's input). The string is a human-readable message; retrying the
         same request will not help."
     media_duration_error MediaDurationError
+        "The audio to transcribe is longer than the supported maximum."
     no_audio_error
+        "The file has no audio track, or no audio content could be detected in
+        it."
     link_download_disabled_error
+        ":field:`FileIdOrUrl.url` referenced a Dropbox shared link whose owner
+        has disabled downloads."
     shared_link_password_protected
+        ":field:`FileIdOrUrl.url` referenced a password-protected Dropbox shared
+        link. Riviera cannot supply the password, so such links cannot be
+        transcribed."
     limit_exceeded_error
+        "A resource limit was exceeded while producing the result."
     not_found_error
         "The referenced file does not exist or is not accessible."
     is_a_folder_error
@@ -36,20 +51,20 @@ union ContentApiV2Error
 
 union FileIdOrUrl
     file_id String = ""
-        "A Dropbox-issued file id (format: \"id:<id>\") for a file the
-        authenticated user has access to."
+        "A Dropbox-issued file ID for a file the authenticated user has access to,
+        e.g. \"id:a4ayc_80_OEAAAAAAAAAYa\"."
     url String = ""
-        "Either a Dropbox shared link (www.dropbox.com) or an external HTTP or
-        HTTPS URL pointing to a supported file.
+        "Either a Dropbox shared link (www.dropbox.com) or an
+        internet-accessible URL pointing to a supported file.
         - Dropbox shared links are resolved internally using the caller's
         authenticated identity and the link's visibility / download
-        settings. They therefore require an authenticated user context
-        (anonymous `url` requests against Dropbox links are rejected with an
-        `access_error`). Links protected by a password are rejected with
-        `shared_link_password_protected`; links with downloads disabled are
-        rejected with `link_download_disabled_error`.
-        - External URLs are fetched through the backend's egress proxy and must
-        point at a supported file extension."
+        settings. They therefore require an authenticated user context;
+        requests made with app auth alone are rejected. Password-protected
+        links and links with downloads disabled are rejected as well.
+        - Other URLs are fetched by Dropbox's servers, so they must be
+        reachable from the public internet -- not only from the calling
+        application's network -- and must point at a supported file
+        extension."
     path String = ""
         "An absolute Dropbox path, e.g. \"/folder/example.pdf\"."
 
@@ -57,67 +72,85 @@ union FileIdOrUrl
         path = "/folder/example.pdf"
 
 struct GetTranscriptArgs
-    "Arguments for the asynchronous `get_transcript_async` route.
-    Exactly one of `file_id`, `path`, or `url` must be supplied via
-    `file_id_or_url` to identify the audio or video asset to transcribe."
+    "Arguments for the asynchronous :route:`get_transcript_async` route.
+    Exactly one of :field:`FileIdOrUrl.file_id`, :field:`FileIdOrUrl.path`, or
+    :field:`FileIdOrUrl.url` must be supplied via
+    :field:`GetTranscriptArgs.file_id_or_url` to identify the audio or video
+    asset to transcribe."
     file_id_or_url FileIdOrUrl?
         "Identifier of the media asset to transcribe. Callers must set exactly one
-        of the `FileIdOrUrl` variants. The referenced asset must be an audio or
-        video file in a supported format (see the route description for the list);
-        requests against files with no audio track return a `no_audio_error`."
+        of the :type:`FileIdOrUrl` variants. The referenced asset must be an audio
+        or video file in a supported format (see the route description for the
+        list); requests against files with no audio track fail with
+        :field:`ContentApiV2Error.no_audio_error`."
     timestamp_level TimestampLevel = sentence
         "Granularity of the time offsets returned for each transcript segment.
-        Defaults to `SENTENCE` when the field is omitted.
-        - SENTENCE: one segment per spoken sentence (recommended).
-        - WORD: one segment per word, useful for fine-grained alignment such
-        as captioning or highlight-as-you-listen experiences."
+        Defaults to :field:`TimestampLevel.sentence` when the field is omitted."
     included_special_words String = ""
         "Comma-delimited list of non-lexical filler words to preserve in the
         transcript output, e.g. `\"uh, ah, uhm\"`. By default these fillers are
         stripped. Unrecognized tokens are ignored. Leave empty to use the
         default filtering behavior."
     audio_language String = ""
-        "Optional ISO 639-1 two-letter language code hinting the spoken language of
-        the source audio (e.g. \"en\", \"ja\"). When empty, the service auto-detects
-        the language; supplying a hint improves accuracy and latency for short or
-        ambiguous clips. Unsupported languages fall back to auto-detection."
+        "Hint for the spoken language of the source audio, as an ISO 639-1 code
+        (e.g. \"en\", \"ja\"). When empty, the service auto-detects the language;
+        supplying a hint improves accuracy and latency for short or ambiguous
+        clips. Languages the service does not support fall back to
+        auto-detection."
 
     example default
         file_id_or_url = default
         timestamp_level = sentence
 
 struct ApiTranscriptSegment
-    "Transcript segment for APIv2"
+    "A contiguous span of transcribed speech. The span covered by a segment
+    depends on the requested :type:`TimestampLevel`."
     text String = ""
+        "The transcribed text of this segment."
     start_time Float64 = 0
+        "Offset of the start of this segment, in seconds from the beginning of the
+        media."
     end_time Float64 = 0
+        "Offset of the end of this segment, in seconds from the beginning of the
+        media."
 
 struct ApiStructuredTranscript
-    "Structured transcript for APIv2"
+    "A transcript, split into segments."
     segments List(ApiTranscriptSegment)?
+        "The segments of the transcript, in playback order."
     transcript_locale String = ""
+        "The language of the transcript, as an ISO 639-1 code (e.g. \"en\"). This is
+        the language detected in the audio, or the one supplied in
+        :field:`GetTranscriptArgs.audio_language`."
 
 struct GetTranscriptResult
     structured_transcript ApiStructuredTranscript?
-        "The structured transcript produced for the requested media asset, with
-        per-segment text, start/end offsets (in seconds from the beginning of
-        the media), and the detected or caller-supplied locale."
+        "The transcript produced for the requested media asset."
 
 union GetTranscriptAsyncCheckResult
-    "Result type for EventBus async check - must end in \"CheckResult\""
+    "Status of a transcript job started by :route:`get_transcript_async`, as
+    returned by :route:`get_transcript_async/check`."
     in_progress
+        "The job has not finished yet. Poll again."
     complete GetTranscriptResult
+        "The job finished successfully."
     failed ContentApiV2Error
+        "The job finished unsuccessfully."
 
 route get_transcript_async (GetTranscriptArgs, async.LaunchResultBase, Void)
     "Asynchronous transcript generation for audio and video files.
     Supported audio formats: .aac, .aif, .aiff, .flac, .m4a, .m4r, .mp3, .oga,
     .ogg, .wav, .wma. Supported video formats: .3gp, .3gpp, .3gpp2, .asf, .avi,
     .dv, .flv, .m2t, .m2ts, .m4v, .mkv, .mov, .mp4, .mpeg, .mpg, .mts, .mxf,
-    .oggtheora, .ogv, .rm, .ts, .vob, .webm, .wmv. Unsupported formats return
-    an `unsupported_format_error`.
+    .oggtheora, .ogv, .rm, .ts, .vob, .webm, .wmv. Files in other formats fail
+    with :field:`ContentApiV2Error.user_error`.
     Size limits: the source file must be at most 10 GB and its audio track at
-    most 1 hour in duration. Files exceeding these limits are rejected."
+    most 1 hour in duration. Files exceeding either limit fail with
+    :field:`ContentApiV2Error.user_error`.
+    The transcript is not returned by this route. Poll
+    :route:`get_transcript_async/check` with the returned async job ID until it
+    reports :field:`GetTranscriptAsyncCheckResult.complete` or
+    :field:`GetTranscriptAsyncCheckResult.failed`."
 
     attrs
         auth = "app, user"
@@ -195,14 +228,22 @@ union KeyframesExtractionApiV2Error
         caller's input). The string is a human-readable message; retrying the
         same request will not help."
     unsupported_format_error
+        "The source file is not in a format this route supports."
     link_download_disabled_error
+        ":field:`FileIdOrUrl.url` referenced a Dropbox shared link whose owner has
+        disabled downloads."
     shared_link_password_protected
+        ":field:`FileIdOrUrl.url` referenced a password-protected Dropbox shared
+        link. Riviera cannot supply the password, so such links cannot be
+        processed."
     limit_exceeded_error
         "The request exceeded a service limit -- for example the source video is
         too large, or the extraction produced more keyframes / more total image
         data than the response can carry. Lower the resolution, raise
         `scene_change_threshold`, or set `include_images = false`."
     conversion_failure_error
+        "The source file was readable but could not be processed, for example
+        because it is corrupt."
     not_found_error
         "The referenced file does not exist or is not accessible."
     is_a_folder_error
@@ -246,14 +287,17 @@ route get_keyframes_async/check (async.PollArg, GetKeyframesAsyncCheckResult, as
 
 
 struct GetMarkdownArgs
-    "Arguments for the asynchronous `get_markdown_async` route.
-    Exactly one of `file_id`, `path`, or `url` must be supplied via
-    `file_id_or_url` to identify the document to convert to markdown."
+    "Arguments for the asynchronous :route:`get_markdown_async` route.
+    Exactly one of :field:`FileIdOrUrl.file_id`, :field:`FileIdOrUrl.path`, or
+    :field:`FileIdOrUrl.url` must be supplied via
+    :field:`GetMarkdownArgs.file_id_or_url` to identify the document to convert
+    to markdown."
     file_id_or_url FileIdOrUrl?
         "Identifier of the document to convert. Callers must set exactly one of the
-        `FileIdOrUrl` variants. The referenced file must be a document in a
+        :type:`FileIdOrUrl` variants. The referenced file must be a document in a
         supported format (see the route description for the list); requests
-        against unsupported formats return `unsupported_format_error`."
+        against unsupported formats fail with
+        :field:`MarkdownConversionApiV2Error.user_error`."
     enable_ocr Boolean = false
         "Enable OCR for PDF documents. Processing is slower when enabled."
     embed_images Boolean = false
@@ -267,44 +311,63 @@ struct GetMarkdownArgs
 
 struct GetMarkdownResult
     markdown String = ""
-        "The converted markdown content"
+        "The markdown the source document was converted to."
 
 union MarkdownConversionApiV2Error
-    "Reason a markdown conversion job failed. Returned in the `failed` variant of
-    `GetMarkdownAsyncCheckResult`. This is a semantic error union: the HTTP
-    status of the poll request itself is unaffected (a poll that surfaces a
-    failed job is still a normal successful poll response). Callers should
-    branch on the variant."
+    "Reason a markdown conversion job failed. Returned in the
+    :field:`GetMarkdownAsyncCheckResult.failed` variant. This is a semantic error
+    union: the HTTP status of the poll request itself is unaffected (a poll that
+    surfaces a failed job is still a normal successful poll response). Callers
+    should branch on the variant."
     server_error String = ""
         "An unexpected, typically transient, server-side failure. The string is a
         human-readable message; retrying with backoff may succeed."
     user_error String = ""
         "The request could not be processed as supplied (a problem with the
-        caller's input). The string is a human-readable message; retrying the
+        caller's input) -- for example an unsupported file format or a file over
+        the size limit. The string is a human-readable message; retrying the
         same request will not help."
     unsupported_format_error
+        "The source file is not in a format this route can convert."
     link_download_disabled_error
+        ":field:`FileIdOrUrl.url` referenced a Dropbox shared link whose owner has
+        disabled downloads."
     shared_link_password_protected
+        ":field:`FileIdOrUrl.url` referenced a password-protected Dropbox shared
+        link. Riviera cannot supply the password, so such links cannot be
+        converted."
     limit_exceeded_error
+        "A resource limit was exceeded while producing the result."
     conversion_failure_error
+        "The source file was readable but could not be converted, for example
+        because it is corrupt."
     not_found_error
         "The referenced file does not exist or is not accessible."
     is_a_folder_error
         "The target is a folder, not a file."
 
 union GetMarkdownAsyncCheckResult
-    "Result type for EventBus async check"
+    "Status of a markdown conversion job started by
+    :route:`get_markdown_async`, as returned by
+    :route:`get_markdown_async/check`."
     in_progress
+        "The job has not finished yet. Poll again."
     complete GetMarkdownResult
+        "The job finished successfully."
     failed MarkdownConversionApiV2Error
+        "The job finished unsuccessfully."
 
 route get_markdown_async (GetMarkdownArgs, async.LaunchResultBase, Void)
     "Asynchronous document-to-markdown conversion for supported file formats.
     Supported formats: .binder, .docx, .html, .paper, .papert, .pptx, .xlsx,
-    .gsheet, .ods, .pdf. Unsupported formats return an
-    `unsupported_format_error`.
-    Size limit: the source file must be at most 50 MB. Larger files are
-    rejected."
+    .gsheet, .ods, .pdf. Files in other formats fail with
+    :field:`MarkdownConversionApiV2Error.user_error`.
+    Size limit: the source file must be at most 50 MB. Larger files fail with
+    :field:`MarkdownConversionApiV2Error.user_error`.
+    The markdown is not returned by this route. Poll
+    :route:`get_markdown_async/check` with the returned async job ID until it
+    reports :field:`GetMarkdownAsyncCheckResult.complete` or
+    :field:`GetMarkdownAsyncCheckResult.failed`."
 
     attrs
         auth = "app, user"
@@ -321,7 +384,7 @@ route get_markdown_async/check (async.PollArg, GetMarkdownAsyncCheckResult, asyn
 
 
 union OfficeFileType
-    "The kind of MS Office document that produced an `ApiOfficeMetadata` result."
+    "The kind of MS Office document that produced an :type:`ApiOfficeMetadata` result."
     office_filetype_unknown
     office_filetype_word
     office_filetype_powerpoint
@@ -329,27 +392,40 @@ union OfficeFileType
 
 
 union MetadataType
-    "Which metadata variant is populated in a `GetMetadataResult`, derived from
-    the file type."
+    "Which metadata variant is populated in a :type:`GetMetadataResult`, derived
+    from the file type."
     metadata_type_unknown
+        "No metadata kind applies to the file, so no variant of
+        :field:`GetMetadataResult.metadata` is populated. Riviera only produces
+        metadata for the formats listed on :route:`get_metadata_async`; a request
+        for any other file normally fails with
+        :field:`MetadataExtractionApiV2Error.user_error` rather than completing
+        with this value. An app that does receive it should treat the file as
+        having no extractable metadata; retrying will not change the outcome."
     metadata_type_exif
+        ":field:`metadata_union.exif` is populated."
     metadata_type_media
+        ":field:`metadata_union.media` is populated."
     metadata_type_pdf
+        ":field:`metadata_union.pdf` is populated."
     metadata_type_office
+        ":field:`metadata_union.office` is populated."
 
 
 struct GetMetadataArgs
-    "Arguments for the asynchronous `get_metadata_async` route.
-    Exactly one of `file_id`, `path`, or `url` must be supplied via
-    `file_id_or_url` to identify the file whose metadata should be extracted."
+    "Arguments for the asynchronous :route:`get_metadata_async` route.
+    Exactly one of :field:`FileIdOrUrl.file_id`, :field:`FileIdOrUrl.path`, or
+    :field:`FileIdOrUrl.url` must be supplied via
+    :field:`GetMetadataArgs.file_id_or_url` to identify the file whose metadata
+    should be extracted."
     file_id_or_url FileIdOrUrl?
         "Identifier of the file to extract metadata from. Callers must set exactly
-        one of the `FileIdOrUrl` variants. The kind of metadata returned is
+        one of the :type:`FileIdOrUrl` variants. The kind of metadata returned is
         determined by the file type: image files return EXIF metadata, audio/video
         files return media metadata, PDFs return PDF metadata, and MS Office
         documents (docx, pptx, xlsx) return Office metadata. See the route
         description for the supported formats. Requests against unsupported formats
-        return `unsupported_format_error`."
+        fail with :field:`MetadataExtractionApiV2Error.user_error`."
 
     example default
         file_id_or_url = default
@@ -359,138 +435,204 @@ struct ApiExifGpsMetadata
     populated on a best-effort basis and may be empty when absent from the
     source file."
     latitude Float32 = 0
-        "Latitude / longitude in decimal degrees (positive = N/E, negative = S/W)."
+        "Latitude in decimal degrees (positive = north, negative = south)."
     longitude Float32 = 0
+        "Longitude in decimal degrees (positive = east, negative = west)."
     altitude String = ""
         "Altitude in meters, as reported by the source (string to preserve the
         original representation, which may include a reference direction)."
     timestamp String = ""
-        "Timestamp / datestamp of the GPS fix, in the EXIF-provided format."
+        "Time of the GPS fix, in the EXIF-provided format."
     datestamp String = ""
+        "Date of the GPS fix, in the EXIF-provided format."
 
 struct ApiExifMetadata
-    "Image EXIF metadata. Mirrors the useful subset of the internal
-    `riviera.ExifMetadata` message. Fields are best-effort and may be empty."
+    "Image EXIF metadata. Fields are populated on a best-effort basis and may be
+    empty when absent from the source file."
     image_width UInt32 = 0
+        "Width of the image, in pixels."
     image_height UInt32 = 0
+        "Height of the image, in pixels."
     camera_make String = ""
+        "Manufacturer of the device that captured the image, e.g. \"Apple\"."
     camera_model String = ""
+        "Model of the device that captured the image, e.g. \"iPhone 15 Pro\"."
     lens_model String = ""
+        "Model of the lens the image was captured with, when the source records it."
     date_time_original String = ""
         "Capture time in the EXIF-provided format (local time of the camera)."
     offset_time_original String = ""
-        "Timezone offset for `date_time_original`, e.g. \"+09:00\"."
+        "Timezone offset for :field:`ApiExifMetadata.date_time_original`, e.g. \"+09:00\"."
     orientation UInt32 = 0
         "EXIF orientation value (1-8). See the EXIF spec; 1 is the normal
         upright orientation."
     exposure_time String = ""
-        "fraction in string form, e.g. \"1/250\""
+        "Exposure time the image was captured with, as a fractional-second string,
+        e.g. \"1/250\"."
     aperture_value Float64 = 0
+        "Aperture the image was captured at, as reported by the EXIF aperture tag."
     iso_speed UInt32 = 0
+        "ISO sensitivity the image was captured at."
     focal_length String = ""
-        "e.g. \"26.0 mm\""
+        "Focal length the image was captured at, including the unit, e.g. \"26.0 mm\"."
     megapixels Float64 = 0
+        "Total pixel count of the image, in megapixels."
     artist String = ""
+        "Creator credited in the EXIF artist tag."
     copyright String = ""
+        "Copyright notice from the EXIF copyright tag."
     gps_metadata ApiExifGpsMetadata?
+        "Location tags from the image, when the source recorded a location."
 
 struct ApiMediaStream
     "A single audio or video stream within a media file."
     index UInt32 = 0
+        "Zero-based index of the stream within the container."
     codec_type String = ""
-        "\"audio\", \"video\", etc."
+        "Kind of media the stream carries, e.g. \"audio\" or \"video\"."
     codec_name String = ""
+        "Name of the codec the stream is encoded with, e.g. \"h264\" or \"aac\"."
     bitrate_bps UInt64 = 0
+        "Bitrate of this stream, in bits per second."
     duration_s Float64 = 0
+        "Duration of this stream, in seconds."
     width UInt32 = 0
-        "Video-specific fields (zero / empty for audio streams)."
+        "Width of the video frame, in pixels. Zero for audio streams."
     height UInt32 = 0
+        "Height of the video frame, in pixels. Zero for audio streams."
     frames_per_second Float64 = 0
+        "Frame rate of the stream, in frames per second. Zero for audio streams."
     rotation Int32 = 0
+        "Rotation to apply on playback, in degrees, as recorded in the stream
+        metadata. Zero for audio streams and for video that needs no rotation."
     display_aspect_ratio String = ""
-        "e.g. \"16:9\""
+        "Aspect ratio the video should be displayed at, as a \"width:height\" string,
+        e.g. \"16:9\". Empty for audio streams."
     channels UInt32 = 0
-        "Audio-specific fields (zero / empty for video streams)."
+        "Number of audio channels in the stream. Zero for video streams."
     channel_layout String = ""
+        "Layout of the audio channels, e.g. \"stereo\". Empty for video streams."
     sample_rate_s UInt64 = 0
+        "Sample rate of the audio stream, in samples per second. Zero for video
+        streams."
     language_iso_639 String = ""
         "ISO 639 language code for the stream, when present."
 
 struct ApiMediaMetadata
-    "Audio/video container and per-stream metadata. Mirrors the useful subset of
-    the internal `riviera.MediaMetadata` message."
+    "Audio/video container and per-stream metadata. Fields are populated on a
+    best-effort basis and may be empty when absent from the source file."
     bitrate_bps UInt64 = 0
+        "Overall bitrate of the container, in bits per second."
     duration_s Float64 = 0
+        "Duration of the media, in seconds."
     creation_time String = ""
         "Container-level creation time, when present."
     streams List(ApiMediaStream)?
+        "The audio and video streams the container holds, in container order."
 
 struct ApiPdfMetadata
     "PDF document metadata."
     pages UInt32 = 0
+        "Number of pages in the document."
     width UInt32 = 0
-        "Width / height of the first page, in PDF points."
+        "Width of the first page, in PDF points."
     height UInt32 = 0
+        "Height of the first page, in PDF points."
 
 struct ApiOfficeMetadata
-    "MS Office document metadata. Mirrors the internal `riviera.OfficeMetadata`
-    message. Some fields apply only to specific document types (e.g. `slides`
-    for PowerPoint, `words`/`pages` for Word)."
+    "MS Office document metadata. Some fields apply only to specific document
+    types (e.g. :field:`ApiOfficeMetadata.slides` for PowerPoint,
+    :field:`ApiOfficeMetadata.words` and :field:`ApiOfficeMetadata.pages` for
+    Word)."
     file_type OfficeFileType = office_filetype_unknown
+        "Which kind of Office document this metadata was extracted from."
     creator String = ""
+        "Author recorded in the document properties."
     company String = ""
+        "Company recorded in the document properties."
     title String = ""
+        "Title recorded in the document properties."
     subject String = ""
+        "Subject recorded in the document properties."
     keywords String = ""
+        "Keywords recorded in the document properties, in the document's own
+        formatting (typically a single comma- or space-separated string)."
     description String = ""
+        "Description recorded in the document properties."
     total_edit_time_minutes UInt32 = 0
+        "Total editing time recorded in the document properties, in minutes."
     pages UInt32 = 0
-        "Word only."
+        "Page count recorded in the document properties. Word documents only; zero
+        for PowerPoint and Excel."
     words UInt32 = 0
+        "Word count recorded in the document properties. Word documents only; zero
+        for PowerPoint and Excel."
     slides UInt32 = 0
-        "PowerPoint only."
+        "Slide count recorded in the document properties. PowerPoint documents only;
+        zero for Word and Excel."
     revision_number String = ""
+        "Revision number recorded in the document properties."
 
 struct GetMetadataResult
     metadata_type MetadataType = metadata_type_unknown
         "The kind of metadata that was extracted for the requested file. Callers
-        should read the matching field of the `metadata` oneof."
+        should read the matching variant of :field:`GetMetadataResult.metadata`."
     metadata metadata_union?
         union
-            "Exactly one variant is populated, corresponding to `metadata_type`."
+            "The extracted metadata. Exactly one variant is populated, corresponding to
+            :field:`GetMetadataResult.metadata_type`."
             exif ApiExifMetadata
+                "EXIF metadata, for image files."
             media ApiMediaMetadata
+                "Container and per-stream metadata, for audio and video files."
             pdf ApiPdfMetadata
+                "Document metadata, for PDFs."
             office ApiOfficeMetadata
+                "Document metadata, for MS Office files."
 
 union MetadataExtractionApiV2Error
-    "Reason a metadata extraction job failed. Returned in the `failed` variant of
-    `GetMetadataAsyncCheckResult`. This is a semantic error union: the HTTP
-    status of the poll request itself is unaffected (a poll that surfaces a
-    failed job is still a normal successful poll response). Callers should
-    branch on the variant."
+    "Reason a metadata extraction job failed. Returned in the
+    :field:`GetMetadataAsyncCheckResult.failed` variant. This is a semantic error
+    union: the HTTP status of the poll request itself is unaffected (a poll that
+    surfaces a failed job is still a normal successful poll response). Callers
+    should branch on the variant."
     server_error String = ""
         "An unexpected, typically transient, server-side failure. The string is a
         human-readable message; retrying with backoff may succeed."
     user_error String = ""
         "The request could not be processed as supplied (a problem with the
-        caller's input). The string is a human-readable message; retrying the
-        same request will not help."
+        caller's input) -- for example an unsupported file format or a file over
+        the size limit for its metadata kind. The string is a human-readable
+        message; retrying the same request will not help."
     unsupported_format_error
+        "The source file is not in a format this route can extract metadata from."
     link_download_disabled_error
+        ":field:`FileIdOrUrl.url` referenced a Dropbox shared link whose owner has
+        disabled downloads."
     shared_link_password_protected
+        ":field:`FileIdOrUrl.url` referenced a password-protected Dropbox shared
+        link. Riviera cannot supply the password, so metadata cannot be
+        extracted from such links."
     limit_exceeded_error
+        "A resource limit was exceeded while producing the result."
     conversion_failure_error
+        "The source file was readable but its metadata could not be extracted,
+        for example because the file is corrupt."
     not_found_error
         "The referenced file does not exist or is not accessible."
     is_a_folder_error
         "The target is a folder, not a file."
 
 union GetMetadataAsyncCheckResult
-    "Result type for EventBus async check - must end in \"CheckResult\""
+    "Status of a metadata extraction job started by
+    :route:`get_metadata_async`, as returned by
+    :route:`get_metadata_async/check`."
     in_progress
+        "The job has not finished yet. Poll again."
     complete GetMetadataResult
+        "The job finished successfully."
     failed MetadataExtractionApiV2Error
+        "The job finished unsuccessfully."
 
 route get_metadata_async (GetMetadataArgs, async.LaunchResultBase, Void)
     "Asynchronous file metadata extraction for supported file formats. The kind
@@ -506,7 +648,16 @@ route get_metadata_async (GetMetadataArgs, async.LaunchResultBase, Void)
     .oggtheora, .ogv, .rm, .ts, .vob, .webm, .wmv.
     - PDF format: .pdf.
     - MS Office formats: .docx, .pptx, .xlsx.
-    Unsupported formats return an `unsupported_format_error`."
+    Files in other formats fail with
+    :field:`MetadataExtractionApiV2Error.user_error`.
+    Size limits depend on the kind of metadata being extracted: at most 200 MB
+    for image (EXIF) files, 100 GB for audio/video files, 500 MB for PDFs, and
+    288 MB for MS Office files. Files over the limit for their kind fail with
+    :field:`MetadataExtractionApiV2Error.user_error`.
+    The metadata is not returned by this route. Poll
+    :route:`get_metadata_async/check` with the returned async job ID until it
+    reports :field:`GetMetadataAsyncCheckResult.complete` or
+    :field:`GetMetadataAsyncCheckResult.failed`."
 
     attrs
         auth = "app, user"
@@ -570,10 +721,19 @@ union OcrExtractionApiV2Error
         caller's input). The string is a human-readable message; retrying the
         same request will not help."
     unsupported_format_error
+        "The source file is not in a format this route supports."
     link_download_disabled_error
+        ":field:`FileIdOrUrl.url` referenced a Dropbox shared link whose owner has
+        disabled downloads."
     shared_link_password_protected
+        ":field:`FileIdOrUrl.url` referenced a password-protected Dropbox shared
+        link. Riviera cannot supply the password, so such links cannot be
+        processed."
     limit_exceeded_error
+        "A resource limit was exceeded while producing the result."
     conversion_failure_error
+        "The source file was readable but could not be processed, for example
+        because it is corrupt."
     not_found_error
         "The referenced file does not exist or is not accessible."
     is_a_folder_error
@@ -653,10 +813,19 @@ union TextExtractionApiV2Error
         caller's input). The string is a human-readable message; retrying the
         same request will not help."
     unsupported_format_error
+        "The source file is not in a format this route supports."
     link_download_disabled_error
+        ":field:`FileIdOrUrl.url` referenced a Dropbox shared link whose owner has
+        disabled downloads."
     shared_link_password_protected
+        ":field:`FileIdOrUrl.url` referenced a password-protected Dropbox shared
+        link. Riviera cannot supply the password, so such links cannot be
+        processed."
     limit_exceeded_error
+        "A resource limit was exceeded while producing the result."
     conversion_failure_error
+        "The source file was readable but could not be processed, for example
+        because it is corrupt."
     not_found_error
         "The referenced file does not exist or is not accessible."
     is_a_folder_error
