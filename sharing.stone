@@ -1318,9 +1318,6 @@ struct AddFileMemberArgs
         "AccessLevel union object, describing what access level we want to give new members."
     add_message_as_comment Boolean = false
         "If the custom message should be added as a comment on the file. Only meant for Paper files."
-    fp_sealed_result String?
-        @common.InternalOnly
-        "The FingerprintJS Sealed Client Result value"
 
     example default
         file = "id:3kmLmQFnf1AAAAAAAAAAAw"
@@ -2360,9 +2357,6 @@ struct AddFolderMemberArg
         notifications of their invite."
     custom_message String(min_length=1)?
         "Optional message to display to added members in their invitation."
-    fp_sealed_result String?
-        @common.InternalOnly
-        "The FingerprintJS Sealed Client Result value"
 
     example default
         members = [default, account]
