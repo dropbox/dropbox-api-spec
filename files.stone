@@ -343,9 +343,6 @@ union_closed ThumbnailSize
         "1024 by 768 px."
     w2048h1536
         "2048 by 1536 px."
-    w3200h2400
-        @common.InternalOnly
-        "3200 by 2400 px."
 
 union_closed SearchMatchType
     "Indicates what type of match was found for a given item."
@@ -2269,9 +2266,6 @@ struct ThumbnailArg
         "The size for the thumbnail image."
     mode ThumbnailMode = strict
         "How to resize and crop the image to achieve the desired size."
-    quality ThumbnailQuality = quality_80
-        @common.InternalOnly
-        "Quality of the thumbnail image."
     exclude_media_info Boolean?
         "Normally, :field:`FileMetadata.media_info` is set for photo and video.
         When this flag is true, :field:`FileMetadata.media_info` is not populated.
@@ -2301,9 +2295,6 @@ struct ThumbnailV2Arg
         "The size for the thumbnail image."
     mode ThumbnailMode = strict
         "How to resize and crop the image to achieve the desired size."
-    quality ThumbnailQuality = quality_80
-        @common.InternalOnly
-        "Quality of the thumbnail image."
     exclude_media_info Boolean?
         "Normally, :field:`FileMetadata.media_info` is set for photo and video.
         When this flag is true, :field:`FileMetadata.media_info` is not populated.
