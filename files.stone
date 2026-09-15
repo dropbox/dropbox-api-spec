@@ -243,6 +243,8 @@ union ThumbnailV2Error
         "Access to this shared link is forbidden."
     not_found
         "The shared link does not exist."
+    unsupported_output_format
+        "Transparency preservation is supported only for PNG and WebP output."
 
 struct UploadSessionOffsetError
     correct_offset UInt64
@@ -2306,6 +2308,10 @@ struct ThumbnailV2Arg
         "Normally, :field:`FileMetadata.media_info` is set for photo and video.
         When this flag is true, :field:`FileMetadata.media_info` is not populated.
         This improves latency for use cases where `media_info` is not needed."
+    preserve_transparency Boolean = false
+        "Whether to preserve the original image's transparency in the thumbnail.
+        This is supported only when the output format is PNG or WebP.
+        Requests that set this flag with JPEG output return an error."
 
     example default
         resource = default
@@ -2464,7 +2470,6 @@ struct UploadWriteFailed
     upload_session_id String
         "The upload session ID; data has already been uploaded to the corresponding upload
         session and this ID may be used to retry the commit with :route:`upload_session/finish`."
-
 
 route create_folder_batch (CreateFolderBatchArg, CreateFolderBatchLaunch, Void)
     "Create multiple folders at once. This route is asynchronous for large batches, which returns
