@@ -206,6 +206,8 @@ union WriteError
         "The destination team folder has reached its storage limit."
     member_folder_insufficient_space
         "The user's member folder has reached its storage limit."
+    upload_traffic_limit_reached
+        "The user has reached their monthly upload traffic limit."
 
 union DeleteError
     path_lookup LookupError
@@ -2461,6 +2463,7 @@ struct UploadWriteFailed
     upload_session_id String
         "The upload session ID; data has already been uploaded to the corresponding upload
         session and this ID may be used to retry the commit with :route:`upload_session/finish`."
+
 
 route create_folder_batch (CreateFolderBatchArg, CreateFolderBatchLaunch, Void)
     "Create multiple folders at once. This route is asynchronous for large batches, which returns
