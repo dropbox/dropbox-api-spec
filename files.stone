@@ -1138,6 +1138,7 @@ union MoveIntoFamilyError
         "Moving shared folder into Family Room folder is not allowed."
 
 union MoveIntoVaultError
+    "Deprecated: the server no longer emits this error."
     is_shared_folder
         "Moving shared folder into Vault is not allowed."
 
@@ -1284,7 +1285,9 @@ union RelocationError
     cant_move_shared_folder
         "Can't move the shared folder to the given destination."
     cant_move_into_vault MoveIntoVaultError
-        "Some content cannot be moved into Vault under certain circumstances, see detailed error."
+        @common.Deprecated
+        "Some content cannot be moved into Vault under certain circumstances, see detailed error.
+        Deprecated: the server no longer emits this error."
     cant_move_into_family MoveIntoFamilyError
         "Some content cannot be moved into the Family Room folder under certain circumstances, see detailed error."
     team_folder_insufficient_quota
