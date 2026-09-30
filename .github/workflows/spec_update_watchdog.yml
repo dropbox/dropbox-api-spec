@@ -34,6 +34,7 @@ jobs:
       # the alarm.
       GRACE_MINUTES: '60'
       # Space-separated list of SDK repos (under the dropbox org) to check.
+      # SwiftyDropbox is excluded for now due to a known integration-test issue.
       REPOS: >-
         dropbox-sdk-python
         dropbox-sdk-js
@@ -41,7 +42,6 @@ jobs:
         dropbox-sdk-go-unofficial
         dropbox-sdk-java
         dropbox-sdk-obj-c
-        SwiftyDropbox
 
     steps:
       - name: Configure AWS credentials
@@ -72,7 +72,6 @@ jobs:
             dropbox-sdk-go-unofficial
             dropbox-sdk-java
             dropbox-sdk-obj-c
-            SwiftyDropbox
           permission-pull-requests: read
 
       - name: Flag unmerged spec-update PRs
