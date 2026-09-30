@@ -10,7 +10,6 @@ name: Spec Update Watchdog
 
 on:
   schedule:
-    # 02:00 UTC, a couple hours after nightly spec updates normally land.
     - cron: '0 2 * * *'
   workflow_dispatch:
 
