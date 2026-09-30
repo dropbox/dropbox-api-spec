@@ -1,0 +1,121 @@
+name: Spec Update Watchdog
+
+# Centralized alert for spec-update PRs that were opened but never merged.
+#
+# Each SDK's Spec Update workflow opens a PR and arms auto-merge, then finishes
+# green regardless of the outcome -- so a PR that stalls (failing CI, merge
+# conflict, review required, auto-merge disabled) sits open silently. This job
+# checks every SDK repo from one place and fails loudly when any labelled
+# spec-update PR is still open past a grace window.
+#
+# No new credential: it reuses the same sdk-updater GitHub App (via AWS OIDC)
+# that dispatch_spec_update.yml already uses, downscoped to pull-requests:read.
+#
+# Delivery to Slack is via the GitHub Slack app. Subscribe once, in the target
+# channel:
+#   /github subscribe dropbox/dropbox-api-spec workflows:{name:"Spec Update Watchdog" event:"schedule"}
+
+on:
+  schedule:
+    # 02:00 UTC, a couple hours after nightly spec updates normally land.
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    env:
+      LABEL: automated-spec-update
+      # Ignore PRs younger than this so a run legitimately mid-CI does not trip
+      # the alarm.
+      GRACE_MINUTES: '60'
+      # Space-separated list of SDK repos (under the dropbox org) to check.
+      REPOS: >-
+        dropbox-sdk-python
+        dropbox-sdk-js
+        dropbox-sdk-dotnet
+        dropbox-sdk-go-unofficial
+        dropbox-sdk-java
+        dropbox-sdk-obj-c
+        SwiftyDropbox
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::082972943155:role/oidc-github-dropbox-dropbox-api-spec-repo
+          aws-region: us-west-2
+
+      - name: Fetch GitHub App credentials from Secrets Manager
+        uses: aws-actions/aws-secretsmanager-get-secrets@v3
+        with:
+          secret-ids: |
+            SDK_UPDATER,sdk-updater-github-app
+          parse-json-secrets: true
+
+      - name: Generate GitHub App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ env.SDK_UPDATER_CLIENT_ID }}
+          private-key: ${{ env.SDK_UPDATER_PRIVATE_KEY }}
+          owner: dropbox
+          # Scope the token to exactly the repos we read, read-only on PRs.
+          repositories: >-
+            dropbox-sdk-python
+            dropbox-sdk-js
+            dropbox-sdk-dotnet
+            dropbox-sdk-go-unofficial
+            dropbox-sdk-java
+            dropbox-sdk-obj-c
+            SwiftyDropbox
+          permission-pull-requests: read
+
+      - name: Flag unmerged spec-update PRs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          now=$(date -u +%s)
+          stalled=0
+          summary=$(mktemp)
+
+          for repo in $REPOS; do
+            prs=$(gh pr list -R "dropbox/${repo}" --label "$LABEL" --state open \
+              --json number,title,url,createdAt,mergeStateStatus)
+
+            while IFS=$'\t' read -r number url created title mergestate; do
+              [ -n "$number" ] || continue
+              created_s=$(date -u -d "$created" +%s)
+              age_min=$(( (now - created_s) / 60 ))
+              [ "$age_min" -ge "$GRACE_MINUTES" ] || continue
+
+              stalled=$((stalled + 1))
+              {
+                echo "- **${repo}** [#${number}](${url}) — ${title}"
+                echo "  - open for ${age_min} min · merge state: \`${mergestate}\`"
+              } >> "$summary"
+            done < <(echo "$prs" | jq -r '.[] | [.number, .url, .createdAt, .title, .mergeStateStatus] | @tsv')
+          done
+
+          if [ "$stalled" -eq 0 ]; then
+            echo "No spec-update PRs stalled beyond ${GRACE_MINUTES} min across: ${REPOS} ✅"
+            exit 0
+          fi
+
+          {
+            echo "### ⚠️ ${stalled} automated spec-update PR(s) not merged"
+            echo
+            cat "$summary"
+            echo
+            echo "_Open the PR to see why (failing checks, conflict, review, auto-merge)._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "::error::${stalled} automated spec-update PR(s) open past the grace window — see job summary."
+          cat "$summary"
+          exit 1
