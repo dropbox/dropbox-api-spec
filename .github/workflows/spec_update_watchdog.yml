@@ -7,13 +7,6 @@ name: Spec Update Watchdog
 # conflict, review required, auto-merge disabled) sits open silently. This job
 # checks every SDK repo from one place and fails loudly when any labelled
 # spec-update PR is still open past a grace window.
-#
-# No new credential: it reuses the same sdk-updater GitHub App (via AWS OIDC)
-# that dispatch_spec_update.yml already uses, downscoped to pull-requests:read.
-#
-# Delivery to Slack is via the GitHub Slack app. Subscribe once, in the target
-# channel:
-#   /github subscribe dropbox/dropbox-api-spec workflows:{name:"Spec Update Watchdog" event:"schedule"}
 
 on:
   schedule:
