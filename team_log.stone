@@ -633,6 +633,12 @@ union PaperMemberPolicy
     only_team
     team_and_explicitly_shared
 
+union PaperOfflineModePolicy
+    "Policy for controlling if team members can use Paper offline mode"
+    default
+    disabled
+    enabled
+
 union PassPolicy
     allow
     disabled
@@ -1605,12 +1611,12 @@ struct MemberTransferredInternalFields
         "Internal only - team user was moved to."
 
     example default
-        source_team_id = "dbtid:AAE3tIYgVuVT1gZork5wQJbXbmlrkBMq26c"
-        target_team_id = "dbtid:AAE3tIYgVuVT1gZork5wQJbXbmlrkBMq26c"
+        source_team_id = "dbtid:AAG-XU6GMDxhEiSDWQ1hUlJbvMBihuv3yO8"
+        target_team_id = "dbtid:AAG-XU6GMDxhEiSDWQ1hUlJbvMBihuv3yO8"
 
     example default2
-        source_team_id = "dbtid:AAFAqKNLrx_W9MFkS2gWftX0QfTZpo03WsE"
-        target_team_id = "dbtid:AAFAqKNLrx_W9MFkS2gWftX0QfTZpo03WsE"
+        source_team_id = "dbtid:AAGuOuS_bvjyz_1e1MFKWF6suiIqd5O6cto"
+        target_team_id = "dbtid:AAGuOuS_bvjyz_1e1MFKWF6suiIqd5O6cto"
 
 struct MobileDeviceSessionLogInfo extends DeviceSessionLogInfo
     "Information about linked Dropbox mobile client sessions"
@@ -1681,12 +1687,12 @@ struct NonTeamMemberLogInfo extends UserLogInfo
     "Non team member's logged information."
 
     example default
-        account_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
+        account_id = "dbid:AAEIZtgeKLjx5uul1l65ZnNxXIfyNJ0-Ohc"
         display_name = "John Smith"
         email = "john_smith@acmecorp.com"
 
     example default2
-        account_id = "dbid:AAGx4oiLtHdvRdNxUpvvJBXYgR4BS19c9kw"
+        account_id = "dbid:AAFQbdtgzUKxmEsRtkUIFbg7MSRGqJCeBnk"
         display_name = "Jane Smith"
         email = "jane_smith@acmecorp.com"
 
@@ -1985,11 +1991,11 @@ struct TeamLinkedAppLogInfo extends AppLogInfo
     "Team linked app"
 
     example default
-        app_id = "dbaid:AAFhvuxku2OYumUaV17x6ExFhr6OPrwjTKs"
+        app_id = "dbaid:AAEWUpqHRlkac-cqxfLZwyEbK0id3thS6Ro"
         display_name = "abc"
 
     example default2
-        app_id = "dbaid:AAG1NxJeBtby__IZENPAvDGeOssreFpPALE"
+        app_id = "dbaid:AAEyS_j819DrCEZQYYJecw54gIkLqYFOm58"
         display_name = "xyz"
 
 struct TeamLogInfo
@@ -2013,7 +2019,7 @@ struct TeamMemberLogInfo extends UserLogInfo
         "Details about this user&#x2019s team for enterprise event."
 
     example default
-        account_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
+        account_id = "dbid:AAEIZtgeKLjx5uul1l65ZnNxXIfyNJ0-Ohc"
         display_name = "John Smith"
         email = "john_smith@acmecorp.com"
         team_member_id = "dbmid:AAFoi-tmvRuQR0jU-3fN4B-9nZo6nHcDO9Q"
@@ -2021,7 +2027,7 @@ struct TeamMemberLogInfo extends UserLogInfo
         team = default
 
     example default2
-        account_id = "dbid:AAGx4oiLtHdvRdNxUpvvJBXYgR4BS19c9kw"
+        account_id = "dbid:AAFQbdtgzUKxmEsRtkUIFbg7MSRGqJCeBnk"
         display_name = "Jane Smith"
         email = "jane_smith@acmecorp.com"
         team_member_id = "dbmid:AAFoi-tmvRuQR0jU-3fN4B-9nZo6nHcDO9Q"
@@ -2051,14 +2057,14 @@ struct TrustedNonTeamMemberLogInfo extends UserLogInfo
         "Details about this user's trusted team."
 
     example default
-        account_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
+        account_id = "dbid:AAEIZtgeKLjx5uul1l65ZnNxXIfyNJ0-Ohc"
         display_name = "John Smith"
         email = "john_smith@acmecorp.com"
         trusted_non_team_member_type = multi_instance_admin
         team = default
 
     example default2
-        account_id = "dbid:AAGx4oiLtHdvRdNxUpvvJBXYgR4BS19c9kw"
+        account_id = "dbid:AAFQbdtgzUKxmEsRtkUIFbg7MSRGqJCeBnk"
         display_name = "Jane Smith"
         email = "jane_smith@acmecorp.com"
         trusted_non_team_member_type = multi_instance_admin
@@ -2068,11 +2074,11 @@ struct UserLinkedAppLogInfo extends AppLogInfo
     "User linked app"
 
     example default
-        app_id = "dbaid:AAFhvuxku2OYumUaV17x6ExFhr6OPrwjTKs"
+        app_id = "dbaid:AAEWUpqHRlkac-cqxfLZwyEbK0id3thS6Ro"
         display_name = "abc"
 
     example default2
-        app_id = "dbaid:AAG1NxJeBtby__IZENPAvDGeOssreFpPALE"
+        app_id = "dbaid:AAEyS_j819DrCEZQYYJecw54gIkLqYFOm58"
         display_name = "xyz"
 
 struct UserLogInfo
@@ -2117,11 +2123,11 @@ struct UserOrTeamLinkedAppLogInfo extends AppLogInfo
     "User or team linked app. Used when linked type is missing due to historical data gap."
 
     example default
-        app_id = "dbaid:AAFhvuxku2OYumUaV17x6ExFhr6OPrwjTKs"
+        app_id = "dbaid:AAEWUpqHRlkac-cqxfLZwyEbK0id3thS6Ro"
         display_name = "abc"
 
     example default2
-        app_id = "dbaid:AAG1NxJeBtby__IZENPAvDGeOssreFpPALE"
+        app_id = "dbaid:AAEyS_j819DrCEZQYYJecw54gIkLqYFOm58"
         display_name = "xyz"
 
 struct WebDeviceSessionLogInfo extends DeviceSessionLogInfo
@@ -4783,8 +4789,8 @@ struct PaperDocOwnershipChangedDetails
 
     example default
         event_uuid = "abc"
-        old_owner_user_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
-        new_owner_user_id = "dbid:AAHgR8xsQP48a5DQUGPo-Vxsrjd0OByVmho"
+        old_owner_user_id = "dbid:AAEIZtgeKLjx5uul1l65ZnNxXIfyNJ0-Ohc"
+        new_owner_user_id = "dbid:AAEIZtgeKLjx5uul1l65ZnNxXIfyNJ0-Ohc"
 
 struct PaperDocRequestAccessDetails
     "Requested access to Paper doc."
@@ -7380,6 +7386,17 @@ struct PaperEnabledUsersGroupAdditionDetails
 struct PaperEnabledUsersGroupRemovalDetails
     "Removed users from Paper-enabled users list."
 
+struct PaperOfflineModePolicyChangedDetails
+    "Enabled/disabled Paper offline mode for team."
+    new_value PaperOfflineModePolicy
+        "New Paper offline mode policy."
+    previous_value PaperOfflineModePolicy
+        "Previous Paper offline mode policy."
+
+    example default
+        new_value = default
+        previous_value = default
+
 struct PasskeyLoginPolicyChangedDetails
     "Changed passkey login policy for team."
     new_value PasskeyLoginPolicy
@@ -8778,6 +8795,7 @@ union EventDetails
     paper_desktop_policy_changed_details PaperDesktopPolicyChangedDetails
     paper_enabled_users_group_addition_details PaperEnabledUsersGroupAdditionDetails
     paper_enabled_users_group_removal_details PaperEnabledUsersGroupRemovalDetails
+    paper_offline_mode_policy_changed_details PaperOfflineModePolicyChangedDetails
     passkey_login_policy_changed_details PasskeyLoginPolicyChangedDetails
     password_strength_requirements_change_policy_details PasswordStrengthRequirementsChangePolicyDetails
     permanent_delete_change_policy_details PermanentDeleteChangePolicyDetails
@@ -12128,6 +12146,12 @@ struct PaperEnabledUsersGroupRemovalType
     example default
         description = "(team_policies) Removed users from Paper-enabled users list"
 
+struct PaperOfflineModePolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Enabled/disabled Paper offline mode for team"
+
 struct PasskeyLoginPolicyChangedType
     description String
 
@@ -13766,6 +13790,8 @@ union EventType
         "(team_policies) Added users to Paper-enabled users list"
     paper_enabled_users_group_removal PaperEnabledUsersGroupRemovalType
         "(team_policies) Removed users from Paper-enabled users list"
+    paper_offline_mode_policy_changed PaperOfflineModePolicyChangedType
+        "(team_policies) Enabled/disabled Paper offline mode for team"
     passkey_login_policy_changed PasskeyLoginPolicyChangedType
         "(team_policies) Changed passkey login policy for team"
     password_strength_requirements_change_policy PasswordStrengthRequirementsChangePolicyType
@@ -15040,6 +15066,8 @@ union EventTypeArg
         "(team_policies) Added users to Paper-enabled users list"
     paper_enabled_users_group_removal
         "(team_policies) Removed users from Paper-enabled users list"
+    paper_offline_mode_policy_changed
+        "(team_policies) Enabled/disabled Paper offline mode for team"
     passkey_login_policy_changed
         "(team_policies) Changed passkey login policy for team"
     password_strength_requirements_change_policy
