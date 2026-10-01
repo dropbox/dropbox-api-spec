@@ -75,6 +75,9 @@ union LinkAudience
     members
         @common.Deprecated
         "Link is accessible only by members of the content."
+    public_logged_in_only
+        "Link is accessible only by signed-in Dropbox users. This audience is currently
+        read-only through API v2: API v2 write methods reject requests that set it."
 
 union LinkAction
     "Actions that can be performed on a link."
