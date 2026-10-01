@@ -3,6 +3,81 @@ namespace riviera
 import async
 import common
 
+route download_transform_output (DownloadTransformOutputArgs, DownloadTransformOutputResult, TransformApiV2Error)
+    "Download the output of a completed `get_transform_async` job.
+    Pass the `output_handle` from the job's `complete` result. The body is the
+    produced file, and the `Dropbox-API-Result` header describes it.
+    A handle can only be redeemed by the user who requested the transform, and
+    only until its `expires_ts`; after that this route fails with
+    `expired_handle_error`, and the transform has to be requested again. A
+    handle that was never valid, or that belongs to another user, fails with
+    `user_error`."
+
+    attrs
+        auth = "app, user"
+        host = "content"
+        is_preview = true
+        scope = "files.content.read"
+        style = "download"
+
+
+route get_transform_async (TransformArgs, async.LaunchResultBase, Void)
+    "Asynchronous file transformation: produces a new file from an existing one.
+    One route covers many conversions. Name the source file in
+    `file_id_or_url`, say what you want back in `transform_type`, and supply
+    that type's options message if it needs one:
+    - `pdf`: documents and images, to PDF.
+    - `html`: spreadsheets, to HTML, preserving the sheet layout.
+    - `image`: images and single document pages, to JPEG or PNG.
+    - `thumbnail`: any thumbnailable source, resized to a named size bucket.
+    - `image_pdf`: documents, to a page image rendered by way of PDF.
+    - `video_frame`: one still frame from a video, at a requested offset.
+    The accepted input formats differ per transform -- they are not one shared
+    list -- and each is the intersection of the source format with the pipeline
+    that transform uses:
+    - `pdf` and `image_pdf`: word-processing, presentation and spreadsheet
+    documents (.doc, .docx, .ppt, .pptx, .xls, .xlsx, .odt, .odp, .ods,
+    .rtf, .epub, .gdoc, .gslides, .hwp, .ai, .eps, .dwg among others).
+    Images are not accepted.
+    - `html`: spreadsheets only -- .xls, .xlsm, .xlsx, .ods, .gsheet. This is
+    the complete list. Note that .csv and .txt are *not* accepted here.
+    - `image`: the documents above, plus .pdf and .html, plus the iWork and
+    design formats .pages, .key, .numbers, .sketch, .xd, .indd and .psd,
+    plus .avif, .heic, .svg and camera RAW, plus fonts (.otf, .ttf), plus
+    video. Formats a browser can already display (.bmp, .gif, .ico, .jpeg,
+    .png, .tif, .tiff, .webp) are not accepted; use `thumbnail` for those.
+    - `thumbnail`: everything `image` accepts, plus .bmp, .gif, .ico, .jpeg,
+    .png, .tif, .tiff, .webp and JPEG 2000.
+    - `video_frame`: .3g2, .3gp, .3gpp, .3gpp2, .asf, .avi, .dv, .flv, .m2t,
+    .m2ts, .m4v, .mkv, .mov, .mp4, .mpeg, .mpg, .mts, .mxf, .ogv, .rm,
+    .ts, .vob, .webm, .wmv. This is the complete list.
+    These lists track Riviera's capability registry
+    (`dropbox/riviera/supported_types/previews_supported_types.yaml`), which is
+    generated and authoritative; treat it rather than this comment as the final
+    word. Formats the requested transform does not support fail with
+    `unsupported_format_error`. Options belonging to a different transform type
+    than the one requested fail with `invalid_options_error`.
+    The produced bytes are not returned by this route, and not by its `/check`
+    poll either. Poll `get_transform_async/check` with the returned async job
+    ID until it reports `complete` or `failed`; a `complete` result carries a
+    `TransformOutput` whose `output_handle` `download_transform_output`
+    exchanges for the bytes. Splitting retrieval out this way is what lets the
+    route return outputs larger than an async result can carry."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+route get_transform_async/check (async.PollArg, GetTransformAsyncCheckResult, async.PollError)
+    "Returns the status or result of specified get_transform_async task."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+
 union TimestampLevel
     "Granularity of the time offsets returned for each transcript segment."
     sentence
@@ -863,4 +938,273 @@ route get_text_async/check (async.PollArg, GetTextAsyncCheckResult, async.PollEr
         auth = "app, user"
         is_preview = true
         scope = "files.content.read"
+
+
+union TransformType
+    "Which derived file to produce from the source file.
+    Unlike the other Riviera content routes, which each expose one capability,
+    `get_transform_async` is a single route over many conversions: the caller
+    names the source file and the output it wants, and the service picks the
+    conversion pipeline. Exactly one variant must be set; a request with none set
+    fails with `invalid_options_error`."
+    pdf
+        "Convert the source document to PDF. Supported for word-processing,
+        presentation, and spreadsheet documents; images are not accepted."
+    html
+        "Convert the source document to HTML. Supported for spreadsheets only,
+        where HTML preserves the sheet layout that a PDF rendering flattens."
+    image
+        "Re-encode the source as a web-safe raster image (JPEG or PNG). This is
+        the transform to use to normalize formats a browser cannot display
+        directly -- HEIC, camera RAW, PSD, SVG -- and to render a single page of
+        a document as an image. Formats a browser can already display, such as
+        JPEG and PNG, are not accepted; use `thumbnail` to resize or re-encode
+        those. Configured by `TransformArgs.image`."
+    thumbnail
+        "Produce a resized thumbnail of the source at one of the supported sizes.
+        Configured by `TransformArgs.thumbnail`."
+    image_pdf
+        "Render the source as a page image by way of a PDF conversion, rather
+        than by whichever image pipeline the source format would otherwise use.
+        Prefer `image` unless you specifically need the PDF-rendered result; the
+        two differ for formats that have a native image pipeline of their own
+        (ebooks, for example). Configured by `TransformArgs.image`."
+    video_frame
+        "Extract a single frame from a video as a still image. Configured by
+        `TransformArgs.video_frame`.
+        This produces one frame at one requested offset. To get the set of
+        scene-change keyframes across a whole video, use `get_keyframes_async`,
+        which returns every detected frame with its timestamp and scene score."
+
+union ThumbnailSize
+    "The size of the thumbnail to produce. These are the same named size buckets
+    `files/get_thumbnail` supports, with the same meanings; arbitrary pixel
+    dimensions are not accepted."
+    w32h32
+        "32 by 32 px."
+    w64h64
+        "64 by 64 px."
+    w128h128
+        "128 by 128 px."
+    w256h256
+        "256 by 256 px."
+    w480h320
+        "480 by 320 px."
+    w640h480
+        "640 by 480 px."
+    w960h640
+        "960 by 640 px."
+    w1024h768
+        "1024 by 768 px."
+    w2048h1536
+        "2048 by 1536 px."
+
+union ThumbnailMode
+    "How to resize and crop the source to reach the requested `ThumbnailSize`.
+    These match `files/get_thumbnail`'s modes."
+    strict
+        "Scale down the image to fit within the given size."
+    bestfit
+        "Scale down the image to fit within the given size or its transpose."
+    fitone_bestfit
+        "Scale down the image to completely cover the given size or its transpose."
+    original
+        "Don't resize the image at all."
+
+union ThumbnailFormat
+    "The encoding of the produced image. These match `files/get_thumbnail`'s
+    formats: JPEG is the better choice for photographs, PNG for screenshots,
+    line art, and anything with sharp text edges or transparency."
+    jpeg
+        "Lossy JPEG. The default, and the right choice for photographic sources."
+    png
+        "Lossless PNG, with alpha preserved."
+    webp
+        "WebP, which compresses better than either JPEG or PNG at comparable
+        quality but is not readable by every consumer."
+
+struct ThumbnailOptions
+    "Options for `TransformType.thumbnail`. Supplying this message with any other
+    transform type fails with `invalid_options_error`."
+    size ThumbnailSize = w64h64
+        "The size bucket to produce. Defaults to `w64h64` when omitted."
+    mode ThumbnailMode = strict
+        "How to fit the source into `size`. Defaults to `strict` when omitted."
+    format ThumbnailFormat = jpeg
+        "The output encoding. Defaults to `jpeg` when omitted."
+
+    example default
+        size = w64h64
+        mode = strict
+        format = jpeg
+
+struct ImageOptions
+    "Options for `TransformType.image` and `TransformType.image_pdf`. Supplying
+    this message with any other transform type fails with
+    `invalid_options_error`."
+    page_number UInt32(min_value=1) = 1
+        "For multi-page sources (PDFs, presentations, documents), the 1-based page
+        to render. Each request renders one page; to render a whole document, issue
+        one request per page. Defaults to the first page when omitted."
+    scale_percent UInt32(max_value=100, min_value=1) = 100
+        "Scale the rendered image to this percentage of its natural size. Must be in
+        (0, 100] -- the pipeline does not upscale, so values above 100 are rejected
+        with `invalid_options_error`. Defaults to 100 (no scaling) when omitted."
+
+    example default
+        page_number = 1
+        scale_percent = 100
+
+struct VideoFrameOptions
+    "Options for `TransformType.video_frame`. Supplying this message with any
+    other transform type fails with `invalid_options_error`."
+    offset_in_seconds Float64(min_value=0) = 0
+        "Offset into the video, in seconds, of the frame to extract. Should be
+        within the video's duration. Defaults to 0 (the first frame) when omitted.
+        Only the lower bound is enforced, because the upper bound is the source's
+        duration, which is not known until the video is opened. An offset past the
+        end is not rejected."
+    scale_percent UInt32(max_value=100, min_value=1) = 100
+        "Scale the extracted frame to this percentage of the video's natural frame
+        size. Must be in (0, 100]; the pipeline does not upscale. Defaults to 100
+        (no scaling) when omitted."
+
+    example default
+        offset_in_seconds = 12.5
+        scale_percent = 100
+
+struct TransformArgs
+    "Arguments for the asynchronous `get_transform_async` route.
+    Exactly one of `file_id`, `path`, or `url` must be supplied via
+    `file_id_or_url` to identify the source file, and exactly one variant of
+    `transform_type` must be set to say what to produce from it.
+    At most one options message may be set, and it must be the one belonging to
+    the requested `transform_type`. Options that belong to a different transform
+    type are rejected with `invalid_options_error` rather than ignored, so that a
+    request whose parameters were misassembled fails visibly instead of quietly
+    producing the wrong output."
+    file_id_or_url FileIdOrUrl?
+        "Identifier of the source file to transform. Callers must set exactly one of
+        the `FileIdOrUrl` variants. The referenced file must be in a format the
+        requested `transform_type` supports; see the route description for the
+        per-transform format lists. Requests against unsupported formats fail with
+        `unsupported_format_error`."
+    transform_type TransformType
+        "What to produce from the source file. Required."
+    thumbnail ThumbnailOptions?
+        "Options for `TransformType.thumbnail`."
+    image ImageOptions?
+        "Options for `TransformType.image` and `TransformType.image_pdf`."
+    video_frame VideoFrameOptions?
+        "Options for `TransformType.video_frame`."
+
+    example default
+        file_id_or_url = default
+        transform_type = image
+        image = default
+
+    example thumbnail
+        file_id_or_url = default
+        transform_type = thumbnail
+        thumbnail = default
+
+struct TransformOutput
+    "A completed transform: a handle for retrieving the produced bytes, plus
+    enough metadata to decide whether to retrieve them.
+    The bytes themselves are deliberately not carried here. A completed async
+    result is persisted, so it is bounded by a row-size limit well below the size
+    of a typical converted document -- an inline payload would fail for exactly
+    the large documents this route exists to convert. The transform therefore
+    completes by caching its output and handing back `output_handle`, which
+    `download_transform_output` exchanges for the bytes."
+    output_handle String = ""
+        "Opaque, single-purpose handle for the produced bytes. Pass it to
+        `download_transform_output` to retrieve them. The handle is scoped to the
+        account that created it and cannot be used to read anything other than the
+        output of this transform. It is not a URL and carries no meaning for
+        callers beyond being passed back verbatim."
+    size UInt64 = 0
+        "Size of the produced output in bytes."
+    format String = ""
+        "Format of the produced output, as a short lowercase format name such as
+        \"pdf\", \"html\", \"jpeg\", or \"png\". This reflects what was actually produced,
+        which for some sources differs from what was requested."
+    mime_type String = ""
+        "MIME type corresponding to `format`, for callers that need a Content-Type
+        to hand to a downstream consumer."
+    expires_ts UInt64 = 0
+        "Unix timestamp, in seconds, after which `output_handle` is no longer
+        accepted. Retrieve the bytes before this point; after it,
+        `download_transform_output` reports `expired_handle_error` and the transform
+        has to be requested again."
+
+union TransformApiV2Error
+    "Reason a transform job failed. Returned in the `failed` variant of
+    `GetTransformAsyncCheckResult`, and by `download_transform_output`. This is
+    a semantic error union: the HTTP status of the poll request itself is
+    unaffected (a poll that surfaces a failed job is still a normal successful
+    poll response). Callers should branch on the variant."
+    server_error String = ""
+        "An unexpected, typically transient, server-side failure. The string is a
+        human-readable message; retrying with backoff may succeed."
+    user_error String = ""
+        "The request could not be processed as supplied (a problem with the
+        caller's input). The string is a human-readable message; retrying the
+        same request will not help."
+    unsupported_format_error
+        "The source file is not in a format the requested `transform_type` can
+        convert."
+    link_download_disabled_error
+        "`FileIdOrUrl.url` referenced a Dropbox shared link whose owner has
+        disabled downloads."
+    shared_link_password_protected
+        "`FileIdOrUrl.url` referenced a password-protected Dropbox shared link.
+        Riviera cannot supply the password, so such links cannot be transformed."
+    limit_exceeded_error
+        "A resource limit was exceeded while producing the result -- for example
+        the source file is larger than the requested transform accepts."
+    conversion_failure_error
+        "The source file was readable but could not be converted, for example
+        because it is corrupt."
+    not_found_error
+        "The referenced file does not exist or is not accessible."
+    is_a_folder_error
+        "The target is a folder, not a file."
+    invalid_options_error
+        "`transform_type` was missing, or the supplied options did not match the
+        requested transform type, or an option was out of range. The request is
+        malformed; fix it rather than retrying it."
+    expired_handle_error
+        "The `output_handle` presented to `download_transform_output` has passed
+        its `TransformOutput.expires_ts`. Request the transform again to get a
+        fresh handle. Only `download_transform_output` produces this; a poll
+        never does."
+
+union GetTransformAsyncCheckResult
+    "Result type for EventBus async check - must end in \"CheckResult\""
+    in_progress
+        "The job has not finished yet. Poll again."
+    complete TransformOutput
+        "The job finished successfully."
+    failed TransformApiV2Error
+        "The job finished unsuccessfully."
+
+struct DownloadTransformOutputArgs
+    "Arguments for `download_transform_output`."
+    output_handle String
+        "The `output_handle` from a `complete` `get_transform_async/check` result."
+
+    example default
+        output_handle = "EXAMPLE_OUTPUT_HANDLE"
+
+struct DownloadTransformOutputResult
+    "Describes the bytes in the response body. Returned in the `Dropbox-API-Result`
+    header."
+    size UInt64 = 0
+        "Size of the output in bytes."
+    format String = ""
+        "Format of the output, as a short lowercase format name such as \"pdf\",
+        \"html\", \"jpeg\", or \"png\"."
+    mime_type String = ""
+        "MIME type corresponding to `format`."
 
