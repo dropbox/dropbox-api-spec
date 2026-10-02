@@ -11,6 +11,85 @@ import team_policies
 import users
 import users_common
 
+route members/suspend_batch (MembersSuspendBatchArg, async.LaunchResultBase, MembersSuspendBatchError)
+    "Launch a member suspension batch. The server enforces a maximum of 500 members."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+route members/suspend_batch/job_status/check (async.PollArg, MembersSuspendBatchJobStatus, async.PollError)
+    "Poll a previously launched member suspension batch job."
+
+    attrs
+        auth = "team"
+        scope = "members.write"
+
+
+union MembersSuspendBatchReportDeliveryStatus
+    members_suspend_batch_report_delivery_status_unspecified
+    members_suspend_batch_report_delivery_status_pending
+    members_suspend_batch_report_delivery_status_delivered
+    members_suspend_batch_report_delivery_status_failed
+
+
+struct MembersSuspendBatchTarget
+    "One member selected for suspension. The opaque client item ID correlates the
+    eventual report row with the caller's input without sending CSV data."
+    client_item_id String(max_length=128, min_length=1)
+    suspend_arg MembersDeactivateArg
+
+struct MembersSuspendBatchArg
+    "Launches one action-specific member suspension batch job."
+    members List(MembersSuspendBatchTarget, max_items=500, min_items=1)
+        "Must contain between 1 and 500 targets. The launch handler also rejects
+        duplicate client item IDs and duplicate member selectors."
+
+union MembersSuspendBatchError
+    "A typed launch rejection. Authorization failures continue to use the API v2
+    authentication/permission error surface."
+    too_many_members
+        "The request contains more than 500 members."
+    duplicate_client_item_id
+        "More than one target uses the same client item ID."
+    duplicate_team_member_id
+        "More than one target selects the same team member."
+    acting_admin
+        "The acting administrator cannot suspend their own account."
+    last_admin
+        "Suspending the selected members would leave the team without an active admin."
+
+union MembersSuspendBatchRowFailure extends MembersSuspendError
+    "Stable machine-readable reasons used by the terminal row report."
+    protected_acting_admin
+    permission_changed
+    suspend_failed
+
+union MembersSuspendBatchRowOutcome
+    "The terminal outcome for one requested member. Row outcomes are delivered in
+    the report rather than embedded in the status response."
+    suspended
+    failed MembersSuspendBatchRowFailure
+    unknown
+
+struct MembersSuspendBatchComplete
+    requested Int64
+    suspended Int64
+    failed Int64
+    unknown Int64
+    report_delivery MembersSuspendBatchReportDeliveryStatus
+
+union MembersSuspendBatchTaskFailure
+    unusable_result
+
+union MembersSuspendBatchJobStatus extends async.PollResultBase
+    "Coarse job state. Live row progress and report contents are intentionally
+    omitted; the authorized team admin who initiated the batch receives row
+    details in the terminal email report."
+    complete MembersSuspendBatchComplete
+    failed MembersSuspendBatchTaskFailure
+
+
 union_closed TeamMembershipType
     full
         "User uses a license and has full access to team resources like the shared quota."
