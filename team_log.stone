@@ -5043,6 +5043,61 @@ struct ProtectActionStopSharingDetails
     example default
         action_id = "abc"
 
+struct ProtectCustomDataTypeCreatedDetails
+    "Created a Dropbox Protect custom data type."
+    custom_data_type_id String
+        "ID."
+    name String
+        "Name."
+
+    example default
+        custom_data_type_id = "abc"
+        name = "abc"
+
+struct ProtectCustomDataTypeDeletedDetails
+    "Deleted a Dropbox Protect custom data type."
+    custom_data_type_id String
+        "ID."
+    name String
+        "Name."
+
+    example default
+        custom_data_type_id = "abc"
+        name = "abc"
+
+struct ProtectCustomDataTypeDisabledDetails
+    "Disabled a Dropbox Protect custom data type."
+    custom_data_type_id String
+        "ID."
+    name String
+        "Name."
+
+    example default
+        custom_data_type_id = "abc"
+        name = "abc"
+
+struct ProtectCustomDataTypeEnabledDetails
+    "Enabled a Dropbox Protect custom data type."
+    custom_data_type_id String
+        "ID."
+    name String
+        "Name."
+
+    example default
+        custom_data_type_id = "abc"
+        name = "abc"
+
+struct ProtectCustomDataTypeModifiedDetails
+    "Modified a Dropbox Protect custom data type."
+    custom_data_type_id String
+        "ID."
+    name String
+        "Name."
+
+    example default
+        custom_data_type_id = "abc"
+        name = "abc"
+
 struct ProtectInternalDomainsChangedDetails
     "Modified Protect internal domains list."
     domains_added List(String)?
@@ -8538,6 +8593,11 @@ union EventDetails
     protect_action_remove_domains_details ProtectActionRemoveDomainsDetails
     protect_action_remove_link_details ProtectActionRemoveLinkDetails
     protect_action_stop_sharing_details ProtectActionStopSharingDetails
+    protect_custom_data_type_created_details ProtectCustomDataTypeCreatedDetails
+    protect_custom_data_type_deleted_details ProtectCustomDataTypeDeletedDetails
+    protect_custom_data_type_disabled_details ProtectCustomDataTypeDisabledDetails
+    protect_custom_data_type_enabled_details ProtectCustomDataTypeEnabledDetails
+    protect_custom_data_type_modified_details ProtectCustomDataTypeModifiedDetails
     protect_internal_domains_changed_details ProtectInternalDomainsChangedDetails
     protect_policy_activated_details ProtectPolicyActivatedDetails
     protect_policy_deactivated_details ProtectPolicyDeactivatedDetails
@@ -10603,6 +10663,36 @@ struct ProtectActionStopSharingType
 
     example default
         description = "(protect) Stopped sharing content via Dropbox Protect"
+
+struct ProtectCustomDataTypeCreatedType
+    description String
+
+    example default
+        description = "(protect) Created a Dropbox Protect custom data type"
+
+struct ProtectCustomDataTypeDeletedType
+    description String
+
+    example default
+        description = "(protect) Deleted a Dropbox Protect custom data type"
+
+struct ProtectCustomDataTypeDisabledType
+    description String
+
+    example default
+        description = "(protect) Disabled a Dropbox Protect custom data type"
+
+struct ProtectCustomDataTypeEnabledType
+    description String
+
+    example default
+        description = "(protect) Enabled a Dropbox Protect custom data type"
+
+struct ProtectCustomDataTypeModifiedType
+    description String
+
+    example default
+        description = "(protect) Modified a Dropbox Protect custom data type"
 
 struct ProtectInternalDomainsChangedType
     description String
@@ -13276,6 +13366,16 @@ union EventType
         "(protect) Removed a link via Dropbox Protect"
     protect_action_stop_sharing ProtectActionStopSharingType
         "(protect) Stopped sharing content via Dropbox Protect"
+    protect_custom_data_type_created ProtectCustomDataTypeCreatedType
+        "(protect) Created a Dropbox Protect custom data type"
+    protect_custom_data_type_deleted ProtectCustomDataTypeDeletedType
+        "(protect) Deleted a Dropbox Protect custom data type"
+    protect_custom_data_type_disabled ProtectCustomDataTypeDisabledType
+        "(protect) Disabled a Dropbox Protect custom data type"
+    protect_custom_data_type_enabled ProtectCustomDataTypeEnabledType
+        "(protect) Enabled a Dropbox Protect custom data type"
+    protect_custom_data_type_modified ProtectCustomDataTypeModifiedType
+        "(protect) Modified a Dropbox Protect custom data type"
     protect_internal_domains_changed ProtectInternalDomainsChangedType
         "(protect) Modified Protect internal domains list"
     protect_policy_activated ProtectPolicyActivatedType
@@ -14552,6 +14652,16 @@ union EventTypeArg
         "(protect) Removed a link via Dropbox Protect"
     protect_action_stop_sharing
         "(protect) Stopped sharing content via Dropbox Protect"
+    protect_custom_data_type_created
+        "(protect) Created a Dropbox Protect custom data type"
+    protect_custom_data_type_deleted
+        "(protect) Deleted a Dropbox Protect custom data type"
+    protect_custom_data_type_disabled
+        "(protect) Disabled a Dropbox Protect custom data type"
+    protect_custom_data_type_enabled
+        "(protect) Enabled a Dropbox Protect custom data type"
+    protect_custom_data_type_modified
+        "(protect) Modified a Dropbox Protect custom data type"
     protect_internal_domains_changed
         "(protect) Modified Protect internal domains list"
     protect_policy_activated
