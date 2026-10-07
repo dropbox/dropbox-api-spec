@@ -1045,6 +1045,11 @@ union FileCategory
 union FileStatus
     active
     deleted
+        @common.Deprecated
+        "Deprecated. Deleted-file search does not work and should not be used.
+        Use :route:`list_folder` with :field:`ListFolderArg.include_deleted` set to
+        :val:`true` to enumerate deleted entries;
+        this does not provide equivalent full-text search."
 
     example default
         active = null
@@ -2194,7 +2199,9 @@ struct SearchOptions
     order_by SearchOrderBy?
         "Specified property of the order of search results. By default, results are sorted by relevance."
     file_status FileStatus = active
-        "Restricts search to the given file status."
+        "Restricts search to the given file status. The :field:`FileStatus.deleted` value is deprecated
+        and should not be used. This also applies to searches
+        continued with :route:`search/continue:2`."
     filename_only Boolean = false
         "Restricts search to only match on filenames."
     file_extensions List(String)?
