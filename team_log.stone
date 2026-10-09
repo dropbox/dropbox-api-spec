@@ -377,6 +377,12 @@ union EnforceLinkPasswordPolicy
     optional
     required
 
+union EnterpriseManagedAuthPolicy
+    "Enterprise managed authorization policy"
+    default
+    disabled
+    enabled
+
 union ExtendedVersionHistoryPolicy
     explicitly_limited
     explicitly_unlimited
@@ -7082,6 +7088,17 @@ struct EmmChangePolicyDetails
 struct EmmRemoveExceptionDetails
     "Removed members from EMM exception list."
 
+struct EnterpriseManagedAuthPolicyChangedDetails
+    "Changed enterprise managed authorization policy for team."
+    new_value EnterpriseManagedAuthPolicy
+        "New enterprise managed authorization policy."
+    previous_value EnterpriseManagedAuthPolicy?
+        "Previous enterprise managed authorization policy. Might be missing due to historical data gap."
+
+    example default
+        new_value = default
+        previous_value = default
+
 struct ExtendedVersionHistoryChangePolicyDetails
     "Accepted/opted out of extended version history."
     new_value ExtendedVersionHistoryPolicy
@@ -8818,6 +8835,7 @@ union EventDetails
     emm_add_exception_details EmmAddExceptionDetails
     emm_change_policy_details EmmChangePolicyDetails
     emm_remove_exception_details EmmRemoveExceptionDetails
+    enterprise_managed_auth_policy_changed_details EnterpriseManagedAuthPolicyChangedDetails
     extended_version_history_change_policy_details ExtendedVersionHistoryChangePolicyDetails
     external_drive_backup_policy_changed_details ExternalDriveBackupPolicyChangedDetails
     file_comments_change_policy_details FileCommentsChangePolicyDetails
@@ -12014,6 +12032,12 @@ struct EmmRemoveExceptionType
     example default
         description = "(team_policies) Removed members from EMM exception list"
 
+struct EnterpriseManagedAuthPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed enterprise managed authorization policy for team"
+
 struct ExtendedVersionHistoryChangePolicyType
     description String
 
@@ -13816,6 +13840,8 @@ union EventType
         "(team_policies) Enabled/disabled enterprise mobility management for members"
     emm_remove_exception EmmRemoveExceptionType
         "(team_policies) Removed members from EMM exception list"
+    enterprise_managed_auth_policy_changed EnterpriseManagedAuthPolicyChangedType
+        "(team_policies) Changed enterprise managed authorization policy for team"
     extended_version_history_change_policy ExtendedVersionHistoryChangePolicyType
         "(team_policies) Accepted/opted out of extended version history"
     external_drive_backup_policy_changed ExternalDriveBackupPolicyChangedType
@@ -15102,6 +15128,8 @@ union EventTypeArg
         "(team_policies) Enabled/disabled enterprise mobility management for members"
     emm_remove_exception
         "(team_policies) Removed members from EMM exception list"
+    enterprise_managed_auth_policy_changed
+        "(team_policies) Changed enterprise managed authorization policy for team"
     extended_version_history_change_policy
         "(team_policies) Accepted/opted out of extended version history"
     external_drive_backup_policy_changed
