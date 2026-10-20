@@ -1797,6 +1797,24 @@ struct SharedFolderMetadataBase
         owner_team = default
         parent_folder_name = "Parent Shared Folder"
 
+struct MountLimitsInfo
+    "Information about the mount limit that the operation would exceed."
+    limit UInt64
+        "The maximum number allowed for this limit."
+    current_count UInt64
+        "The current number of mounts for the user, or of namespaces in the folder tree."
+    new_count UInt64
+        "The number of mounts for the user, or of namespaces in the folder tree, if the operation were completed."
+
+union TooManyMountsError
+    "This operation would exceed the maximum number of mounts allowed."
+    total_mounts_exceeded MountLimitsInfo
+        "The user can't add more mounts because it would exceed the maximum number of mounts allowed."
+    home_mounts_exceeded MountLimitsInfo
+        "The user can't add more mounts because it would exceed the mount limit for their home namespace."
+    tree_size_exceeded MountLimitsInfo
+        "The user can't create a new nested share because doing so would exceed the maximum number of namespaces allowed in the folder tree."
+
 
 struct MemberPermission
     "Whether the user is allowed to take the action on the associated member."
@@ -2090,6 +2108,8 @@ union MountFolderError
     must_automount
         "The shared folder is not mountable by directly call APIs, instead the
         automounter is responsible for mounting it."
+    too_many_mounts TooManyMountsError
+        "User will have too many mounts after this operation."
 
 union RelinquishFolderMembershipError
     access_error SharedFolderAccessError
@@ -2160,6 +2180,8 @@ union ShareFolderErrorBase
     disallowed_shared_link_policy
         "The current user's account is not allowed to select the specified
         :field:`ShareFolderArg.shared_link_policy`."
+    too_many_mounts TooManyMountsError
+        "User will have too many mounts after the operation."
 
 union ShareFolderErrorBaseV2
     email_unverified
