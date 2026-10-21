@@ -1044,14 +1044,6 @@ route list_received_files/continue (ListFilesContinueArg, ListFilesResult, ListF
         auth = "user"
         scope = "sharing.read"
 
-route remove_file_member (RemoveFileMemberArg, FileMemberActionIndividualResult, RemoveFileMemberError) deprecated
-    "Identical to remove_file_member_2 but with less information returned."
-
-    attrs
-        auth = "user"
-        scope = "sharing.write"
-        select_admin_mode = "team_admin"
-
 route remove_file_member_2 (RemoveFileMemberArg, FileMemberRemoveActionResult, RemoveFileMemberError)
     "Removes a specified member from the file."
 
