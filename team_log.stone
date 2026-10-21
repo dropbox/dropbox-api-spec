@@ -340,6 +340,11 @@ union DefaultLinkExpirationDaysPolicy
     none
     year_1
 
+union DefaultTeamFolderSyncPolicy
+    "Default sync setting for newly created team folders."
+    do_not_sync
+    sync
+
 union DeviceApprovalsPolicy
     limited
     unlimited
@@ -6993,6 +6998,17 @@ struct DataPlacementRestrictionSatisfyPolicyDetails
     example default
         placement_restriction = none
 
+struct DefaultTeamFolderSyncPolicyChangedDetails
+    "Changed the default sync setting for new team folders."
+    new_value DefaultTeamFolderSyncPolicy
+        "New default sync setting for team folders."
+    previous_value DefaultTeamFolderSyncPolicy
+        "Previous default sync setting for team folders."
+
+    example default
+        new_value = sync
+        previous_value = sync
+
 struct DeviceApprovalsAddExceptionDetails
     "Added members to device approvals exception list."
 
@@ -8822,6 +8838,7 @@ union EventDetails
     dash_external_sharing_policy_changed_details DashExternalSharingPolicyChangedDetails
     data_placement_restriction_change_policy_details DataPlacementRestrictionChangePolicyDetails
     data_placement_restriction_satisfy_policy_details DataPlacementRestrictionSatisfyPolicyDetails
+    default_team_folder_sync_policy_changed_details DefaultTeamFolderSyncPolicyChangedDetails
     device_approvals_add_exception_details DeviceApprovalsAddExceptionDetails
     device_approvals_change_desktop_policy_details DeviceApprovalsChangeDesktopPolicyDetails
     device_approvals_change_mobile_policy_details DeviceApprovalsChangeMobilePolicyDetails
@@ -11954,6 +11971,12 @@ struct DataPlacementRestrictionSatisfyPolicyType
     example default
         description = "(team_policies) Completed restrictions on data center locations where team data resides"
 
+struct DefaultTeamFolderSyncPolicyChangedType
+    description String
+
+    example default
+        description = "(team_policies) Changed the default sync setting for new team folders"
+
 struct DeviceApprovalsAddExceptionType
     description String
 
@@ -13814,6 +13837,8 @@ union EventType
         "(team_policies) Set restrictions on data center locations where team data resides"
     data_placement_restriction_satisfy_policy DataPlacementRestrictionSatisfyPolicyType
         "(team_policies) Completed restrictions on data center locations where team data resides"
+    default_team_folder_sync_policy_changed DefaultTeamFolderSyncPolicyChangedType
+        "(team_policies) Changed the default sync setting for new team folders"
     device_approvals_add_exception DeviceApprovalsAddExceptionType
         "(team_policies) Added members to device approvals exception list"
     device_approvals_change_desktop_policy DeviceApprovalsChangeDesktopPolicyType
@@ -15102,6 +15127,8 @@ union EventTypeArg
         "(team_policies) Set restrictions on data center locations where team data resides"
     data_placement_restriction_satisfy_policy
         "(team_policies) Completed restrictions on data center locations where team data resides"
+    default_team_folder_sync_policy_changed
+        "(team_policies) Changed the default sync setting for new team folders"
     device_approvals_add_exception
         "(team_policies) Added members to device approvals exception list"
     device_approvals_change_desktop_policy

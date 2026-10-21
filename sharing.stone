@@ -344,6 +344,8 @@ union ListSharedLinksError
     reset
         "Indicates that the cursor has been invalidated. Call
         :route:`list_shared_links` to obtain a new cursor."
+    permission_denied
+        "The user does not have permissions to list links to the content."
 
 union ModifySharedLinkSettingsError extends SharedLinkError
     settings_error SharedLinkSettingsError
@@ -535,6 +537,11 @@ struct SharedLinkMetadata
         "The team information of the content's owner. This field will only be present if
         the content's owner is a team member and the content's owner team is different from the
         link's owner team."
+    preview_type String?
+        "The preview type is determined by the file extension of the shared link. It will be null
+        if the file cannot be previewed by the file viewer."
+    created_timestamp common.DropboxTimestamp?
+        "The time the shared link was created."
 
     example default
         file = default
@@ -1896,6 +1903,8 @@ struct MembershipInfo
         "Never set."
     is_inherited Boolean = false
         "True if the member has access on a parent folder."
+    inherited_access_type AccessLevel?
+        "The access type from parent folder for this member."
 
     example default
         access_type = owner
