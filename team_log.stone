@@ -6082,6 +6082,20 @@ struct SharedFolderNestDetails
         previous_ns_path = "/Contract Work/Product Design"
         new_ns_path = "/Contract Work/Product Design"
 
+struct SharedFolderTransferMembershipDetails
+    "Transferred shared folder membership to another member."
+    previous_member_account_id users_common.AccountId
+        "The account that previously held the access being transferred."
+    new_member_account_id users_common.AccountId
+        "The account that received the transferred access."
+    shared_content_access_level sharing.AccessLevel
+        "The shared folder access level that was transferred. This is the level at the time of the transfer and does not change if the member's access is updated later."
+
+    example default
+        previous_member_account_id = "dbid:AAEIZtgeKLjx5uul1l65ZnNxXIfyNJ0-Ohc"
+        new_member_account_id = "dbid:AAEIZtgeKLjx5uul1l65ZnNxXIfyNJ0-Ohc"
+        shared_content_access_level = traverse
+
 struct SharedFolderTransferOwnershipDetails
     "Transferred ownership of shared folder to another member."
     previous_owner_email EmailAddress?
@@ -8743,6 +8757,7 @@ union EventDetails
     shared_folder_decline_invitation_details SharedFolderDeclineInvitationDetails
     shared_folder_mount_details SharedFolderMountDetails
     shared_folder_nest_details SharedFolderNestDetails
+    shared_folder_transfer_membership_details SharedFolderTransferMembershipDetails
     shared_folder_transfer_ownership_details SharedFolderTransferOwnershipDetails
     shared_folder_unmount_details SharedFolderUnmountDetails
     shared_link_add_expiry_details SharedLinkAddExpiryDetails
@@ -11401,6 +11416,12 @@ struct SharedFolderNestType
     example default
         description = "(sharing) Changed parent of shared folder"
 
+struct SharedFolderTransferMembershipType
+    description String
+
+    example default
+        description = "(sharing) Transferred shared folder membership to another member"
+
 struct SharedFolderTransferOwnershipType
     description String
 
@@ -13647,6 +13668,8 @@ union EventType
         "(sharing) Added shared folder to own Dropbox"
     shared_folder_nest SharedFolderNestType
         "(sharing) Changed parent of shared folder"
+    shared_folder_transfer_membership SharedFolderTransferMembershipType
+        "(sharing) Transferred shared folder membership to another member"
     shared_folder_transfer_ownership SharedFolderTransferOwnershipType
         "(sharing) Transferred ownership of shared folder to another member"
     shared_folder_unmount SharedFolderUnmountType
@@ -14937,6 +14960,8 @@ union EventTypeArg
         "(sharing) Added shared folder to own Dropbox"
     shared_folder_nest
         "(sharing) Changed parent of shared folder"
+    shared_folder_transfer_membership
+        "(sharing) Transferred shared folder membership to another member"
     shared_folder_transfer_ownership
         "(sharing) Transferred ownership of shared folder to another member"
     shared_folder_unmount
