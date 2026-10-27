@@ -1,7 +1,6 @@
 namespace users_common
     "This namespace contains common data types used within the users namespace."
 
-import account_id
 import common
 
 alias AccountId = String(max_length=40, min_length=40)

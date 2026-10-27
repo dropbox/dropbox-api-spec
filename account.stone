@@ -1,6 +1,5 @@
 namespace account
 
-import account_id
 import common
 
 union DeleteProfilePhotoError

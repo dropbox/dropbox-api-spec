@@ -1,6 +1,0 @@
-namespace account_id
-
-annotation_type ContainsDbidAnnotation
-    "Annotation type should be applied to Response object fields which contain account id"
-
-    authorize_caller Boolean = true

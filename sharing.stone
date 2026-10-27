@@ -2,7 +2,6 @@ namespace sharing
     "This namespace contains endpoints and data types for creating and managing shared links and
     shared folders."
 
-import account_id
 import async
 import common
 import files
