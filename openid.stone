@@ -1,6 +1,5 @@
 namespace openid
 
-import account_id
 import common
 
 route userinfo (UserInfoArgs, UserInfoResult, UserInfoError)
