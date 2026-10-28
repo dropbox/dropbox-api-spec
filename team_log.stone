@@ -6161,9 +6161,12 @@ struct SharedLinkCreateDetails
     "Created shared link."
     shared_link_access_level SharedLinkAccessLevel?
         "Defines who can access the shared link. Might be missing due to historical data gap."
+    subdomain String?
+        "Team subdomain associated with this shared-link action."
 
     example default
         shared_link_access_level = none
+        subdomain = "abc"
 
 struct SharedLinkDisableDetails
     "Removed shared link."
