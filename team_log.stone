@@ -6327,9 +6327,12 @@ struct SharedLinkViewDetails
     "Opened shared link."
     shared_link_owner UserLogInfo?
         "Shared link owner details. Might be missing due to historical data gap."
+    subdomain String?
+        "Team subdomain used to access the shared link."
 
     example default
         shared_link_owner = default
+        subdomain = "abc"
 
 struct SharedNoteOpenedDetails
     "Opened shared Paper doc."
