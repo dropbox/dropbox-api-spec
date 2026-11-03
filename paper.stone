@@ -475,6 +475,8 @@ union PaperApiCursorError
 union DocLookupError extends PaperApiBaseError
     doc_not_found
         "The required doc was not found."
+    folder_not_found
+        "Cloud Docs do not have legacy Paper folders. Use the Dropbox filesystem APIs to look up their containing folders."
 
 union ListDocsCursorError
     cursor_error PaperApiCursorError
