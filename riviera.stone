@@ -3,6 +3,41 @@ namespace riviera
 import async
 import common
 
+route extract_async (ExtractArgs, async.LaunchResultBase, Void)
+    "Asynchronous content extraction from a single file.
+    One route covers every Riviera extraction. Name the source file in
+    `file_id_or_url`, and say what to extract in `extract_type`, whose variant
+    carries that extraction's options:
+    - `markdown`: a document, converted to markdown that preserves its
+    structure.
+    - `text`: the plain text of a document.
+    - `ocr`: the text of an image or scanned PDF, plus hOCR with per-word
+    coordinates.
+    - `transcript`: the timestamped transcript of an audio or video file.
+    - `keyframes`: one keyframe per scene change in a video.
+    The accepted formats and size limits differ per extraction; see
+    `ExtractType`. Formats the requested extraction does not support fail with
+    `unsupported_format_error`, and files over its size limit fail with
+    `limit_exceeded_error`.
+    The result is not returned by this route. Poll `extract_async/check` with
+    the returned async job ID until it reports `complete` or `failed`. A
+    `complete` result is an `ExtractResult` whose variant matches the requested
+    `extract_type`."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+route extract_async/check (async.PollArg, ExtractAsyncCheckResult, async.PollError)
+    "Returns the status or result of specified extract_async task."
+
+    attrs
+        auth = "app, user"
+        is_preview = true
+        scope = "files.content.read"
+
+
 route download_transform_output (DownloadTransformOutputArgs, DownloadTransformOutputResult, TransformApiV2Error)
     "Download the output of a completed `get_transform_async` job.
     Pass the `output_handle` from the job's `complete` result. The body is the
@@ -239,6 +274,180 @@ route get_transcript_async/check (async.PollArg, GetTranscriptAsyncCheckResult, 
         auth = "app, user"
         is_preview = true
         scope = "files.content.read"
+
+
+struct MarkdownExtractOptions
+    "Options for `ExtractType.markdown`."
+    enable_ocr Boolean = false
+        "Run OCR on PDF documents, so that scanned pages contribute text.
+        Processing is slower when enabled."
+    embed_images Boolean = false
+        "Embed images as base64 data URIs in the markdown. This can significantly
+        increase the size of the result."
+
+    example default
+        enable_ocr = false
+        embed_images = false
+
+struct TextExtractOptions
+    "Options for `ExtractType.text`. There are none yet; the variant carries a
+    message so that options can be added later without changing its shape."
+
+struct OcrExtractOptions
+    "Options for `ExtractType.ocr`. There are none yet; the variant carries a
+    message so that options can be added later without changing its shape."
+
+struct TranscriptExtractOptions
+    "Options for `ExtractType.transcript`."
+    timestamp_level TimestampLevel = sentence
+        "Granularity of the time offsets returned for each transcript segment.
+        Defaults to `sentence`."
+    included_special_words String = ""
+        "Comma-delimited list of non-lexical filler words to keep in the
+        transcript, e.g. \"uh, ah, uhm\". By default these fillers are stripped.
+        Unrecognized tokens are ignored."
+    audio_language String = ""
+        "Hint for the spoken language of the audio, as an ISO 639-1 code such as
+        \"en\" or \"ja\". When empty, the service detects the language. A language the
+        service does not support fails with `user_error`."
+
+    example default
+        timestamp_level = sentence
+
+struct KeyframesExtractOptions
+    "Options for `ExtractType.keyframes`."
+    scene_change_threshold Float64 = 0
+        "Sensitivity of scene-change detection. A keyframe is emitted whenever the
+        frame-to-frame scene score crosses this threshold, so a LOWER value yields
+        MORE keyframes. When omitted (0.0) the service uses 0.3, a good starting
+        point for most videos. Values above 1.0 fail with `user_error`."
+    include_images Boolean = false
+        "When true, each keyframe carries its JPEG image, base64-encoded, in
+        `ApiKeyframe.image_base64`. When false (the default), only timestamps and
+        scene scores are returned, which keeps the result small."
+
+    example default
+        scene_change_threshold = 0.3
+        include_images = false
+
+union ExtractType
+    "What to extract from the source file, with that extraction's options.
+    Exactly one variant must be set. Every variant carries an options message,
+    so always send the object form -- for example `{\".tag\": \"text\"}` -- rather
+    than a bare tag string. Option fields may be omitted to take their defaults."
+    markdown MarkdownExtractOptions
+        "Convert a document to markdown, preserving structure such as headings,
+        lists, and tables. Supported formats: .binder, .docx, .html, .paper,
+        .papert, .pptx, .xlsx, .gsheet, .ods, .pdf. At most 50 MB."
+    text TextExtractOptions
+        "Extract the plain text of a document. Supported formats: .doc, .docx,
+        .docm, .rtf, .ppt, .pptx, .pptm, .xls, .xlsx, .xlsm, .pdf, .paper,
+        .papert, .binder, .gdoc, .gsheet, .gslides, .txt, .vtt. At most 50 MB."
+    ocr OcrExtractOptions
+        "Run OCR on an image or a scanned PDF, returning reading-ordered text plus
+        hOCR with per-word coordinates. Supported formats: .bmp, .gif, .heic,
+        .jpeg, .jpg, .png, .tif, .tiff, .webp, .pdf. A PDF that already has a
+        text layer is not OCRed and yields an empty result; use `text` for it.
+        External (non-Dropbox) URLs are not supported."
+    transcript TranscriptExtractOptions
+        "Transcribe the audio of an audio or video file into timestamped
+        segments. Supported audio formats: .aac, .aif, .aiff, .flac, .m4a, .m4r,
+        .mp3, .oga, .ogg, .wav, .wma; video formats as for `keyframes`. At most
+        10 GB, with at most 1 hour of audio. A file with no audio track fails
+        with `no_audio_error`."
+    keyframes KeyframesExtractOptions
+        "Detect scene changes in a video and return one keyframe per scene.
+        Supported formats: .3gp, .3gpp, .3gpp2, .asf, .avi, .dv, .flv, .m2t,
+        .m2ts, .m4v, .mkv, .mov, .mp4, .mpeg, .mpg, .mts, .mxf, .oggtheora,
+        .ogv, .rm, .ts, .vob, .webm, .wmv. At most 10 GB."
+
+    example default
+        markdown = default
+
+    example transcript
+        transcript = default
+
+struct ExtractArgs
+    "Arguments for the asynchronous `extract_async` route.
+    Exactly one of `file_id`, `path`, or `url` must be supplied via
+    `file_id_or_url` to identify the source file, and `extract_type` must say
+    what to extract from it."
+    file_id_or_url FileIdOrUrl?
+        "Identifier of the source file. Callers must set exactly one of the
+        `FileIdOrUrl` variants. The file must be in a format the requested
+        `extract_type` supports; see `ExtractType` for the per-type lists."
+    extract_type ExtractType
+        "What to extract, and that extraction's options. Required."
+
+    example default
+        file_id_or_url = default
+        extract_type = default
+
+    example transcript
+        file_id_or_url = default
+        extract_type = transcript
+
+union ExtractResult
+    "A completed extraction. The variant always matches the `ExtractType` that
+    was requested."
+    markdown GetMarkdownResult
+        "The markdown the document was converted to. May be empty when the
+        document has no extractable text."
+    text GetTextResult
+        "The plain text of the document. May be empty when no text is found."
+    ocr GetOcrResult
+        "The OCR text and hOCR. Both may be empty when no text is detected."
+    transcript GetTranscriptResult
+        "The transcript. Its segments are empty when no speech is detected."
+    keyframes GetKeyframesResult
+        "The keyframes. Empty when no scene changes are detected."
+
+union ExtractApiV2Error
+    "Reason an extraction job failed. Returned in the `failed` variant of
+    `ExtractAsyncCheckResult`. This is a semantic error union: the HTTP status of
+    the poll request itself is unaffected (a poll that surfaces a failed job is
+    still a normal successful poll response). Callers should branch on the
+    variant."
+    server_error String = ""
+        "An unexpected, typically transient, server-side failure. The string is a
+        human-readable message; retrying with backoff may succeed."
+    user_error String = ""
+        "The request could not be processed as supplied (a problem with the
+        caller's input), for example an out-of-range option. The string is a
+        human-readable message; retrying the same request will not help."
+    unsupported_format_error
+        "The source file is not in a format the requested `extract_type`
+        supports."
+    link_download_disabled_error
+        "`FileIdOrUrl.url` referenced a Dropbox shared link whose owner has
+        disabled downloads."
+    shared_link_password_protected
+        "`FileIdOrUrl.url` referenced a password-protected Dropbox shared link.
+        Riviera cannot supply the password, so such links cannot be read."
+    limit_exceeded_error
+        "A resource limit was exceeded: the source file is larger than the
+        requested `extract_type` accepts, or the result would be too large to
+        return. For `keyframes`, raise `scene_change_threshold` or turn off
+        `include_images`; for `markdown`, turn off `embed_images`."
+    conversion_failure_error
+        "The source file was readable but could not be processed, for example
+        because it is corrupt."
+    not_found_error
+        "The referenced file does not exist or is not accessible."
+    is_a_folder_error
+        "The target is a folder, not a file."
+    no_audio_error
+        "`transcript` only: the source file has no audio track."
+
+union ExtractAsyncCheckResult
+    "Status of an extraction job started by `extract_async`, as returned by
+    `extract_async/check`."
+    in_progress
+        "The job has not finished yet. Poll again."
+    complete ExtractResult
+        "The job finished successfully."
+    failed ExtractApiV2Error
+        "The job finished unsuccessfully."
 
 
 struct GetKeyframesArgs
