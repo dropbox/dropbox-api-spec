@@ -700,6 +700,95 @@ union TeamFolderUpdateSyncSettingsError extends BaseTeamFolderError
     sync_settings_error files.SyncSettingsError
         "An error occurred setting the sync settings."
 
+union TeamFolderSpaceLimitCapsType
+    "How a team folder's space limit is enforced."
+    off
+        "No space limit is enforced and no usage notifications are sent. Any
+        stored space limit value is ignored."
+    soft
+        "The space limit is advisory. Members can keep adding content after the
+        team folder reaches the limit, but usage notifications are sent as
+        described in :type:`TeamFolderSpaceLimitNotificationTarget`."
+    hard
+        "The space limit is enforced. Once the total size of the team folder,
+        including all of its subfolders, reaches the limit, uploads and other
+        writes that add content to the team folder fail until space is freed or
+        the limit is raised. Usage notifications are sent as for :field:`soft`."
+
+union TeamFolderSpaceLimitNotificationTarget
+    "Who receives email notifications when a team folder's usage reaches 80% of
+    its space limit, and when usage reaches or exceeds the limit. These
+    notifications are sent asynchronously, so they can arrive some time after
+    usage crosses a threshold. They are only sent when the caps type is
+    :field:`TeamFolderSpaceLimitCapsType.soft` or :field:`TeamFolderSpaceLimitCapsType.hard`.
+    Regardless of this setting, team admins and all members with edit access to
+    the team folder are notified when a space limit is added, changed, or
+    removed."
+    admins
+        "Team admins who can manage team folders."
+    editors
+        "Members with edit access to the team folder, excluding team admins."
+    both
+        "Both team admins who can manage team folders and members with edit
+        access to the team folder."
+    silent
+        "No usage notifications are sent."
+
+struct TeamFolderSetSpaceLimitArg extends TeamFolderIdArg
+    "Arguments for :route:`team_folder/space_limit/set`."
+    space_limit_bytes UInt64
+        "The maximum total size, in bytes, of all content in the team folder and
+        its subfolders. When :field:`caps_type` is
+        :field:`TeamFolderSpaceLimitCapsType.soft` or :field:`TeamFolderSpaceLimitCapsType.hard`, this
+        must be at least 2 GB (2147483648 bytes). It must never exceed the team's
+        total storage capacity. When :field:`caps_type` is
+        :field:`TeamFolderSpaceLimitCapsType.off`, the value is stored but has no effect,
+        and it may be 0."
+    caps_type TeamFolderSpaceLimitCapsType
+        "The caps type to apply to the specified team folder."
+    notification_target TeamFolderSpaceLimitNotificationTarget
+        "Who receives usage notifications for the specified team folder."
+
+    example default
+        team_folder_id = "123456789"
+        space_limit_bytes = 10737418240
+        caps_type = soft
+        notification_target = admins
+
+struct TeamFolderGetSpaceLimitResponse
+    "The space limit configuration of a team folder. If no space limit has ever
+    been set for the team folder, :field:`space_limit_bytes` is 0,
+    :field:`caps_type` is :field:`TeamFolderSpaceLimitCapsType.off`, and
+    :field:`notification_target` is
+    :field:`TeamFolderSpaceLimitNotificationTarget.admins`."
+    space_limit_bytes UInt64 = 0
+        "The maximum total size, in bytes, of all content in the team folder and
+        its subfolders. Only meaningful when :field:`caps_type` is not
+        :field:`TeamFolderSpaceLimitCapsType.off`."
+    caps_type TeamFolderSpaceLimitCapsType
+        "The caps type currently applied to the team folder."
+    notification_target TeamFolderSpaceLimitNotificationTarget
+        "Who currently receives usage notifications for the team folder."
+
+    example default
+        space_limit_bytes = 10737418240
+        caps_type = soft
+        notification_target = admins
+
+union TeamFolderSetSpaceLimitError extends BaseTeamFolderError
+    "Errors for :route:`team_folder/space_limit/set`."
+    limit_below_minimum
+        ":field:`TeamFolderSetSpaceLimitArg.space_limit_bytes` is below the
+        2 GB minimum. Only returned when
+        :field:`TeamFolderSetSpaceLimitArg.caps_type` is
+        :field:`TeamFolderSpaceLimitCapsType.soft` or :field:`TeamFolderSpaceLimitCapsType.hard`."
+    limit_exceeds_team_quota
+        ":field:`TeamFolderSetSpaceLimitArg.space_limit_bytes` exceeds the
+        team's total storage capacity."
+
+union TeamFolderGetSpaceLimitError extends BaseTeamFolderError
+    "Errors for :route:`team_folder/space_limit/get`."
+
 route team_folder/create (TeamFolderCreateArg, TeamFolderMetadata, TeamFolderCreateError)
     "Creates a new, active, team folder with no members. This endpoint can only be used for teams
     that do not already have a shared team space.
@@ -796,6 +885,25 @@ route team_folder/update_sync_settings (TeamFolderUpdateSyncSettingsArg, TeamFol
 
     attrs
         auth = "team"
+        scope = "team_data.content.write"
+
+route team_folder/space_limit/get (TeamFolderIdArg, TeamFolderGetSpaceLimitResponse, TeamFolderGetSpaceLimitError)
+    "Returns the space limit configuration of a team folder. See
+    :type:`TeamFolderSpaceLimitCapsType` for how space limits are enforced."
+
+    attrs
+        auth = "team"
+        is_preview = true
+        scope = "team_data.content.read"
+
+route team_folder/space_limit/set (TeamFolderSetSpaceLimitArg, Void, TeamFolderSetSpaceLimitError)
+    "Sets the space limit configuration of a team folder, replacing any existing
+    configuration. See :type:`TeamFolderSpaceLimitCapsType` for how space
+    limits are enforced."
+
+    attrs
+        auth = "team"
+        is_preview = true
         scope = "team_data.content.write"
 
 
