@@ -247,8 +247,11 @@ union GetTranscriptAsyncCheckResult
     failed ContentApiV2Error
         "The job finished unsuccessfully."
 
-route get_transcript_async (GetTranscriptArgs, async.LaunchResultBase, Void)
-    "Asynchronous transcript generation for audio and video files.
+route get_transcript_async (GetTranscriptArgs, async.LaunchResultBase, Void) deprecated
+    "Deprecated: use :route:`extract_async` with `extract_type` set to
+    :field:`ExtractType.transcript` instead, which takes the same options. This
+    route will be turned off by December 31, 2026.
+    Asynchronous transcript generation for audio and video files.
     Supported audio formats: .aac, .aif, .aiff, .flac, .m4a, .m4r, .mp3, .oga,
     .ogg, .wav, .wma. Supported video formats: .3gp, .3gpp, .3gpp2, .asf, .avi,
     .dv, .flv, .m2t, .m2ts, .m4v, .mkv, .mov, .mp4, .mpeg, .mpg, .mts, .mxf,
@@ -267,7 +270,7 @@ route get_transcript_async (GetTranscriptArgs, async.LaunchResultBase, Void)
         is_preview = true
         scope = "files.content.read"
 
-route get_transcript_async/check (async.PollArg, GetTranscriptAsyncCheckResult, async.PollError)
+route get_transcript_async/check (async.PollArg, GetTranscriptAsyncCheckResult, async.PollError) deprecated
     "Returns the status or result of specified get_transcript_async task."
 
     attrs
@@ -539,8 +542,11 @@ union GetKeyframesAsyncCheckResult
     complete GetKeyframesResult
     failed KeyframesExtractionApiV2Error
 
-route get_keyframes_async (GetKeyframesArgs, async.LaunchResultBase, Void)
-    "Asynchronous scene-change keyframe extraction for video files.
+route get_keyframes_async (GetKeyframesArgs, async.LaunchResultBase, Void) deprecated
+    "Deprecated: use :route:`extract_async` with `extract_type` set to
+    :field:`ExtractType.keyframes` instead, which takes the same options. This
+    route will be turned off by December 31, 2026.
+    Asynchronous scene-change keyframe extraction for video files.
     Detects scene changes in the source video and returns one representative
     keyframe per detected scene, each tagged with its timestamp (seconds from
     the start of the video) and scene-change score. Set `include_images = true`
@@ -561,7 +567,7 @@ route get_keyframes_async (GetKeyframesArgs, async.LaunchResultBase, Void)
         is_preview = true
         scope = "files.content.read"
 
-route get_keyframes_async/check (async.PollArg, GetKeyframesAsyncCheckResult, async.PollError)
+route get_keyframes_async/check (async.PollArg, GetKeyframesAsyncCheckResult, async.PollError) deprecated
     "Returns the status or result of specified get_keyframes_async task."
 
     attrs
@@ -641,8 +647,11 @@ union GetMarkdownAsyncCheckResult
     failed MarkdownConversionApiV2Error
         "The job finished unsuccessfully."
 
-route get_markdown_async (GetMarkdownArgs, async.LaunchResultBase, Void)
-    "Asynchronous document-to-markdown conversion for supported file formats.
+route get_markdown_async (GetMarkdownArgs, async.LaunchResultBase, Void) deprecated
+    "Deprecated: use :route:`extract_async` with `extract_type` set to
+    :field:`ExtractType.markdown` instead, which takes the same options. This
+    route will be turned off by December 31, 2026.
+    Asynchronous document-to-markdown conversion for supported file formats.
     Supported formats: .binder, .docx, .html, .paper, .papert, .pptx, .xlsx,
     .gsheet, .ods, .pdf. Files in other formats fail with
     :field:`MarkdownConversionApiV2Error.user_error`.
@@ -658,7 +667,7 @@ route get_markdown_async (GetMarkdownArgs, async.LaunchResultBase, Void)
         is_preview = true
         scope = "files.content.read"
 
-route get_markdown_async/check (async.PollArg, GetMarkdownAsyncCheckResult, async.PollError)
+route get_markdown_async/check (async.PollArg, GetMarkdownAsyncCheckResult, async.PollError) deprecated
     "Returns the status or result of specified get_markdown_async task."
 
     attrs
@@ -1029,8 +1038,11 @@ union GetOcrAsyncCheckResult
     complete GetOcrResult
     failed OcrExtractionApiV2Error
 
-route get_ocr_async (GetOcrArgs, async.LaunchResultBase, Void)
-    "Asynchronous OCR (optical character recognition) text extraction for
+route get_ocr_async (GetOcrArgs, async.LaunchResultBase, Void) deprecated
+    "Deprecated: use :route:`extract_async` with `extract_type` set to
+    :field:`ExtractType.ocr` instead, which takes the same options. This
+    route will be turned off by December 31, 2026.
+    Asynchronous OCR (optical character recognition) text extraction for
     images and PDFs, including scanned / non-text PDFs. Supported formats:
     - Image formats: .bmp, .gif, .heic, .jpeg, .jpg, .png, .tif, .tiff,
     .webp.
@@ -1049,7 +1061,7 @@ route get_ocr_async (GetOcrArgs, async.LaunchResultBase, Void)
         is_preview = true
         scope = "files.content.read"
 
-route get_ocr_async/check (async.PollArg, GetOcrAsyncCheckResult, async.PollError)
+route get_ocr_async/check (async.PollArg, GetOcrAsyncCheckResult, async.PollError) deprecated
     "Returns the status or result of specified get_ocr_async task."
 
     attrs
@@ -1121,8 +1133,11 @@ union GetTextAsyncCheckResult
     complete GetTextResult
     failed TextExtractionApiV2Error
 
-route get_text_async (GetTextArgs, async.LaunchResultBase, Void)
-    "Asynchronous plain-text extraction from documents. Supported formats
+route get_text_async (GetTextArgs, async.LaunchResultBase, Void) deprecated
+    "Deprecated: use :route:`extract_async` with `extract_type` set to
+    :field:`ExtractType.text` instead, which takes the same options. This
+    route will be turned off by December 31, 2026.
+    Asynchronous plain-text extraction from documents. Supported formats
     include:
     - Word processing: .doc, .docx, .docm, .rtf.
     - Presentations: .ppt, .pptx, .pptm.
@@ -1140,7 +1155,7 @@ route get_text_async (GetTextArgs, async.LaunchResultBase, Void)
         is_preview = true
         scope = "files.content.read"
 
-route get_text_async/check (async.PollArg, GetTextAsyncCheckResult, async.PollError)
+route get_text_async/check (async.PollArg, GetTextAsyncCheckResult, async.PollError) deprecated
     "Returns the status or result of specified get_text_async task."
 
     attrs
