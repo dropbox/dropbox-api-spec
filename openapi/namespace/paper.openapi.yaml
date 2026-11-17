@@ -1,0 +1,3777 @@
+components:
+  headers:
+    X-Dropbox-Request-Id:
+      description: A unique identifier for the request, useful for debugging and support.
+      schema:
+        type: string
+  parameters:
+    Dropbox-API-Path-Root:
+      description: 'Scopes path-based operations to a namespace (root). The value
+        is a JSON serialization of the `common.PathRoot` union: `{".tag": "home"}`,
+        `{".tag": "root", "root": "<namespace_id>"}`, or `{".tag": "namespace_id",
+        "namespace_id": "<namespace_id>"}`. On failure the request returns 422 with
+        a `common.PathRootError`.'
+      in: header
+      name: Dropbox-API-Path-Root
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-Admin:
+      description: Acts as the specified team admin for supported user-auth operations.
+        Pass a team member ID for an admin account. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-Admin
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-User:
+      description: Acts on behalf of a team member for supported user-auth operations.
+        Pass a team member ID such as `dbmid:...`. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-User
+      required: false
+      schema:
+        type: string
+  responses:
+    "400":
+      content:
+        text/plain:
+          schema:
+            type: string
+      description: Bad input parameter. Check the response body for more information.
+    "401":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+      description: Bad or expired token
+    "403":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AccessErrorResponse'
+      description: The user or team account doesn't have access to the endpoint or
+        feature
+    409NoEndpointError:
+      description: No endpoint-specific errors
+      headers:
+        X-Dropbox-Request-Id:
+          $ref: '#/components/headers/X-Dropbox-Request-Id'
+    "429":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitErrorResponse'
+        text/plain:
+          schema:
+            type: string
+      description: The app is making too many requests for the given user or team
+        and is being rate limited. The app should wait for the number of seconds specified
+        in the "Retry-After" response header before trying again.
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying, when provided by
+            Dropbox.
+          schema:
+            format: int64
+            type: integer
+    "500":
+      description: Internal server error. An error occurred on the Dropbox servers.
+        Check https://status.dropbox.com/ for announcements about Dropbox service
+        issues.
+  schemas:
+    AccessErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AccessError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    AuthErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AuthError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    RateLimitErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    auth_apiv2.AccessError:
+      description: Error occurred because the account doesn't have permission to access
+        the resource.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.invalid_account_type'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.paper_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.team_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.no_permission'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.other'
+    auth_apiv2.AccessError.invalid_account_type:
+      description: Current account type cannot access the resource.
+      properties:
+        .tag:
+          enum:
+          - invalid_account_type
+          type: string
+        invalid_account_type:
+          $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError'
+      required:
+      - .tag
+      - invalid_account_type
+      type: object
+    auth_apiv2.AccessError.no_permission:
+      description: Caller does not have permission to access the resource.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+        no_permission:
+          $ref: '#/components/schemas/auth_apiv2.NoPermissionError'
+      required:
+      - .tag
+      - no_permission
+      type: object
+    auth_apiv2.AccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - invalid_account_type
+            - no_permission
+            - paper_access_denied
+            - team_access_denied
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AccessError.paper_access_denied:
+      description: Current account cannot access Paper.
+      properties:
+        .tag:
+          enum:
+          - paper_access_denied
+          type: string
+        paper_access_denied:
+          $ref: '#/components/schemas/auth_apiv2.PaperAccessError'
+      required:
+      - .tag
+      - paper_access_denied
+      type: object
+    auth_apiv2.AccessError.team_access_denied:
+      description: Team doesn't have permission to access.
+      properties:
+        .tag:
+          enum:
+          - team_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError:
+      description: Errors occurred during authentication.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_user'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_admin'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.user_suspended'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.expired_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.missing_scope'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.route_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.other'
+    auth_apiv2.AuthError.expired_access_token:
+      description: The access token has expired.
+      properties:
+        .tag:
+          enum:
+          - expired_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_access_token:
+      description: 'The access token is invalid. This can happen if the access token
+        has been revoked by Dropbox or the user. To fix this, you should re-authenticate
+        the user. Note: Access tokens that are not returned exactly as provisioned
+        will return this error. Be sure not to truncate or otherwise malform access
+        tokens provided by Dropbox.'
+      properties:
+        .tag:
+          enum:
+          - invalid_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_admin:
+      description: The user specified in 'Dropbox-API-Select-Admin' is not a Dropbox
+        Business team admin.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_admin
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_user:
+      description: The user specified in 'Dropbox-API-Select-User' is no longer on
+        the team.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.missing_scope:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - missing_scope
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.TokenScopeError'
+      description: The access token does not have the required scope to access the
+        route.
+    auth_apiv2.AuthError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - expired_access_token
+            - invalid_access_token
+            - invalid_select_admin
+            - invalid_select_user
+            - missing_scope
+            - route_access_denied
+            - user_suspended
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AuthError.route_access_denied:
+      description: The route is not available to public.
+      properties:
+        .tag:
+          enum:
+          - route_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.user_suspended:
+      description: The user has been suspended.
+      properties:
+        .tag:
+          enum:
+          - user_suspended
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.endpoint'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.feature'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.other'
+    auth_apiv2.InvalidAccountTypeError.endpoint:
+      description: Current account type doesn't have permission to access this endpoint.
+      properties:
+        .tag:
+          enum:
+          - endpoint
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.feature:
+      description: Current account type doesn't have permission to access this feature.
+      properties:
+        .tag:
+          enum:
+          - feature
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - endpoint
+            - feature
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.unauthorized_account_id_usage'
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.other'
+    auth_apiv2.NoPermissionError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - unauthorized_account_id_usage
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError.unauthorized_account_id_usage:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - unauthorized_account_id_usage
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.UnauthorizedAccountIdUsageError'
+      description: Current caller does not have permission to access the account information
+        for one or more of the specified account IDs.
+    auth_apiv2.PaperAccessError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.paper_disabled'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.not_paper_user'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.other'
+    auth_apiv2.PaperAccessError.not_paper_user:
+      description: The provided user has not used Paper yet.
+      properties:
+        .tag:
+          enum:
+          - not_paper_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.PaperAccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - not_paper_user
+            - paper_disabled
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.PaperAccessError.paper_disabled:
+      description: Paper is disabled.
+      properties:
+        .tag:
+          enum:
+          - paper_disabled
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitError:
+      description: Error occurred because the app is being rate limited.
+      properties:
+        reason:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitReason'
+          description: The reason why the app is being rate limited.
+        retry_after:
+          default: 1
+          description: |-
+            The number of seconds that the app should wait
+             before making another request.
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - reason
+      type: object
+    auth_apiv2.RateLimitReason:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_requests'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_write_operations'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.other'
+    auth_apiv2.RateLimitReason.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - too_many_requests
+            - too_many_write_operations
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.RateLimitReason.too_many_requests:
+      description: You are making too many requests in the past few minutes.
+      properties:
+        .tag:
+          enum:
+          - too_many_requests
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitReason.too_many_write_operations:
+      description: There are currently too many write operations happening in the
+        user's Dropbox.
+      properties:
+        .tag:
+          enum:
+          - too_many_write_operations
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.TokenScopeError:
+      properties:
+        required_scope:
+          description: The required scope to access the route.
+          type: string
+      required:
+      - required_scope
+      type: object
+    auth_apiv2.UnauthorizedAccountIdUsageError:
+      properties:
+        unauthorized_account_ids:
+          description: The account IDs that the caller does not have permission to
+            use.
+          items:
+            type: string
+          type: array
+      required:
+      - unauthorized_account_ids
+      type: object
+    common.EmailAddress:
+      maxLength: 255
+      pattern: ^['#&A-Za-z0-9._%+-]+@[A-Za-z0-9-][A-Za-z0-9.-]*\.[A-Za-z]{2,15}$
+      type: string
+    files.FileId:
+      minLength: 4
+      pattern: id:.+
+      type: string
+    paper_apiv2.AddMember:
+      examples:
+      - member:
+          .tag: email
+          email: justin@example.com
+        permission_level:
+          .tag: view_and_comment
+      properties:
+        member:
+          $ref: '#/components/schemas/sharing_apiv2.MemberSelectorRequest'
+          description: User which should be added to the Paper doc. Specify only email
+            address or Dropbox account ID.
+        permission_level:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.PaperDocPermissionLevelRequest'
+          - type: "null"
+          description: Permission for the user.
+      required:
+      - member
+      type: object
+    paper_apiv2.AddMemberList:
+      items:
+        $ref: '#/components/schemas/paper_apiv2.AddMember'
+      maxItems: 20
+      type: array
+    paper_apiv2.AddPaperDocUser:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          custom_message:
+            description: A personal message that will be emailed to each successfully
+              added member.
+            type:
+            - string
+            - "null"
+          members:
+            $ref: '#/components/schemas/paper_apiv2.AddMemberList'
+            description: User which should be added to the Paper doc. Specify only
+              email address or Dropbox account ID.
+          quiet:
+            default: false
+            description: Clients should set this to true if no email message shall
+              be sent to added users.
+            type: boolean
+        required:
+        - members
+        type: object
+      examples:
+      - custom_message: Welcome to Paper.
+        doc_id: uaSvRuxvnkFa12PTkBv5q
+        members:
+        - member:
+            .tag: email
+            email: justin@example.com
+          permission_level:
+            .tag: view_and_comment
+    paper_apiv2.AddPaperDocUserMemberResult:
+      description: Per-member result for [docs/users/add](api:dropbox-api:POST/2/paper/docs/users/add).
+      properties:
+        member:
+          $ref: '#/components/schemas/sharing_apiv2.MemberSelector'
+          description: One of specified input members.
+        result:
+          $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult'
+          description: The outcome of the action on this member.
+      required:
+      - member
+      - result
+      type: object
+    paper_apiv2.AddPaperDocUserMemberResultList:
+      description: Route result wrapper for List(AddPaperDocUserMemberResult) - used
+        by docs/users/add route
+      items:
+        $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserMemberResult'
+      type: array
+    paper_apiv2.AddPaperDocUserResult:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult.success'
+      - $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult.unknown_error'
+      - $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult.sharing_outside_team_disabled'
+      - $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult.daily_limit_reached'
+      - $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult.user_is_owner'
+      - $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult.failed_user_data_retrieval'
+      - $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult.permission_already_granted'
+      - $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserResult.other'
+    paper_apiv2.AddPaperDocUserResult.daily_limit_reached:
+      description: The daily limit of how many users can be added to the Paper doc
+        was reached.
+      properties:
+        .tag:
+          enum:
+          - daily_limit_reached
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.AddPaperDocUserResult.failed_user_data_retrieval:
+      description: User data could not be retrieved. Clients should retry.
+      properties:
+        .tag:
+          enum:
+          - failed_user_data_retrieval
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.AddPaperDocUserResult.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - daily_limit_reached
+            - failed_user_data_retrieval
+            - permission_already_granted
+            - sharing_outside_team_disabled
+            - success
+            - unknown_error
+            - user_is_owner
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.AddPaperDocUserResult.permission_already_granted:
+      description: This user already has the correct permission to the Paper doc.
+      properties:
+        .tag:
+          enum:
+          - permission_already_granted
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.AddPaperDocUserResult.sharing_outside_team_disabled:
+      description: The Paper doc can be shared only with team members.
+      properties:
+        .tag:
+          enum:
+          - sharing_outside_team_disabled
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.AddPaperDocUserResult.success:
+      description: User was successfully added to the Paper doc.
+      properties:
+        .tag:
+          enum:
+          - success
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.AddPaperDocUserResult.unknown_error:
+      description: Something unexpected happened when trying to add the user to the
+        Paper doc.
+      properties:
+        .tag:
+          enum:
+          - unknown_error
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.AddPaperDocUserResult.user_is_owner:
+      description: Owner's permissions cannot be changed.
+      properties:
+        .tag:
+          enum:
+          - user_is_owner
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.Cursor:
+      examples:
+      - expiration: "2016-08-07T14:56:15Z"
+        value: zHZvTPBnXilGgm1AmDgVyZ10zf7qb0qznd5sAVQbbIvoteSnWLjUdLU7aR25hb
+      properties:
+        expiration:
+          description: 'Expiration time of `value`. Some cursors might have expiration
+            time assigned. This is a UTC value after which the cursor is no longer
+            valid and the API starts returning an error. If cursor expires a new one
+            needs to be obtained and pagination needs to be restarted. Some cursors
+            might be short-lived some cursors might be long-lived. This really depends
+            on the sorting type and order, e.g.: 1. on one hand, listing docs created
+            by the user, sorted by the created time ascending will have undefinite
+            expiration because the results cannot change while the iteration is happening.
+            This cursor would be suitable for long term polling. 2. on the other hand,
+            listing docs sorted by the last modified time will have a very short expiration
+            as docs do get modified very often and the modified time can be changed
+            while the iteration is happening thus altering the results.'
+          format: date-time
+          type:
+          - string
+          - "null"
+        value:
+          description: The actual cursor value.
+          type: string
+      required:
+      - value
+      type: object
+    paper_apiv2.DocLookupError:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.DocLookupError.insufficient_permissions'
+      - $ref: '#/components/schemas/paper_apiv2.DocLookupError.doc_not_found'
+      - $ref: '#/components/schemas/paper_apiv2.DocLookupError.folder_not_found'
+      - $ref: '#/components/schemas/paper_apiv2.DocLookupError.other'
+    paper_apiv2.DocLookupError.doc_not_found:
+      description: The required doc was not found.
+      properties:
+        .tag:
+          enum:
+          - doc_not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.DocLookupError.folder_not_found:
+      description: Cloud Docs do not have legacy Paper folders. Use the Dropbox filesystem
+        APIs to look up their containing folders.
+      properties:
+        .tag:
+          enum:
+          - folder_not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.DocLookupError.insufficient_permissions:
+      description: Your account does not have permissions to perform this action.
+        This may be due to it only having access to Paper as files in the Dropbox
+        filesystem. For more information, refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide).
+      properties:
+        .tag:
+          enum:
+          - insufficient_permissions
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.DocLookupError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - doc_not_found
+            - folder_not_found
+            - insufficient_permissions
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.ExportFormat:
+      description: The desired export format of the Paper doc.
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.ExportFormat.html'
+      - $ref: '#/components/schemas/paper_apiv2.ExportFormat.markdown'
+      - $ref: '#/components/schemas/paper_apiv2.ExportFormat.json'
+    paper_apiv2.ExportFormat.html:
+      description: The HTML export format.
+      properties:
+        .tag:
+          enum:
+          - html
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ExportFormat.json:
+      description: Doc metadata JSON export format.
+      properties:
+        .tag:
+          enum:
+          - json
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ExportFormat.markdown:
+      description: The markdown export format.
+      properties:
+        .tag:
+          enum:
+          - markdown
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.Folder:
+      description: Data structure representing a Paper folder.
+      examples:
+      - id: e.gGYT6HSafpMej9bUv306oGm60vrHiCHgEFnzziioPGCvHf
+        name: Design docs
+      properties:
+        id:
+          description: Paper folder ID. This ID uniquely identifies the folder.
+          type: string
+        name:
+          description: Paper folder name.
+          type: string
+      required:
+      - id
+      - name
+      type: object
+    paper_apiv2.FolderList:
+      items:
+        $ref: '#/components/schemas/paper_apiv2.Folder'
+      type: array
+    paper_apiv2.FolderSharingPolicyType:
+      description: The sharing policy of a Paper folder. The sharing policy of subfolders
+        is inherited from the root folder.
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.FolderSharingPolicyType.team'
+      - $ref: '#/components/schemas/paper_apiv2.FolderSharingPolicyType.invite_only'
+      x-stone-union-closed: true
+    paper_apiv2.FolderSharingPolicyType.invite_only:
+      description: Only people directly invited can access this folder.
+      properties:
+        .tag:
+          enum:
+          - invite_only
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.FolderSharingPolicyType.team:
+      description: Everyone in your team and anyone directly invited can access this
+        folder.
+      properties:
+        .tag:
+          enum:
+          - team
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.FoldersContainingPaperDoc:
+      description: Metadata about Paper folders containing the specififed Paper doc.
+      examples:
+      - folder_sharing_policy_type:
+          .tag: team
+        folders:
+        - id: e.gGYT6HSafpMej9bUv306oGm60vrHiCHgEFnzziioPGCvHf
+          name: Design docs
+      properties:
+        folder_sharing_policy_type:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.FolderSharingPolicyType'
+          - type: "null"
+          description: The sharing policy of the folder containing the Paper doc.
+        folders:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.FolderList'
+          - type: "null"
+          description: The folder path. If present the first folder is the root folder.
+      type: object
+    paper_apiv2.GetDocMetadataArg:
+      description: Argument for retrieving Paper doc metadata. Accepts either a legacy
+        Paper doc ID or a Cloud Doc file ID.
+      properties:
+        doc_id:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.PaperDocId'
+          - type: "null"
+          description: Legacy Paper doc identifier.
+        file_id:
+          anyOf:
+          - $ref: '#/components/schemas/files.FileId'
+          - type: "null"
+          description: Dropbox file ID for Cloud Docs (post-PiFS migration).
+      type: object
+    paper_apiv2.ImportFormat:
+      description: The import format of the incoming data.
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.ImportFormat.html'
+      - $ref: '#/components/schemas/paper_apiv2.ImportFormat.markdown'
+      - $ref: '#/components/schemas/paper_apiv2.ImportFormat.plain_text'
+    paper_apiv2.ImportFormat.html:
+      description: The provided data is interpreted as standard HTML.
+      properties:
+        .tag:
+          enum:
+          - html
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ImportFormat.markdown:
+      description: The provided data is interpreted as markdown. The first line of
+        the provided document will be used as the doc title.
+      properties:
+        .tag:
+          enum:
+          - markdown
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ImportFormat.plain_text:
+      description: The provided data is interpreted as plain text. The first line
+        of the provided document will be used as the doc title.
+      properties:
+        .tag:
+          enum:
+          - plain_text
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.InviteeInfoList:
+      items:
+        $ref: '#/components/schemas/sharing_apiv2.InviteeInfo'
+      type: array
+    paper_apiv2.InviteeInfoWithPermissionLevel:
+      examples:
+      - invitee:
+          .tag: email
+          email: jessica@example.com
+        permission_level:
+          .tag: edit
+      properties:
+        invitee:
+          $ref: '#/components/schemas/sharing_apiv2.InviteeInfo'
+          description: Email address invited to the Paper doc.
+        permission_level:
+          $ref: '#/components/schemas/paper_apiv2.PaperDocPermissionLevel'
+          description: Permission level for the invitee.
+      required:
+      - invitee
+      - permission_level
+      type: object
+    paper_apiv2.InviteeInfoWithPermissionLevelList:
+      items:
+        $ref: '#/components/schemas/paper_apiv2.InviteeInfoWithPermissionLevel'
+      type: array
+    paper_apiv2.ListDocsCursorError:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.ListDocsCursorError.cursor_error'
+      - $ref: '#/components/schemas/paper_apiv2.ListDocsCursorError.other'
+    paper_apiv2.ListDocsCursorError.cursor_error:
+      properties:
+        .tag:
+          enum:
+          - cursor_error
+          type: string
+        cursor_error:
+          $ref: '#/components/schemas/paper_apiv2.PaperApiCursorError'
+      required:
+      - .tag
+      - cursor_error
+      type: object
+    paper_apiv2.ListDocsCursorError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - cursor_error
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.ListPaperDocsArgs:
+      examples:
+      - filter_by:
+          .tag: docs_created
+        limit: 100
+        sort_by:
+          .tag: modified
+        sort_order:
+          .tag: descending
+        stop_at_date: "2024-10-11T12:34:55Z"
+      properties:
+        filter_by:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsFilterBy'
+          - type: "null"
+          description: Allows user to specify how the Paper docs should be filtered.
+        limit:
+          default: 1000
+          description: Size limit per batch. The maximum number of docs that can be
+            retrieved per batch is 1000. Higher value results in invalid arguments
+            error.
+          format: int32
+          maximum: 1000
+          minimum: 1
+          type: integer
+        sort_by:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsSortBy'
+          - type: "null"
+          description: Allows user to specify how the Paper docs should be sorted.
+        sort_order:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsSortOrder'
+          - type: "null"
+          description: Allows user to specify the sort order of the result.
+        stop_at_date:
+          description: Do not return results beyond this date. Behavior depends on
+            sort order.
+          format: date-time
+          type:
+          - string
+          - "null"
+      type: object
+    paper_apiv2.ListPaperDocsContinueArgs:
+      examples:
+      - cursor: U60b6BxT43ySd5sAVQbbIvoteSnWLjUdLU7aR25hbt3ySd5sAVQbbIvoteSnWLjUd
+      properties:
+        cursor:
+          description: The cursor obtained from [docs/list](api:dropbox-api:POST/2/paper/docs/list)
+            or [docs/list/continue](api:dropbox-api:POST/2/paper/docs/list/continue).
+            Allows for pagination.
+          type: string
+      required:
+      - cursor
+      type: object
+    paper_apiv2.ListPaperDocsFilterBy:
+      default:
+        .tag: docs_accessed
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsFilterBy.docs_accessed'
+      - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsFilterBy.docs_created'
+    paper_apiv2.ListPaperDocsFilterBy.docs_accessed:
+      description: Fetches all Paper doc IDs that the user has ever accessed.
+      properties:
+        .tag:
+          enum:
+          - docs_accessed
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListPaperDocsFilterBy.docs_created:
+      description: Fetches only the Paper doc IDs that the user has created.
+      properties:
+        .tag:
+          enum:
+          - docs_created
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListPaperDocsResponse:
+      examples:
+      - cursor:
+          expiration: "2016-08-07T14:56:15Z"
+          value: zHZvTPBnXilGgm1AmDgVyZ10zf7qb0qznd5sAVQbbIvoteSnWLjUdLU7aR25hb
+        doc_ids:
+        - zO1E7coc54sE8IuMdUoxz
+        - mm1AmDgVyZ10zf7qb0qzn
+        - dByYHZvTPBnXilGgyc5mm
+        has_more: true
+      properties:
+        cursor:
+          $ref: '#/components/schemas/paper_apiv2.Cursor'
+          description: Pass the cursor into [docs/list/continue](api:dropbox-api:POST/2/paper/docs/list/continue)
+            to paginate through all files. The cursor preserves all properties as
+            specified in the original call to [docs/list](api:dropbox-api:POST/2/paper/docs/list).
+        doc_ids:
+          $ref: '#/components/schemas/paper_apiv2.PaperDocIdList'
+          description: The list of Paper doc IDs that can be used to access the given
+            Paper docs or supplied to other API methods. The list is sorted in the
+            order specified by the initial call to [docs/list](api:dropbox-api:POST/2/paper/docs/list).
+        has_more:
+          description: Will be set to True if a subsequent call with the provided
+            cursor to [docs/list/continue](api:dropbox-api:POST/2/paper/docs/list/continue)
+            returns immediately with some results. If set to False please allow some
+            delay before making another call to [docs/list/continue](api:dropbox-api:POST/2/paper/docs/list/continue).
+          type: boolean
+      required:
+      - cursor
+      - doc_ids
+      - has_more
+      type: object
+    paper_apiv2.ListPaperDocsSortBy:
+      default:
+        .tag: accessed
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsSortBy.accessed'
+      - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsSortBy.modified'
+      - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsSortBy.created'
+    paper_apiv2.ListPaperDocsSortBy.accessed:
+      description: Sorts the Paper docs by the time they were last accessed.
+      properties:
+        .tag:
+          enum:
+          - accessed
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListPaperDocsSortBy.created:
+      description: Sorts the Paper docs by the creation time.
+      properties:
+        .tag:
+          enum:
+          - created
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListPaperDocsSortBy.modified:
+      description: Sorts the Paper docs by the time they were last modified.
+      properties:
+        .tag:
+          enum:
+          - modified
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListPaperDocsSortOrder:
+      default:
+        .tag: ascending
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsSortOrder.ascending'
+      - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsSortOrder.descending'
+    paper_apiv2.ListPaperDocsSortOrder.ascending:
+      description: Sorts the search result in ascending order.
+      properties:
+        .tag:
+          enum:
+          - ascending
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListPaperDocsSortOrder.descending:
+      description: Sorts the search result in descending order.
+      properties:
+        .tag:
+          enum:
+          - descending
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListUsersCursorError:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.ListUsersCursorError.insufficient_permissions'
+      - $ref: '#/components/schemas/paper_apiv2.ListUsersCursorError.doc_not_found'
+      - $ref: '#/components/schemas/paper_apiv2.ListUsersCursorError.cursor_error'
+      - $ref: '#/components/schemas/paper_apiv2.ListUsersCursorError.other'
+    paper_apiv2.ListUsersCursorError.cursor_error:
+      properties:
+        .tag:
+          enum:
+          - cursor_error
+          type: string
+        cursor_error:
+          $ref: '#/components/schemas/paper_apiv2.PaperApiCursorError'
+      required:
+      - .tag
+      - cursor_error
+      type: object
+    paper_apiv2.ListUsersCursorError.doc_not_found:
+      description: The required doc was not found.
+      properties:
+        .tag:
+          enum:
+          - doc_not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListUsersCursorError.insufficient_permissions:
+      description: Your account does not have permissions to perform this action.
+        This may be due to it only having access to Paper as files in the Dropbox
+        filesystem. For more information, refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide).
+      properties:
+        .tag:
+          enum:
+          - insufficient_permissions
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.ListUsersCursorError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - cursor_error
+            - doc_not_found
+            - insufficient_permissions
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.ListUsersOnFolderArgs:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          limit:
+            default: 1000
+            description: Size limit per batch. The maximum number of users that can
+              be retrieved per batch is 1000. Higher value results in invalid arguments
+              error.
+            format: int32
+            maximum: 1000
+            minimum: 1
+            type: integer
+        type: object
+      examples:
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+        limit: 100
+    paper_apiv2.ListUsersOnFolderContinueArgs:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          cursor:
+            description: The cursor obtained from [docs/folder_users/list](api:dropbox-api:POST/2/paper/docs/folder_users/list)
+              or [docs/folder_users/list/continue](api:dropbox-api:POST/2/paper/docs/folder_users/list/continue).
+              Allows for pagination.
+            type: string
+        required:
+        - cursor
+        type: object
+      examples:
+      - cursor: U60b6BxT43ySd5sAVQbbIvoteSnWLjUdLU7aR25hbt3ySd5sAVQbbIvoteSnWLjUd
+        doc_id: uaSvRuxvnkFa12PTkBv5q
+    paper_apiv2.ListUsersOnFolderResponse:
+      examples:
+      - cursor:
+          expiration: "2016-08-07T14:56:15Z"
+          value: zHZvTPBnXilGgm1AmDgVyZ10zf7qb0qznd5sAVQbbIvoteSnWLjUdLU7aR25hb
+        has_more: false
+        invitees:
+        - .tag: email
+          email: jessica@example.com
+        users:
+        - account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+          display_name: Robert Smith
+          email: bob@example.com
+          same_team: true
+          team_member_id: dbmid:abcd1234
+      properties:
+        cursor:
+          $ref: '#/components/schemas/paper_apiv2.Cursor'
+          description: Pass the cursor into [docs/folder_users/list/continue](api:dropbox-api:POST/2/paper/docs/folder_users/list/continue)
+            to paginate through all users. The cursor preserves all properties as
+            specified in the original call to [docs/folder_users/list](api:dropbox-api:POST/2/paper/docs/folder_users/list).
+        has_more:
+          description: Will be set to True if a subsequent call with the provided
+            cursor to [docs/folder_users/list/continue](api:dropbox-api:POST/2/paper/docs/folder_users/list/continue)
+            returns immediately with some results. If set to False please allow some
+            delay before making another call to [docs/folder_users/list/continue](api:dropbox-api:POST/2/paper/docs/folder_users/list/continue).
+          type: boolean
+        invitees:
+          $ref: '#/components/schemas/paper_apiv2.InviteeInfoList'
+          description: List of email addresses that are invited on the Paper folder.
+        users:
+          $ref: '#/components/schemas/paper_apiv2.UserInfoList'
+          description: List of users that are invited on the Paper folder.
+      required:
+      - cursor
+      - has_more
+      - invitees
+      - users
+      type: object
+    paper_apiv2.ListUsersOnPaperDocArgs:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          filter_by:
+            anyOf:
+            - $ref: '#/components/schemas/paper_apiv2.UserOnPaperDocFilter'
+            - type: "null"
+            description: Specify this attribute if you want to obtain users that have
+              already accessed the Paper doc.
+          limit:
+            default: 1000
+            description: Size limit per batch. The maximum number of users that can
+              be retrieved per batch is 1000. Higher value results in invalid arguments
+              error.
+            format: int32
+            maximum: 1000
+            minimum: 1
+            type: integer
+        type: object
+      examples:
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+        filter_by:
+          .tag: shared
+        limit: 100
+    paper_apiv2.ListUsersOnPaperDocContinueArgs:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          cursor:
+            description: The cursor obtained from [docs/users/list](api:dropbox-api:POST/2/paper/docs/users/list)
+              or [docs/users/list/continue](api:dropbox-api:POST/2/paper/docs/users/list/continue).
+              Allows for pagination.
+            type: string
+        required:
+        - cursor
+        type: object
+      examples:
+      - cursor: U60b6BxT43ySd5sAVQbbIvoteSnWLjUdLU7aR25hbt3ySd5sAVQbbIvoteSnWLjUd
+        doc_id: uaSvRuxvnkFa12PTkBv5q
+    paper_apiv2.ListUsersOnPaperDocResponse:
+      examples:
+      - cursor:
+          expiration: "2016-08-07T14:56:15Z"
+          value: zHZvTPBnXilGgm1AmDgVyZ10zf7qb0qznd5sAVQbbIvoteSnWLjUdLU7aR25hb
+        doc_owner:
+          account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+          display_name: Robert Smith
+          email: bob@example.com
+          same_team: true
+          team_member_id: dbmid:abcd1234
+        has_more: false
+        invitees:
+        - invitee:
+            .tag: email
+            email: jessica@example.com
+          permission_level:
+            .tag: edit
+        users:
+        - permission_level:
+            .tag: view_and_comment
+          user:
+            account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+            display_name: Robert Smith
+            email: bob@example.com
+            same_team: true
+            team_member_id: dbmid:abcd1234
+      properties:
+        cursor:
+          $ref: '#/components/schemas/paper_apiv2.Cursor'
+          description: Pass the cursor into [docs/users/list/continue](api:dropbox-api:POST/2/paper/docs/users/list/continue)
+            to paginate through all users. The cursor preserves all properties as
+            specified in the original call to [docs/users/list](api:dropbox-api:POST/2/paper/docs/users/list).
+        doc_owner:
+          $ref: '#/components/schemas/sharing_apiv2.UserInfo'
+          description: The Paper doc owner. This field is populated on every single
+            response.
+        has_more:
+          description: Will be set to True if a subsequent call with the provided
+            cursor to [docs/users/list/continue](api:dropbox-api:POST/2/paper/docs/users/list/continue)
+            returns immediately with some results. If set to False please allow some
+            delay before making another call to [docs/users/list/continue](api:dropbox-api:POST/2/paper/docs/users/list/continue).
+          type: boolean
+        invitees:
+          $ref: '#/components/schemas/paper_apiv2.InviteeInfoWithPermissionLevelList'
+          description: List of email addresses with their respective permission levels
+            that are invited on the Paper doc.
+        users:
+          $ref: '#/components/schemas/paper_apiv2.UserInfoWithPermissionLevelList'
+          description: List of users with their respective permission levels that
+            are invited on the Paper folder.
+      required:
+      - cursor
+      - doc_owner
+      - has_more
+      - invitees
+      - users
+      type: object
+    paper_apiv2.PaperApiCursorError:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.PaperApiCursorError.expired_cursor'
+      - $ref: '#/components/schemas/paper_apiv2.PaperApiCursorError.invalid_cursor'
+      - $ref: '#/components/schemas/paper_apiv2.PaperApiCursorError.wrong_user_in_cursor'
+      - $ref: '#/components/schemas/paper_apiv2.PaperApiCursorError.reset'
+      - $ref: '#/components/schemas/paper_apiv2.PaperApiCursorError.other'
+    paper_apiv2.PaperApiCursorError.expired_cursor:
+      description: The provided cursor is expired.
+      properties:
+        .tag:
+          enum:
+          - expired_cursor
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperApiCursorError.invalid_cursor:
+      description: The provided cursor is invalid.
+      properties:
+        .tag:
+          enum:
+          - invalid_cursor
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperApiCursorError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - expired_cursor
+            - invalid_cursor
+            - reset
+            - wrong_user_in_cursor
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.PaperApiCursorError.reset:
+      description: Indicates that the cursor has been invalidated. Call the corresponding
+        non-continue endpoint to obtain a new cursor.
+      properties:
+        .tag:
+          enum:
+          - reset
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperApiCursorError.wrong_user_in_cursor:
+      description: The provided cursor contains invalid user.
+      properties:
+        .tag:
+          enum:
+          - wrong_user_in_cursor
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocCreateArgs:
+      examples:
+      - import_format:
+          .tag: markdown
+      - import_format:
+          .tag: html
+        parent_folder_id: e.gGYT6HSafpMej9bUv306GarglI7GGeAM3yvfZvXHO9u4mV
+      properties:
+        import_format:
+          $ref: '#/components/schemas/paper_apiv2.ImportFormat'
+          description: The format of provided data.
+        parent_folder_id:
+          description: The Paper folder ID where the Paper document should be created.
+            The API user has to have write access to this folder or error is thrown.
+          type:
+          - string
+          - "null"
+      required:
+      - import_format
+      type: object
+    paper_apiv2.PaperDocCreateError:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocCreateError.insufficient_permissions'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocCreateError.content_malformed'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocCreateError.folder_not_found'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocCreateError.doc_length_exceeded'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocCreateError.image_size_exceeded'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocCreateError.other'
+    paper_apiv2.PaperDocCreateError.content_malformed:
+      description: The provided content was malformed and cannot be imported to Paper.
+      properties:
+        .tag:
+          enum:
+          - content_malformed
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocCreateError.doc_length_exceeded:
+      description: The newly created Paper doc would be too large. Please split the
+        content into multiple docs.
+      properties:
+        .tag:
+          enum:
+          - doc_length_exceeded
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocCreateError.folder_not_found:
+      description: The specified Paper folder is cannot be found.
+      properties:
+        .tag:
+          enum:
+          - folder_not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocCreateError.image_size_exceeded:
+      description: The imported document contains an image that is too large. The
+        current limit is 1MB. This only applies to HTML with data URI.
+      properties:
+        .tag:
+          enum:
+          - image_size_exceeded
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocCreateError.insufficient_permissions:
+      description: Your account does not have permissions to perform this action.
+        This may be due to it only having access to Paper as files in the Dropbox
+        filesystem. For more information, refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide).
+      properties:
+        .tag:
+          enum:
+          - insufficient_permissions
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocCreateError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - content_malformed
+            - doc_length_exceeded
+            - folder_not_found
+            - image_size_exceeded
+            - insufficient_permissions
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.PaperDocCreateUpdateResult:
+      examples:
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+        revision: 456736745
+        title: Week one retention
+      properties:
+        doc_id:
+          description: Doc ID of the newly created doc.
+          type: string
+        revision:
+          description: The Paper doc revision. Simply an ever increasing number.
+          format: int64
+          type: integer
+        title:
+          description: The Paper doc title.
+          type: string
+      required:
+      - doc_id
+      - revision
+      - title
+      type: object
+    paper_apiv2.PaperDocExport:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          export_format:
+            $ref: '#/components/schemas/paper_apiv2.ExportFormat'
+          include_comments:
+            default: false
+            description: |-
+              When true, export includes comment threads (e.g. markdown footnotes). When false or omitted, body only.
+               Other formats may adopt this later; currently only markdown uses it.
+               Plain bool (not optional): protoc-gen-godbx does not support proto3 optional yet.
+            type: boolean
+        required:
+        - export_format
+        type: object
+      examples:
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+        export_format:
+          .tag: markdown
+    paper_apiv2.PaperDocExportResult:
+      examples:
+      - mime_type: text/x-markdown
+        owner: james@example.com
+        revision: 456736745
+        title: Week one retention
+      properties:
+        mime_type:
+          description: MIME type of the export. This corresponds to `ExportFormat`
+            specified in the request.
+          type: string
+        owner:
+          description: The Paper doc owner's email address.
+          type: string
+        revision:
+          description: The Paper doc revision. Simply an ever increasing number.
+          format: int64
+          type: integer
+        title:
+          description: The Paper doc title.
+          type: string
+      required:
+      - mime_type
+      - owner
+      - revision
+      - title
+      type: object
+    paper_apiv2.PaperDocGetMetadataResult:
+      description: Metadata returned by docs/get_metadata.
+      examples:
+      - created_date: "2016-01-20T00:00:00Z"
+        doc_id: uaSvRuxvnkFa12PTkBv5q
+        last_editor: stephen@example.com
+        last_updated_date: "2017-01-02T00:00:00Z"
+        owner: steph@example.com
+        revision: 56556
+        status:
+          .tag: active
+        title: Onbaording Doc
+      properties:
+        created_date:
+          description: The Paper doc creation date.
+          format: date-time
+          type: string
+        doc_id:
+          $ref: '#/components/schemas/paper_apiv2.PaperDocId'
+          description: The Paper doc ID.
+        last_editor:
+          description: The email address of the last editor of the Paper doc.
+          type: string
+        last_updated_date:
+          description: The date when the Paper doc was last edited.
+          format: date-time
+          type: string
+        owner:
+          description: The Paper doc owner's email address.
+          type: string
+        revision:
+          description: The Paper doc revision. Simply an ever increasing number.
+          format: int64
+          type: integer
+        status:
+          $ref: '#/components/schemas/paper_apiv2.PaperDocStatus'
+          description: The Paper doc status.
+        title:
+          description: The Paper doc title.
+          type: string
+      required:
+      - created_date
+      - doc_id
+      - last_editor
+      - last_updated_date
+      - owner
+      - revision
+      - status
+      - title
+      type: object
+    paper_apiv2.PaperDocId:
+      description: Paper doc ID.
+      type: string
+    paper_apiv2.PaperDocIdList:
+      items:
+        $ref: '#/components/schemas/paper_apiv2.PaperDocId'
+      type: array
+    paper_apiv2.PaperDocPermissionLevel:
+      default:
+        .tag: edit
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocPermissionLevel.edit'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocPermissionLevel.view_and_comment'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocPermissionLevel.other'
+    paper_apiv2.PaperDocPermissionLevel.edit:
+      description: User will be granted edit permissions.
+      properties:
+        .tag:
+          enum:
+          - edit
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocPermissionLevel.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - edit
+            - view_and_comment
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.PaperDocPermissionLevel.view_and_comment:
+      description: User will be granted view and comment permissions.
+      properties:
+        .tag:
+          enum:
+          - view_and_comment
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocPermissionLevelRequest:
+      default:
+        .tag: edit
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocPermissionLevel.edit'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocPermissionLevel.view_and_comment'
+    paper_apiv2.PaperDocSharingPolicy:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          sharing_policy:
+            $ref: '#/components/schemas/paper_apiv2.SharingPolicy'
+            description: The default sharing policy to be set for the Paper doc.
+        required:
+        - sharing_policy
+        type: object
+      examples:
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+        sharing_policy:
+          public_sharing_policy:
+            .tag: people_with_link_can_edit
+          team_sharing_policy:
+            .tag: people_with_link_can_edit
+    paper_apiv2.PaperDocStatus:
+      description: The status of a Paper doc.
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocStatus.active'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocStatus.deleted'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocStatus.other'
+    paper_apiv2.PaperDocStatus.active:
+      description: The Paper doc is active.
+      properties:
+        .tag:
+          enum:
+          - active
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocStatus.deleted:
+      description: The Paper doc is deleted.
+      properties:
+        .tag:
+          enum:
+          - deleted
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocStatus.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - active
+            - deleted
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.PaperDocUpdateArgs:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          doc_update_policy:
+            $ref: '#/components/schemas/paper_apiv2.PaperDocUpdatePolicy'
+            description: The policy used for the current update call.
+          import_format:
+            $ref: '#/components/schemas/paper_apiv2.ImportFormat'
+            description: The format of provided data.
+          revision:
+            description: The latest doc revision. This value must match the head revision
+              or an error code will be returned. This is to prevent colliding writes.
+            format: int64
+            type: integer
+        required:
+        - doc_update_policy
+        - import_format
+        - revision
+        type: object
+      examples:
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+        doc_update_policy:
+          .tag: overwrite_all
+        import_format:
+          .tag: html
+        revision: 12345
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+        doc_update_policy:
+          .tag: prepend
+        import_format:
+          .tag: plain_text
+        revision: 56556
+    paper_apiv2.PaperDocUpdateError:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.insufficient_permissions'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.doc_not_found'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.folder_not_found'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.content_malformed'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.revision_mismatch'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.doc_length_exceeded'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.image_size_exceeded'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.doc_archived'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.doc_deleted'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError.other'
+    paper_apiv2.PaperDocUpdateError.content_malformed:
+      description: The provided content was malformed and cannot be imported to Paper.
+      properties:
+        .tag:
+          enum:
+          - content_malformed
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdateError.doc_archived:
+      description: This operation is not allowed on archived Paper docs.
+      properties:
+        .tag:
+          enum:
+          - doc_archived
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdateError.doc_deleted:
+      description: This operation is not allowed on deleted Paper docs.
+      properties:
+        .tag:
+          enum:
+          - doc_deleted
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdateError.doc_length_exceeded:
+      description: The newly created Paper doc would be too large, split the content
+        into multiple docs.
+      properties:
+        .tag:
+          enum:
+          - doc_length_exceeded
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdateError.doc_not_found:
+      description: The required doc was not found.
+      properties:
+        .tag:
+          enum:
+          - doc_not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdateError.folder_not_found:
+      description: Cloud Docs do not have legacy Paper folders. Use the Dropbox filesystem
+        APIs to look up their containing folders.
+      properties:
+        .tag:
+          enum:
+          - folder_not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdateError.image_size_exceeded:
+      description: The imported document contains an image that is too large. The
+        current limit is 1MB. This only applies to HTML with data URI.
+      properties:
+        .tag:
+          enum:
+          - image_size_exceeded
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdateError.insufficient_permissions:
+      description: Your account does not have permissions to perform this action.
+        This may be due to it only having access to Paper as files in the Dropbox
+        filesystem. For more information, refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide).
+      properties:
+        .tag:
+          enum:
+          - insufficient_permissions
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdateError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - content_malformed
+            - doc_archived
+            - doc_deleted
+            - doc_length_exceeded
+            - doc_not_found
+            - folder_not_found
+            - image_size_exceeded
+            - insufficient_permissions
+            - revision_mismatch
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.PaperDocUpdateError.revision_mismatch:
+      description: The provided revision does not match the document head.
+      properties:
+        .tag:
+          enum:
+          - revision_mismatch
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdatePolicy:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdatePolicy.append'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdatePolicy.prepend'
+      - $ref: '#/components/schemas/paper_apiv2.PaperDocUpdatePolicy.overwrite_all'
+    paper_apiv2.PaperDocUpdatePolicy.append:
+      description: The content will be appended to the doc.
+      properties:
+        .tag:
+          enum:
+          - append
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdatePolicy.overwrite_all:
+      description: The document will be overwitten at the head with the provided content.
+      properties:
+        .tag:
+          enum:
+          - overwrite_all
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperDocUpdatePolicy.prepend:
+      description: The content will be prepended to the doc. The doc title will not
+        be affected.
+      properties:
+        .tag:
+          enum:
+          - prepend
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperFolderCreateArg:
+      examples:
+      - name: my new folder
+      - name: my new folder
+        parent_folder_id: e.gGYT6HSafpMej9bUv306GarglI7GGeAM3yvfZvXHO9u4mV
+      - is_team_folder: true
+        name: my new folder
+      properties:
+        is_team_folder:
+          description: Whether the folder to be created should be a team folder. This
+            value will be ignored if parent_folder_id is supplied, as the new folder
+            will inherit the type (private or team folder) from its parent. We will
+            by default create a top-level private folder if both parent_folder_id
+            and is_team_folder are not supplied.
+          type:
+          - boolean
+          - "null"
+        name:
+          description: The name of the new Paper folder.
+          type: string
+        parent_folder_id:
+          description: The encrypted Paper folder Id where the new Paper folder should
+            be created. The API user has to have write access to this folder or error
+            is thrown. If not supplied, the new folder will be created at top level.
+          type:
+          - string
+          - "null"
+      required:
+      - name
+      type: object
+    paper_apiv2.PaperFolderCreateError:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.PaperFolderCreateError.insufficient_permissions'
+      - $ref: '#/components/schemas/paper_apiv2.PaperFolderCreateError.folder_not_found'
+      - $ref: '#/components/schemas/paper_apiv2.PaperFolderCreateError.invalid_folder_id'
+      - $ref: '#/components/schemas/paper_apiv2.PaperFolderCreateError.other'
+    paper_apiv2.PaperFolderCreateError.folder_not_found:
+      description: The specified parent Paper folder cannot be found.
+      properties:
+        .tag:
+          enum:
+          - folder_not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperFolderCreateError.insufficient_permissions:
+      description: Your account does not have permissions to perform this action.
+        This may be due to it only having access to Paper as files in the Dropbox
+        filesystem. For more information, refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide).
+      properties:
+        .tag:
+          enum:
+          - insufficient_permissions
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperFolderCreateError.invalid_folder_id:
+      description: The folder id cannot be decrypted to valid folder id.
+      properties:
+        .tag:
+          enum:
+          - invalid_folder_id
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.PaperFolderCreateError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - folder_not_found
+            - insufficient_permissions
+            - invalid_folder_id
+          type: string
+      title: Other
+      type: object
+    paper_apiv2.PaperFolderCreateResult:
+      examples:
+      - folder_id: abcd
+      properties:
+        folder_id:
+          description: Folder ID of the newly created folder.
+          type: string
+      required:
+      - folder_id
+      type: object
+    paper_apiv2.RefPaperDoc:
+      examples:
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+      properties:
+        doc_id:
+          $ref: '#/components/schemas/paper_apiv2.PaperDocId'
+          description: The Paper doc ID.
+      required:
+      - doc_id
+      type: object
+    paper_apiv2.RemovePaperDocUser:
+      allOf:
+      - $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+      - properties:
+          member:
+            $ref: '#/components/schemas/sharing_apiv2.MemberSelectorRequest'
+            description: User which should be removed from the Paper doc. Specify
+              only email address or Dropbox account ID.
+        required:
+        - member
+        type: object
+      examples:
+      - doc_id: uaSvRuxvnkFa12PTkBv5q
+        member:
+          .tag: email
+          email: justin@example.com
+    paper_apiv2.SharingPolicy:
+      description: Sharing policy of Paper doc.
+      examples:
+      - public_sharing_policy:
+          .tag: people_with_link_can_edit
+        team_sharing_policy:
+          .tag: people_with_link_can_edit
+      properties:
+        public_sharing_policy:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.SharingPublicPolicyType'
+          - type: "null"
+          description: This value applies to the non-team members.
+        team_sharing_policy:
+          anyOf:
+          - $ref: '#/components/schemas/paper_apiv2.SharingTeamPolicyType'
+          - type: "null"
+          description: This value applies to the team members only. The value is null
+            for all personal accounts.
+      type: object
+    paper_apiv2.SharingPublicPolicyType:
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.SharingPublicPolicyType.people_with_link_can_edit'
+      - $ref: '#/components/schemas/paper_apiv2.SharingPublicPolicyType.people_with_link_can_view_and_comment'
+      - $ref: '#/components/schemas/paper_apiv2.SharingPublicPolicyType.invite_only'
+      - $ref: '#/components/schemas/paper_apiv2.SharingPublicPolicyType.disabled'
+      x-stone-union-closed: true
+    paper_apiv2.SharingPublicPolicyType.disabled:
+      description: Value used to indicate that doc sharing is enabled only within
+        team.
+      properties:
+        .tag:
+          enum:
+          - disabled
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.SharingPublicPolicyType.invite_only:
+      description: Users must be explicitly invited to this doc.
+      properties:
+        .tag:
+          enum:
+          - invite_only
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.SharingPublicPolicyType.people_with_link_can_edit:
+      description: Users who have a link to this doc can edit it.
+      properties:
+        .tag:
+          enum:
+          - people_with_link_can_edit
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.SharingPublicPolicyType.people_with_link_can_view_and_comment:
+      description: Users who have a link to this doc can view and comment on it.
+      properties:
+        .tag:
+          enum:
+          - people_with_link_can_view_and_comment
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.SharingTeamPolicyType:
+      description: The sharing policy type of the Paper doc.
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.SharingTeamPolicyType.people_with_link_can_edit'
+      - $ref: '#/components/schemas/paper_apiv2.SharingTeamPolicyType.people_with_link_can_view_and_comment'
+      - $ref: '#/components/schemas/paper_apiv2.SharingTeamPolicyType.invite_only'
+      x-stone-union-closed: true
+    paper_apiv2.SharingTeamPolicyType.invite_only:
+      description: Users must be explicitly invited to this doc.
+      properties:
+        .tag:
+          enum:
+          - invite_only
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.SharingTeamPolicyType.people_with_link_can_edit:
+      description: Users who have a link to this doc can edit it.
+      properties:
+        .tag:
+          enum:
+          - people_with_link_can_edit
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.SharingTeamPolicyType.people_with_link_can_view_and_comment:
+      description: Users who have a link to this doc can view and comment on it.
+      properties:
+        .tag:
+          enum:
+          - people_with_link_can_view_and_comment
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.UserInfoList:
+      items:
+        $ref: '#/components/schemas/sharing_apiv2.UserInfo'
+      type: array
+    paper_apiv2.UserInfoWithPermissionLevel:
+      examples:
+      - permission_level:
+          .tag: view_and_comment
+        user:
+          account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+          display_name: Robert Smith
+          email: bob@example.com
+          same_team: true
+          team_member_id: dbmid:abcd1234
+      properties:
+        permission_level:
+          $ref: '#/components/schemas/paper_apiv2.PaperDocPermissionLevel'
+          description: Permission level for the user.
+        user:
+          $ref: '#/components/schemas/sharing_apiv2.UserInfo'
+          description: User shared on the Paper doc.
+      required:
+      - permission_level
+      - user
+      type: object
+    paper_apiv2.UserInfoWithPermissionLevelList:
+      items:
+        $ref: '#/components/schemas/paper_apiv2.UserInfoWithPermissionLevel'
+      type: array
+    paper_apiv2.UserOnPaperDocFilter:
+      default:
+        .tag: shared
+      oneOf:
+      - $ref: '#/components/schemas/paper_apiv2.UserOnPaperDocFilter.visited'
+      - $ref: '#/components/schemas/paper_apiv2.UserOnPaperDocFilter.shared'
+    paper_apiv2.UserOnPaperDocFilter.shared:
+      description: All uses who are shared on the Paper doc. This includes all users
+        who have visited the Paper doc as well as those who have not.
+      properties:
+        .tag:
+          enum:
+          - shared
+          type: string
+      required:
+      - .tag
+      type: object
+    paper_apiv2.UserOnPaperDocFilter.visited:
+      description: all users who have visited the Paper doc.
+      properties:
+        .tag:
+          enum:
+          - visited
+          type: string
+      required:
+      - .tag
+      type: object
+    sharing_apiv2.DropboxId:
+      minLength: 1
+      type: string
+    sharing_apiv2.InviteeInfo:
+      description: Information about the recipient of a shared content invitation.
+      examples:
+      - .tag: email
+        email: jessica@example.com
+      oneOf:
+      - $ref: '#/components/schemas/sharing_apiv2.InviteeInfo.email'
+      - $ref: '#/components/schemas/sharing_apiv2.InviteeInfo.other'
+    sharing_apiv2.InviteeInfo.email:
+      description: Email address of invited user.
+      properties:
+        .tag:
+          enum:
+          - email
+          type: string
+        email:
+          anyOf:
+          - $ref: '#/components/schemas/common.EmailAddress'
+          - type: "null"
+      required:
+      - .tag
+      - email
+      type: object
+    sharing_apiv2.InviteeInfo.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - email
+          type: string
+      title: Other
+      type: object
+    sharing_apiv2.MemberSelector:
+      description: Includes different ways to identify a member of a shared folder.
+      examples:
+      - .tag: email
+        email: justin@example.com
+      - .tag: dropbox_id
+        dropbox_id: dbid:AAEufNrMPSPe0dMQijRP0N_aZtBJRm26W4Q
+      - .tag: dropbox_id
+        dropbox_id: g:98d36ed08e6290c2e9d536a392f974ee
+      oneOf:
+      - $ref: '#/components/schemas/sharing_apiv2.MemberSelector.dropbox_id'
+      - $ref: '#/components/schemas/sharing_apiv2.MemberSelector.email'
+      - $ref: '#/components/schemas/sharing_apiv2.MemberSelector.other'
+    sharing_apiv2.MemberSelector.dropbox_id:
+      description: Dropbox account, team member, or group ID of member.
+      properties:
+        .tag:
+          enum:
+          - dropbox_id
+          type: string
+        dropbox_id:
+          anyOf:
+          - $ref: '#/components/schemas/sharing_apiv2.DropboxId'
+          - type: "null"
+      required:
+      - .tag
+      - dropbox_id
+      type: object
+    sharing_apiv2.MemberSelector.email:
+      description: Email address of member.
+      properties:
+        .tag:
+          enum:
+          - email
+          type: string
+        email:
+          anyOf:
+          - $ref: '#/components/schemas/common.EmailAddress'
+          - type: "null"
+      required:
+      - .tag
+      - email
+      type: object
+    sharing_apiv2.MemberSelector.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - dropbox_id
+            - email
+          type: string
+      title: Other
+      type: object
+    sharing_apiv2.MemberSelectorRequest:
+      description: Includes different ways to identify a member of a shared folder.
+      examples:
+      - .tag: email
+        email: justin@example.com
+      - .tag: dropbox_id
+        dropbox_id: dbid:AAEufNrMPSPe0dMQijRP0N_aZtBJRm26W4Q
+      - .tag: dropbox_id
+        dropbox_id: g:98d36ed08e6290c2e9d536a392f974ee
+      oneOf:
+      - $ref: '#/components/schemas/sharing_apiv2.MemberSelector.dropbox_id'
+      - $ref: '#/components/schemas/sharing_apiv2.MemberSelector.email'
+    sharing_apiv2.UserInfo:
+      description: |-
+        Basic information about a user. Use [users.get_account](api:dropbox-api:POST/2/users/get_account) and
+         [users.get_account_batch](api:dropbox-api:POST/2/users/get_account_batch) to obtain more detailed information.
+      examples:
+      - account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+        display_name: Robert Smith
+        email: bob@example.com
+        same_team: true
+        team_member_id: dbmid:abcd1234
+      properties:
+        account_id:
+          $ref: '#/components/schemas/users_common.AccountId'
+          description: The account ID of the user.
+        display_name:
+          description: The display name of the user.
+          type: string
+        email:
+          description: Email address of user.
+          type: string
+        same_team:
+          description: If the user is in the same team as current user.
+          type: boolean
+        team_member_id:
+          description: |-
+            The team member ID of the shared folder member. Only present if
+             `same_team` is true.
+          type:
+          - string
+          - "null"
+      required:
+      - account_id
+      - display_name
+      - email
+      - same_team
+      type: object
+    users_common.AccountId:
+      maxLength: 40
+      minLength: 40
+      type: string
+  securitySchemes:
+    dropboxOAuth2:
+      description: |-
+        OAuth 2.0 token issued to a specific user. Use `Authorization: Bearer <token>`.
+
+        Public clients should use the authorization code flow with PKCE (S256).
+
+        For background or offline access, send `token_access_type=offline` during authorization and use the returned refresh token to obtain new access tokens.
+
+        You can generate a short-lived access token in the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+      flows:
+        authorizationCode:
+          authorizationUrl: https://www.dropbox.com/oauth2/authorize
+          scopes:
+            files.content.read: 'Required Dropbox scope: files.content.read'
+            files.content.write: 'Required Dropbox scope: files.content.write'
+            files.metadata.read: 'Required Dropbox scope: files.metadata.read'
+            files.permanent_delete: 'Required Dropbox scope: files.permanent_delete'
+            sharing.read: 'Required Dropbox scope: sharing.read'
+            sharing.write: 'Required Dropbox scope: sharing.write'
+          tokenUrl: https://api.dropboxapi.com/oauth2/token
+      type: oauth2
+      x-fern-playground-description: You can generate a short-lived access token in
+        the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+externalDocs:
+  description: Dropbox API HTTP Reference
+  url: https://www.dropbox.com/developers/documentation/http/documentation
+info:
+  contact:
+    name: Dropbox Developer Support
+    url: https://www.dropbox.com/developers
+  description: The Dropbox API allows developers to work with files in Dropbox, including
+    advanced functionality like full-text search, thumbnails, and sharing.
+  license:
+    name: Dropbox Developer Terms
+    url: https://www.dropbox.com/developers/reference/tos
+  termsOfService: https://www.dropbox.com/developers/reference/tos
+  title: Dropbox API
+  version: 1.0.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+openapi: 3.1.0
+paths:
+  /2/paper/docs/archive:
+    post:
+      deprecated: true
+      description: |-
+        Marks the given Paper doc as archived. This action can be performed or undone by anyone with edit permissions to the doc. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. This endpoint will be retired in September 2020. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for more information.
+
+        **Required scope:** `files.content.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsArchive
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.content.write
+      summary: Docs Archive
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/create:
+    post:
+      deprecated: true
+      description: |-
+        Creates a new Paper doc with the provided content. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. This endpoint will be retired in September 2020. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for more information.
+
+        **Required scope:** `files.content.write`
+
+        **Endpoint format:** [Content-upload](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#content-upload-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsCreate
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      - content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.PaperDocCreateArgs'
+        description: JSON-encoded arguments. Non-ASCII characters and 0x7F must use
+          JSON \uXXXX escape sequences to be HTTP-header-safe.
+        in: header
+        name: Dropbox-API-Arg
+        required: true
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.PaperDocCreateUpdateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.PaperDocCreateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.content.write
+      summary: Docs Create
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/download:
+    post:
+      deprecated: true
+      description: |-
+        Exports and downloads Paper doc either as HTML or markdown. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `files.content.read`
+
+        **Endpoint format:** [Content-download](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#content-download-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsDownload
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      - content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.PaperDocExport'
+        description: JSON-encoded arguments. Non-ASCII characters and 0x7F must use
+          JSON \uXXXX escape sequences to be HTTP-header-safe.
+        in: header
+        name: Dropbox-API-Arg
+        required: true
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                format: binary
+                type: string
+          description: Successful response
+          headers:
+            Dropbox-API-Result:
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/paper_apiv2.PaperDocExportResult'
+              description: JSON-encoded result metadata.
+              required: true
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.content.read
+      summary: Docs Download
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/folder_users/list:
+    post:
+      deprecated: true
+      description: |-
+        Lists the users who are explicitly invited to the Paper folder in which the Paper doc is contained. For private folders all users (including owner) shared on the folder are listed and for team folders all non-team users shared on the folder are returned. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsFolderUsersList
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.ListUsersOnFolderArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.ListUsersOnFolderResponse'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.read
+      summary: Docs Folder Users List
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/folder_users/list/continue:
+    post:
+      deprecated: true
+      description: |-
+        Once a cursor has been retrieved from [docs/folder_users/list](api:dropbox-api:POST/2/paper/docs/folder_users/list), use this to paginate through all users on the Paper folder. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsFolderUsersListContinue
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.ListUsersOnFolderContinueArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.ListUsersOnFolderResponse'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.ListUsersCursorError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.read
+      summary: Docs Folder Users List Continue
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/get_folder_info:
+    post:
+      deprecated: true
+      description: |-
+        Retrieves folder information for the given Paper doc. This includes: - folder sharing policy; permissions for subfolders are set by the top-level folder. - full 'filepath', i.e. the list of folders (both folderId and folderName) from the root folder to the folder directly containing the Paper doc. If the Paper doc is not in any folder (aka unfiled) the response will be empty. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsGetFolderInfo
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.FoldersContainingPaperDoc'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.read
+      summary: Docs Get Folder Info
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/get_metadata:
+    post:
+      description: |-
+        Returns metadata for a Paper doc or Cloud Doc.
+
+        **Required scope:** `files.metadata.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDocsGetMetadata
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/paper_apiv2.GetDocMetadataArg'
+              - type: "null"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.PaperDocGetMetadataResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.read
+      summary: Docs Get Metadata
+      tags:
+      - paper
+      x-auth-type: user
+  /2/paper/docs/list:
+    post:
+      deprecated: true
+      description: |-
+        Return the list of all Paper docs according to the argument specifications. To iterate over through the full pagination, pass the cursor to [docs/list/continue](api:dropbox-api:POST/2/paper/docs/list/continue). Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `files.metadata.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsList
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/paper_apiv2.ListPaperDocsArgs'
+              - type: "null"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.ListPaperDocsResponse'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          $ref: '#/components/responses/409NoEndpointError'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.read
+      summary: Docs List
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/list/continue:
+    post:
+      deprecated: true
+      description: |-
+        Once a cursor has been retrieved from [docs/list](api:dropbox-api:POST/2/paper/docs/list), use this to paginate through all Paper doc. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `files.metadata.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsListContinue
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.ListPaperDocsContinueArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.ListPaperDocsResponse'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.ListDocsCursorError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.read
+      summary: Docs List Continue
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/permanently_delete:
+    post:
+      deprecated: true
+      description: |-
+        Permanently deletes the given Paper doc. This operation is final as the doc cannot be recovered. This action can be performed only by the doc owner. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `files.permanent_delete`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsPermanentlyDelete
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.permanent_delete
+      summary: Docs Permanently Delete
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/sharing_policy/get:
+    post:
+      deprecated: true
+      description: |-
+        Gets the default sharing policy for the given Paper doc. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsSharingPolicyGet
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.RefPaperDoc'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.SharingPolicy'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.read
+      summary: Docs Sharing Policy Get
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/sharing_policy/set:
+    post:
+      deprecated: true
+      description: |-
+        Sets the default sharing policy for the given Paper doc. The default 'team_sharing_policy' can be changed only by teams, omit this field for personal accounts. The 'public_sharing_policy' policy can't be set to the value 'disabled' because this setting can be changed only via the team admin console. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsSharingPolicySet
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.PaperDocSharingPolicy'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.write
+      summary: Docs Sharing Policy Set
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/update:
+    post:
+      deprecated: true
+      description: |-
+        Updates an existing Paper doc with the provided content. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. This endpoint will be retired in September 2020. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for more information.
+
+        **Required scope:** `files.content.write`
+
+        **Endpoint format:** [Content-upload](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#content-upload-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsUpdate
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      - content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateArgs'
+        description: JSON-encoded arguments. Non-ASCII characters and 0x7F must use
+          JSON \uXXXX escape sequences to be HTTP-header-safe.
+        in: header
+        name: Dropbox-API-Arg
+        required: true
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.PaperDocCreateUpdateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.PaperDocUpdateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.content.write
+      summary: Docs Update
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/users/add:
+    post:
+      deprecated: true
+      description: |-
+        Allows an owner or editor to add users to a Paper doc or change their permissions using their email address or Dropbox account ID. The doc owner's permissions cannot be changed. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsUsersAdd
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.AddPaperDocUser'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.AddPaperDocUserMemberResultList'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.write
+      summary: Docs Users Add
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/users/list:
+    post:
+      deprecated: true
+      description: |-
+        Lists all users who visited the Paper doc or users with explicit access. This call excludes users who have been removed. The list is sorted by the date of the visit or the share date. The list will include both users, the explicitly shared ones as well as those who came in using the Paper url link. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsUsersList
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.ListUsersOnPaperDocArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.ListUsersOnPaperDocResponse'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.read
+      summary: Docs Users List
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/users/list/continue:
+    post:
+      deprecated: true
+      description: |-
+        Once a cursor has been retrieved from [docs/users/list](api:dropbox-api:POST/2/paper/docs/users/list), use this to paginate through all users on the Paper doc. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsUsersListContinue
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.ListUsersOnPaperDocContinueArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.ListUsersOnPaperDocResponse'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.ListUsersCursorError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.read
+      summary: Docs Users List Continue
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/docs/users/remove:
+    post:
+      deprecated: true
+      description: |-
+        Allows an owner or editor to remove users from a Paper doc using their email address or Dropbox account ID. The doc owner cannot be removed. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `sharing.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedDocsUsersRemove
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.RemovePaperDocUser'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.DocLookupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.write
+      summary: Docs Users Remove
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+  /2/paper/folders/create:
+    post:
+      deprecated: true
+      description: |-
+        Create a new Paper folder with the provided info. Note that this endpoint will continue to work for content created by users on the older version of Paper. To check which version of Paper a user is on, use /users/features/get_values. If the paper_as_files feature is enabled, then the user is running the new version of Paper. Refer to the [Paper Migration Guide](https://www.dropbox.com/lp/developers/reference/paper-migration-guide) for migration information.
+
+        **Required scope:** `files.content.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: paperDeprecatedFoldersCreate
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/paper_apiv2.PaperFolderCreateArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/paper_apiv2.PaperFolderCreateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/paper_apiv2.PaperFolderCreateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.content.write
+      summary: Folders Create
+      tags:
+      - paperDeprecated
+      x-auth-type: user
+      x-fern-availability: deprecated
+servers:
+- description: Dropbox API (RPC-style endpoints)
+  url: https://api.dropboxapi.com
+tags:
+- description: |-
+    This namespace contains endpoints and data types for managing docs and folders in Dropbox Paper.
+
+    New Paper users will see docs they create in their filesystem as '.paper' files alongside their other Dropbox content. The /paper endpoints are being deprecated and you'll need to use /files and /sharing endpoints to interact with their Paper content. Read more in the :link:`Paper Migration Guide https://www.dropbox.com/lp/developers/reference/paper-migration-guide`.
+  name: paper
+  x-displayName: Paper
+- name: paperDeprecated
+  x-displayName: Paper Deprecated

@@ -1,0 +1,3139 @@
+components:
+  headers:
+    X-Dropbox-Request-Id:
+      description: A unique identifier for the request, useful for debugging and support.
+      schema:
+        type: string
+  parameters:
+    Dropbox-API-Path-Root:
+      description: 'Scopes path-based operations to a namespace (root). The value
+        is a JSON serialization of the `common.PathRoot` union: `{".tag": "home"}`,
+        `{".tag": "root", "root": "<namespace_id>"}`, or `{".tag": "namespace_id",
+        "namespace_id": "<namespace_id>"}`. On failure the request returns 422 with
+        a `common.PathRootError`.'
+      in: header
+      name: Dropbox-API-Path-Root
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-Admin:
+      description: Acts as the specified team admin for supported user-auth operations.
+        Pass a team member ID for an admin account. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-Admin
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-User:
+      description: Acts on behalf of a team member for supported user-auth operations.
+        Pass a team member ID such as `dbmid:...`. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-User
+      required: false
+      schema:
+        type: string
+  responses:
+    "400":
+      content:
+        text/plain:
+          schema:
+            type: string
+      description: Bad input parameter. Check the response body for more information.
+    "401":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+      description: Bad or expired token
+    "403":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AccessErrorResponse'
+      description: The user or team account doesn't have access to the endpoint or
+        feature
+    409NoEndpointError:
+      description: No endpoint-specific errors
+      headers:
+        X-Dropbox-Request-Id:
+          $ref: '#/components/headers/X-Dropbox-Request-Id'
+    "429":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitErrorResponse'
+        text/plain:
+          schema:
+            type: string
+      description: The app is making too many requests for the given user or team
+        and is being rate limited. The app should wait for the number of seconds specified
+        in the "Retry-After" response header before trying again.
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying, when provided by
+            Dropbox.
+          schema:
+            format: int64
+            type: integer
+    "500":
+      description: Internal server error. An error occurred on the Dropbox servers.
+        Check https://status.dropbox.com/ for announcements about Dropbox service
+        issues.
+  schemas:
+    AccessErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AccessError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    AuthErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AuthError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    RateLimitErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    auth_apiv2.AccessError:
+      description: Error occurred because the account doesn't have permission to access
+        the resource.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.invalid_account_type'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.paper_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.team_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.no_permission'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.other'
+    auth_apiv2.AccessError.invalid_account_type:
+      description: Current account type cannot access the resource.
+      properties:
+        .tag:
+          enum:
+          - invalid_account_type
+          type: string
+        invalid_account_type:
+          $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError'
+      required:
+      - .tag
+      - invalid_account_type
+      type: object
+    auth_apiv2.AccessError.no_permission:
+      description: Caller does not have permission to access the resource.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+        no_permission:
+          $ref: '#/components/schemas/auth_apiv2.NoPermissionError'
+      required:
+      - .tag
+      - no_permission
+      type: object
+    auth_apiv2.AccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - invalid_account_type
+            - no_permission
+            - paper_access_denied
+            - team_access_denied
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AccessError.paper_access_denied:
+      description: Current account cannot access Paper.
+      properties:
+        .tag:
+          enum:
+          - paper_access_denied
+          type: string
+        paper_access_denied:
+          $ref: '#/components/schemas/auth_apiv2.PaperAccessError'
+      required:
+      - .tag
+      - paper_access_denied
+      type: object
+    auth_apiv2.AccessError.team_access_denied:
+      description: Team doesn't have permission to access.
+      properties:
+        .tag:
+          enum:
+          - team_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError:
+      description: Errors occurred during authentication.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_user'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_admin'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.user_suspended'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.expired_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.missing_scope'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.route_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.other'
+    auth_apiv2.AuthError.expired_access_token:
+      description: The access token has expired.
+      properties:
+        .tag:
+          enum:
+          - expired_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_access_token:
+      description: 'The access token is invalid. This can happen if the access token
+        has been revoked by Dropbox or the user. To fix this, you should re-authenticate
+        the user. Note: Access tokens that are not returned exactly as provisioned
+        will return this error. Be sure not to truncate or otherwise malform access
+        tokens provided by Dropbox.'
+      properties:
+        .tag:
+          enum:
+          - invalid_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_admin:
+      description: The user specified in 'Dropbox-API-Select-Admin' is not a Dropbox
+        Business team admin.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_admin
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_user:
+      description: The user specified in 'Dropbox-API-Select-User' is no longer on
+        the team.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.missing_scope:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - missing_scope
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.TokenScopeError'
+      description: The access token does not have the required scope to access the
+        route.
+    auth_apiv2.AuthError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - expired_access_token
+            - invalid_access_token
+            - invalid_select_admin
+            - invalid_select_user
+            - missing_scope
+            - route_access_denied
+            - user_suspended
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AuthError.route_access_denied:
+      description: The route is not available to public.
+      properties:
+        .tag:
+          enum:
+          - route_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.user_suspended:
+      description: The user has been suspended.
+      properties:
+        .tag:
+          enum:
+          - user_suspended
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.endpoint'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.feature'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.other'
+    auth_apiv2.InvalidAccountTypeError.endpoint:
+      description: Current account type doesn't have permission to access this endpoint.
+      properties:
+        .tag:
+          enum:
+          - endpoint
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.feature:
+      description: Current account type doesn't have permission to access this feature.
+      properties:
+        .tag:
+          enum:
+          - feature
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - endpoint
+            - feature
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.unauthorized_account_id_usage'
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.other'
+    auth_apiv2.NoPermissionError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - unauthorized_account_id_usage
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError.unauthorized_account_id_usage:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - unauthorized_account_id_usage
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.UnauthorizedAccountIdUsageError'
+      description: Current caller does not have permission to access the account information
+        for one or more of the specified account IDs.
+    auth_apiv2.PaperAccessError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.paper_disabled'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.not_paper_user'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.other'
+    auth_apiv2.PaperAccessError.not_paper_user:
+      description: The provided user has not used Paper yet.
+      properties:
+        .tag:
+          enum:
+          - not_paper_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.PaperAccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - not_paper_user
+            - paper_disabled
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.PaperAccessError.paper_disabled:
+      description: Paper is disabled.
+      properties:
+        .tag:
+          enum:
+          - paper_disabled
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitError:
+      description: Error occurred because the app is being rate limited.
+      properties:
+        reason:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitReason'
+          description: The reason why the app is being rate limited.
+        retry_after:
+          default: 1
+          description: |-
+            The number of seconds that the app should wait
+             before making another request.
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - reason
+      type: object
+    auth_apiv2.RateLimitReason:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_requests'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_write_operations'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.other'
+    auth_apiv2.RateLimitReason.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - too_many_requests
+            - too_many_write_operations
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.RateLimitReason.too_many_requests:
+      description: You are making too many requests in the past few minutes.
+      properties:
+        .tag:
+          enum:
+          - too_many_requests
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitReason.too_many_write_operations:
+      description: There are currently too many write operations happening in the
+        user's Dropbox.
+      properties:
+        .tag:
+          enum:
+          - too_many_write_operations
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.TokenScopeError:
+      properties:
+        required_scope:
+          description: The required scope to access the route.
+          type: string
+      required:
+      - required_scope
+      type: object
+    auth_apiv2.UnauthorizedAccountIdUsageError:
+      properties:
+        unauthorized_account_ids:
+          description: The account IDs that the caller does not have permission to
+            use.
+          items:
+            type: string
+          type: array
+      required:
+      - unauthorized_account_ids
+      type: object
+    file_properties.AddPropertiesArg:
+      examples:
+      - path: /my_awesome/word.docx
+        property_groups:
+        - fields:
+          - name: Security Policy
+            value: Confidential
+          template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        path:
+          $ref: '#/components/schemas/file_properties.PathOrId'
+          description: A unique identifier for the file or folder.
+        property_groups:
+          description: |-
+            The property groups which are to be added to a Dropbox file. No two groups in the input should
+             refer to the same template.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyGroup'
+          type: array
+      required:
+      - path
+      - property_groups
+      type: object
+    file_properties.AddPropertiesError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.template_not_found'
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.restricted_content'
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.path'
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.unsupported_folder'
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.property_field_too_large'
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.does_not_fit_template'
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.duplicate_property_groups'
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.property_group_already_exists'
+      - $ref: '#/components/schemas/file_properties.AddPropertiesError.other'
+    file_properties.AddPropertiesError.does_not_fit_template:
+      description: One or more of the supplied property fields does not conform to
+        the template specifications.
+      properties:
+        .tag:
+          enum:
+          - does_not_fit_template
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.AddPropertiesError.duplicate_property_groups:
+      description: There are 2 or more property groups referring to the same templates
+        in the input.
+      properties:
+        .tag:
+          enum:
+          - duplicate_property_groups
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.AddPropertiesError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - does_not_fit_template
+            - duplicate_property_groups
+            - path
+            - property_field_too_large
+            - property_group_already_exists
+            - restricted_content
+            - template_not_found
+            - unsupported_folder
+          type: string
+      title: Other
+      type: object
+    file_properties.AddPropertiesError.path:
+      properties:
+        .tag:
+          enum:
+          - path
+          type: string
+        path:
+          $ref: '#/components/schemas/file_properties.LookupError'
+      required:
+      - .tag
+      - path
+      type: object
+    file_properties.AddPropertiesError.property_field_too_large:
+      description: One or more of the supplied property field values is too large.
+      properties:
+        .tag:
+          enum:
+          - property_field_too_large
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.AddPropertiesError.property_group_already_exists:
+      description: A property group associated with this template and file already
+        exists.
+      properties:
+        .tag:
+          enum:
+          - property_group_already_exists
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.AddPropertiesError.restricted_content:
+      description: You do not have permission to modify this template.
+      properties:
+        .tag:
+          enum:
+          - restricted_content
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.AddPropertiesError.template_not_found:
+      description: Template does not exist for the given identifier.
+      properties:
+        .tag:
+          enum:
+          - template_not_found
+          type: string
+        template_not_found:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.TemplateId'
+          - type: "null"
+      required:
+      - .tag
+      - template_not_found
+      type: object
+    file_properties.AddPropertiesError.unsupported_folder:
+      description: This folder cannot be tagged. Tagging folders is not supported
+        for team-owned templates.
+      properties:
+        .tag:
+          enum:
+          - unsupported_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.AddTemplateArg:
+      allOf:
+      - $ref: '#/components/schemas/file_properties.PropertyGroupTemplateRequest'
+      - properties: {}
+        type: object
+      examples:
+      - description: These properties describe how confidential this file or folder
+          is.
+        fields:
+        - description: This is the security policy of the file or folder described.
+            Policies can be Confidential, Public or Internal.
+          name: Security Policy
+          type:
+            .tag: string
+        name: Security
+    file_properties.AddTemplateResult:
+      examples:
+      - template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        template_id:
+          $ref: '#/components/schemas/file_properties.TemplateId'
+          description: |-
+            An identifier for template added by  See [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user) or
+             [templates/add_for_team](api:dropbox-api:POST/2/file_properties/templates/add_for_team).
+      required:
+      - template_id
+      type: object
+    file_properties.GetTemplateArg:
+      examples:
+      - template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        template_id:
+          $ref: '#/components/schemas/file_properties.TemplateId'
+          description: |-
+            An identifier for template added by route  See [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user) or
+             [templates/add_for_team](api:dropbox-api:POST/2/file_properties/templates/add_for_team).
+      required:
+      - template_id
+      type: object
+    file_properties.GetTemplateResult:
+      allOf:
+      - $ref: '#/components/schemas/file_properties.PropertyGroupTemplate'
+      - properties: {}
+        type: object
+      examples:
+      - description: These properties describe how confidential this file or folder
+          is.
+        fields:
+        - description: This is the security policy of the file or folder described.
+            Policies can be Confidential, Public or Internal.
+          name: Security Policy
+          type:
+            .tag: string
+        name: Security
+    file_properties.Id:
+      minLength: 1
+      type: string
+    file_properties.InvalidPropertyGroupError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError.template_not_found'
+      - $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError.restricted_content'
+      - $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError.path'
+      - $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError.unsupported_folder'
+      - $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError.property_field_too_large'
+      - $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError.does_not_fit_template'
+      - $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError.duplicate_property_groups'
+      - $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError.other'
+    file_properties.InvalidPropertyGroupError.does_not_fit_template:
+      description: One or more of the supplied property fields does not conform to
+        the template specifications.
+      properties:
+        .tag:
+          enum:
+          - does_not_fit_template
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.InvalidPropertyGroupError.duplicate_property_groups:
+      description: There are 2 or more property groups referring to the same templates
+        in the input.
+      properties:
+        .tag:
+          enum:
+          - duplicate_property_groups
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.InvalidPropertyGroupError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - does_not_fit_template
+            - duplicate_property_groups
+            - path
+            - property_field_too_large
+            - restricted_content
+            - template_not_found
+            - unsupported_folder
+          type: string
+      title: Other
+      type: object
+    file_properties.InvalidPropertyGroupError.path:
+      properties:
+        .tag:
+          enum:
+          - path
+          type: string
+        path:
+          $ref: '#/components/schemas/file_properties.LookupError'
+      required:
+      - .tag
+      - path
+      type: object
+    file_properties.InvalidPropertyGroupError.property_field_too_large:
+      description: One or more of the supplied property field values is too large.
+      properties:
+        .tag:
+          enum:
+          - property_field_too_large
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.InvalidPropertyGroupError.restricted_content:
+      description: You do not have permission to modify this template.
+      properties:
+        .tag:
+          enum:
+          - restricted_content
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.InvalidPropertyGroupError.template_not_found:
+      description: Template does not exist for the given identifier.
+      properties:
+        .tag:
+          enum:
+          - template_not_found
+          type: string
+        template_not_found:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.TemplateId'
+          - type: "null"
+      required:
+      - .tag
+      - template_not_found
+      type: object
+    file_properties.InvalidPropertyGroupError.unsupported_folder:
+      description: This folder cannot be tagged. Tagging folders is not supported
+        for team-owned templates.
+      properties:
+        .tag:
+          enum:
+          - unsupported_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.ListTemplateResult:
+      examples:
+      - template_ids:
+        - ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        template_ids:
+          description: |-
+            List of identifiers for templates added by  See [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user) or
+             [templates/add_for_team](api:dropbox-api:POST/2/file_properties/templates/add_for_team).
+          items:
+            $ref: '#/components/schemas/file_properties.TemplateId'
+          type: array
+      required:
+      - template_ids
+      type: object
+    file_properties.LogicalOperator:
+      default:
+        .tag: or_operator
+      description: Logical operator to join search queries together.
+      examples:
+      - .tag: or_operator
+        or_operator: null
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.LogicalOperator.or_operator'
+    file_properties.LogicalOperator.or_operator:
+      description: Append a query with an "or" operator.
+      properties:
+        .tag:
+          enum:
+          - or_operator
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.LookUpPropertiesError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.LookUpPropertiesError.property_group_not_found'
+      - $ref: '#/components/schemas/file_properties.LookUpPropertiesError.other'
+    file_properties.LookUpPropertiesError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - property_group_not_found
+          type: string
+      title: Other
+      type: object
+    file_properties.LookUpPropertiesError.property_group_not_found:
+      description: No property group was found.
+      properties:
+        .tag:
+          enum:
+          - property_group_not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.LookupError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.LookupError.malformed_path'
+      - $ref: '#/components/schemas/file_properties.LookupError.not_found'
+      - $ref: '#/components/schemas/file_properties.LookupError.not_file'
+      - $ref: '#/components/schemas/file_properties.LookupError.not_folder'
+      - $ref: '#/components/schemas/file_properties.LookupError.restricted_content'
+      - $ref: '#/components/schemas/file_properties.LookupError.other'
+    file_properties.LookupError.malformed_path:
+      properties:
+        .tag:
+          enum:
+          - malformed_path
+          type: string
+        malformed_path:
+          type: string
+      required:
+      - .tag
+      - malformed_path
+      type: object
+    file_properties.LookupError.not_file:
+      description: We were expecting a file, but the given path refers to something
+        that isn't a file.
+      properties:
+        .tag:
+          enum:
+          - not_file
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.LookupError.not_folder:
+      description: We were expecting a folder, but the given path refers to something
+        that isn't a folder.
+      properties:
+        .tag:
+          enum:
+          - not_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.LookupError.not_found:
+      description: There is nothing at the given path.
+      properties:
+        .tag:
+          enum:
+          - not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.LookupError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - malformed_path
+            - not_file
+            - not_folder
+            - not_found
+            - restricted_content
+          type: string
+      title: Other
+      type: object
+    file_properties.LookupError.restricted_content:
+      description: The file cannot be transferred because the content is restricted.
+        For example, we might restrict a file due to legal requirements.
+      properties:
+        .tag:
+          enum:
+          - restricted_content
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.ModifyTemplateError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.ModifyTemplateError.template_not_found'
+      - $ref: '#/components/schemas/file_properties.ModifyTemplateError.restricted_content'
+      - $ref: '#/components/schemas/file_properties.ModifyTemplateError.conflicting_property_names'
+      - $ref: '#/components/schemas/file_properties.ModifyTemplateError.too_many_properties'
+      - $ref: '#/components/schemas/file_properties.ModifyTemplateError.too_many_templates'
+      - $ref: '#/components/schemas/file_properties.ModifyTemplateError.template_attribute_too_large'
+      - $ref: '#/components/schemas/file_properties.ModifyTemplateError.other'
+    file_properties.ModifyTemplateError.conflicting_property_names:
+      description: A property field key with that name already exists in the template.
+      properties:
+        .tag:
+          enum:
+          - conflicting_property_names
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.ModifyTemplateError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - conflicting_property_names
+            - restricted_content
+            - template_attribute_too_large
+            - template_not_found
+            - too_many_properties
+            - too_many_templates
+          type: string
+      title: Other
+      type: object
+    file_properties.ModifyTemplateError.restricted_content:
+      description: You do not have permission to modify this template.
+      properties:
+        .tag:
+          enum:
+          - restricted_content
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.ModifyTemplateError.template_attribute_too_large:
+      description: The template name, description or one or more of the property field
+        keys is too large.
+      properties:
+        .tag:
+          enum:
+          - template_attribute_too_large
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.ModifyTemplateError.template_not_found:
+      description: Template does not exist for the given identifier.
+      properties:
+        .tag:
+          enum:
+          - template_not_found
+          type: string
+        template_not_found:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.TemplateId'
+          - type: "null"
+      required:
+      - .tag
+      - template_not_found
+      type: object
+    file_properties.ModifyTemplateError.too_many_properties:
+      description: |-
+        There are too many properties in the changed template.
+         The maximum number of properties per template is 32.
+      properties:
+        .tag:
+          enum:
+          - too_many_properties
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.ModifyTemplateError.too_many_templates:
+      description: There are too many templates for the team.
+      properties:
+        .tag:
+          enum:
+          - too_many_templates
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.OverwritePropertyGroupArg:
+      examples:
+      - path: /my_awesome/word.docx
+        property_groups:
+        - fields:
+          - name: Security Policy
+            value: Confidential
+          template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        path:
+          $ref: '#/components/schemas/file_properties.PathOrId'
+          description: A unique identifier for the file or folder.
+        property_groups:
+          description: |-
+            The property groups "snapshot" updates to force apply. No two groups in the input should
+             refer to the same template.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyGroup'
+          minItems: 1
+          type: array
+      required:
+      - path
+      - property_groups
+      type: object
+    file_properties.PathOrId:
+      pattern: \/(.|[\r\n])*|id:.*|(ns:[0-9]+(/.*)?)
+      type: string
+    file_properties.PropertiesSearchArg:
+      examples:
+      - queries:
+        - logical_operator:
+            .tag: or_operator
+            or_operator: null
+          mode:
+            .tag: field_name
+            field_name: Security
+          query: Confidential
+        template_filter:
+          .tag: filter_none
+          filter_none: null
+      properties:
+        queries:
+          description: Queries to search.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertiesSearchQuery'
+          minItems: 1
+          type: array
+        template_filter:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.TemplateFilter'
+          - type: "null"
+          description: Filter results to contain only properties associated with these
+            template IDs.
+      required:
+      - queries
+      type: object
+    file_properties.PropertiesSearchContinueArg:
+      examples:
+      - cursor: ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu
+      properties:
+        cursor:
+          $ref: '#/components/schemas/file_properties.PropertiesSearchCursor'
+          description: |-
+            The cursor returned by your last call to [properties/search](api:dropbox-api:POST/2/file_properties/properties/search) or
+             [properties/search/continue](api:dropbox-api:POST/2/file_properties/properties/search/continue).
+      required:
+      - cursor
+      type: object
+    file_properties.PropertiesSearchContinueError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.PropertiesSearchContinueError.reset'
+      - $ref: '#/components/schemas/file_properties.PropertiesSearchContinueError.other'
+    file_properties.PropertiesSearchContinueError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - reset
+          type: string
+      title: Other
+      type: object
+    file_properties.PropertiesSearchContinueError.reset:
+      description: |-
+        Indicates that the cursor has been invalidated. Call
+         [properties/search](api:dropbox-api:POST/2/file_properties/properties/search) to obtain a new cursor.
+      properties:
+        .tag:
+          enum:
+          - reset
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.PropertiesSearchCursor:
+      minLength: 1
+      type: string
+    file_properties.PropertiesSearchError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.PropertiesSearchError.property_group_lookup'
+      - $ref: '#/components/schemas/file_properties.PropertiesSearchError.other'
+    file_properties.PropertiesSearchError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - property_group_lookup
+          type: string
+      title: Other
+      type: object
+    file_properties.PropertiesSearchError.property_group_lookup:
+      properties:
+        .tag:
+          enum:
+          - property_group_lookup
+          type: string
+        property_group_lookup:
+          $ref: '#/components/schemas/file_properties.LookUpPropertiesError'
+      required:
+      - .tag
+      - property_group_lookup
+      type: object
+    file_properties.PropertiesSearchMatch:
+      examples:
+      - id: id:a4ayc_80_OEAAAAAAAAAXz
+        is_deleted: false
+        path: /my_awesome/word.docx
+        property_groups:
+        - fields:
+          - name: Security Policy
+            value: Confidential
+          template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        id:
+          $ref: '#/components/schemas/file_properties.Id'
+          description: The ID for the matched file or folder.
+        is_deleted:
+          description: Whether the file or folder is deleted.
+          type: boolean
+        path:
+          description: The path for the matched file or folder.
+          type: string
+        property_groups:
+          description: List of custom property groups associated with the file.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyGroup'
+          type: array
+      required:
+      - id
+      - is_deleted
+      - path
+      - property_groups
+      type: object
+    file_properties.PropertiesSearchMode:
+      examples:
+      - .tag: field_name
+        field_name: Security
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.PropertiesSearchMode.field_name'
+    file_properties.PropertiesSearchMode.field_name:
+      description: Search for a value associated with this field name.
+      properties:
+        .tag:
+          enum:
+          - field_name
+          type: string
+        field_name:
+          description: Search for a value associated with this field name.
+          type: string
+      required:
+      - .tag
+      - field_name
+      type: object
+    file_properties.PropertiesSearchQuery:
+      examples:
+      - logical_operator:
+          .tag: or_operator
+          or_operator: null
+        mode:
+          .tag: field_name
+          field_name: Security
+        query: Confidential
+      properties:
+        logical_operator:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.LogicalOperator'
+          - type: "null"
+          description: The logical operator with which to append the query.
+        mode:
+          $ref: '#/components/schemas/file_properties.PropertiesSearchMode'
+          description: The mode with which to perform the search.
+        query:
+          description: The property field value for which to search across templates.
+          type: string
+      required:
+      - mode
+      - query
+      type: object
+    file_properties.PropertiesSearchResult:
+      examples:
+      - matches:
+        - id: id:a4ayc_80_OEAAAAAAAAAXz
+          is_deleted: false
+          path: /my_awesome/word.docx
+          property_groups:
+          - fields:
+            - name: Security Policy
+              value: Confidential
+            template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        cursor:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.PropertiesSearchCursor'
+          - type: "null"
+          description: |-
+            Pass the cursor into [properties/search/continue](api:dropbox-api:POST/2/file_properties/properties/search/continue) to continue to receive
+             search results. Cursor will be null when there are no more results.
+        matches:
+          description: A list (possibly empty) of matches for the query.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertiesSearchMatch'
+          type: array
+      required:
+      - matches
+      type: object
+    file_properties.PropertyField:
+      description: |-
+        Raw key/value data to be associated with a Dropbox file. Property fields are added to Dropbox
+         files as a `PropertyGroup`.
+      examples:
+      - name: Security Policy
+        value: Confidential
+      properties:
+        name:
+          description: |-
+            Key of the property field associated with a file and template.
+             Keys can be up to 256 bytes.
+          type: string
+        value:
+          description: |-
+            Value of the property field associated with a file and template.
+             Values can be up to 1024 bytes.
+          type: string
+      required:
+      - name
+      - value
+      type: object
+    file_properties.PropertyFieldTemplate:
+      description: Defines how a single property field may be structured. Used exclusively
+        by `PropertyGroupTemplate`.
+      examples:
+      - description: This is the security policy of the file or folder described.
+          Policies can be Confidential, Public or Internal.
+        name: Security Policy
+        type:
+          .tag: string
+      properties:
+        description:
+          description: Description of the property field. Property field descriptions
+            can be up to 1024 bytes.
+          type: string
+        name:
+          description: Key of the property field being described. Property field keys
+            can be up to 256 bytes.
+          type: string
+        type:
+          $ref: '#/components/schemas/file_properties.PropertyFieldTemplate.PropertyType'
+      required:
+      - description
+      - name
+      - type
+      type: object
+    file_properties.PropertyFieldTemplate.PropertyType:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.PropertyFieldTemplate.PropertyType.string'
+      - $ref: '#/components/schemas/file_properties.PropertyFieldTemplate.PropertyType.other'
+    file_properties.PropertyFieldTemplate.PropertyType.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - string
+          type: string
+      required:
+      - .tag
+      title: Other
+      type: object
+    file_properties.PropertyFieldTemplate.PropertyType.string:
+      description: The associated property field will be of type string. Unicode is
+        supported.
+      properties:
+        .tag:
+          enum:
+          - string
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.PropertyFieldTemplateRequest:
+      description: Defines how a single property field may be structured. Used exclusively
+        by `PropertyGroupTemplate`.
+      examples:
+      - description: This is the security policy of the file or folder described.
+          Policies can be Confidential, Public or Internal.
+        name: Security Policy
+        type:
+          .tag: string
+      properties:
+        description:
+          description: Description of the property field. Property field descriptions
+            can be up to 1024 bytes.
+          type: string
+        name:
+          description: Key of the property field being described. Property field keys
+            can be up to 256 bytes.
+          type: string
+        type:
+          $ref: '#/components/schemas/file_properties.PropertyFieldTemplateRequest.PropertyType'
+      required:
+      - description
+      - name
+      - type
+      type: object
+    file_properties.PropertyFieldTemplateRequest.PropertyType:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.PropertyFieldTemplate.PropertyType.string'
+    file_properties.PropertyGroup:
+      description: |-
+        A subset of the property fields described by the corresponding `PropertyGroupTemplate`.
+         Properties are always added to a Dropbox file as a `PropertyGroup`.
+         The possible key names and value types in this group are defined by the
+         corresponding `PropertyGroupTemplate`.
+      examples:
+      - fields:
+        - name: Security Policy
+          value: Confidential
+        template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        fields:
+          description: |-
+            The actual properties associated with the template. There can be up to 32
+             property types per template.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyField'
+          type: array
+        template_id:
+          $ref: '#/components/schemas/file_properties.TemplateId'
+          description: A unique identifier for the associated template.
+      required:
+      - fields
+      - template_id
+      type: object
+    file_properties.PropertyGroupTemplate:
+      description: Defines how a property group may be structured.
+      examples:
+      - description: These properties describe how confidential this file or folder
+          is.
+        fields:
+        - description: This is the security policy of the file or folder described.
+            Policies can be Confidential, Public or Internal.
+          name: Security Policy
+          type:
+            .tag: string
+        name: Security
+      properties:
+        description:
+          description: |-
+            Description for the template. Template descriptions
+             can be up to 1024 bytes.
+          type: string
+        fields:
+          description: |-
+            Definitions of the property fields associated with this template.
+             There can be up to 32 properties in a single template.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyFieldTemplate'
+          type: array
+        name:
+          description: |-
+            Display name for the template. Template names can
+             be up to 256 bytes.
+          type: string
+      required:
+      - description
+      - fields
+      - name
+      type: object
+    file_properties.PropertyGroupTemplateRequest:
+      description: Defines how a property group may be structured.
+      examples:
+      - description: These properties describe how confidential this file or folder
+          is.
+        fields:
+        - description: This is the security policy of the file or folder described.
+            Policies can be Confidential, Public or Internal.
+          name: Security Policy
+          type:
+            .tag: string
+        name: Security
+      properties:
+        description:
+          description: |-
+            Description for the template. Template descriptions
+             can be up to 1024 bytes.
+          type: string
+        fields:
+          description: |-
+            Definitions of the property fields associated with this template.
+             There can be up to 32 properties in a single template.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyFieldTemplateRequest'
+          type: array
+        name:
+          description: |-
+            Display name for the template. Template names can
+             be up to 256 bytes.
+          type: string
+      required:
+      - description
+      - fields
+      - name
+      type: object
+    file_properties.PropertyGroupUpdate:
+      description: Property routes
+      examples:
+      - add_or_update_fields:
+        - name: Security Policy
+          value: Confidential
+        remove_fields: []
+        template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        add_or_update_fields:
+          description: |-
+            Property fields to update. If the property field already exists, it is updated.
+             If the property field doesn't exist, it will be created as long as the property group already exists.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyField'
+          type:
+          - array
+          - "null"
+        remove_fields:
+          description: Property fields to remove (by name), provided they exist.
+          items:
+            type: string
+          type:
+          - array
+          - "null"
+        template_id:
+          $ref: '#/components/schemas/file_properties.TemplateId'
+          description: A unique identifier for a property template.
+      required:
+      - template_id
+      type: object
+    file_properties.RemovePropertiesArg:
+      examples:
+      - path: /my_awesome/word.docx
+        property_template_ids:
+        - ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        path:
+          $ref: '#/components/schemas/file_properties.PathOrId'
+          description: A unique identifier for the file or folder.
+        property_template_ids:
+          description: |-
+            A list of identifiers for a template created by [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user) or
+             [templates/add_for_team](api:dropbox-api:POST/2/file_properties/templates/add_for_team).
+          items:
+            $ref: '#/components/schemas/file_properties.TemplateId'
+          type: array
+      required:
+      - path
+      - property_template_ids
+      type: object
+    file_properties.RemovePropertiesError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.RemovePropertiesError.template_not_found'
+      - $ref: '#/components/schemas/file_properties.RemovePropertiesError.restricted_content'
+      - $ref: '#/components/schemas/file_properties.RemovePropertiesError.path'
+      - $ref: '#/components/schemas/file_properties.RemovePropertiesError.unsupported_folder'
+      - $ref: '#/components/schemas/file_properties.RemovePropertiesError.property_group_lookup'
+      - $ref: '#/components/schemas/file_properties.RemovePropertiesError.other'
+    file_properties.RemovePropertiesError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - path
+            - property_group_lookup
+            - restricted_content
+            - template_not_found
+            - unsupported_folder
+          type: string
+      title: Other
+      type: object
+    file_properties.RemovePropertiesError.path:
+      properties:
+        .tag:
+          enum:
+          - path
+          type: string
+        path:
+          $ref: '#/components/schemas/file_properties.LookupError'
+      required:
+      - .tag
+      - path
+      type: object
+    file_properties.RemovePropertiesError.property_group_lookup:
+      properties:
+        .tag:
+          enum:
+          - property_group_lookup
+          type: string
+        property_group_lookup:
+          $ref: '#/components/schemas/file_properties.LookUpPropertiesError'
+      required:
+      - .tag
+      - property_group_lookup
+      type: object
+    file_properties.RemovePropertiesError.restricted_content:
+      description: You do not have permission to modify this template.
+      properties:
+        .tag:
+          enum:
+          - restricted_content
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.RemovePropertiesError.template_not_found:
+      description: Template does not exist for the given identifier.
+      properties:
+        .tag:
+          enum:
+          - template_not_found
+          type: string
+        template_not_found:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.TemplateId'
+          - type: "null"
+      required:
+      - .tag
+      - template_not_found
+      type: object
+    file_properties.RemovePropertiesError.unsupported_folder:
+      description: This folder cannot be tagged. Tagging folders is not supported
+        for team-owned templates.
+      properties:
+        .tag:
+          enum:
+          - unsupported_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.RemoveTemplateArg:
+      examples:
+      - template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        template_id:
+          $ref: '#/components/schemas/file_properties.TemplateId'
+          description: |-
+            An identifier for a template created by [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user) or
+             [templates/add_for_team](api:dropbox-api:POST/2/file_properties/templates/add_for_team).
+      required:
+      - template_id
+      type: object
+    file_properties.TemplateError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.TemplateError.template_not_found'
+      - $ref: '#/components/schemas/file_properties.TemplateError.restricted_content'
+      - $ref: '#/components/schemas/file_properties.TemplateError.other'
+    file_properties.TemplateError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - restricted_content
+            - template_not_found
+          type: string
+      title: Other
+      type: object
+    file_properties.TemplateError.restricted_content:
+      description: You do not have permission to modify this template.
+      properties:
+        .tag:
+          enum:
+          - restricted_content
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.TemplateError.template_not_found:
+      description: Template does not exist for the given identifier.
+      properties:
+        .tag:
+          enum:
+          - template_not_found
+          type: string
+        template_not_found:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.TemplateId'
+          - type: "null"
+      required:
+      - .tag
+      - template_not_found
+      type: object
+    file_properties.TemplateFilter:
+      default:
+        .tag: filter_none
+      examples:
+      - .tag: filter_none
+        filter_none: null
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.TemplateFilter.filter_some'
+      - $ref: '#/components/schemas/file_properties.TemplateFilter.filter_none'
+    file_properties.TemplateFilter.filter_none:
+      description: No templates will be filtered from the result (all templates will
+        be returned).
+      properties:
+        .tag:
+          enum:
+          - filter_none
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.TemplateFilter.filter_some:
+      description: |-
+        Only templates with an ID in the supplied list will be returned (a subset of
+         templates will be returned).
+      properties:
+        .tag:
+          enum:
+          - filter_some
+          type: string
+        filter_some:
+          $ref: '#/components/schemas/file_properties.TemplateIdList'
+      required:
+      - .tag
+      - filter_some
+      type: object
+    file_properties.TemplateId:
+      description: Core data types
+      minLength: 1
+      pattern: (/|ptid:).*
+      type: string
+    file_properties.TemplateIdList:
+      items:
+        $ref: '#/components/schemas/file_properties.TemplateId'
+      minItems: 1
+      type: array
+    file_properties.UpdatePropertiesArg:
+      examples:
+      - path: /my_awesome/word.docx
+        update_property_groups:
+        - add_or_update_fields:
+          - name: Security Policy
+            value: Confidential
+          remove_fields: []
+          template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        path:
+          $ref: '#/components/schemas/file_properties.PathOrId'
+          description: A unique identifier for the file or folder.
+        update_property_groups:
+          description: The property groups "delta" updates to apply.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyGroupUpdate'
+          type: array
+      required:
+      - path
+      - update_property_groups
+      type: object
+    file_properties.UpdatePropertiesError:
+      oneOf:
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.template_not_found'
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.restricted_content'
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.path'
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.unsupported_folder'
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.property_field_too_large'
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.does_not_fit_template'
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.duplicate_property_groups'
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.property_group_lookup'
+      - $ref: '#/components/schemas/file_properties.UpdatePropertiesError.other'
+    file_properties.UpdatePropertiesError.does_not_fit_template:
+      description: One or more of the supplied property fields does not conform to
+        the template specifications.
+      properties:
+        .tag:
+          enum:
+          - does_not_fit_template
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.UpdatePropertiesError.duplicate_property_groups:
+      description: There are 2 or more property groups referring to the same templates
+        in the input.
+      properties:
+        .tag:
+          enum:
+          - duplicate_property_groups
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.UpdatePropertiesError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - does_not_fit_template
+            - duplicate_property_groups
+            - path
+            - property_field_too_large
+            - property_group_lookup
+            - restricted_content
+            - template_not_found
+            - unsupported_folder
+          type: string
+      title: Other
+      type: object
+    file_properties.UpdatePropertiesError.path:
+      properties:
+        .tag:
+          enum:
+          - path
+          type: string
+        path:
+          $ref: '#/components/schemas/file_properties.LookupError'
+      required:
+      - .tag
+      - path
+      type: object
+    file_properties.UpdatePropertiesError.property_field_too_large:
+      description: One or more of the supplied property field values is too large.
+      properties:
+        .tag:
+          enum:
+          - property_field_too_large
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.UpdatePropertiesError.property_group_lookup:
+      properties:
+        .tag:
+          enum:
+          - property_group_lookup
+          type: string
+        property_group_lookup:
+          $ref: '#/components/schemas/file_properties.LookUpPropertiesError'
+      required:
+      - .tag
+      - property_group_lookup
+      type: object
+    file_properties.UpdatePropertiesError.restricted_content:
+      description: You do not have permission to modify this template.
+      properties:
+        .tag:
+          enum:
+          - restricted_content
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.UpdatePropertiesError.template_not_found:
+      description: Template does not exist for the given identifier.
+      properties:
+        .tag:
+          enum:
+          - template_not_found
+          type: string
+        template_not_found:
+          anyOf:
+          - $ref: '#/components/schemas/file_properties.TemplateId'
+          - type: "null"
+      required:
+      - .tag
+      - template_not_found
+      type: object
+    file_properties.UpdatePropertiesError.unsupported_folder:
+      description: This folder cannot be tagged. Tagging folders is not supported
+        for team-owned templates.
+      properties:
+        .tag:
+          enum:
+          - unsupported_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_properties.UpdateTemplateArg:
+      examples:
+      - add_fields:
+        - description: This is the security policy of the file or folder described.
+            Policies can be Confidential, Public or Internal.
+          name: Security Policy
+          type:
+            .tag: string
+        description: These properties will describe how confidential this file or
+          folder is.
+        name: New Security Template Name
+        template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        add_fields:
+          description: |-
+            Property field templates to be added to the group template.
+             There can be up to 32 properties in a single template.
+          items:
+            $ref: '#/components/schemas/file_properties.PropertyFieldTemplateRequest'
+          type:
+          - array
+          - "null"
+        description:
+          description: |-
+            Description for the new template. Template descriptions
+             can be up to 1024 bytes.
+          type:
+          - string
+          - "null"
+        name:
+          description: |-
+            A display name for the template. template names can
+             be up to 256 bytes.
+          type:
+          - string
+          - "null"
+        template_id:
+          $ref: '#/components/schemas/file_properties.TemplateId'
+          description: |-
+            An identifier for template added by  See [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user) or
+             [templates/add_for_team](api:dropbox-api:POST/2/file_properties/templates/add_for_team).
+      required:
+      - template_id
+      type: object
+    file_properties.UpdateTemplateResult:
+      examples:
+      - template_id: ptid:1a5n2i6d3OYEAAAAAAAAAYa
+      properties:
+        template_id:
+          $ref: '#/components/schemas/file_properties.TemplateId'
+          description: |-
+            An identifier for template added by route  See [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user) or
+             [templates/add_for_team](api:dropbox-api:POST/2/file_properties/templates/add_for_team).
+      required:
+      - template_id
+      type: object
+  securitySchemes:
+    dropboxOAuth2:
+      description: |-
+        OAuth 2.0 token issued to a specific user. Use `Authorization: Bearer <token>`.
+
+        Public clients should use the authorization code flow with PKCE (S256).
+
+        For background or offline access, send `token_access_type=offline` during authorization and use the returned refresh token to obtain new access tokens.
+
+        You can generate a short-lived access token in the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+      flows:
+        authorizationCode:
+          authorizationUrl: https://www.dropbox.com/oauth2/authorize
+          scopes:
+            files.metadata.read: 'Required Dropbox scope: files.metadata.read'
+            files.metadata.write: 'Required Dropbox scope: files.metadata.write'
+          tokenUrl: https://api.dropboxapi.com/oauth2/token
+      type: oauth2
+      x-fern-playground-description: You can generate a short-lived access token in
+        the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+    dropboxTeamAuth:
+      description: |-
+        Team-level OAuth 2.0 token issued to a Dropbox Business admin. Use `Authorization: Bearer <token>`.
+
+        Obtain via the authorization code flow with team-scoped permissions.
+
+        Grants access to team-wide administrative operations.
+
+        You can generate a short-lived access token in the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+      flows:
+        authorizationCode:
+          authorizationUrl: https://www.dropbox.com/oauth2/authorize
+          scopes:
+            files.team_metadata.write: 'Required Dropbox scope: files.team_metadata.write'
+          tokenUrl: https://api.dropboxapi.com/oauth2/token
+      type: oauth2
+      x-fern-playground-description: You can generate a short-lived access token in
+        the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+externalDocs:
+  description: Dropbox API HTTP Reference
+  url: https://www.dropbox.com/developers/documentation/http/documentation
+info:
+  contact:
+    name: Dropbox Developer Support
+    url: https://www.dropbox.com/developers
+  description: The Dropbox API allows developers to work with files in Dropbox, including
+    advanced functionality like full-text search, thumbnails, and sharing.
+  license:
+    name: Dropbox Developer Terms
+    url: https://www.dropbox.com/developers/reference/tos
+  termsOfService: https://www.dropbox.com/developers/reference/tos
+  title: Dropbox API
+  version: 1.0.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+openapi: 3.1.0
+paths:
+  /2/file_properties/properties/add:
+    post:
+      description: |-
+        Add property groups to a Dropbox file. See [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user) or
+         [templates/add_for_team](api:dropbox-api:POST/2/file_properties/templates/add_for_team) to create new templates.
+
+        **Required scope:** `files.metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesPropertiesAdd
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.AddPropertiesArg'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.AddPropertiesError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.write
+      summary: Properties Add
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/properties/overwrite:
+    post:
+      description: |-
+        Overwrite property groups associated with a file. This endpoint should be used
+         instead of [properties/update](api:dropbox-api:POST/2/file_properties/properties/update) when property groups are being updated via a
+         "snapshot" instead of via a "delta". In other words, this endpoint will delete all
+         omitted fields from a property group, whereas [properties/update](api:dropbox-api:POST/2/file_properties/properties/update) will only
+         delete fields that are explicitly marked for deletion.
+
+        **Required scope:** `files.metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesPropertiesOverwrite
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.OverwritePropertyGroupArg'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.InvalidPropertyGroupError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.write
+      summary: Properties Overwrite
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/properties/remove:
+    post:
+      description: |-
+        Permanently removes the specified property group from the file. To remove specific property field key
+         value pairs, see [properties/update](api:dropbox-api:POST/2/file_properties/properties/update).
+         To update a template, see
+         [templates/update_for_user](api:dropbox-api:POST/2/file_properties/templates/update_for_user) or [templates/update_for_team](api:dropbox-api:POST/2/file_properties/templates/update_for_team).
+         To remove a template, see
+         [templates/remove_for_user](api:dropbox-api:POST/2/file_properties/templates/remove_for_user) or [templates/remove_for_team](api:dropbox-api:POST/2/file_properties/templates/remove_for_team).
+
+        **Required scope:** `files.metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesPropertiesRemove
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.RemovePropertiesArg'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.RemovePropertiesError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.write
+      summary: Properties Remove
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/properties/search:
+    post:
+      description: |-
+        Search across property templates for particular property field values.
+
+        **Required scope:** `files.metadata.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesPropertiesSearch
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.PropertiesSearchArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.PropertiesSearchResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.PropertiesSearchError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.read
+      summary: Properties Search
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/properties/search/continue:
+    post:
+      description: |-
+        Once a cursor has been retrieved from [properties/search](api:dropbox-api:POST/2/file_properties/properties/search), use this to paginate through all
+         search results.
+
+        **Required scope:** `files.metadata.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesPropertiesSearchContinue
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.PropertiesSearchContinueArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.PropertiesSearchResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.PropertiesSearchContinueError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.read
+      summary: Properties Search Continue
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/properties/update:
+    post:
+      description: |-
+        Add, update or remove properties associated with the supplied file and templates.
+         This endpoint should be used instead of [properties/overwrite](api:dropbox-api:POST/2/file_properties/properties/overwrite) when property groups
+         are being updated via a "delta" instead of via a "snapshot" . In other words, this endpoint
+         will not delete any omitted fields from a property group, whereas [properties/overwrite](api:dropbox-api:POST/2/file_properties/properties/overwrite)
+         will delete any fields that are omitted from a property group.
+
+        **Required scope:** `files.metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesPropertiesUpdate
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.UpdatePropertiesArg'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.UpdatePropertiesError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.write
+      summary: Properties Update
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/templates/add_for_team:
+    post:
+      description: |-
+        Add a template associated with a team. See [properties/add](api:dropbox-api:POST/2/file_properties/properties/add) to add properties to a file or folder.
+
+         Note: this endpoint will create team-owned templates.
+
+        **Required scope:** `files.team_metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [Team](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#team-authentication)
+      operationId: filePropertiesTeamTemplatesAddForTeam
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.AddTemplateArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.AddTemplateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.ModifyTemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxTeamAuth:
+        - files.team_metadata.write
+      summary: Templates Add For Team
+      tags:
+      - filePropertiesTeam
+      x-auth-type: team
+  /2/file_properties/templates/add_for_user:
+    post:
+      description: |-
+        Add a template associated with a user. See [properties/add](api:dropbox-api:POST/2/file_properties/properties/add) to add properties to a file. This
+         endpoint can't be called on a team member or admin's behalf.
+
+        **Required scope:** `files.metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesTemplatesAddForUser
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.AddTemplateArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.AddTemplateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.ModifyTemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.write
+      summary: Templates Add For User
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/templates/get_for_team:
+    post:
+      description: |-
+        Get the schema for a specified template.
+
+        **Required scope:** `files.team_metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [Team](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#team-authentication)
+      operationId: filePropertiesTeamTemplatesGetForTeam
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.GetTemplateArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.GetTemplateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.TemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxTeamAuth:
+        - files.team_metadata.write
+      summary: Templates Get For Team
+      tags:
+      - filePropertiesTeam
+      x-auth-type: team
+  /2/file_properties/templates/get_for_user:
+    post:
+      description: |-
+        Get the schema for a specified template. This endpoint can't be called on a team member or admin's behalf.
+
+        **Required scope:** `files.metadata.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesTemplatesGetForUser
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.GetTemplateArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.GetTemplateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.TemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.read
+      summary: Templates Get For User
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/templates/list_for_team:
+    post:
+      description: |-
+        Get the template identifiers for a team. To get the schema of
+         each template use [templates/get_for_team](api:dropbox-api:POST/2/file_properties/templates/get_for_team).
+
+        **Required scope:** `files.team_metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [Team](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#team-authentication)
+      operationId: filePropertiesTeamTemplatesListForTeam
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.ListTemplateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.TemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxTeamAuth:
+        - files.team_metadata.write
+      summary: Templates List For Team
+      tags:
+      - filePropertiesTeam
+      x-auth-type: team
+  /2/file_properties/templates/list_for_user:
+    post:
+      description: |-
+        Get the template identifiers for a team. To get the schema of
+         each template use [templates/get_for_user](api:dropbox-api:POST/2/file_properties/templates/get_for_user). This endpoint can't be
+         called on a team member or admin's behalf.
+
+        **Required scope:** `files.metadata.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesTemplatesListForUser
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.ListTemplateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.TemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.read
+      summary: Templates List For User
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/templates/remove_for_team:
+    post:
+      description: |-
+        Permanently removes the specified template created from [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user).
+         All properties associated with the template will also be removed. This action
+         cannot be undone.
+
+        **Required scope:** `files.team_metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [Team](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#team-authentication)
+      operationId: filePropertiesTeamTemplatesRemoveForTeam
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.RemoveTemplateArg'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.TemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxTeamAuth:
+        - files.team_metadata.write
+      summary: Templates Remove For Team
+      tags:
+      - filePropertiesTeam
+      x-auth-type: team
+  /2/file_properties/templates/remove_for_user:
+    post:
+      description: |-
+        Permanently removes the specified template created from [templates/add_for_user](api:dropbox-api:POST/2/file_properties/templates/add_for_user).
+         All properties associated with the template will also be removed. This action
+         cannot be undone.
+
+        **Required scope:** `files.metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesTemplatesRemoveForUser
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.RemoveTemplateArg'
+        required: true
+      responses:
+        "200":
+          description: Successful response (no content)
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.TemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.write
+      summary: Templates Remove For User
+      tags:
+      - fileProperties
+      x-auth-type: user
+  /2/file_properties/templates/update_for_team:
+    post:
+      description: |-
+        Update a template associated with a team. This route can update the template name,
+         the template description and add optional properties to templates.
+
+        **Required scope:** `files.team_metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [Team](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#team-authentication)
+      operationId: filePropertiesTeamTemplatesUpdateForTeam
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.UpdateTemplateArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.UpdateTemplateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.ModifyTemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxTeamAuth:
+        - files.team_metadata.write
+      summary: Templates Update For Team
+      tags:
+      - filePropertiesTeam
+      x-auth-type: team
+  /2/file_properties/templates/update_for_user:
+    post:
+      description: |-
+        Update a template associated with a user. This route can update the template name,
+         the template description and add optional properties to templates. This endpoint can't
+         be called on a team member or admin's behalf.
+
+        **Required scope:** `files.metadata.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+
+        This endpoint does not support apps with the app folder permission.
+      operationId: filePropertiesTemplatesUpdateForUser
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_properties.UpdateTemplateArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_properties.UpdateTemplateResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_properties.ModifyTemplateError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - files.metadata.write
+      summary: Templates Update For User
+      tags:
+      - fileProperties
+      x-auth-type: user
+servers:
+- description: Dropbox API (RPC-style endpoints)
+  url: https://api.dropboxapi.com
+tags:
+- description: |+
+    This namespace contains helpers for property and template metadata endpoints.
+
+
+    These endpoints enable you to tag arbitrary key/value data to Dropbox files.
+
+
+    The most basic unit in this namespace is the :type:`PropertyField`. These fields encapsulate the
+    actual key/value data.
+
+
+    Fields are added to a Dropbox file using a :type:`PropertyGroup`. Property groups contain a
+    reference to a Dropbox file and a :type:`PropertyGroupTemplate`. Property groups are uniquely
+    identified by the combination of their associated Dropbox file and template.
+
+
+    The :type:`PropertyGroupTemplate` is a way of restricting the possible key names and value types
+    of the data within a property group. The possible key names and value types are explicitly
+    enumerated using :type:`PropertyFieldTemplate` objects.
+
+
+    You can think of a property group template as a class definition for a particular key/value
+    metadata object, and the property groups themselves as the instantiations of these objects.
+
+
+    Templates are owned either by a user/app pair or team/app pair. Templates and their associated
+    properties can't be accessed by any app other than the app that created them, and even then, only
+    when the app is linked with the owner of the template (either a user or team).
+
+
+    User-owned templates are accessed via the user-auth `file_properties/templates/*_for_user` endpoints, while
+    team-owned templates are accessed via the team-auth `file_properties/templates/*_for_team` endpoints. Properties
+    associated with either type of template can be accessed via the user-auth `properties/*` endpoints.
+
+
+    Finally, properties can be accessed from a number of endpoints that return metadata, including
+    `files/get_metadata`, and `files/list_folder`. Properties can also be added during upload, using
+    `files/upload`.
+
+  name: fileProperties
+  x-displayName: File Properties
+- name: filePropertiesTeam
+  x-displayName: File Properties

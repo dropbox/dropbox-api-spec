@@ -1,0 +1,681 @@
+components:
+  headers:
+    X-Dropbox-Request-Id:
+      description: A unique identifier for the request, useful for debugging and support.
+      schema:
+        type: string
+  parameters:
+    Dropbox-API-Path-Root:
+      description: 'Scopes path-based operations to a namespace (root). The value
+        is a JSON serialization of the `common.PathRoot` union: `{".tag": "home"}`,
+        `{".tag": "root", "root": "<namespace_id>"}`, or `{".tag": "namespace_id",
+        "namespace_id": "<namespace_id>"}`. On failure the request returns 422 with
+        a `common.PathRootError`.'
+      in: header
+      name: Dropbox-API-Path-Root
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-Admin:
+      description: Acts as the specified team admin for supported user-auth operations.
+        Pass a team member ID for an admin account. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-Admin
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-User:
+      description: Acts on behalf of a team member for supported user-auth operations.
+        Pass a team member ID such as `dbmid:...`. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-User
+      required: false
+      schema:
+        type: string
+  responses:
+    "400":
+      content:
+        text/plain:
+          schema:
+            type: string
+      description: Bad input parameter. Check the response body for more information.
+    "401":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+      description: Bad or expired token
+    "403":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AccessErrorResponse'
+      description: The user or team account doesn't have access to the endpoint or
+        feature
+    409NoEndpointError:
+      description: No endpoint-specific errors
+      headers:
+        X-Dropbox-Request-Id:
+          $ref: '#/components/headers/X-Dropbox-Request-Id'
+    "429":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitErrorResponse'
+        text/plain:
+          schema:
+            type: string
+      description: The app is making too many requests for the given user or team
+        and is being rate limited. The app should wait for the number of seconds specified
+        in the "Retry-After" response header before trying again.
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying, when provided by
+            Dropbox.
+          schema:
+            format: int64
+            type: integer
+    "500":
+      description: Internal server error. An error occurred on the Dropbox servers.
+        Check https://status.dropbox.com/ for announcements about Dropbox service
+        issues.
+  schemas:
+    AccessErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AccessError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    AuthErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AuthError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    RateLimitErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    auth_apiv2.AccessError:
+      description: Error occurred because the account doesn't have permission to access
+        the resource.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.invalid_account_type'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.paper_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.team_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.no_permission'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.other'
+    auth_apiv2.AccessError.invalid_account_type:
+      description: Current account type cannot access the resource.
+      properties:
+        .tag:
+          enum:
+          - invalid_account_type
+          type: string
+        invalid_account_type:
+          $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError'
+      required:
+      - .tag
+      - invalid_account_type
+      type: object
+    auth_apiv2.AccessError.no_permission:
+      description: Caller does not have permission to access the resource.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+        no_permission:
+          $ref: '#/components/schemas/auth_apiv2.NoPermissionError'
+      required:
+      - .tag
+      - no_permission
+      type: object
+    auth_apiv2.AccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - invalid_account_type
+            - no_permission
+            - paper_access_denied
+            - team_access_denied
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AccessError.paper_access_denied:
+      description: Current account cannot access Paper.
+      properties:
+        .tag:
+          enum:
+          - paper_access_denied
+          type: string
+        paper_access_denied:
+          $ref: '#/components/schemas/auth_apiv2.PaperAccessError'
+      required:
+      - .tag
+      - paper_access_denied
+      type: object
+    auth_apiv2.AccessError.team_access_denied:
+      description: Team doesn't have permission to access.
+      properties:
+        .tag:
+          enum:
+          - team_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError:
+      description: Errors occurred during authentication.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_user'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_admin'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.user_suspended'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.expired_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.missing_scope'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.route_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.other'
+    auth_apiv2.AuthError.expired_access_token:
+      description: The access token has expired.
+      properties:
+        .tag:
+          enum:
+          - expired_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_access_token:
+      description: 'The access token is invalid. This can happen if the access token
+        has been revoked by Dropbox or the user. To fix this, you should re-authenticate
+        the user. Note: Access tokens that are not returned exactly as provisioned
+        will return this error. Be sure not to truncate or otherwise malform access
+        tokens provided by Dropbox.'
+      properties:
+        .tag:
+          enum:
+          - invalid_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_admin:
+      description: The user specified in 'Dropbox-API-Select-Admin' is not a Dropbox
+        Business team admin.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_admin
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_user:
+      description: The user specified in 'Dropbox-API-Select-User' is no longer on
+        the team.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.missing_scope:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - missing_scope
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.TokenScopeError'
+      description: The access token does not have the required scope to access the
+        route.
+    auth_apiv2.AuthError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - expired_access_token
+            - invalid_access_token
+            - invalid_select_admin
+            - invalid_select_user
+            - missing_scope
+            - route_access_denied
+            - user_suspended
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AuthError.route_access_denied:
+      description: The route is not available to public.
+      properties:
+        .tag:
+          enum:
+          - route_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.user_suspended:
+      description: The user has been suspended.
+      properties:
+        .tag:
+          enum:
+          - user_suspended
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.endpoint'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.feature'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.other'
+    auth_apiv2.InvalidAccountTypeError.endpoint:
+      description: Current account type doesn't have permission to access this endpoint.
+      properties:
+        .tag:
+          enum:
+          - endpoint
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.feature:
+      description: Current account type doesn't have permission to access this feature.
+      properties:
+        .tag:
+          enum:
+          - feature
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - endpoint
+            - feature
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.unauthorized_account_id_usage'
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.other'
+    auth_apiv2.NoPermissionError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - unauthorized_account_id_usage
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError.unauthorized_account_id_usage:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - unauthorized_account_id_usage
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.UnauthorizedAccountIdUsageError'
+      description: Current caller does not have permission to access the account information
+        for one or more of the specified account IDs.
+    auth_apiv2.PaperAccessError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.paper_disabled'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.not_paper_user'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.other'
+    auth_apiv2.PaperAccessError.not_paper_user:
+      description: The provided user has not used Paper yet.
+      properties:
+        .tag:
+          enum:
+          - not_paper_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.PaperAccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - not_paper_user
+            - paper_disabled
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.PaperAccessError.paper_disabled:
+      description: Paper is disabled.
+      properties:
+        .tag:
+          enum:
+          - paper_disabled
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitError:
+      description: Error occurred because the app is being rate limited.
+      properties:
+        reason:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitReason'
+          description: The reason why the app is being rate limited.
+        retry_after:
+          default: 1
+          description: |-
+            The number of seconds that the app should wait
+             before making another request.
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - reason
+      type: object
+    auth_apiv2.RateLimitReason:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_requests'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_write_operations'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.other'
+    auth_apiv2.RateLimitReason.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - too_many_requests
+            - too_many_write_operations
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.RateLimitReason.too_many_requests:
+      description: You are making too many requests in the past few minutes.
+      properties:
+        .tag:
+          enum:
+          - too_many_requests
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitReason.too_many_write_operations:
+      description: There are currently too many write operations happening in the
+        user's Dropbox.
+      properties:
+        .tag:
+          enum:
+          - too_many_write_operations
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.TokenScopeError:
+      properties:
+        required_scope:
+          description: The required scope to access the route.
+          type: string
+      required:
+      - required_scope
+      type: object
+    auth_apiv2.UnauthorizedAccountIdUsageError:
+      properties:
+        unauthorized_account_ids:
+          description: The account IDs that the caller does not have permission to
+            use.
+          items:
+            type: string
+          type: array
+      required:
+      - unauthorized_account_ids
+      type: object
+    openid.OpenIdError:
+      properties:
+        .tag:
+          enum:
+          - incorrect_openid_scopes
+          - other
+          type: string
+          x-enum-descriptions:
+          - Missing openid claims for the associated access token.
+          - ""
+      required:
+      - .tag
+      type: object
+    openid.UserInfoArgs:
+      description: No Parameters
+      properties: {}
+      type: object
+    openid.UserInfoError:
+      oneOf:
+      - $ref: '#/components/schemas/openid.UserInfoError.openid_error'
+      - $ref: '#/components/schemas/openid.UserInfoError.other'
+    openid.UserInfoError.openid_error:
+      properties:
+        .tag:
+          enum:
+          - openid_error
+          type: string
+        openid_error:
+          $ref: '#/components/schemas/openid.OpenIdError'
+      required:
+      - .tag
+      type: object
+    openid.UserInfoError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - openid_error
+          type: string
+      title: Other
+      type: object
+    openid.UserInfoResult:
+      properties:
+        email:
+          description: |-
+            The user's email address. Be aware it's possible that the user
+             has since lost access to their email. Note: email is not a unique or
+             stable identifier for a Dropbox account. Users can change their email,
+             and emails can be reused by different accounts. Apps should not use
+             email as a key for account identification; use `sub` instead.
+          type:
+          - string
+          - "null"
+        email_verified:
+          description: If the user's email address is verified.
+          type:
+          - boolean
+          - "null"
+        family_name:
+          description: Last name of the user.
+          type:
+          - string
+          - "null"
+        given_name:
+          description: First name of the user.
+          type:
+          - string
+          - "null"
+        iss:
+          default: ""
+          description: Issuer of the token (in this case Dropbox).
+          type: string
+        sub:
+          default: ""
+          description: |-
+            An identifier for the user. This is the Dropbox account_id, a string
+             value such as dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc. The account_id
+             is a unique and stable identifier for a Dropbox account, suitable for
+             use as a key in authentication and account management.
+          type: string
+      type: object
+  securitySchemes:
+    dropboxOAuth2:
+      description: |-
+        OAuth 2.0 token issued to a specific user. Use `Authorization: Bearer <token>`.
+
+        Public clients should use the authorization code flow with PKCE (S256).
+
+        For background or offline access, send `token_access_type=offline` during authorization and use the returned refresh token to obtain new access tokens.
+
+        You can generate a short-lived access token in the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+      flows:
+        authorizationCode:
+          authorizationUrl: https://www.dropbox.com/oauth2/authorize
+          scopes:
+            openid: 'Required Dropbox scope: openid'
+          tokenUrl: https://api.dropboxapi.com/oauth2/token
+      type: oauth2
+      x-fern-playground-description: You can generate a short-lived access token in
+        the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+externalDocs:
+  description: Dropbox API HTTP Reference
+  url: https://www.dropbox.com/developers/documentation/http/documentation
+info:
+  contact:
+    name: Dropbox Developer Support
+    url: https://www.dropbox.com/developers
+  description: The Dropbox API allows developers to work with files in Dropbox, including
+    advanced functionality like full-text search, thumbnails, and sharing.
+  license:
+    name: Dropbox Developer Terms
+    url: https://www.dropbox.com/developers/reference/tos
+  termsOfService: https://www.dropbox.com/developers/reference/tos
+  title: Dropbox API
+  version: 1.0.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+openapi: 3.1.0
+paths:
+  /2/openid/userinfo:
+    post:
+      description: |-
+        This route is used for refreshing the info that is found in the id_token during the OIDC flow.
+         This route doesn't require any arguments and will use the scopes approved for the given access token.
+
+        **Required scope:** `openid`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: openidUserinfo
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/openid.UserInfoArgs'
+              - type: "null"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openid.UserInfoResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/openid.UserInfoError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - openid
+      summary: Userinfo
+      tags:
+      - openid
+      x-auth-type: user
+      x-fern-availability: preview
+servers:
+- description: Dropbox API (RPC-style endpoints)
+  url: https://api.dropboxapi.com
+tags:
+- name: openid
+  x-displayName: OpenID
