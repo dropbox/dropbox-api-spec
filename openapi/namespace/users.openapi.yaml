@@ -1,0 +1,2468 @@
+components:
+  headers:
+    X-Dropbox-Request-Id:
+      description: A unique identifier for the request, useful for debugging and support.
+      schema:
+        type: string
+  parameters:
+    Dropbox-API-Path-Root:
+      description: 'Scopes path-based operations to a namespace (root). The value
+        is a JSON serialization of the `common.PathRoot` union: `{".tag": "home"}`,
+        `{".tag": "root", "root": "<namespace_id>"}`, or `{".tag": "namespace_id",
+        "namespace_id": "<namespace_id>"}`. On failure the request returns 422 with
+        a `common.PathRootError`.'
+      in: header
+      name: Dropbox-API-Path-Root
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-Admin:
+      description: Acts as the specified team admin for supported user-auth operations.
+        Pass a team member ID for an admin account. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-Admin
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-User:
+      description: Acts on behalf of a team member for supported user-auth operations.
+        Pass a team member ID such as `dbmid:...`. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-User
+      required: false
+      schema:
+        type: string
+  responses:
+    "400":
+      content:
+        text/plain:
+          schema:
+            type: string
+      description: Bad input parameter. Check the response body for more information.
+    "401":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+      description: Bad or expired token
+    "403":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AccessErrorResponse'
+      description: The user or team account doesn't have access to the endpoint or
+        feature
+    409NoEndpointError:
+      description: No endpoint-specific errors
+      headers:
+        X-Dropbox-Request-Id:
+          $ref: '#/components/headers/X-Dropbox-Request-Id'
+    "429":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitErrorResponse'
+        text/plain:
+          schema:
+            type: string
+      description: The app is making too many requests for the given user or team
+        and is being rate limited. The app should wait for the number of seconds specified
+        in the "Retry-After" response header before trying again.
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying, when provided by
+            Dropbox.
+          schema:
+            format: int64
+            type: integer
+    "500":
+      description: Internal server error. An error occurred on the Dropbox servers.
+        Check https://status.dropbox.com/ for announcements about Dropbox service
+        issues.
+  schemas:
+    AccessErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AccessError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    AuthErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AuthError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    RateLimitErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    auth_apiv2.AccessError:
+      description: Error occurred because the account doesn't have permission to access
+        the resource.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.invalid_account_type'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.paper_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.team_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.no_permission'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.other'
+    auth_apiv2.AccessError.invalid_account_type:
+      description: Current account type cannot access the resource.
+      properties:
+        .tag:
+          enum:
+          - invalid_account_type
+          type: string
+        invalid_account_type:
+          $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError'
+      required:
+      - .tag
+      - invalid_account_type
+      type: object
+    auth_apiv2.AccessError.no_permission:
+      description: Caller does not have permission to access the resource.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+        no_permission:
+          $ref: '#/components/schemas/auth_apiv2.NoPermissionError'
+      required:
+      - .tag
+      - no_permission
+      type: object
+    auth_apiv2.AccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - invalid_account_type
+            - no_permission
+            - paper_access_denied
+            - team_access_denied
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AccessError.paper_access_denied:
+      description: Current account cannot access Paper.
+      properties:
+        .tag:
+          enum:
+          - paper_access_denied
+          type: string
+        paper_access_denied:
+          $ref: '#/components/schemas/auth_apiv2.PaperAccessError'
+      required:
+      - .tag
+      - paper_access_denied
+      type: object
+    auth_apiv2.AccessError.team_access_denied:
+      description: Team doesn't have permission to access.
+      properties:
+        .tag:
+          enum:
+          - team_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError:
+      description: Errors occurred during authentication.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_user'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_admin'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.user_suspended'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.expired_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.missing_scope'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.route_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.other'
+    auth_apiv2.AuthError.expired_access_token:
+      description: The access token has expired.
+      properties:
+        .tag:
+          enum:
+          - expired_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_access_token:
+      description: 'The access token is invalid. This can happen if the access token
+        has been revoked by Dropbox or the user. To fix this, you should re-authenticate
+        the user. Note: Access tokens that are not returned exactly as provisioned
+        will return this error. Be sure not to truncate or otherwise malform access
+        tokens provided by Dropbox.'
+      properties:
+        .tag:
+          enum:
+          - invalid_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_admin:
+      description: The user specified in 'Dropbox-API-Select-Admin' is not a Dropbox
+        Business team admin.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_admin
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_user:
+      description: The user specified in 'Dropbox-API-Select-User' is no longer on
+        the team.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.missing_scope:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - missing_scope
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.TokenScopeError'
+      description: The access token does not have the required scope to access the
+        route.
+    auth_apiv2.AuthError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - expired_access_token
+            - invalid_access_token
+            - invalid_select_admin
+            - invalid_select_user
+            - missing_scope
+            - route_access_denied
+            - user_suspended
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AuthError.route_access_denied:
+      description: The route is not available to public.
+      properties:
+        .tag:
+          enum:
+          - route_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.user_suspended:
+      description: The user has been suspended.
+      properties:
+        .tag:
+          enum:
+          - user_suspended
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.endpoint'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.feature'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.other'
+    auth_apiv2.InvalidAccountTypeError.endpoint:
+      description: Current account type doesn't have permission to access this endpoint.
+      properties:
+        .tag:
+          enum:
+          - endpoint
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.feature:
+      description: Current account type doesn't have permission to access this feature.
+      properties:
+        .tag:
+          enum:
+          - feature
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - endpoint
+            - feature
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.unauthorized_account_id_usage'
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.other'
+    auth_apiv2.NoPermissionError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - unauthorized_account_id_usage
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError.unauthorized_account_id_usage:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - unauthorized_account_id_usage
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.UnauthorizedAccountIdUsageError'
+      description: Current caller does not have permission to access the account information
+        for one or more of the specified account IDs.
+    auth_apiv2.PaperAccessError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.paper_disabled'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.not_paper_user'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.other'
+    auth_apiv2.PaperAccessError.not_paper_user:
+      description: The provided user has not used Paper yet.
+      properties:
+        .tag:
+          enum:
+          - not_paper_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.PaperAccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - not_paper_user
+            - paper_disabled
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.PaperAccessError.paper_disabled:
+      description: Paper is disabled.
+      properties:
+        .tag:
+          enum:
+          - paper_disabled
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitError:
+      description: Error occurred because the app is being rate limited.
+      properties:
+        reason:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitReason'
+          description: The reason why the app is being rate limited.
+        retry_after:
+          default: 1
+          description: |-
+            The number of seconds that the app should wait
+             before making another request.
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - reason
+      type: object
+    auth_apiv2.RateLimitReason:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_requests'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_write_operations'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.other'
+    auth_apiv2.RateLimitReason.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - too_many_requests
+            - too_many_write_operations
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.RateLimitReason.too_many_requests:
+      description: You are making too many requests in the past few minutes.
+      properties:
+        .tag:
+          enum:
+          - too_many_requests
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitReason.too_many_write_operations:
+      description: There are currently too many write operations happening in the
+        user's Dropbox.
+      properties:
+        .tag:
+          enum:
+          - too_many_write_operations
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.TokenScopeError:
+      properties:
+        required_scope:
+          description: The required scope to access the route.
+          type: string
+      required:
+      - required_scope
+      type: object
+    auth_apiv2.UnauthorizedAccountIdUsageError:
+      properties:
+        unauthorized_account_ids:
+          description: The account IDs that the caller does not have permission to
+            use.
+          items:
+            type: string
+          type: array
+      required:
+      - unauthorized_account_ids
+      type: object
+    common.NamespaceId:
+      pattern: '[-_0-9a-zA-Z:]+'
+      type: string
+    common.RootInfo:
+      examples:
+      - .tag: user
+        home_namespace_id: "3235641"
+        root_namespace_id: "3235641"
+      oneOf:
+      - $ref: '#/components/schemas/common.RootInfo.team'
+      - $ref: '#/components/schemas/common.RootInfo.user'
+      - $ref: '#/components/schemas/common.RootInfo.other'
+    common.RootInfo.other:
+      allOf:
+      - $ref: '#/components/schemas/common.RootInfoBase'
+      - properties:
+          .tag:
+            not:
+              enum:
+              - team
+              - user
+            type: string
+        required:
+        - .tag
+        type: object
+      description: 'An open-union catch-all: a subtype added to this union after your
+        API client''s spec was generated. It carries the base type''s shared fields,
+        and its ".tag" is a value not listed among the known variants above; treat
+        it as an unrecognized/forward-compatible case.'
+      title: Other
+    common.RootInfo.team:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - team
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/common.TeamRootInfo'
+    common.RootInfo.user:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - user
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/common.UserRootInfo'
+    common.RootInfoBase:
+      description: Information about current user's root.
+      properties:
+        home_namespace_id:
+          $ref: '#/components/schemas/common.NamespaceId'
+          description: The namespace ID for user's home namespace.
+        root_namespace_id:
+          $ref: '#/components/schemas/common.NamespaceId'
+          description: |-
+            The namespace ID for user's root namespace. It will be the namespace ID
+             of the shared team root if the user is member of a team with a separate team root,
+             or the user root if user is member of a team with separate distinct roots for users.
+             Otherwise it will be the same as `RootInfo.home_namespace_id`.
+      required:
+      - home_namespace_id
+      - root_namespace_id
+      type: object
+    common.TeamRootInfo:
+      allOf:
+      - $ref: '#/components/schemas/common.RootInfoBase'
+      - properties:
+          home_path:
+            description: The path for user's home directory under the shared team
+              root.
+            type: string
+        required:
+        - home_path
+        type: object
+      description: Root info when user is member of a team with a separate root namespace
+        ID.
+    common.UserRootInfo:
+      allOf:
+      - $ref: '#/components/schemas/common.RootInfoBase'
+      - properties:
+          home_path:
+            description: The path for user's home directory under the distinct user
+              root.
+            type:
+            - string
+            - "null"
+        type: object
+      description: |-
+        Root info when user is not member of a team or
+         the user is a member of a team and the team does not have a separate root namespace.
+      examples:
+      - home_namespace_id: "3235641"
+        root_namespace_id: "3235641"
+    team_common.MemberSpaceLimitType:
+      description: The type of the space limit imposed on a team member.
+      oneOf:
+      - $ref: '#/components/schemas/team_common.MemberSpaceLimitType.off'
+      - $ref: '#/components/schemas/team_common.MemberSpaceLimitType.alert_only'
+      - $ref: '#/components/schemas/team_common.MemberSpaceLimitType.stop_sync'
+      - $ref: '#/components/schemas/team_common.MemberSpaceLimitType.other'
+    team_common.MemberSpaceLimitType.alert_only:
+      description: |-
+        The team member has soft imposed space limit - the limit is used for display and
+         for notifications.
+      properties:
+        .tag:
+          enum:
+          - alert_only
+          type: string
+      required:
+      - .tag
+      type: object
+    team_common.MemberSpaceLimitType.off:
+      description: The team member does not have imposed space limit.
+      properties:
+        .tag:
+          enum:
+          - "off"
+          type: string
+      required:
+      - .tag
+      type: object
+    team_common.MemberSpaceLimitType.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - alert_only
+            - "off"
+            - stop_sync
+          type: string
+      title: Other
+      type: object
+    team_common.MemberSpaceLimitType.stop_sync:
+      description: |-
+        The team member has hard imposed space limit - Dropbox file sync will stop after
+         the limit is reached.
+      properties:
+        .tag:
+          enum:
+          - stop_sync
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy:
+      description: Policy governing default expiration date for new links shared outside
+        the team.
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.none'
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.day_1'
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.day_3'
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.day_7'
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.day_30'
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.day_90'
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.day_180'
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.year_1'
+      - $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy.other'
+    team_policies.DefaultLinkExpirationDaysPolicy.day_1:
+      description: New links shared outside the team default to expire in one day.
+      properties:
+        .tag:
+          enum:
+          - day_1
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy.day_180:
+      description: New links shared outside the team default to expire in 180 days.
+      properties:
+        .tag:
+          enum:
+          - day_180
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy.day_3:
+      description: New links shared outside the team default to expire in three days.
+      properties:
+        .tag:
+          enum:
+          - day_3
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy.day_30:
+      description: New links shared outside the team default to expire in 30 days.
+      properties:
+        .tag:
+          enum:
+          - day_30
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy.day_7:
+      description: New links shared outside the team default to expire in seven days.
+      properties:
+        .tag:
+          enum:
+          - day_7
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy.day_90:
+      description: New links shared outside the team default to expire in 90 days.
+      properties:
+        .tag:
+          enum:
+          - day_90
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy.none:
+      description: New links shared outside the team default to no expiration date.
+      properties:
+        .tag:
+          enum:
+          - none
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - day_1
+            - day_180
+            - day_3
+            - day_30
+            - day_7
+            - day_90
+            - none
+            - year_1
+          type: string
+      title: Other
+      type: object
+    team_policies.DefaultLinkExpirationDaysPolicy.year_1:
+      description: New links shared outside the team default to expire in 365 days.
+      properties:
+        .tag:
+          enum:
+          - year_1
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.EnforceLinkPasswordPolicy:
+      description: Policy governing whether new links shared outside the team require
+        passwords.
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.EnforceLinkPasswordPolicy.optional'
+      - $ref: '#/components/schemas/team_policies.EnforceLinkPasswordPolicy.required'
+      - $ref: '#/components/schemas/team_policies.EnforceLinkPasswordPolicy.other'
+    team_policies.EnforceLinkPasswordPolicy.optional:
+      description: New links shared outside the team do not require passwords.
+      properties:
+        .tag:
+          enum:
+          - optional
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.EnforceLinkPasswordPolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - optional
+            - required
+          type: string
+      title: Other
+      type: object
+    team_policies.EnforceLinkPasswordPolicy.required:
+      description: New links shared outside the team require passwords.
+      properties:
+        .tag:
+          enum:
+          - required
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.GroupCreation:
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.GroupCreation.admins_and_members'
+      - $ref: '#/components/schemas/team_policies.GroupCreation.admins_only'
+      x-stone-union-closed: true
+    team_policies.GroupCreation.admins_and_members:
+      description: Team admins and members can create groups.
+      properties:
+        .tag:
+          enum:
+          - admins_and_members
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.GroupCreation.admins_only:
+      description: Only team admins can create groups.
+      properties:
+        .tag:
+          enum:
+          - admins_only
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.OfficeAddInPolicy:
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.OfficeAddInPolicy.disabled'
+      - $ref: '#/components/schemas/team_policies.OfficeAddInPolicy.enabled'
+      - $ref: '#/components/schemas/team_policies.OfficeAddInPolicy.other'
+    team_policies.OfficeAddInPolicy.disabled:
+      description: Office Add-In is disabled.
+      properties:
+        .tag:
+          enum:
+          - disabled
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.OfficeAddInPolicy.enabled:
+      description: Office Add-In is enabled.
+      properties:
+        .tag:
+          enum:
+          - enabled
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.OfficeAddInPolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - disabled
+            - enabled
+          type: string
+      title: Other
+      type: object
+    team_policies.SharedFolderBlanketLinkRestrictionPolicy:
+      description: Policy governing whether shared folder membership is required to
+        access shared links.
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.SharedFolderBlanketLinkRestrictionPolicy.members'
+      - $ref: '#/components/schemas/team_policies.SharedFolderBlanketLinkRestrictionPolicy.anyone'
+      - $ref: '#/components/schemas/team_policies.SharedFolderBlanketLinkRestrictionPolicy.other'
+    team_policies.SharedFolderBlanketLinkRestrictionPolicy.anyone:
+      description: Anyone can access folder content via shared link.
+      properties:
+        .tag:
+          enum:
+          - anyone
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedFolderBlanketLinkRestrictionPolicy.members:
+      description: Only members of shared folders can access folder content via shared
+        link.
+      properties:
+        .tag:
+          enum:
+          - members
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedFolderBlanketLinkRestrictionPolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - anyone
+            - members
+          type: string
+      title: Other
+      type: object
+    team_policies.SharedFolderJoinPolicy:
+      description: Policy governing which shared folders a team member can join.
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.SharedFolderJoinPolicy.from_team_only'
+      - $ref: '#/components/schemas/team_policies.SharedFolderJoinPolicy.from_anyone'
+      - $ref: '#/components/schemas/team_policies.SharedFolderJoinPolicy.other'
+    team_policies.SharedFolderJoinPolicy.from_anyone:
+      description: Team members can join any shared folder, including those shared
+        by users outside the team.
+      properties:
+        .tag:
+          enum:
+          - from_anyone
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedFolderJoinPolicy.from_team_only:
+      description: Team members can only join folders shared by teammates.
+      properties:
+        .tag:
+          enum:
+          - from_team_only
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedFolderJoinPolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - from_anyone
+            - from_team_only
+          type: string
+      title: Other
+      type: object
+    team_policies.SharedFolderMemberPolicy:
+      description: Policy governing who can be a member of a folder shared by a team
+        member.
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.SharedFolderMemberPolicy.team'
+      - $ref: '#/components/schemas/team_policies.SharedFolderMemberPolicy.anyone'
+      - $ref: '#/components/schemas/team_policies.SharedFolderMemberPolicy.team_and_approved'
+      - $ref: '#/components/schemas/team_policies.SharedFolderMemberPolicy.other'
+    team_policies.SharedFolderMemberPolicy.anyone:
+      description: Anyone can be a member of a folder shared by a team member.
+      properties:
+        .tag:
+          enum:
+          - anyone
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedFolderMemberPolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - anyone
+            - team
+            - team_and_approved
+          type: string
+      title: Other
+      type: object
+    team_policies.SharedFolderMemberPolicy.team:
+      description: Only a teammate can be a member of a folder shared by a team member.
+      properties:
+        .tag:
+          enum:
+          - team
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedFolderMemberPolicy.team_and_approved:
+      description: Only a teammate and approved people can be a member of a folder
+        shared by a team member.
+      properties:
+        .tag:
+          enum:
+          - team_and_approved
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedLinkCreatePolicy:
+      description: |-
+        Policy governing the visibility of shared links. This policy can apply to newly created shared
+         links, or all shared links.
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.SharedLinkCreatePolicy.default_public'
+      - $ref: '#/components/schemas/team_policies.SharedLinkCreatePolicy.default_team_only'
+      - $ref: '#/components/schemas/team_policies.SharedLinkCreatePolicy.team_only'
+      - $ref: '#/components/schemas/team_policies.SharedLinkCreatePolicy.default_no_one'
+      - $ref: '#/components/schemas/team_policies.SharedLinkCreatePolicy.other'
+    team_policies.SharedLinkCreatePolicy.default_no_one:
+      description: |-
+        Only people invited can access newly created links.
+         Login will be required to access the shared links unless overridden.
+      properties:
+        .tag:
+          enum:
+          - default_no_one
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedLinkCreatePolicy.default_public:
+      description: |-
+        By default, anyone can access newly created shared links.
+         No login will be required to access the shared links unless overridden.
+      properties:
+        .tag:
+          enum:
+          - default_public
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedLinkCreatePolicy.default_team_only:
+      description: |-
+        By default, only members of the same team can access newly created shared links.
+         Login will be required to access the shared links unless overridden.
+      properties:
+        .tag:
+          enum:
+          - default_team_only
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedLinkCreatePolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - default_no_one
+            - default_public
+            - default_team_only
+            - team_only
+          type: string
+      title: Other
+      type: object
+    team_policies.SharedLinkCreatePolicy.team_only:
+      description: |-
+        Only members of the same team can access all shared links.
+         Login will be required to access all shared links.
+      properties:
+        .tag:
+          enum:
+          - team_only
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedLinkDefaultPermissionsPolicy:
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.SharedLinkDefaultPermissionsPolicy.default'
+      - $ref: '#/components/schemas/team_policies.SharedLinkDefaultPermissionsPolicy.edit'
+      - $ref: '#/components/schemas/team_policies.SharedLinkDefaultPermissionsPolicy.view'
+      - $ref: '#/components/schemas/team_policies.SharedLinkDefaultPermissionsPolicy.other'
+    team_policies.SharedLinkDefaultPermissionsPolicy.default:
+      description: No team default. Member defaults used instead.
+      properties:
+        .tag:
+          enum:
+          - default
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedLinkDefaultPermissionsPolicy.edit:
+      description: Default to edit when creating new sharing links
+      properties:
+        .tag:
+          enum:
+          - edit
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.SharedLinkDefaultPermissionsPolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - default
+            - edit
+            - view
+          type: string
+      title: Other
+      type: object
+    team_policies.SharedLinkDefaultPermissionsPolicy.view:
+      description: Default to view-only when creating new sharing links
+      properties:
+        .tag:
+          enum:
+          - view
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.TeamSharingPolicies:
+      description: Policies governing sharing within and outside of the team.
+      examples:
+      - default_link_expiration_days_policy:
+          .tag: none
+        enforce_link_password_policy:
+          .tag: optional
+        group_creation_policy:
+          .tag: admins_only
+        shared_folder_join_policy:
+          .tag: from_anyone
+        shared_folder_link_restriction_policy:
+          .tag: anyone
+        shared_folder_member_policy:
+          .tag: team
+        shared_link_create_policy:
+          .tag: team_only
+        shared_link_default_permissions_policy:
+          .tag: default
+      properties:
+        default_link_expiration_days_policy:
+          $ref: '#/components/schemas/team_policies.DefaultLinkExpirationDaysPolicy'
+          description: Default expiration date for new links shared outside the team.
+        enforce_link_password_policy:
+          $ref: '#/components/schemas/team_policies.EnforceLinkPasswordPolicy'
+          description: If passwords are required for new links shared outside the
+            team.
+        group_creation_policy:
+          $ref: '#/components/schemas/team_policies.GroupCreation'
+          description: Who can create groups.
+        shared_folder_join_policy:
+          $ref: '#/components/schemas/team_policies.SharedFolderJoinPolicy'
+          description: Which shared folders team members can join.
+        shared_folder_link_restriction_policy:
+          $ref: '#/components/schemas/team_policies.SharedFolderBlanketLinkRestrictionPolicy'
+          description: Who can view links to content in shared folders.
+        shared_folder_member_policy:
+          $ref: '#/components/schemas/team_policies.SharedFolderMemberPolicy'
+          description: Who can join folders shared by team members.
+        shared_link_create_policy:
+          $ref: '#/components/schemas/team_policies.SharedLinkCreatePolicy'
+          description: Who can view shared links owned by team members.
+        shared_link_default_permissions_policy:
+          $ref: '#/components/schemas/team_policies.SharedLinkDefaultPermissionsPolicy'
+          description: Default access level for new links shared by team members.
+      required:
+      - default_link_expiration_days_policy
+      - enforce_link_password_policy
+      - group_creation_policy
+      - shared_folder_join_policy
+      - shared_folder_link_restriction_policy
+      - shared_folder_member_policy
+      - shared_link_create_policy
+      - shared_link_default_permissions_policy
+      type: object
+    team_policies.TopLevelContentPolicy:
+      oneOf:
+      - $ref: '#/components/schemas/team_policies.TopLevelContentPolicy.admin_only'
+      - $ref: '#/components/schemas/team_policies.TopLevelContentPolicy.everyone'
+      - $ref: '#/components/schemas/team_policies.TopLevelContentPolicy.other'
+    team_policies.TopLevelContentPolicy.admin_only:
+      description: Only admins can edit team folders at the top level of the team
+        space.
+      properties:
+        .tag:
+          enum:
+          - admin_only
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.TopLevelContentPolicy.everyone:
+      description: Everyone on the team can edit team folders at the top level of
+        the team space.
+      properties:
+        .tag:
+          enum:
+          - everyone
+          type: string
+      required:
+      - .tag
+      type: object
+    team_policies.TopLevelContentPolicy.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - admin_only
+            - everyone
+          type: string
+      title: Other
+      type: object
+    users.Account:
+      description: |-
+        The amount of detail revealed about an account depends on the user
+         being queried and the user making the query.
+      examples:
+      - account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+        disabled: false
+        email: franz@dropbox.com
+        email_verified: true
+        name:
+          abbreviated_name: FF
+          display_name: Franz Ferdinand (Personal)
+          familiar_name: Franz
+          given_name: Franz
+          surname: Ferdinand
+        profile_photo_url: https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128
+      properties:
+        account_id:
+          $ref: '#/components/schemas/users_common.AccountId'
+          description: The user's unique and stable Dropbox ID.
+        disabled:
+          description: Whether the user has been disabled.
+          type: boolean
+        email:
+          description: |-
+            The user's email address. Do not rely on this without checking the
+             `email_verified` field. Even then, it's possible that the user
+             has since lost access to their email. Note: email is not a unique or
+             stable identifier for a Dropbox account. Users can change their email,
+             and emails can be reused by different accounts. Apps should not use
+             email as a key for account identification; use `account_id` instead.
+          type: string
+        email_verified:
+          description: Whether the user has verified their email address.
+          type: boolean
+        name:
+          $ref: '#/components/schemas/users.Name'
+          description: Details of a user's name.
+        profile_photo_url:
+          description: URL for the photo representing the user, if one is set.
+          type:
+          - string
+          - "null"
+      required:
+      - account_id
+      - disabled
+      - email
+      - email_verified
+      - name
+      type: object
+    users.BasicAccount:
+      allOf:
+      - $ref: '#/components/schemas/users.Account'
+      - properties:
+          is_teammate:
+            description: |-
+              Whether this user is a teammate of the current user. If this account
+               is the current user's account, then this will be `true`.
+            type: boolean
+          team_member_id:
+            description: |-
+              The user's unique team member id. This field will only be present if
+               the user is part of a team and `is_teammate` is `true`.
+            type:
+            - string
+            - "null"
+        required:
+        - is_teammate
+        type: object
+      description: Basic information about any account.
+      examples:
+      - account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+        disabled: false
+        email: franz@dropbox.com
+        email_verified: true
+        is_teammate: false
+        name:
+          abbreviated_name: FF
+          display_name: Franz Ferdinand (Personal)
+          familiar_name: Franz
+          given_name: Franz
+          surname: Ferdinand
+        profile_photo_url: https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128
+      - account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+        disabled: false
+        email: franz@dropbox.com
+        email_verified: true
+        is_teammate: true
+        name:
+          abbreviated_name: FF
+          display_name: Franz Ferdinand (Personal)
+          familiar_name: Franz
+          given_name: Franz
+          surname: Ferdinand
+        profile_photo_url: https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128
+        team_member_id: dbmid:AAHhy7WsR0x-u4ZCqiDl5Fz5zvuL3kmspwU
+    users.DistinctMemberHomeValue:
+      description: The value for `UserFeature.distinct_member_home`.
+      oneOf:
+      - $ref: '#/components/schemas/users.DistinctMemberHomeValue.enabled'
+      - $ref: '#/components/schemas/users.DistinctMemberHomeValue.other'
+    users.DistinctMemberHomeValue.enabled:
+      description: |-
+        When this value is True, the user have distinct home and root ns. When the value is
+         False the user's home ns and root ns are the same.
+      properties:
+        .tag:
+          enum:
+          - enabled
+          type: string
+        enabled:
+          description: |-
+            When this value is True, the user have distinct home and root ns. When the value is
+             False the user's home ns and root ns are the same.
+          type: boolean
+      required:
+      - .tag
+      - enabled
+      type: object
+    users.DistinctMemberHomeValue.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - enabled
+          type: string
+      title: Other
+      type: object
+    users.FileLockingValue:
+      description: The value for `UserFeature.file_locking`.
+      examples:
+      - .tag: enabled
+        enabled: true
+      oneOf:
+      - $ref: '#/components/schemas/users.FileLockingValue.enabled'
+      - $ref: '#/components/schemas/users.FileLockingValue.other'
+    users.FileLockingValue.enabled:
+      description: |-
+        When this value is True, the user can lock files in shared directories. When the value is
+         False the user can unlock the files they have locked or request to unlock files locked by
+         others.
+      properties:
+        .tag:
+          enum:
+          - enabled
+          type: string
+        enabled:
+          description: |-
+            When this value is True, the user can lock files in shared directories. When the value is
+             False the user can unlock the files they have locked or request to unlock files locked by
+             others.
+          type: boolean
+      required:
+      - .tag
+      - enabled
+      type: object
+    users.FileLockingValue.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - enabled
+          type: string
+      title: Other
+      type: object
+    users.FullAccount:
+      allOf:
+      - $ref: '#/components/schemas/users.Account'
+      - properties:
+          account_type:
+            $ref: '#/components/schemas/users_common.AccountType'
+            description: What type of account this user has.
+          country:
+            description: |-
+              The user's two-letter country code, if available. Country codes are
+               based on [ISO 3166-1](http://en.wikipedia.org/wiki/ISO_3166-1).
+            maxLength: 2
+            minLength: 2
+            type:
+            - string
+            - "null"
+          is_paired:
+            description: |-
+              Whether the user has a personal and work account. If the current
+               account is personal, then `team` will always be `null`,
+               but `is_paired` will indicate if a work account is linked.
+            type: boolean
+          locale:
+            description: |-
+              The language that the user specified. Locale tags will be
+               [IETF language tags](http://en.wikipedia.org/wiki/IETF_language_tag).
+            minLength: 2
+            type: string
+          referral_link:
+            description: The user's [referral link](https://www.dropbox.com/referrals).
+            type: string
+          root_info:
+            $ref: '#/components/schemas/common.RootInfo'
+            description: The root info for this account.
+          team:
+            anyOf:
+            - $ref: '#/components/schemas/users.FullTeam'
+            - type: "null"
+            description: If this account is a member of a team, information about
+              that team.
+          team_member_id:
+            description: |-
+              This account's unique team member id. This field will only be present if
+               `team` is present.
+            type:
+            - string
+            - "null"
+        required:
+        - account_type
+        - is_paired
+        - locale
+        - referral_link
+        - root_info
+        type: object
+      description: Detailed information about the current user's account.
+      examples:
+      - account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+        account_type:
+          .tag: business
+          business: null
+        country: US
+        disabled: false
+        email: franz@dropbox.com
+        email_verified: true
+        is_paired: true
+        locale: en
+        name:
+          abbreviated_name: FF
+          display_name: Franz Ferdinand (Personal)
+          familiar_name: Franz
+          given_name: Franz
+          surname: Ferdinand
+        profile_photo_url: https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128
+        referral_link: https://db.tt/ZITNuhtI
+        root_info:
+          .tag: user
+          home_namespace_id: "3235641"
+          root_namespace_id: "3235641"
+        team:
+          id: dbtid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I
+          name: Acme, Inc.
+          office_addin_policy:
+            .tag: disabled
+          sharing_policies:
+            default_link_expiration_days_policy:
+              .tag: none
+            enforce_link_password_policy:
+              .tag: optional
+            group_creation_policy:
+              .tag: admins_only
+            shared_folder_join_policy:
+              .tag: from_anyone
+            shared_folder_link_restriction_policy:
+              .tag: anyone
+            shared_folder_member_policy:
+              .tag: team
+            shared_link_create_policy:
+              .tag: team_only
+            shared_link_default_permissions_policy:
+              .tag: default
+          top_level_content_policy:
+            .tag: admin_only
+        team_member_id: dbmid:AAHhy7WsR0x-u4ZCqiDl5Fz5zvuL3kmspwU
+      - account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+        account_type:
+          .tag: basic
+          basic: null
+        country: US
+        disabled: false
+        email: franz@gmail.com
+        email_verified: false
+        is_paired: false
+        locale: en
+        name:
+          abbreviated_name: FF
+          display_name: Franz Ferdinand (Personal)
+          familiar_name: Franz
+          given_name: Franz
+          surname: Ferdinand
+        profile_photo_url: https://dl-web.dropbox.com/account_photo/get/dbaphid%3AAAHWGmIXV3sUuOmBfTz0wPsiqHUpBWvv3ZA?vers=1556069330102&size=128x128
+        referral_link: https://db.tt/ZITNuhtI
+        root_info:
+          .tag: user
+          home_namespace_id: "3235641"
+          root_namespace_id: "3235641"
+        team: null
+    users.FullTeam:
+      allOf:
+      - $ref: '#/components/schemas/users.Team'
+      - properties:
+          office_addin_policy:
+            $ref: '#/components/schemas/team_policies.OfficeAddInPolicy'
+            description: Team policy governing the use of the Office Add-In.
+          sharing_policies:
+            $ref: '#/components/schemas/team_policies.TeamSharingPolicies'
+            description: Team policies governing sharing.
+          top_level_content_policy:
+            $ref: '#/components/schemas/team_policies.TopLevelContentPolicy'
+            description: Team policy governing whether members can edit team folders
+              at the top level of the team space.
+        required:
+        - office_addin_policy
+        - sharing_policies
+        - top_level_content_policy
+        type: object
+      description: Detailed information about a team.
+      examples:
+      - id: dbtid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I
+        name: Acme, Inc.
+        office_addin_policy:
+          .tag: disabled
+        sharing_policies:
+          default_link_expiration_days_policy:
+            .tag: none
+          enforce_link_password_policy:
+            .tag: optional
+          group_creation_policy:
+            .tag: admins_only
+          shared_folder_join_policy:
+            .tag: from_anyone
+          shared_folder_link_restriction_policy:
+            .tag: anyone
+          shared_folder_member_policy:
+            .tag: team
+          shared_link_create_policy:
+            .tag: team_only
+          shared_link_default_permissions_policy:
+            .tag: default
+        top_level_content_policy:
+          .tag: admin_only
+    users.GetAccountArg:
+      examples:
+      - account_id: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+      properties:
+        account_id:
+          $ref: '#/components/schemas/users_common.AccountId'
+          description: A user's account identifier.
+      required:
+      - account_id
+      type: object
+    users.GetAccountBatchArg:
+      examples:
+      - account_ids:
+        - dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+        - dbid:AAH1Vcz-DVoRDeixtr_OA8oUGgiqhs4XPOQ
+      properties:
+        account_ids:
+          description: List of user account identifiers.  Should not contain any duplicate
+            account IDs.
+          items:
+            $ref: '#/components/schemas/users_common.AccountId'
+          minItems: 1
+          type: array
+      required:
+      - account_ids
+      type: object
+    users.GetAccountBatchError:
+      examples:
+      - .tag: no_account
+        no_account: dbid:AAH4f99T0taONIb-OurWxbNQ6ywGRopQngc
+      oneOf:
+      - $ref: '#/components/schemas/users.GetAccountBatchError.no_account'
+      - $ref: '#/components/schemas/users.GetAccountBatchError.other'
+    users.GetAccountBatchError.no_account:
+      description: |-
+        The value is an account ID specified in `GetAccountBatchArg.account_ids`
+         that does not exist.
+      properties:
+        .tag:
+          enum:
+          - no_account
+          type: string
+        no_account:
+          anyOf:
+          - $ref: '#/components/schemas/users_common.AccountId'
+          - type: "null"
+      required:
+      - .tag
+      - no_account
+      type: object
+    users.GetAccountBatchError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - no_account
+          type: string
+      title: Other
+      type: object
+    users.GetAccountBatchResult:
+      items:
+        $ref: '#/components/schemas/users.BasicAccount'
+      type: array
+    users.GetAccountError:
+      oneOf:
+      - $ref: '#/components/schemas/users.GetAccountError.no_account'
+      - $ref: '#/components/schemas/users.GetAccountError.other'
+    users.GetAccountError.no_account:
+      description: The specified `GetAccountArg.account_id` does not exist.
+      properties:
+        .tag:
+          enum:
+          - no_account
+          type: string
+      required:
+      - .tag
+      type: object
+    users.GetAccountError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - no_account
+          type: string
+      title: Other
+      type: object
+    users.IndividualSpaceAllocation:
+      examples:
+      - allocated: 10000000000
+      properties:
+        allocated:
+          description: The total space allocated to the user's account (bytes).
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - allocated
+      type: object
+    users.Name:
+      description: Representations for a person's name to assist with internationalization.
+      examples:
+      - abbreviated_name: FF
+        display_name: Franz Ferdinand (Personal)
+        familiar_name: Franz
+        given_name: Franz
+        surname: Ferdinand
+      - abbreviated_name: ZD
+        display_name: Zexy Desperado (Personal)
+        familiar_name: Zexy
+        given_name: Zexy Desperado
+        surname: Desperado
+      properties:
+        abbreviated_name:
+          description: An abbreviated form of the person's name. Their initials in
+            most locales.
+          type: string
+        display_name:
+          description: |-
+            A name that can be used directly to represent the name of a user's
+             Dropbox account.
+          type: string
+        familiar_name:
+          description: |-
+            Locale-dependent name. In the US, a person's familiar name is their
+             `given_name`, but elsewhere, it could be any combination of a
+             person's `given_name` and `surname`.
+          type: string
+        given_name:
+          description: Also known as a first name.
+          type: string
+        surname:
+          description: Also known as a last name or family name.
+          type: string
+      required:
+      - abbreviated_name
+      - display_name
+      - familiar_name
+      - given_name
+      - surname
+      type: object
+    users.PaperAsFilesValue:
+      description: The value for `UserFeature.paper_as_files`.
+      examples:
+      - .tag: enabled
+        enabled: true
+      oneOf:
+      - $ref: '#/components/schemas/users.PaperAsFilesValue.enabled'
+      - $ref: '#/components/schemas/users.PaperAsFilesValue.other'
+    users.PaperAsFilesValue.enabled:
+      description: |-
+        When this value is true, the user's Paper docs are accessible in Dropbox with the .paper
+         extension and must be accessed via the /files endpoints.  When this value is
+         false, the user's Paper docs are stored separate from Dropbox files and folders and should
+         be accessed via the /paper endpoints.
+      properties:
+        .tag:
+          enum:
+          - enabled
+          type: string
+        enabled:
+          description: |-
+            When this value is true, the user's Paper docs are accessible in Dropbox with the .paper
+             extension and must be accessed via the /files endpoints.  When this value is
+             false, the user's Paper docs are stored separate from Dropbox files and folders and should
+             be accessed via the /paper endpoints.
+          type: boolean
+      required:
+      - .tag
+      - enabled
+      type: object
+    users.PaperAsFilesValue.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - enabled
+          type: string
+      title: Other
+      type: object
+    users.SpaceAllocation:
+      description: Space is allocated differently based on the type of account.
+      examples:
+      - .tag: individual
+        allocated: 10000000000
+      oneOf:
+      - $ref: '#/components/schemas/users.SpaceAllocation.individual'
+      - $ref: '#/components/schemas/users.SpaceAllocation.team'
+      - $ref: '#/components/schemas/users.SpaceAllocation.other'
+    users.SpaceAllocation.individual:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - individual
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/users.IndividualSpaceAllocation'
+      description: The user's space allocation applies only to their individual account.
+    users.SpaceAllocation.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - individual
+            - team
+          type: string
+      title: Other
+      type: object
+    users.SpaceAllocation.team:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - team
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/users.TeamSpaceAllocation'
+      description: The user shares space with other members of their team.
+    users.SpaceUsage:
+      description: Information about a user's space usage and quota.
+      examples:
+      - allocation:
+          .tag: individual
+          allocated: 10000000000
+        used: 314159265
+      properties:
+        allocation:
+          $ref: '#/components/schemas/users.SpaceAllocation'
+          description: The user's space allocation.
+        used:
+          description: The user's total space usage (bytes).
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - allocation
+      - used
+      type: object
+    users.Team:
+      description: Information about a team.
+      examples:
+      - id: dbtid:AAFdgehTzw7WlXhZJsbGCLePe8RvQGYDr-I
+        name: Acme, Inc.
+      properties:
+        id:
+          description: The team's unique ID.
+          type: string
+        name:
+          description: The name of the team.
+          type: string
+      required:
+      - id
+      - name
+      type: object
+    users.TeamSharedDropboxValue:
+      description: The value for `UserFeature.team_shared_dropbox`.
+      oneOf:
+      - $ref: '#/components/schemas/users.TeamSharedDropboxValue.enabled'
+      - $ref: '#/components/schemas/users.TeamSharedDropboxValue.other'
+    users.TeamSharedDropboxValue.enabled:
+      description: |-
+        When this value is True, the user have a shared team root. When the value is
+         False the user have distinct root.
+      properties:
+        .tag:
+          enum:
+          - enabled
+          type: string
+        enabled:
+          description: |-
+            When this value is True, the user have a shared team root. When the value is
+             False the user have distinct root.
+          type: boolean
+      required:
+      - .tag
+      - enabled
+      type: object
+    users.TeamSharedDropboxValue.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - enabled
+          type: string
+      title: Other
+      type: object
+    users.TeamSpaceAllocation:
+      examples:
+      - allocated: 100000000000
+        used: 27182818284
+        user_within_team_space_allocated: 2000000000
+        user_within_team_space_limit_type:
+          .tag: stop_sync
+        user_within_team_space_used_cached: 314159265
+      properties:
+        allocated:
+          description: The total space allocated to the user's team (bytes).
+          format: uint64
+          minimum: 0
+          type: integer
+        used:
+          description: The total space currently used by the user's team (bytes).
+          format: uint64
+          minimum: 0
+          type: integer
+        user_within_team_space_allocated:
+          description: |-
+            The total space allocated to the user within its team allocated space (0 means that
+             no restriction is imposed on the user's quota within its team).
+          format: uint64
+          minimum: 0
+          type: integer
+        user_within_team_space_limit_type:
+          $ref: '#/components/schemas/team_common.MemberSpaceLimitType'
+          description: The type of the space limit imposed on the team member (off,
+            alert_only, stop_sync).
+        user_within_team_space_used_cached:
+          description: An accurate cached calculation of a team member's total space
+            usage (bytes).
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - allocated
+      - used
+      - user_within_team_space_allocated
+      - user_within_team_space_limit_type
+      - user_within_team_space_used_cached
+      type: object
+    users.UserFeature:
+      description: A set of features that a Dropbox User account may have configured.
+      oneOf:
+      - $ref: '#/components/schemas/users.UserFeature.paper_as_files'
+      - $ref: '#/components/schemas/users.UserFeature.file_locking'
+      - $ref: '#/components/schemas/users.UserFeature.team_shared_dropbox'
+      - $ref: '#/components/schemas/users.UserFeature.distinct_member_home'
+    users.UserFeature.distinct_member_home:
+      description: This feature contains information about whether or not the user's
+        home namespace is distinct from their root namespace.
+      properties:
+        .tag:
+          enum:
+          - distinct_member_home
+          type: string
+      required:
+      - .tag
+      type: object
+    users.UserFeature.file_locking:
+      description: This feature allows users to lock files in order to restrict other
+        users from editing them.
+      properties:
+        .tag:
+          enum:
+          - file_locking
+          type: string
+      required:
+      - .tag
+      type: object
+    users.UserFeature.paper_as_files:
+      description: This feature contains information about how the user's Paper files
+        are stored.
+      properties:
+        .tag:
+          enum:
+          - paper_as_files
+          type: string
+      required:
+      - .tag
+      type: object
+    users.UserFeature.team_shared_dropbox:
+      description: This feature contains information about whether or not the user
+        is part of a team with a shared team root.
+      properties:
+        .tag:
+          enum:
+          - team_shared_dropbox
+          type: string
+      required:
+      - .tag
+      type: object
+    users.UserFeatureValue:
+      description: Values that correspond to entries in `UserFeature`.
+      examples:
+      - .tag: paper_as_files
+        paper_as_files:
+          .tag: enabled
+          enabled: true
+      oneOf:
+      - $ref: '#/components/schemas/users.UserFeatureValue.paper_as_files'
+      - $ref: '#/components/schemas/users.UserFeatureValue.file_locking'
+      - $ref: '#/components/schemas/users.UserFeatureValue.team_shared_dropbox'
+      - $ref: '#/components/schemas/users.UserFeatureValue.distinct_member_home'
+      - $ref: '#/components/schemas/users.UserFeatureValue.other'
+    users.UserFeatureValue.distinct_member_home:
+      properties:
+        .tag:
+          enum:
+          - distinct_member_home
+          type: string
+        distinct_member_home:
+          $ref: '#/components/schemas/users.DistinctMemberHomeValue'
+      required:
+      - .tag
+      - distinct_member_home
+      type: object
+    users.UserFeatureValue.file_locking:
+      properties:
+        .tag:
+          enum:
+          - file_locking
+          type: string
+        file_locking:
+          $ref: '#/components/schemas/users.FileLockingValue'
+      required:
+      - .tag
+      - file_locking
+      type: object
+    users.UserFeatureValue.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - distinct_member_home
+            - file_locking
+            - paper_as_files
+            - team_shared_dropbox
+          type: string
+      title: Other
+      type: object
+    users.UserFeatureValue.paper_as_files:
+      properties:
+        .tag:
+          enum:
+          - paper_as_files
+          type: string
+        paper_as_files:
+          $ref: '#/components/schemas/users.PaperAsFilesValue'
+      required:
+      - .tag
+      - paper_as_files
+      type: object
+    users.UserFeatureValue.team_shared_dropbox:
+      properties:
+        .tag:
+          enum:
+          - team_shared_dropbox
+          type: string
+        team_shared_dropbox:
+          $ref: '#/components/schemas/users.TeamSharedDropboxValue'
+      required:
+      - .tag
+      - team_shared_dropbox
+      type: object
+    users.UserFeaturesGetValuesBatchArg:
+      examples:
+      - features:
+        - .tag: paper_as_files
+        - .tag: file_locking
+      properties:
+        features:
+          description: |-
+            A list of features in `UserFeature`. If the list is empty,
+             this route will return `UserFeaturesGetValuesBatchError`.
+          items:
+            $ref: '#/components/schemas/users.UserFeature'
+          type: array
+      required:
+      - features
+      type: object
+    users.UserFeaturesGetValuesBatchError:
+      oneOf:
+      - $ref: '#/components/schemas/users.UserFeaturesGetValuesBatchError.empty_features_list'
+      - $ref: '#/components/schemas/users.UserFeaturesGetValuesBatchError.other'
+    users.UserFeaturesGetValuesBatchError.empty_features_list:
+      description: |-
+        At least one `UserFeature` must be included in the
+         `UserFeaturesGetValuesBatchArg`.features list.
+      properties:
+        .tag:
+          enum:
+          - empty_features_list
+          type: string
+      required:
+      - .tag
+      type: object
+    users.UserFeaturesGetValuesBatchError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - empty_features_list
+          type: string
+      title: Other
+      type: object
+    users.UserFeaturesGetValuesBatchResult:
+      examples:
+      - values:
+        - .tag: paper_as_files
+          paper_as_files:
+            .tag: enabled
+            enabled: true
+      properties:
+        values:
+          items:
+            $ref: '#/components/schemas/users.UserFeatureValue'
+          type: array
+      required:
+      - values
+      type: object
+    users_common.AccountId:
+      maxLength: 40
+      minLength: 40
+      type: string
+    users_common.AccountType:
+      description: What type of account this user has.
+      examples:
+      - .tag: basic
+        basic: null
+      - .tag: business
+        business: null
+      oneOf:
+      - $ref: '#/components/schemas/users_common.AccountType.basic'
+      - $ref: '#/components/schemas/users_common.AccountType.pro'
+      - $ref: '#/components/schemas/users_common.AccountType.business'
+      x-stone-union-closed: true
+    users_common.AccountType.basic:
+      description: The basic account type.
+      properties:
+        .tag:
+          enum:
+          - basic
+          type: string
+      required:
+      - .tag
+      type: object
+    users_common.AccountType.business:
+      description: The Dropbox Business account type.
+      properties:
+        .tag:
+          enum:
+          - business
+          type: string
+      required:
+      - .tag
+      type: object
+    users_common.AccountType.pro:
+      description: The Dropbox Pro account type.
+      properties:
+        .tag:
+          enum:
+          - pro
+          type: string
+      required:
+      - .tag
+      type: object
+  securitySchemes:
+    dropboxOAuth2:
+      description: |-
+        OAuth 2.0 token issued to a specific user. Use `Authorization: Bearer <token>`.
+
+        Public clients should use the authorization code flow with PKCE (S256).
+
+        For background or offline access, send `token_access_type=offline` during authorization and use the returned refresh token to obtain new access tokens.
+
+        You can generate a short-lived access token in the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+      flows:
+        authorizationCode:
+          authorizationUrl: https://www.dropbox.com/oauth2/authorize
+          scopes:
+            account_info.read: 'Required Dropbox scope: account_info.read'
+            sharing.read: 'Required Dropbox scope: sharing.read'
+          tokenUrl: https://api.dropboxapi.com/oauth2/token
+      type: oauth2
+      x-fern-playground-description: You can generate a short-lived access token in
+        the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+externalDocs:
+  description: Dropbox API HTTP Reference
+  url: https://www.dropbox.com/developers/documentation/http/documentation
+info:
+  contact:
+    name: Dropbox Developer Support
+    url: https://www.dropbox.com/developers
+  description: The Dropbox API allows developers to work with files in Dropbox, including
+    advanced functionality like full-text search, thumbnails, and sharing.
+  license:
+    name: Dropbox Developer Terms
+    url: https://www.dropbox.com/developers/reference/tos
+  termsOfService: https://www.dropbox.com/developers/reference/tos
+  title: Dropbox API
+  version: 1.0.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+openapi: 3.1.0
+paths:
+  /2/users/features/get_values:
+    post:
+      description: |-
+        Get a list of feature values that may be configured for the current account.
+
+        **Required scope:** `account_info.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: usersFeaturesGetValues
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/users.UserFeaturesGetValuesBatchArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/users.UserFeaturesGetValuesBatchResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/users.UserFeaturesGetValuesBatchError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - account_info.read
+      summary: Features Get Values
+      tags:
+      - users
+      x-auth-type: user
+  /2/users/get_account:
+    post:
+      description: |-
+        Get information about a user's account.
+
+        **Required scope:** `sharing.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: usersGetAccount
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/users.GetAccountArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/users.BasicAccount'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/users.GetAccountError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.read
+      summary: Get Account
+      tags:
+      - users
+      x-auth-type: user
+  /2/users/get_account_batch:
+    post:
+      description: |-
+        Get information about multiple user accounts. At most 300 accounts may be queried per request.
+
+        **Required scope:** `sharing.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: usersGetAccountBatch
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/users.GetAccountBatchArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/users.GetAccountBatchResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/users.GetAccountBatchError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - sharing.read
+      summary: Get Account Batch
+      tags:
+      - users
+      x-auth-type: user
+  /2/users/get_current_account:
+    post:
+      description: |-
+        Get information about the current user's account.
+
+        **Required scope:** `account_info.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication), [Dropbox-API-Select-Admin (Whole Team)](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#admin-authentication-via-dropbox-api-select-admin)
+      operationId: usersGetCurrentAccount
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Select-Admin'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/users.FullAccount'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          $ref: '#/components/responses/409NoEndpointError'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - account_info.read
+      summary: Get Current Account
+      tags:
+      - users
+      x-auth-type: user
+  /2/users/get_space_usage:
+    post:
+      description: |-
+        Get the space usage information for the current user's account.
+
+        **Required scope:** `account_info.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: usersGetSpaceUsage
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/users.SpaceUsage'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          $ref: '#/components/responses/409NoEndpointError'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - account_info.read
+      summary: Get Space Usage
+      tags:
+      - users
+      x-auth-type: user
+servers:
+- description: Dropbox API (RPC-style endpoints)
+  url: https://api.dropboxapi.com
+tags:
+- description: This namespace contains endpoints and data types for user management.
+  name: users
+  x-displayName: Users

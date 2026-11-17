@@ -1,0 +1,2496 @@
+components:
+  headers:
+    X-Dropbox-Request-Id:
+      description: A unique identifier for the request, useful for debugging and support.
+      schema:
+        type: string
+  parameters:
+    Dropbox-API-Path-Root:
+      description: 'Scopes path-based operations to a namespace (root). The value
+        is a JSON serialization of the `common.PathRoot` union: `{".tag": "home"}`,
+        `{".tag": "root", "root": "<namespace_id>"}`, or `{".tag": "namespace_id",
+        "namespace_id": "<namespace_id>"}`. On failure the request returns 422 with
+        a `common.PathRootError`.'
+      in: header
+      name: Dropbox-API-Path-Root
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-Admin:
+      description: Acts as the specified team admin for supported user-auth operations.
+        Pass a team member ID for an admin account. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-Admin
+      required: false
+      schema:
+        type: string
+    Dropbox-API-Select-User:
+      description: Acts on behalf of a team member for supported user-auth operations.
+        Pass a team member ID such as `dbmid:...`. When used with a team token, that
+        token must also include the `team_data.member` scope.
+      in: header
+      name: Dropbox-API-Select-User
+      required: false
+      schema:
+        type: string
+  responses:
+    "400":
+      content:
+        text/plain:
+          schema:
+            type: string
+      description: Bad input parameter. Check the response body for more information.
+    "401":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthErrorResponse'
+      description: Bad or expired token
+    "403":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AccessErrorResponse'
+      description: The user or team account doesn't have access to the endpoint or
+        feature
+    409NoEndpointError:
+      description: No endpoint-specific errors
+      headers:
+        X-Dropbox-Request-Id:
+          $ref: '#/components/headers/X-Dropbox-Request-Id'
+    "429":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitErrorResponse'
+        text/plain:
+          schema:
+            type: string
+      description: The app is making too many requests for the given user or team
+        and is being rate limited. The app should wait for the number of seconds specified
+        in the "Retry-After" response header before trying again.
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying, when provided by
+            Dropbox.
+          schema:
+            format: int64
+            type: integer
+    "500":
+      description: Internal server error. An error occurred on the Dropbox servers.
+        Check https://status.dropbox.com/ for announcements about Dropbox service
+        issues.
+  schemas:
+    AccessErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AccessError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    AuthErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.AuthError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    RateLimitErrorResponse:
+      properties:
+        error:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitError'
+        error_summary:
+          description: A human-readable summary of the error.
+          type: string
+      required:
+      - error_summary
+      - error
+      type: object
+    auth_apiv2.AccessError:
+      description: Error occurred because the account doesn't have permission to access
+        the resource.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.invalid_account_type'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.paper_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.team_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.no_permission'
+      - $ref: '#/components/schemas/auth_apiv2.AccessError.other'
+    auth_apiv2.AccessError.invalid_account_type:
+      description: Current account type cannot access the resource.
+      properties:
+        .tag:
+          enum:
+          - invalid_account_type
+          type: string
+        invalid_account_type:
+          $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError'
+      required:
+      - .tag
+      - invalid_account_type
+      type: object
+    auth_apiv2.AccessError.no_permission:
+      description: Caller does not have permission to access the resource.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+        no_permission:
+          $ref: '#/components/schemas/auth_apiv2.NoPermissionError'
+      required:
+      - .tag
+      - no_permission
+      type: object
+    auth_apiv2.AccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - invalid_account_type
+            - no_permission
+            - paper_access_denied
+            - team_access_denied
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AccessError.paper_access_denied:
+      description: Current account cannot access Paper.
+      properties:
+        .tag:
+          enum:
+          - paper_access_denied
+          type: string
+        paper_access_denied:
+          $ref: '#/components/schemas/auth_apiv2.PaperAccessError'
+      required:
+      - .tag
+      - paper_access_denied
+      type: object
+    auth_apiv2.AccessError.team_access_denied:
+      description: Team doesn't have permission to access.
+      properties:
+        .tag:
+          enum:
+          - team_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError:
+      description: Errors occurred during authentication.
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_user'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.invalid_select_admin'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.user_suspended'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.expired_access_token'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.missing_scope'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.route_access_denied'
+      - $ref: '#/components/schemas/auth_apiv2.AuthError.other'
+    auth_apiv2.AuthError.expired_access_token:
+      description: The access token has expired.
+      properties:
+        .tag:
+          enum:
+          - expired_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_access_token:
+      description: 'The access token is invalid. This can happen if the access token
+        has been revoked by Dropbox or the user. To fix this, you should re-authenticate
+        the user. Note: Access tokens that are not returned exactly as provisioned
+        will return this error. Be sure not to truncate or otherwise malform access
+        tokens provided by Dropbox.'
+      properties:
+        .tag:
+          enum:
+          - invalid_access_token
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_admin:
+      description: The user specified in 'Dropbox-API-Select-Admin' is not a Dropbox
+        Business team admin.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_admin
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.invalid_select_user:
+      description: The user specified in 'Dropbox-API-Select-User' is no longer on
+        the team.
+      properties:
+        .tag:
+          enum:
+          - invalid_select_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.missing_scope:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - missing_scope
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.TokenScopeError'
+      description: The access token does not have the required scope to access the
+        route.
+    auth_apiv2.AuthError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - expired_access_token
+            - invalid_access_token
+            - invalid_select_admin
+            - invalid_select_user
+            - missing_scope
+            - route_access_denied
+            - user_suspended
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.AuthError.route_access_denied:
+      description: The route is not available to public.
+      properties:
+        .tag:
+          enum:
+          - route_access_denied
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.AuthError.user_suspended:
+      description: The user has been suspended.
+      properties:
+        .tag:
+          enum:
+          - user_suspended
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.endpoint'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.feature'
+      - $ref: '#/components/schemas/auth_apiv2.InvalidAccountTypeError.other'
+    auth_apiv2.InvalidAccountTypeError.endpoint:
+      description: Current account type doesn't have permission to access this endpoint.
+      properties:
+        .tag:
+          enum:
+          - endpoint
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.feature:
+      description: Current account type doesn't have permission to access this feature.
+      properties:
+        .tag:
+          enum:
+          - feature
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.InvalidAccountTypeError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - endpoint
+            - feature
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.unauthorized_account_id_usage'
+      - $ref: '#/components/schemas/auth_apiv2.NoPermissionError.other'
+    auth_apiv2.NoPermissionError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - unauthorized_account_id_usage
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.NoPermissionError.unauthorized_account_id_usage:
+      allOf:
+      - properties:
+          .tag:
+            enum:
+            - unauthorized_account_id_usage
+            type: string
+        required:
+        - .tag
+        type: object
+      - $ref: '#/components/schemas/auth_apiv2.UnauthorizedAccountIdUsageError'
+      description: Current caller does not have permission to access the account information
+        for one or more of the specified account IDs.
+    auth_apiv2.PaperAccessError:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.paper_disabled'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.not_paper_user'
+      - $ref: '#/components/schemas/auth_apiv2.PaperAccessError.other'
+    auth_apiv2.PaperAccessError.not_paper_user:
+      description: The provided user has not used Paper yet.
+      properties:
+        .tag:
+          enum:
+          - not_paper_user
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.PaperAccessError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - not_paper_user
+            - paper_disabled
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.PaperAccessError.paper_disabled:
+      description: Paper is disabled.
+      properties:
+        .tag:
+          enum:
+          - paper_disabled
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitError:
+      description: Error occurred because the app is being rate limited.
+      properties:
+        reason:
+          $ref: '#/components/schemas/auth_apiv2.RateLimitReason'
+          description: The reason why the app is being rate limited.
+        retry_after:
+          default: 1
+          description: |-
+            The number of seconds that the app should wait
+             before making another request.
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - reason
+      type: object
+    auth_apiv2.RateLimitReason:
+      oneOf:
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_requests'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.too_many_write_operations'
+      - $ref: '#/components/schemas/auth_apiv2.RateLimitReason.other'
+    auth_apiv2.RateLimitReason.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - too_many_requests
+            - too_many_write_operations
+          type: string
+      title: Other
+      type: object
+    auth_apiv2.RateLimitReason.too_many_requests:
+      description: You are making too many requests in the past few minutes.
+      properties:
+        .tag:
+          enum:
+          - too_many_requests
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.RateLimitReason.too_many_write_operations:
+      description: There are currently too many write operations happening in the
+        user's Dropbox.
+      properties:
+        .tag:
+          enum:
+          - too_many_write_operations
+          type: string
+      required:
+      - .tag
+      type: object
+    auth_apiv2.TokenScopeError:
+      properties:
+        required_scope:
+          description: The required scope to access the route.
+          type: string
+      required:
+      - required_scope
+      type: object
+    auth_apiv2.UnauthorizedAccountIdUsageError:
+      properties:
+        unauthorized_account_ids:
+          description: The account IDs that the caller does not have permission to
+            use.
+          items:
+            type: string
+          type: array
+      required:
+      - unauthorized_account_ids
+      type: object
+    file_requests_apiv2.CountFileRequestsError:
+      description: There was an error counting the file requests.
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.CountFileRequestsError.disabled_for_team'
+      - $ref: '#/components/schemas/file_requests_apiv2.CountFileRequestsError.other'
+    file_requests_apiv2.CountFileRequestsError.disabled_for_team:
+      description: This user's Dropbox Business team doesn't allow file requests.
+      properties:
+        .tag:
+          enum:
+          - disabled_for_team
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CountFileRequestsError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - disabled_for_team
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.CountFileRequestsResult:
+      description: Result for [count](api:dropbox-api:POST/2/file_requests/count).
+      examples:
+      - file_request_count: 15
+      properties:
+        file_request_count:
+          description: The number file requests owner by this user.
+          format: uint64
+          minimum: 0
+          type: integer
+      required:
+      - file_request_count
+      type: object
+    file_requests_apiv2.CreateFileRequestArgs:
+      description: Arguments for [create](api:dropbox-api:POST/2/file_requests/create).
+      examples:
+      - deadline:
+          allow_late_uploads:
+            .tag: seven_days
+          deadline: "2020-10-12T17:00:00Z"
+        destination: /File Requests/Homework
+        title: Homework submission
+      properties:
+        deadline:
+          anyOf:
+          - $ref: '#/components/schemas/file_requests_apiv2.FileRequestDeadlineRequest'
+          - type: "null"
+          description: |-
+            The deadline for the file request. Deadlines can only be set by
+             Professional and Business accounts.
+        description:
+          description: A description of the file request.
+          type:
+          - string
+          - "null"
+        destination:
+          $ref: '#/components/schemas/files.Path'
+          description: |-
+            The path of the folder in the Dropbox where uploaded files will be
+             sent. For apps with the app folder permission, this will be relative to
+             the app folder.
+        open:
+          default: true
+          description: |-
+            Whether or not the file request should be open. If the file request is
+             closed, it will not accept any file submissions, but it can be opened
+             later.
+          type: boolean
+        title:
+          description: The title of the file request. Must not be empty.
+          minLength: 1
+          type: string
+        video_project_id:
+          description: If this request was created from video project, its id.
+          type:
+          - string
+          - "null"
+      required:
+      - destination
+      - title
+      type: object
+    file_requests_apiv2.CreateFileRequestError:
+      description: There was an error creating the file request.
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.disabled_for_team'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.not_found'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.not_a_folder'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.app_lacks_access'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.no_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.email_unverified'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.validation_error'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.no_write_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.invalid_location'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.rate_limit'
+      - $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError.other'
+    file_requests_apiv2.CreateFileRequestError.app_lacks_access:
+      description: |-
+        This file request is not accessible to this app. Apps with the app
+         folder permission can only access file requests in their app folder.
+      properties:
+        .tag:
+          enum:
+          - app_lacks_access
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.disabled_for_team:
+      description: This user's Dropbox Business team doesn't allow file requests.
+      properties:
+        .tag:
+          enum:
+          - disabled_for_team
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.email_unverified:
+      description: |-
+        This user's email address is not verified. File requests are only
+         available on accounts with a verified email address. Users can verify
+         their email address [here](https://www.dropbox.com/help/317).
+      properties:
+        .tag:
+          enum:
+          - email_unverified
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.invalid_location:
+      description: File requests are not available on the specified folder.
+      properties:
+        .tag:
+          enum:
+          - invalid_location
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.no_permission:
+      description: |-
+        This user doesn't have permission to access or modify this file
+         request.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.no_write_permission:
+      description: This user doesn't have permission to edit files in a destination
+        folder
+      properties:
+        .tag:
+          enum:
+          - no_write_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.not_a_folder:
+      description: The specified path is not a folder.
+      properties:
+        .tag:
+          enum:
+          - not_a_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.not_found:
+      description: This file request ID was not found.
+      properties:
+        .tag:
+          enum:
+          - not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - app_lacks_access
+            - disabled_for_team
+            - email_unverified
+            - invalid_location
+            - no_permission
+            - no_write_permission
+            - not_a_folder
+            - not_found
+            - rate_limit
+            - validation_error
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.CreateFileRequestError.rate_limit:
+      description: |-
+        The user has reached the rate limit for creating file requests. The
+         limit is currently 4000 file requests total.
+      properties:
+        .tag:
+          enum:
+          - rate_limit
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.CreateFileRequestError.validation_error:
+      description: |-
+        There was an error validating the request. For example, the title was
+         invalid, or there were disallowed characters in the destination path.
+      properties:
+        .tag:
+          enum:
+          - validation_error
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError:
+      description: There was an error deleting all closed file requests.
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.disabled_for_team'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.not_found'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.not_a_folder'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.app_lacks_access'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.no_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.email_unverified'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.validation_error'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.no_write_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError.other'
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.app_lacks_access:
+      description: |-
+        This file request is not accessible to this app. Apps with the app
+         folder permission can only access file requests in their app folder.
+      properties:
+        .tag:
+          enum:
+          - app_lacks_access
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.disabled_for_team:
+      description: This user's Dropbox Business team doesn't allow file requests.
+      properties:
+        .tag:
+          enum:
+          - disabled_for_team
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.email_unverified:
+      description: |-
+        This user's email address is not verified. File requests are only
+         available on accounts with a verified email address. Users can verify
+         their email address [here](https://www.dropbox.com/help/317).
+      properties:
+        .tag:
+          enum:
+          - email_unverified
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.no_permission:
+      description: |-
+        This user doesn't have permission to access or modify this file
+         request.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.no_write_permission:
+      description: This user doesn't have permission to edit files in a destination
+        folder
+      properties:
+        .tag:
+          enum:
+          - no_write_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.not_a_folder:
+      description: The specified path is not a folder.
+      properties:
+        .tag:
+          enum:
+          - not_a_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.not_found:
+      description: This file request ID was not found.
+      properties:
+        .tag:
+          enum:
+          - not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - app_lacks_access
+            - disabled_for_team
+            - email_unverified
+            - no_permission
+            - no_write_permission
+            - not_a_folder
+            - not_found
+            - validation_error
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsError.validation_error:
+      description: |-
+        There was an error validating the request. For example, the title was
+         invalid, or there were disallowed characters in the destination path.
+      properties:
+        .tag:
+          enum:
+          - validation_error
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteAllClosedFileRequestsResult:
+      description: Result for [delete_all_closed](api:dropbox-api:POST/2/file_requests/delete_all_closed).
+      examples:
+      - file_requests:
+        - created: "2015-10-05T17:00:00Z"
+          deadline:
+            allow_late_uploads:
+              .tag: seven_days
+            deadline: "2020-10-12T17:00:00Z"
+          description: Please submit your homework here.
+          destination: /File Requests/Homework
+          file_count: 3
+          id: oaCAVmEyrqYnkZX9955Y
+          is_open: true
+          title: Homework submission
+          url: https://www.dropbox.com/request/oaCAVmEyrqYnkZX9955Y
+        - created: "2015-11-02T04:00:00Z"
+          deadline:
+            deadline: "2020-10-12T17:00:00Z"
+          destination: /Photo contest entries
+          file_count: 105
+          id: BAJ7IrRGicQKGToykQdB
+          is_open: true
+          title: Photo contest submission
+          url: https://www.dropbox.com/request/BAJ7IrRGjcQKGToykQdB
+        - created: "2015-12-15T13:02:00Z"
+          deadline: null
+          destination: /Wedding photos
+          file_count: 37
+          id: rxwMPvK3ATTa0VxOJu5T
+          is_open: true
+          title: Wedding photo submission
+          url: https://www.dropbox.com/request/rxwMPvK3ATTa0VxOJu5T
+      properties:
+        file_requests:
+          description: The file requests deleted for this user.
+          items:
+            $ref: '#/components/schemas/file_requests_apiv2.FileRequest'
+          type: array
+      required:
+      - file_requests
+      type: object
+    file_requests_apiv2.DeleteFileRequestArgs:
+      description: Arguments for [delete](api:dropbox-api:POST/2/file_requests/delete).
+      examples:
+      - ids:
+        - oaCAVmEyrqYnkZX9955Y
+        - BaZmehYoXMPtaRmfTbSG
+      properties:
+        ids:
+          description: List IDs of the file requests to delete.
+          items:
+            $ref: '#/components/schemas/file_requests_apiv2.FileRequestId'
+          type: array
+      required:
+      - ids
+      type: object
+    file_requests_apiv2.DeleteFileRequestError:
+      description: There was an error deleting these file requests.
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.disabled_for_team'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.not_found'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.not_a_folder'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.app_lacks_access'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.no_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.email_unverified'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.validation_error'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.no_write_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.file_request_open'
+      - $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError.other'
+    file_requests_apiv2.DeleteFileRequestError.app_lacks_access:
+      description: |-
+        This file request is not accessible to this app. Apps with the app
+         folder permission can only access file requests in their app folder.
+      properties:
+        .tag:
+          enum:
+          - app_lacks_access
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.disabled_for_team:
+      description: This user's Dropbox Business team doesn't allow file requests.
+      properties:
+        .tag:
+          enum:
+          - disabled_for_team
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.email_unverified:
+      description: |-
+        This user's email address is not verified. File requests are only
+         available on accounts with a verified email address. Users can verify
+         their email address [here](https://www.dropbox.com/help/317).
+      properties:
+        .tag:
+          enum:
+          - email_unverified
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.file_request_open:
+      description: One or more file requests currently open.
+      properties:
+        .tag:
+          enum:
+          - file_request_open
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.no_permission:
+      description: |-
+        This user doesn't have permission to access or modify this file
+         request.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.no_write_permission:
+      description: This user doesn't have permission to edit files in a destination
+        folder
+      properties:
+        .tag:
+          enum:
+          - no_write_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.not_a_folder:
+      description: The specified path is not a folder.
+      properties:
+        .tag:
+          enum:
+          - not_a_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.not_found:
+      description: This file request ID was not found.
+      properties:
+        .tag:
+          enum:
+          - not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - app_lacks_access
+            - disabled_for_team
+            - email_unverified
+            - file_request_open
+            - no_permission
+            - no_write_permission
+            - not_a_folder
+            - not_found
+            - validation_error
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.DeleteFileRequestError.validation_error:
+      description: |-
+        There was an error validating the request. For example, the title was
+         invalid, or there were disallowed characters in the destination path.
+      properties:
+        .tag:
+          enum:
+          - validation_error
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.DeleteFileRequestsResult:
+      description: Result for [delete](api:dropbox-api:POST/2/file_requests/delete).
+      examples:
+      - file_requests:
+        - created: "2015-10-05T17:00:00Z"
+          deadline:
+            allow_late_uploads:
+              .tag: seven_days
+            deadline: "2020-10-12T17:00:00Z"
+          description: Please submit your homework here.
+          destination: /File Requests/Homework
+          file_count: 3
+          id: oaCAVmEyrqYnkZX9955Y
+          is_open: true
+          title: Homework submission
+          url: https://www.dropbox.com/request/oaCAVmEyrqYnkZX9955Y
+        - created: "2015-11-02T04:00:00Z"
+          deadline:
+            deadline: "2020-10-12T17:00:00Z"
+          destination: /Photo contest entries
+          file_count: 105
+          id: BAJ7IrRGicQKGToykQdB
+          is_open: true
+          title: Photo contest submission
+          url: https://www.dropbox.com/request/BAJ7IrRGjcQKGToykQdB
+        - created: "2015-12-15T13:02:00Z"
+          deadline: null
+          destination: /Wedding photos
+          file_count: 37
+          id: rxwMPvK3ATTa0VxOJu5T
+          is_open: true
+          title: Wedding photo submission
+          url: https://www.dropbox.com/request/rxwMPvK3ATTa0VxOJu5T
+      properties:
+        file_requests:
+          description: The file requests deleted by the request.
+          items:
+            $ref: '#/components/schemas/file_requests_apiv2.FileRequest'
+          type: array
+      required:
+      - file_requests
+      type: object
+    file_requests_apiv2.FileRequest:
+      description: |-
+        A [file request](https://www.dropbox.com/help/9090) for receiving
+         files into the user's Dropbox account.
+      examples:
+      - created: "2015-10-05T17:00:00Z"
+        deadline:
+          allow_late_uploads:
+            .tag: seven_days
+          deadline: "2020-10-12T17:00:00Z"
+        description: Please submit your homework here.
+        destination: /File Requests/Homework
+        file_count: 3
+        id: oaCAVmEyrqYnkZX9955Y
+        is_open: true
+        title: Homework submission
+        url: https://www.dropbox.com/request/oaCAVmEyrqYnkZX9955Y
+      - created: "2015-11-02T04:00:00Z"
+        deadline:
+          deadline: "2020-10-12T17:00:00Z"
+        destination: /Photo contest entries
+        file_count: 105
+        id: BAJ7IrRGicQKGToykQdB
+        is_open: true
+        title: Photo contest submission
+        url: https://www.dropbox.com/request/BAJ7IrRGjcQKGToykQdB
+      - created: "2015-12-15T13:02:00Z"
+        deadline: null
+        destination: /Wedding photos
+        file_count: 37
+        id: rxwMPvK3ATTa0VxOJu5T
+        is_open: true
+        title: Wedding photo submission
+        url: https://www.dropbox.com/request/rxwMPvK3ATTa0VxOJu5T
+      properties:
+        created:
+          description: When this file request was created.
+          format: date-time
+          type: string
+        deadline:
+          anyOf:
+          - $ref: '#/components/schemas/file_requests_apiv2.FileRequestDeadline'
+          - type: "null"
+          description: |-
+            The deadline for this file request. Only set if the request has a
+             deadline.
+        description:
+          description: A description of the file request.
+          type:
+          - string
+          - "null"
+        destination:
+          anyOf:
+          - $ref: '#/components/schemas/files.Path'
+          - type: "null"
+          description: |-
+            The path of the folder in the Dropbox where uploaded files will be
+             sent. This can be `null` if the destination was removed. For apps
+             with the app folder permission, this will be relative to the app
+             folder.
+        file_count:
+          description: The number of files this file request has received.
+          format: int64
+          type: integer
+        id:
+          $ref: '#/components/schemas/file_requests_apiv2.FileRequestId'
+          description: The ID of the file request.
+        is_open:
+          description: |-
+            Whether or not the file request is open. If the file request is
+             closed, it will not accept any more file submissions.
+          type: boolean
+        title:
+          description: The title of the file request.
+          minLength: 1
+          type: string
+        url:
+          description: The URL of the file request.
+          minLength: 1
+          type: string
+        video_project_id:
+          description: If this request was created from video project, its id.
+          type:
+          - string
+          - "null"
+      required:
+      - created
+      - file_count
+      - id
+      - is_open
+      - title
+      - url
+      type: object
+    file_requests_apiv2.FileRequestDeadline:
+      examples:
+      - deadline: "2020-10-12T17:00:00Z"
+      - allow_late_uploads:
+          .tag: seven_days
+        deadline: "2020-10-12T17:00:00Z"
+      properties:
+        allow_late_uploads:
+          anyOf:
+          - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod'
+          - type: "null"
+          description: |-
+            If set, allow uploads after the deadline has passed. These
+             uploads will be marked overdue.
+        deadline:
+          description: The deadline for this file request.
+          format: date-time
+          type: string
+      required:
+      - deadline
+      type: object
+    file_requests_apiv2.FileRequestDeadlineRequest:
+      examples:
+      - deadline: "2020-10-12T17:00:00Z"
+      - allow_late_uploads:
+          .tag: seven_days
+        deadline: "2020-10-12T17:00:00Z"
+      properties:
+        allow_late_uploads:
+          anyOf:
+          - $ref: '#/components/schemas/file_requests_apiv2.GracePeriodRequest'
+          - type: "null"
+          description: |-
+            If set, allow uploads after the deadline has passed. These
+             uploads will be marked overdue.
+        deadline:
+          description: The deadline for this file request.
+          format: date-time
+          type: string
+      required:
+      - deadline
+      type: object
+    file_requests_apiv2.FileRequestId:
+      minLength: 1
+      pattern: '[-_0-9a-zA-Z]+'
+      type: string
+    file_requests_apiv2.GetFileRequestArgs:
+      description: Arguments for [get](api:dropbox-api:POST/2/file_requests/get).
+      examples:
+      - id: oaCAVmEyrqYnkZX9955Y
+      properties:
+        id:
+          $ref: '#/components/schemas/file_requests_apiv2.FileRequestId'
+          description: The ID of the file request to retrieve.
+      required:
+      - id
+      type: object
+    file_requests_apiv2.GetFileRequestError:
+      description: There was an error retrieving the specified file request.
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.disabled_for_team'
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.not_found'
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.not_a_folder'
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.app_lacks_access'
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.no_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.email_unverified'
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.validation_error'
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.no_write_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError.other'
+    file_requests_apiv2.GetFileRequestError.app_lacks_access:
+      description: |-
+        This file request is not accessible to this app. Apps with the app
+         folder permission can only access file requests in their app folder.
+      properties:
+        .tag:
+          enum:
+          - app_lacks_access
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GetFileRequestError.disabled_for_team:
+      description: This user's Dropbox Business team doesn't allow file requests.
+      properties:
+        .tag:
+          enum:
+          - disabled_for_team
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GetFileRequestError.email_unverified:
+      description: |-
+        This user's email address is not verified. File requests are only
+         available on accounts with a verified email address. Users can verify
+         their email address [here](https://www.dropbox.com/help/317).
+      properties:
+        .tag:
+          enum:
+          - email_unverified
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GetFileRequestError.no_permission:
+      description: |-
+        This user doesn't have permission to access or modify this file
+         request.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GetFileRequestError.no_write_permission:
+      description: This user doesn't have permission to edit files in a destination
+        folder
+      properties:
+        .tag:
+          enum:
+          - no_write_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GetFileRequestError.not_a_folder:
+      description: The specified path is not a folder.
+      properties:
+        .tag:
+          enum:
+          - not_a_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GetFileRequestError.not_found:
+      description: This file request ID was not found.
+      properties:
+        .tag:
+          enum:
+          - not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GetFileRequestError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - app_lacks_access
+            - disabled_for_team
+            - email_unverified
+            - no_permission
+            - no_write_permission
+            - not_a_folder
+            - not_found
+            - validation_error
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.GetFileRequestError.validation_error:
+      description: |-
+        There was an error validating the request. For example, the title was
+         invalid, or there were disallowed characters in the destination path.
+      properties:
+        .tag:
+          enum:
+          - validation_error
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GracePeriod:
+      examples:
+      - .tag: seven_days
+        seven_days: null
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.one_day'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.two_days'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.seven_days'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.thirty_days'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.always'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.other'
+    file_requests_apiv2.GracePeriod.always:
+      properties:
+        .tag:
+          enum:
+          - always
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GracePeriod.one_day:
+      properties:
+        .tag:
+          enum:
+          - one_day
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GracePeriod.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - always
+            - one_day
+            - seven_days
+            - thirty_days
+            - two_days
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.GracePeriod.seven_days:
+      properties:
+        .tag:
+          enum:
+          - seven_days
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GracePeriod.thirty_days:
+      properties:
+        .tag:
+          enum:
+          - thirty_days
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GracePeriod.two_days:
+      properties:
+        .tag:
+          enum:
+          - two_days
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.GracePeriodRequest:
+      examples:
+      - .tag: seven_days
+        seven_days: null
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.one_day'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.two_days'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.seven_days'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.thirty_days'
+      - $ref: '#/components/schemas/file_requests_apiv2.GracePeriod.always'
+    file_requests_apiv2.ListFileRequestsArg:
+      description: Arguments for [list:2](api:dropbox-api:POST/2/file_requests/list_v2).
+      examples:
+      - limit: 1000
+      properties:
+        limit:
+          default: 1000
+          description: The maximum number of file requests that should be returned
+            per request.
+          format: uint64
+          minimum: 0
+          type: integer
+      type: object
+    file_requests_apiv2.ListFileRequestsContinueArg:
+      examples:
+      - cursor: ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu
+      properties:
+        cursor:
+          description: The cursor returned by the previous API call specified in the
+            endpoint description.
+          type: string
+      required:
+      - cursor
+      type: object
+    file_requests_apiv2.ListFileRequestsContinueError:
+      description: There was an error retrieving the file requests.
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsContinueError.disabled_for_team'
+      - $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsContinueError.invalid_cursor'
+      - $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsContinueError.other'
+    file_requests_apiv2.ListFileRequestsContinueError.disabled_for_team:
+      description: This user's Dropbox Business team doesn't allow file requests.
+      properties:
+        .tag:
+          enum:
+          - disabled_for_team
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.ListFileRequestsContinueError.invalid_cursor:
+      description: The cursor is invalid.
+      properties:
+        .tag:
+          enum:
+          - invalid_cursor
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.ListFileRequestsContinueError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - disabled_for_team
+            - invalid_cursor
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.ListFileRequestsError:
+      description: There was an error retrieving the file requests.
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsError.disabled_for_team'
+      - $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsError.other'
+    file_requests_apiv2.ListFileRequestsError.disabled_for_team:
+      description: This user's Dropbox Business team doesn't allow file requests.
+      properties:
+        .tag:
+          enum:
+          - disabled_for_team
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.ListFileRequestsError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - disabled_for_team
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.ListFileRequestsResult:
+      description: Result for [list](api:dropbox-api:POST/2/file_requests/list).
+      examples:
+      - file_requests:
+        - created: "2015-10-05T17:00:00Z"
+          deadline:
+            allow_late_uploads:
+              .tag: seven_days
+            deadline: "2020-10-12T17:00:00Z"
+          description: Please submit your homework here.
+          destination: /File Requests/Homework
+          file_count: 3
+          id: oaCAVmEyrqYnkZX9955Y
+          is_open: true
+          title: Homework submission
+          url: https://www.dropbox.com/request/oaCAVmEyrqYnkZX9955Y
+        - created: "2015-11-02T04:00:00Z"
+          deadline:
+            deadline: "2020-10-12T17:00:00Z"
+          destination: /Photo contest entries
+          file_count: 105
+          id: BAJ7IrRGicQKGToykQdB
+          is_open: true
+          title: Photo contest submission
+          url: https://www.dropbox.com/request/BAJ7IrRGjcQKGToykQdB
+        - created: "2015-12-15T13:02:00Z"
+          deadline: null
+          destination: /Wedding photos
+          file_count: 37
+          id: rxwMPvK3ATTa0VxOJu5T
+          is_open: true
+          title: Wedding photo submission
+          url: https://www.dropbox.com/request/rxwMPvK3ATTa0VxOJu5T
+      properties:
+        file_requests:
+          description: |-
+            The file requests owned by this user. Apps with the app folder
+             permission will only see file requests in their app folder.
+          items:
+            $ref: '#/components/schemas/file_requests_apiv2.FileRequest'
+          type: array
+      required:
+      - file_requests
+      type: object
+    file_requests_apiv2.ListFileRequestsV2Result:
+      description: Result for [list:2](api:dropbox-api:POST/2/file_requests/list_v2)
+        and [list/continue](api:dropbox-api:POST/2/file_requests/list/continue).
+      examples:
+      - cursor: ZtkX9_EHj3x7PMkVuFIhwKYXEpwpLwyxp9vMKomUhllil9q7eWiAu
+        file_requests:
+        - created: "2015-10-05T17:00:00Z"
+          deadline:
+            allow_late_uploads:
+              .tag: seven_days
+            deadline: "2020-10-12T17:00:00Z"
+          description: Please submit your homework here.
+          destination: /File Requests/Homework
+          file_count: 3
+          id: oaCAVmEyrqYnkZX9955Y
+          is_open: true
+          title: Homework submission
+          url: https://www.dropbox.com/request/oaCAVmEyrqYnkZX9955Y
+        - created: "2015-11-02T04:00:00Z"
+          deadline:
+            deadline: "2020-10-12T17:00:00Z"
+          destination: /Photo contest entries
+          file_count: 105
+          id: BAJ7IrRGicQKGToykQdB
+          is_open: true
+          title: Photo contest submission
+          url: https://www.dropbox.com/request/BAJ7IrRGjcQKGToykQdB
+        - created: "2015-12-15T13:02:00Z"
+          deadline: null
+          destination: /Wedding photos
+          file_count: 37
+          id: rxwMPvK3ATTa0VxOJu5T
+          is_open: true
+          title: Wedding photo submission
+          url: https://www.dropbox.com/request/rxwMPvK3ATTa0VxOJu5T
+        has_more: true
+      properties:
+        cursor:
+          description: Pass the cursor into [list/continue](api:dropbox-api:POST/2/file_requests/list/continue)
+            to obtain additional file requests.
+          type: string
+        file_requests:
+          description: |-
+            The file requests owned by this user. Apps with the app folder
+             permission will only see file requests in their app folder.
+          items:
+            $ref: '#/components/schemas/file_requests_apiv2.FileRequest'
+          type: array
+        has_more:
+          description: |-
+            Is true if there are additional file requests that have not been returned
+             yet. An additional call to :route:list/continue` can retrieve them.
+          type: boolean
+      required:
+      - cursor
+      - file_requests
+      - has_more
+      type: object
+    file_requests_apiv2.UpdateFileRequestArgs:
+      description: Arguments for [update](api:dropbox-api:POST/2/file_requests/update).
+      examples:
+      - deadline:
+          .tag: update
+          update: deadline_with_grace_period
+        destination: /File Requests/Homework
+        id: oaCAVmEyrqYnkZX9955Y
+        open: true
+        title: Homework submission
+      properties:
+        deadline:
+          anyOf:
+          - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestDeadline'
+          - type: "null"
+          description: |-
+            The new deadline for the file request. Deadlines can only be set by
+             Professional and Business accounts.
+        description:
+          description: The description of the file request.
+          type:
+          - string
+          - "null"
+        destination:
+          anyOf:
+          - $ref: '#/components/schemas/files.Path'
+          - type: "null"
+          description: |-
+            The new path of the folder in the Dropbox where uploaded files will be
+             sent. For apps with the app folder permission, this will be relative to
+             the app folder.
+        id:
+          $ref: '#/components/schemas/file_requests_apiv2.FileRequestId'
+          description: The ID of the file request to update.
+        open:
+          description: Whether to set this file request as open or closed.
+          type:
+          - boolean
+          - "null"
+        title:
+          description: The new title of the file request. Must not be empty.
+          minLength: 1
+          type:
+          - string
+          - "null"
+      required:
+      - id
+      type: object
+    file_requests_apiv2.UpdateFileRequestDeadline:
+      default:
+        .tag: no_update
+      examples:
+      - .tag: update
+        update: deadline_with_grace_period
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestDeadline.no_update'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestDeadline.update'
+    file_requests_apiv2.UpdateFileRequestDeadline.no_update:
+      description: Do not change the file request's deadline.
+      properties:
+        .tag:
+          enum:
+          - no_update
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestDeadline.update:
+      description: If `null`, the file request's deadline is cleared.
+      properties:
+        .tag:
+          enum:
+          - update
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestError:
+      description: There is an error updating the file request.
+      oneOf:
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.disabled_for_team'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.not_found'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.not_a_folder'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.app_lacks_access'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.no_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.email_unverified'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.validation_error'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.no_write_permission'
+      - $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError.other'
+    file_requests_apiv2.UpdateFileRequestError.app_lacks_access:
+      description: |-
+        This file request is not accessible to this app. Apps with the app
+         folder permission can only access file requests in their app folder.
+      properties:
+        .tag:
+          enum:
+          - app_lacks_access
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestError.disabled_for_team:
+      description: This user's Dropbox Business team doesn't allow file requests.
+      properties:
+        .tag:
+          enum:
+          - disabled_for_team
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestError.email_unverified:
+      description: |-
+        This user's email address is not verified. File requests are only
+         available on accounts with a verified email address. Users can verify
+         their email address [here](https://www.dropbox.com/help/317).
+      properties:
+        .tag:
+          enum:
+          - email_unverified
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestError.no_permission:
+      description: |-
+        This user doesn't have permission to access or modify this file
+         request.
+      properties:
+        .tag:
+          enum:
+          - no_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestError.no_write_permission:
+      description: This user doesn't have permission to edit files in a destination
+        folder
+      properties:
+        .tag:
+          enum:
+          - no_write_permission
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestError.not_a_folder:
+      description: The specified path is not a folder.
+      properties:
+        .tag:
+          enum:
+          - not_a_folder
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestError.not_found:
+      description: This file request ID was not found.
+      properties:
+        .tag:
+          enum:
+          - not_found
+          type: string
+      required:
+      - .tag
+      type: object
+    file_requests_apiv2.UpdateFileRequestError.other:
+      description: 'An open-union catch-all: a variant added to this union after your
+        API client''s spec was generated. Its ".tag" is a value not listed among the
+        known variants above; treat it as an unrecognized/forward-compatible case.'
+      properties:
+        .tag:
+          not:
+            enum:
+            - app_lacks_access
+            - disabled_for_team
+            - email_unverified
+            - no_permission
+            - no_write_permission
+            - not_a_folder
+            - not_found
+            - validation_error
+          type: string
+      title: Other
+      type: object
+    file_requests_apiv2.UpdateFileRequestError.validation_error:
+      description: |-
+        There was an error validating the request. For example, the title was
+         invalid, or there were disallowed characters in the destination path.
+      properties:
+        .tag:
+          enum:
+          - validation_error
+          type: string
+      required:
+      - .tag
+      type: object
+    files.Path:
+      pattern: \/(.|[\r\n])*
+      type: string
+  securitySchemes:
+    dropboxOAuth2:
+      description: |-
+        OAuth 2.0 token issued to a specific user. Use `Authorization: Bearer <token>`.
+
+        Public clients should use the authorization code flow with PKCE (S256).
+
+        For background or offline access, send `token_access_type=offline` during authorization and use the returned refresh token to obtain new access tokens.
+
+        You can generate a short-lived access token in the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+      flows:
+        authorizationCode:
+          authorizationUrl: https://www.dropbox.com/oauth2/authorize
+          scopes:
+            file_requests.read: 'Required Dropbox scope: file_requests.read'
+            file_requests.write: 'Required Dropbox scope: file_requests.write'
+          tokenUrl: https://api.dropboxapi.com/oauth2/token
+      type: oauth2
+      x-fern-playground-description: You can generate a short-lived access token in
+        the Developer Console; see [Testing with a generated token](https://docs.dropboxapi.com/dropbox-api/docs/oauth#testing-with-a-generated-token).
+externalDocs:
+  description: Dropbox API HTTP Reference
+  url: https://www.dropbox.com/developers/documentation/http/documentation
+info:
+  contact:
+    name: Dropbox Developer Support
+    url: https://www.dropbox.com/developers
+  description: The Dropbox API allows developers to work with files in Dropbox, including
+    advanced functionality like full-text search, thumbnails, and sharing.
+  license:
+    name: Dropbox Developer Terms
+    url: https://www.dropbox.com/developers/reference/tos
+  termsOfService: https://www.dropbox.com/developers/reference/tos
+  title: Dropbox API
+  version: 1.0.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+openapi: 3.1.0
+paths:
+  /2/file_requests/count:
+    post:
+      description: |-
+        Returns the total number of file requests owned by this user. Includes both open and
+         closed file requests.
+
+        **Required scope:** `file_requests.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsCount
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.CountFileRequestsResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.CountFileRequestsError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.read
+      summary: Count
+      tags:
+      - fileRequests
+      x-auth-type: user
+  /2/file_requests/create:
+    post:
+      description: |-
+        Creates a file request for this user.
+
+        **Required scope:** `file_requests.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsCreate
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.FileRequest'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.CreateFileRequestError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.write
+      summary: Create
+      tags:
+      - fileRequests
+      x-auth-type: user
+  /2/file_requests/delete:
+    post:
+      description: |-
+        Delete a batch of closed file requests.
+
+        **Required scope:** `file_requests.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsDelete
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestsResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.DeleteFileRequestError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.write
+      summary: Delete
+      tags:
+      - fileRequests
+      x-auth-type: user
+  /2/file_requests/delete_all_closed:
+    post:
+      description: |-
+        Delete all closed file requests owned by this user.
+
+        **Required scope:** `file_requests.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsDeleteAllClosed
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.DeleteAllClosedFileRequestsError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.write
+      summary: Delete All Closed
+      tags:
+      - fileRequests
+      x-auth-type: user
+  /2/file_requests/get:
+    post:
+      description: |-
+        Returns the specified file request.
+
+        **Required scope:** `file_requests.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsGet
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.FileRequest'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.GetFileRequestError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.read
+      summary: Get
+      tags:
+      - fileRequests
+      x-auth-type: user
+  /2/file_requests/list:
+    post:
+      description: |-
+        Returns a list of file requests owned by this user. For apps with the app
+         folder permission, this will only return file requests with destinations in
+         the app folder.
+
+        **Required scope:** `file_requests.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsList
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsResult'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.read
+      summary: List
+      tags:
+      - fileRequests
+      x-auth-type: user
+  /2/file_requests/list/continue:
+    post:
+      description: |-
+        Once a cursor has been retrieved from [list:2](api:dropbox-api:POST/2/file_requests/list_v2), use this to paginate through all
+         file requests. The cursor must come from a previous call to [list:2](api:dropbox-api:POST/2/file_requests/list_v2) or
+         [list/continue](api:dropbox-api:POST/2/file_requests/list/continue).
+
+        **Required scope:** `file_requests.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsListContinue
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsContinueArg'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsV2Result'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsContinueError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.read
+      summary: List Continue
+      tags:
+      - fileRequests
+      x-auth-type: user
+  /2/file_requests/list_v2:
+    post:
+      description: |-
+        Returns a list of file requests owned by this user. For apps with the app
+         folder permission, this will only return file requests with destinations in
+         the app folder.
+
+        **Required scope:** `file_requests.read`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsListV2
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsArg'
+              - type: "null"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsV2Result'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.ListFileRequestsError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.read
+      summary: List v2
+      tags:
+      - fileRequests
+      x-auth-type: user
+  /2/file_requests/update:
+    post:
+      description: |-
+        Update a file request.
+
+        **Required scope:** `file_requests.write`
+
+        **Endpoint format:** [RPC](https://docs.dropboxapi.com/dropbox-api/docs/technical-reference/request-response-formats#rpc-endpoints)
+
+        **Authentication:** [User](https://docs.dropboxapi.com/dropbox-api/docs/auth-types#user-authentication)
+      operationId: fileRequestsUpdate
+      parameters:
+      - $ref: '#/components/parameters/Dropbox-API-Select-User'
+      - $ref: '#/components/parameters/Dropbox-API-Path-Root'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestArgs'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/file_requests_apiv2.FileRequest'
+          description: Successful response
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "400":
+          $ref: '#/components/responses/400'
+        "401":
+          $ref: '#/components/responses/401'
+        "403":
+          $ref: '#/components/responses/403'
+        "409":
+          content:
+            application/json:
+              schema:
+                properties:
+                  error:
+                    $ref: '#/components/schemas/file_requests_apiv2.UpdateFileRequestError'
+                  error_summary:
+                    description: A human-readable summary of the error.
+                    type: string
+                  user_message:
+                    properties:
+                      locale:
+                        type: string
+                      text:
+                        type: string
+                    type: object
+                required:
+                - error_summary
+                - error
+                type: object
+          description: Endpoint-specific error
+          headers:
+            X-Dropbox-Request-Id:
+              $ref: '#/components/headers/X-Dropbox-Request-Id'
+        "429":
+          $ref: '#/components/responses/429'
+        "500":
+          $ref: '#/components/responses/500'
+      security:
+      - dropboxOAuth2:
+        - file_requests.write
+      summary: Update
+      tags:
+      - fileRequests
+      x-auth-type: user
+servers:
+- description: Dropbox API (RPC-style endpoints)
+  url: https://api.dropboxapi.com
+tags:
+- description: This namespace contains endpoints and data types for file request operations.
+  name: fileRequests
+  x-displayName: File Requests
