@@ -8,6 +8,12 @@ struct Route
         "The server to make the request to. "
     style String(pattern="^(rpc|download|upload)$") = "rpc"
         "The RPC format to use for the request."
+    http_method String(pattern="^(POST|GET|PUT|PATCH|DELETE|HEAD|OPTIONS)$")?
+        "The explicit HTTP method. Omitted for routes using existing API v2 behavior."
+    http_method_name String?
+        "HTTP route name within the namespace, separate from the unique Stone operation name."
+    resumable_upload_operation String(pattern="^(discovery|create|offset_retrieval|append|cancel)$")?
+        "The resumable-upload protocol operation implemented by this route."
     is_preview Boolean = false
         "A flag indicating whether the route is subject to breaking
         changes without notice."
