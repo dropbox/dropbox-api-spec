@@ -1443,7 +1443,7 @@ components:
     file_tagging.TagText:
       maxLength: 32
       minLength: 1
-      pattern: '[\w]+'
+      pattern: '[\w ]+'
       type: string
     file_tagging.UserGeneratedTag:
       examples:

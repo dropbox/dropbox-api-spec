@@ -31,7 +31,7 @@ route search/continue:2 (SearchV2ContinueArg, SearchV2Result, SearchError)
         scope = "files.metadata.read"
 
 
-alias TagText = String(max_length=32, min_length=1, pattern="[\\w]+")
+alias TagText = String(max_length=32, min_length=1, pattern="[\\w ]+")
 
 
 union Tag
