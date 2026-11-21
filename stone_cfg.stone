@@ -6,7 +6,7 @@ struct Route
         "The auth type for the route. In case of multiple values it should be sorted allphabetically"
     host String(pattern="^(api|content|notify)$") = "api"
         "The server to make the request to. "
-    style String(pattern="^(rpc|download|upload)$") = "rpc"
+    style String(pattern="^(rpc|download|upload|sse)$") = "rpc"
         "The RPC format to use for the request."
     http_method String(pattern="^(POST|GET|PUT|PATCH|DELETE|HEAD|OPTIONS)$")?
         "The explicit HTTP method. Omitted for routes using existing API v2 behavior."
